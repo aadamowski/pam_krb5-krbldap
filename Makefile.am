@@ -6,6 +6,7 @@ VERSION=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n
 RELEASE=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1)
 CVSTAG=pam_krb5-$(shell echo $(VERSION) | tr . _)-$(shell echo $(RELEASE) | tr . _)
 distdir=$(PACKAGE)-$(VERSION)-$(RELEASE)
+DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
 tag:
 	cvs tag -c $(CVSTAG)
