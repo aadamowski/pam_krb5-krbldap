@@ -1,4 +1,9 @@
 2003-08-14 nalin
+	* configure.ac: check for __posix_getpwnam_r.
+	* src/userinfo.c(get_pw): use __posix_getpwnam_r if it is available and
+	getpwnam_r isn't available
+
+2003-08-14 nalin
 	* src/session.c(pam_close_session), src/sly.c: return PAM_USER_UNKNOWN
 	instead of PAM_SERVICE_ERR if we fail to get information about the user.
 

@@ -38,7 +38,7 @@ AC_MSG_RESULT($KRB4_LIBS)
 
 AC_CHECK_HEADERS(security/pam_appl.h)
 AC_CHECK_HEADERS(security/pam_modules.h)
-AC_CHECK_FUNCS(getpwnam_r)
+AC_CHECK_FUNCS(getpwnam_r __posix_getpwnam_r)
 AC_CHECK_FUNC(crypt,,[AC_CHECK_LIB(crypt,crypt)])
 
 # We need GNU sed for this to work, but okay.

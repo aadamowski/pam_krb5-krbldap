@@ -59,7 +59,7 @@
 
 #ident "$Id$"
 
-#ifdef HAVE_GETPWNAM_R
+#if defined(HAVE_GETPWNAM_R) || defined(HAVE___POSIX_GETPWNAM_R)
 #define CHUNK_SIZE 128
 /* Convert a name to a UID/GID pair. */
 static int
@@ -80,7 +80,11 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
 
 		/* Give it a shot. */
 		pwd = NULL;
+#if defined(HAVE_GETPWNAM_R)
 		i = getpwnam_r(name, &passwd, buffer, size, &pwd);
+#else
+		i = __posix_getpwnam_r(name, &passwd, buffer, size, &pwd);
+#endif
 		xstrfree(buffer);
 
 		/* If we got 0 back, AND pwd now points to the passwd
