@@ -1,3 +1,8 @@
+Fri January 14 2000 Nalin Dahyabhai <nalin@redhat.com>
+- fix stupid bug in password-changing
+- add check that user exists in Kerberos before prompting to make password-
+  changing sane for mixed environments
+
 Thu January 6 2000 Nalin Dahyabhai <nalin@redhat.com>
 - merge in spelling and other fixes from Michael K. Johnson
 - modify to build both normal and AFS-aware version if krbafs.h is found

@@ -1,2 +1,0 @@
-* Figure out why password-changing doesn't work without pam_cracklib running
-  before pam_krb5.

@@ -1061,6 +1061,37 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		pam_get_item(pamh, PAM_AUTHTOK, (const void**) &authtok);
 	}
 
+	/* flush out the case where the user has no Kerberos principal, and
+	   avoid a spurious, potentially confusing password prompt */
+	if(ret == KRB5_SUCCESS) {
+		kadm5_handle = NULL;
+		ret = kadm5_init_with_password(user,
+					       user,
+					       PASSWORD_CHANGE_SERVICE,
+					       NULL,
+					       KADM5_STRUCT_VERSION,
+					       KADM5_API_VERSION_2,
+					       &kadm5_handle);
+		if(ret == KRB5_SUCCESS) {
+			DEBUG("connected to kadmin server with user's name as "
+			      "password -- should have a stronger password");
+			kadm5_destroy(kadm5_handle);
+		} else {
+			if(ret == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN) {
+				DEBUG("user does not have a Kerberos "
+				      "principal");
+				ret = PAM_USER_UNKNOWN;
+			} else
+			if(ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN) {
+				DEBUG("password-changing service does "
+				      "not exist?!?!?");
+				ret = PAM_SYSTEM_ERR;
+			} else {
+				ret = PAM_SUCCESS;
+			}
+		}
+	}
+
 	/* We have two cases we have to deal with.  The first: check auth. */
 	if((ret == KRB5_SUCCESS) && (flags & PAM_PRELIM_CHECK)) {
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
@@ -1123,8 +1154,8 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				if(ret != PAM_SUCCESS) {
 					INFO("error in conversation: %s",
 					     error_message(ret));
+					ret = PAM_AUTHTOK_ERR;
 				}
-				ret = PAM_AUTHTOK_ERR;
 			}
 			if(ret == KRB5_SUCCESS) {
 				if(strcmp(authtok, authtok2) != 0) {
@@ -1162,11 +1193,11 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						     principal,
 						     authtok);
 			if(ret == KRB5_SUCCESS) {
-				INFO("%s's %spassword has been changed", user,
+				INFO("%s's %s password has been changed", user,
 				     config->banner);
 			} else {
-				INFO("attempt to change %s's password failed",
-				     user);
+				INFO("changing %s's %s password failed",
+				     user, config->banner);
 			}
 			kadm5_destroy(kadm5_handle);
 		}
