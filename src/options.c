@@ -328,15 +328,15 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->v4 = option_b(pamh, argc, argv,
 			       ctx, options->realm, "krb4_convert");
 	if (options->v4 == -1) {
-		/* default is to have this behavior disabled */
+		/* default is to have this behavior disabled... */
 		options->v4 = 0;
-		/* unless /afs is on a different device from /, which suggests
-		 * that AFS is running */
-		if (stat("/", &stroot) == 0) {
-			if (stat("/afs", &stafs) == 0) {
-				if (stroot.st_dev != stafs.st_dev) {
-					options->v4 = 1;
-				}
+	}
+	/* ... unless /afs is on a different device from /, which suggests that
+	 * AFS is running */
+	if (stat("/", &stroot) == 0) {
+		if (stat("/afs", &stafs) == 0) {
+			if (stroot.st_dev != stafs.st_dev) {
+				options->v4 = 1;
 			}
 		}
 	}
