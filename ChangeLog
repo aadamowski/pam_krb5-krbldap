@@ -1,3 +1,7 @@
+2005-02-23 nalin
+	* src/init.c: don't call initialize_krb5_error_table; this currently
+	leads to a crash due to libkrb5 from MIT's 1.4 release making an
+	invalid assumption about e2fsprogs 1.36's libcom_err (SF #1150146)
 2005-02-14 nalin
 	* src/stash.c,src/stash.h: add a field to the stash structure for
 	keeping of whether or not we set the KRB5CCNAME/KRBTKFILE environment

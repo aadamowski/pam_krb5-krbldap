@@ -91,7 +91,7 @@ fi
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(initialize_krb5_error_table initialize_krb4_error_table initialize_krb_error_table krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb_in_tkt in_tkt krb_save_credentials save_credentials)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb_in_tkt in_tkt krb_save_credentials save_credentials)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>

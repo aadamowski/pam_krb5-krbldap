@@ -70,15 +70,6 @@ _pam_krb5_init_ctx(krb5_context *ctx,
 			try_secure = 0;
 		}
 	}
-#ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
-        initialize_krb5_error_table();
-#endif
-#ifdef HAVE_INITIALIZE_KRB4_ERROR_TABLE
-        initialize_krb4_error_table();
-#endif
-#ifdef HAVE_INITIALIZE_KRB_ERROR_TABLE
-        initialize_krb_error_table();
-#endif
 	*ctx = NULL;
 #ifdef HAVE_KRB5_INIT_SECURE_CONTEXT
 	if (try_secure) {
