@@ -89,7 +89,10 @@ if test x$krb4 != xno ; then
 	fi
 fi
 
+LIBSsave="$LIBS"
+LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
 AC_CHECK_FUNCS(initialize_krb5_error_table initialize_krb4_error_table initialize_krb_error_table krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb_in_tkt in_tkt krb_save_credentials save_credentials)
+LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
 #if HAVE_SYS_TYPES_H
@@ -145,6 +148,8 @@ AC_CHECK_MEMBERS(krb5_creds.session,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.enctype,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.keytype,,,[$headers])
 
+LIBSsave="$LIBS"
+LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
 AC_CHECK_FUNC(krb524_convert_creds_kdc,,[AC_CHECK_LIB(krb524,krb524_convert_creds_kdc,,[AC_CHECK_LIB(54,krb524_convert_creds_kdc)])])
 AC_CHECK_FUNCS(krb5_524_convert_creds krb524_convert_creds_kdc)
 if test x$ac_cv_function_krb5_524_convert_creds = xyes ; then
@@ -152,14 +157,15 @@ if test x$ac_cv_function_krb5_524_convert_creds = xyes ; then
 else
 	if test x$ac_cv_lib_krb524_krb5_524_convert_creds_kdc = xyes ; then
 		AC_DEFINE(HAVE_KRB524_CONVERT_CREDS_KDC,1,[Define if you have the krb524_convert_creds_kdc function.])
-		LIBS="$LIBS -lkrb524"
+		KRB5_LIBS="$KRB5_LIBS -lkrb524"
 	else
 		if test x$ac_cv_lib_54_krb5_524_convert_creds_kdc = xyes ; then
 			AC_DEFINE(HAVE_KRB524_CONVERT_CREDS_KDC,1,[Define if you have the krb524_convert_creds_kdc function.])
-			LIBS="$LIBS -l54"
+			KRB5_LIBS="$KRB5_LIBS -l54"
 		fi
 	fi
 fi
+LIBS="$LIBSsave"
 
 LIBSsave="$LIBS"
 AC_CHECK_FUNC(pam_get_item,,[AC_CHECK_LIB(pam,pam_get_item)])

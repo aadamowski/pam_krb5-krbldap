@@ -452,7 +452,7 @@ v4_get_creds(krb5_context ctx,
 			}
 		}
 	}
-#endif
+#else
 #ifdef HAVE_KRB524_CONVERT_CREDS_KDC
 	if (options->debug) {
 		debug("converting v5 creds to v4 creds (etype = %d)",
@@ -478,6 +478,7 @@ v4_get_creds(krb5_context ctx,
 			}
 		}
 	}
+#endif
 #endif
 	if ((in_creds != NULL) &&
 	    (v5_creds_check_initialized(ctx, in_creds) == 0)) {

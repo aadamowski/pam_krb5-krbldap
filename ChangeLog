@@ -1,4 +1,8 @@
 2004-04-21 nalin
+	* configure.ac: perform all checks for Kerberos functions with all of
+	the libraries we've found.
+
+2004-04-21 nalin
 	* configure.ac: escape sed expressions correctly so that LDFLAGS doesn't
 	include -l flags for Kerberos, skip all krb4 checks if --without-krb4
 	is passed in.
