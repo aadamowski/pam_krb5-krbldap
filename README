@@ -127,8 +127,8 @@ Updates: updated source and binary packages will always appear (however
 infrequently) in Raw Hide (ftp://ftp.redhat.com/pub/redhat/linux/rawhide/).
 The source tree can also be pulled directly from CVS off sources.redhat.com.
 To check out a copy of the tree:
-   cvs -d :pserver:anoncvs@sources.redhat.com:/cvs/rhl login
-   cvs -d :pserver:anoncvs@sources.redhat.com:/cvs/rhl co pam_krb5
+   cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS login
+   cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS co pam_krb5
 The anoncvs password is "anoncvs".
 
 Caveat: pam_pwdb will cause things to fail if your user information isn't stored
@@ -138,4 +138,4 @@ pam_unix if that happens.
 Let me know if you have problems,
 
 Nalin Dahyabhai <nalin@redhat.com>
-15 February 2002
+23 July 2002
