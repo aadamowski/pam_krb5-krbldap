@@ -245,7 +245,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	krb5_address **addresses = NULL;
 	krb5_address **hostlist;
 
-	/* Defaults: try everyting (try_first_pass, use a PAG, no debug). */
+	/* Defaults: try everything (try_first_pass, use a PAG, no debug). */
 	ret = malloc(sizeof(struct config));
 	if(ret == NULL) {
 		return NULL;
@@ -970,7 +970,7 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
 	if(!(config = get_config(context, argc, argv))) {
 		ret = PAM_BUF_ERR;
 	}
-	DEBUG("pam_sm_close_session() called");
+	DEBUG("pam_sm_open_session() called");
 	if(context) krb5_free_context(context);
 
 	return pam_sm_setcred(pamh, flags | PAM_ESTABLISH_CRED, argc, argv);
