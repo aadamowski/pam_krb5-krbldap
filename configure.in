@@ -49,14 +49,15 @@ AC_CHECK_FUNC(yp_bind,,AC_CHECK_LIB(nsl,yp_bind))
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
 AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
 AC_CHECK_FUNC(error_message,,AC_CHECK_LIB(com_err,error_message))
-AC_CHECK_FUNC(krb5_des_string_to_key,
-	      AC_CHECK_LIB(k5crypto,krb5_des_string_to_key))
+AC_CHECK_FUNC(mit_des_key_sched,,
+	      AC_CHECK_LIB(crypto,mit_des_key_sched,,
+	      	AC_CHECK_LIB(k5crypto,mit_des_key_sched)))
 AC_CHECK_FUNC(krb5_init_context,,AC_CHECK_LIB(krb5,krb5_init_context))
 AC_CHECK_FUNC(des_string_to_key,,AC_CHECK_LIB(des425,des_string_to_key))
 AC_CHECK_HEADER(kerberosIV/krb.h,
 	AC_DEFINE(HAVE_KERBEROSIV_KRB_H)
 	AC_CHECK_FUNC(in_tkt,,AC_CHECK_LIB(krb4,in_tkt))
-	AC_CHECK_FUNC(krb524_convert_creds_kdc,
+	AC_CHECK_FUNC(krb524_convert_creds_kdc,,
 		      AC_CHECK_LIB(krb524,krb524_convert_creds_kdc))
 )
 if test x$ac_cv_lib_krb4_in_tkt = xyes ; then

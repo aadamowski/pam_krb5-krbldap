@@ -47,6 +47,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
   Onime Clement)
 - use krb5_aname_to_localname to convert the principal to a login name
   and set PAM_USER to the result when authenticating
+- some autoconf fixes for failure cases
 
 * Wed Jun 26 2001 Nalin Dahyabhai <nalin@redhat.com>
 - use krb5_change_password() to change passwords
