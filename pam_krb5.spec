@@ -12,6 +12,7 @@ BuildRoot: %{_tmppath}/%{name}-root
 This is pam_krb5, a pluggable authentication module that can be used with
 Linux-PAM and Kerberos 5. This module supports password checking, ticket
 creation, and optional TGT verification and conversion to Kerberos IV tickets.
+The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %prep
 %setup -q
@@ -31,8 +32,11 @@ ln -s -f krb5-pam.d pam.d
 %files
 %defattr(-,root,root)
 /lib/security/pam_krb5.so
+/lib/security/pam_krb5afs.so
 /usr/man/man5/pam_krb5.5
+/usr/man/man5/pam_krb5afs.5
 /usr/man/man8/pam_krb5.8
+/usr/man/man8/pam_krb5afs.8
 %doc README ChangeLog TODO pam.d
 
 %changelog

@@ -1,46 +1,54 @@
-KRB5=@KRB5@
-KRBAFS=@KRBAFS@
-DEFS=@DEFS@
-SHLIBDEP=@SHLIBDEP@
-TARGET=@TARGET@
-
 # shamelessly stolen from the usermode makefile
 VERSION=$(shell awk '/^Version:/ { print $$2 }' < pam_krb5.spec)
 REVISION=$(shell awk '/^Revision:/ { print $$2 }' < pam_krb5.spec)
 CVSTAG = pk$(subst .,-,$(VERSION))$(subst .,-,$(REVISION))
+
+KRB5=@KRB5@
+KRBAFS=@KRBAFS@
+DEFS=@DEFS@
+OSDEP=@OS@
 
 CC=@CC@
 CFLAGS=-Wall -Wshadow -Wcast-align @CFLAGS@ $(DEFS)
 LDFLAGS=@LDFLAGS@ @LIBS@
 CCSHLIBFLAGS=-Wl,-rpath=$(KRB5)/lib -Wl,-rpath=$(KRBAFS) $(LDFLAGS)
 LDSHLIBFLAGS=-R$(KRB5)/lib -R$(KRBAFS) $(LDFLAGS)
+OSTARGETS = @OSTARGETS@
+SHTARGETS = @SHTARGETS@
+MAN5TARGETS = @MAN5TARGETS@
+MAN8TARGETS = @MAN8TARGETS@
 
-modules: $(TARGET).o $(SHLIBDEP)
+modules: $(OSTARGETS)
 
-$(TARGET).so: $(SHLIBDEP)
-
-$(TARGET).o: pam_krb5afs.c
+pam_krb5.o: pam_krb5afs.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-SunOS: $(TARGET).o
-	/usr/ccs/bin/ld -G -o $(TARGET).so $^ $(LDSHLIBFLAGS)
+pam_krb5afs.o: pam_krb5afs.c
+	$(CC) $(CFLAGS) -DAFS -c -o $@ $^
 
-Linux: $(TARGET).o
-	$(CC) -shared -o $(TARGET).so $^ $(CCSHLIBFLAGS)
+pam_krb5.so.Linux: pam_krb5.o
+	$(CC) -shared -o pam_krb5.so $^ $(CCSHLIBFLAGS)
 
-all: dlopen kreset
+pam_krb5afs.so.Linux: pam_krb5afs.o
+	$(CC) -shared -o pam_krb5afs.so $^ $(CCSHLIBFLAGS)
 
-install: $(SHLIBDEP) $(DESTDIR)/lib/security/$(TARGET).so install-man
+pam_krb5.so.SunOS: pam_krb5.o
+	/usr/ccs/bin/ld -G -o pam_krb5.so $^ $(LDSHLIBFLAGS)
+
+pam_krb5afs.so.SunOS: pam_krb5afs.o
+	/usr/ccs/bin/ld -G -o pam_krb5afs.so $^ $(LDSHLIBFLAGS)
+
+install: $(SHLIBDEP) install-modules install-man
+
+install-modules:
+	test -d $(DESTDIR)/lib/security || mkdir -p $(DESTDIR)/lib/security
+	@INSTALL@ -m 755 $(SHTARGETS) $(DESTDIR)/lib/security
 
 install-man:
 	test -d $(DESTDIR)/usr/man/man5 || mkdir -p $(DESTDIR)/usr/man/man5
-	@INSTALL@ -m 644 $(TARGET).5 $(DESTDIR)/usr/man/man5
+	@INSTALL@ -m 644 $(MAN5TARGETS) $(DESTDIR)/usr/man/man5
 	test -d $(DESTDIR)/usr/man/man8 || mkdir -p $(DESTDIR)/usr/man/man8
-	@INSTALL@ -m 644 $(TARGET).8 $(DESTDIR)/usr/man/man8
-
-$(DESTDIR)/lib/security/$(TARGET).so: $(TARGET).so
-	test -d $(DESTDIR)/lib/security || mkdir -p $(DESTDIR)/lib/security
-	@INSTALL@ -m 755 $(TARGET).so $(DESTDIR)/lib/security
+	@INSTALL@ -m 644 $(MAN8TARGETS) $(DESTDIR)/usr/man/man8
 
 clean:
 	$(RM) *.so *.o main core krb5 kreset dlopen
@@ -49,16 +57,18 @@ distclean: clean
 	$(RM) Makefile config.cache config.log config.status config.h
 	$(RM) ltconfig ltmain.sh pam.d
 
+all: modules check
+
+check: dlopen
+	./dlopen ./$(SHTARGETS).so
+
+pam_krb5afs.c: config.h
+
 kreset: kreset.c
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
 dlopen: dlopen.c
 	$(CC) -o $@ $^ -lpam -ldl
-	
-test: dlopen $(SHLIBDEP)
-	./dlopen ./$(TARGET).so
-
-pam_krb5afs.c: config.h
 
 dist: archive
 archive:
@@ -70,4 +80,3 @@ archive:
 	@dir=$$PWD; cd /tmp; tar cvzf $$dir/$(TARGET)-$(VERSION).tar.gz $(TARGET)-$(VERSION)
 	@rm -rf /tmp/$(TARGET)-$(VERSION)
 	@echo "The archive is in $(TARGET)-$(VERSION).tar.gz"
-

@@ -1,3 +1,7 @@
+Thu January 6 2000 Nalin Dahyabhai <nalin@redhat.com>
+- merge in spelling and other fixes from Michael K. Johnson
+- modify to build both normal and AFS-aware version if krbafs.h is found
+
 Fri December 31 1999 Nalin Dahyabhai <nalin@redhat.com>
 - change to using ticket files created with mkstemp()
 

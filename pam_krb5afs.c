@@ -64,12 +64,16 @@
 #include <kerberosIV/krb.h>
 #endif
 
+#ifdef AFS
 #ifdef HAVE_KRBAFS_H
 #include <krbafs.h>
 #define MODULE_NAME "pam_krb5afs"
-#else
+#else /* HAVE_KRBAFS_H */
 #define MODULE_NAME "pam_krb5"
-#endif
+#endif /* HAVE_KRBAFS_H */
+#else /* AFS */
+#define MODULE_NAME "pam_krb5"
+#endif /* AFS */
 
 #ifndef KRB5_SUCCESS
 #define KRB5_SUCCESS 0
