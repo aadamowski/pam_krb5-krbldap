@@ -53,6 +53,7 @@
 #endif
 
 #include "log.h"
+#include "map.h"
 #include "userinfo.h"
 #include "v5.h"
 #include "xstr.h"
@@ -130,11 +131,12 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
 
 struct _pam_krb5_user_info *
 _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
-			 int check_user)
+			 int check_user,
+			 int num_mappings, struct name_mapping *mappings)
 {
 	struct _pam_krb5_user_info *ret = NULL;
 	char local_name[LINE_MAX];
-	int i;
+	char mapped_name[LINE_MAX];
 
 	ret = malloc(sizeof(struct _pam_krb5_user_info));
 	if (ret == NULL) {
@@ -142,51 +144,25 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 	}
 	memset(ret, 0, sizeof(struct _pam_krb5_user_info));
 
-	/* Parse the user's name into a principal name. */
-	if (krb5_parse_name(ctx, name, &ret->principal_name) != 0) {
-		warn("error parsing principal name '%s'", name);
-		free(ret);
-		return NULL;
-	}
-
-	/* Override the realm part of the principal's name with the configured
-	 * realm's name. */
-	if (v5_set_principal_realm(ctx, &ret->principal_name, realm) != 0) {
-		warn("internal error setting realm name");
-		krb5_free_principal(ctx, ret->principal_name);
-		free(ret);
-		return NULL;
-	}
-
-	if (check_user) {
-		/* Convert the principal name back into a local user's name.
-		 * If the principal is not in the local realm, this may fail
-		 * due to an unconfigured aname-to-lname mapping in krb5.conf.
-		 * If we don't map to a local user, stop now. */
-		memset(local_name, '\0', sizeof(local_name));
-		i = krb5_aname_to_localname(ctx, ret->principal_name,
-					    sizeof(local_name) - 1,
-					    local_name);
-		if (i != 0) {
-			warn("error converting principal name to user name "
-			     "(check auth_to_local and auth_to_local_names "
-			     "settings in krb5.conf): %s",
-			     v5_error_message(i));
-			krb5_free_principal(ctx, ret->principal_name);
-			free(ret);
-			return NULL;
-		}
-		/* Look up the user's UID/GID. */
-		if (_get_pw_nam(local_name, &ret->uid, &ret->gid) != 0) {
-			warn("error resolving user name to uid/gid pair");
-			krb5_free_principal(ctx, ret->principal_name);
+	/* See if we need to map this user name to a principal somehow. */
+	if (map_lname_aname(mappings, num_mappings,
+			    name, mapped_name, sizeof(mapped_name)) == 0) {
+		/* Parse the user's derived principal name into a principal
+		 * structure. */
+		if (krb5_parse_name(ctx, mapped_name,
+		    &ret->principal_name) != 0) {
+			warn("error parsing principal name '%s' derived from "
+			     "user name %s", mapped_name, name);
 			free(ret);
 			return NULL;
 		}
 	} else {
-		/* Set things to the current UID/GID. */
-		ret->uid = getuid();
-		ret->gid = getgid();
+		/* Parse the user's name into a principal structure as-is. */
+		if (krb5_parse_name(ctx, name, &ret->principal_name) != 0) {
+			warn("error parsing principal name '%s'", name);
+			free(ret);
+			return NULL;
+		}
 	}
 
 	/* Convert the principal back to a full principal name string. */
@@ -196,6 +172,47 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		krb5_free_principal(ctx, ret->principal_name);
 		free(ret);
 		return NULL;
+	}
+
+#if 0
+	/* Convert the principal name back into a local user's name.
+	 * If the principal is not in the local realm, this may fail
+	 * due to an unconfigured aname-to-lname mapping in krb5.conf.
+	 * If we don't map to a local user, stop now. */
+	memset(local_name, '\0', sizeof(local_name));
+	i = krb5_aname_to_localname(ctx, ret->principal_name,
+				    sizeof(local_name) - 1,
+				    local_name);
+	if (i != 0) {
+		warn("error converting principal name %s to user name "
+		     "(check auth_to_local and auth_to_local_names "
+		     "settings in krb5.conf): %s", ret->unparsed_name,
+		     v5_error_message(i));
+		v5_free_unparsed_name(ctx, ret->unparsed_name);
+		krb5_free_principal(ctx, ret->principal_name);
+		free(ret);
+		return NULL;
+	}
+#else
+	/* Use the local user name which the user gave us. */
+	strncpy(local_name, name, sizeof(local_name) - 1);
+	local_name[sizeof(local_name) - 1] = '\0';
+#endif
+
+	if (check_user) {
+		/* Look up the user's UID/GID. */
+		if (_get_pw_nam(local_name, &ret->uid, &ret->gid) != 0) {
+			warn("error resolving user name '%s' to uid/gid pair",
+			     local_name);
+			v5_free_unparsed_name(ctx, ret->unparsed_name);
+			krb5_free_principal(ctx, ret->principal_name);
+			free(ret);
+			return NULL;
+		}
+	} else {
+		/* Set things to the current UID/GID. */
+		ret->uid = getuid();
+		ret->gid = getgid();
 	}
 
 	return ret;
