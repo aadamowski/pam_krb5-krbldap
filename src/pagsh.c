@@ -33,9 +33,9 @@
 #include "../config.h"
 
 #include <sys/types.h>
+#include <errno.h>
 #include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -48,6 +48,7 @@
 #include KRB4_KRB_ERR_H
 #endif
 #endif
+
 #include <security/pam_appl.h>
 
 #include "logstdio.h"
@@ -55,101 +56,41 @@
 #include "stash.h"
 #include "minikafs.h"
 
+struct _pam_krb5_options;
+
 int
 main(int argc, char **argv)
 {
-	char local[PATH_MAX], home[PATH_MAX];
-	const char *homedir;
-	int i, j, try_v5_2b, cells;
-	krb5_context ctx;
-	krb5_ccache ccache;
-	uid_t uid;
+	const char *shell;
+	char **new_argv;
+	int i;
 
-	/* Iterate through every parameter, assuming they're names of cells. */
-#ifdef USE_KRB4
-	try_v5_2b = 0;
-#else
-	try_v5_2b = 1;
-#endif
-	cells = 0;
-	uid = getuid();
 	memset(&log_options, 0, sizeof(log_options));
-	memset(&ccache, 0, sizeof(ccache));
-	i = krb5_init_context(&ctx);
-	if (i != 0) {
-		fprintf(stderr, "Error initializing Kerberos: %d\n", i);
-		exit(1);
+	shell = getenv("SHELL");
+	if ((shell == NULL) || (strlen(shell) == 0)) {
+		shell = _PATH_BSHELL;
 	}
-	i = krb5_cc_default(ctx, &ccache);
-	if (i != 0) {
-		fprintf(stderr, "Error reading default credential cache: %d\n",
-			i);
-		exit(1);
+	new_argv = malloc(sizeof(char*) * argc);
+	if (new_argv == NULL) {
+		fprintf(stderr, "pagsh: out of memory\n");
+		return 1;
 	}
-	for (i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
-			switch (argv[i][1]) {
-			case 'v':
-				log_options.debug++;
-				break;
-			default:
-				break;
-			}
+	for (i = 0; i < argc; i++) {
+		switch (i) {
+		case 0:
+			new_argv[i] = strdup(shell);
+			break;
+		default:
+			new_argv[i] = strdup(argv[i]);
+			break;
 		}
 	}
-	for (i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
-			switch (argv[i][1]) {
-			case '5':
-				try_v5_2b = !try_v5_2b;
-				break;
-			case 'v':
-				break;
-			default:
-				printf("%s: [ [-v] [-5] [cell] ] [...]\n",
-				       argv[0]);
-				krb5_free_context(ctx);
-				exit(0);
-				break;
-			}
-		} else {
-			cells++;
-			j = minikafs_log(NULL, ccache, &log_options,
-					 argv[i], uid, try_v5_2b);
-			if (j != 0) {
-				fprintf(stderr, "%s: %d\n", argv[i], j);
-			}
+	if (minikafs_has_afs()) {
+		if (minikafs_setpag() != 0) {
+			fprintf(stderr, "pagsh: error creating new PAG\n");
 		}
 	}
-
-	/* If no parameters were offered, go for the user's home directory and
-	 * the local cell, if we can determine what its name is. */
-	if (cells == 0) {
-		j = minikafs_cell_of_file("/afs", local, sizeof(local));
-		if (j == 0) {
-			j = minikafs_log(NULL, ccache, &log_options,
-					 local, uid, try_v5_2b);
-			if (j != 0) {
-				fprintf(stderr, "%s: %d\n", local, j);
-			}
-		}
-		homedir = getenv("HOME");
-		if (homedir != NULL) {
-			if (strlen(homedir) > 1) {
-				j = minikafs_cell_of_file(homedir,
-							  home, sizeof(home));
-				if ((j == 0) && (strcmp(local, home) != 0)) {
-					j = minikafs_log(NULL, ccache,
-							 &log_options,
-							 home, uid, try_v5_2b);
-					if (j != 0) {
-						fprintf(stderr, "%s: %d\n",
-							home, j);
-					}
-				}
-			}
-		}
-	}
-	krb5_free_context(ctx);
-	return 0;
+	execvp(new_argv[0], new_argv);
+	fprintf(stderr, "pagsh: exec() failed: %s\n", strerror(errno));
+	return 1;
 }
