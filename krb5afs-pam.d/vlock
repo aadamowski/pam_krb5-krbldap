@@ -1,4 +1,3 @@
 #%PAM-1.0
-# pam_unix does *not* work here!
-auth	sufficient	/lib/security/pam_pwdb.so shadow md5 nullok
+auth	sufficient	/lib/security/pam_unix.so shadow md5 nullok
 auth	required	/lib/security/pam_krb5afs.so use_first_pass
