@@ -16,7 +16,6 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %prep
 %setup -q
-ln -s krb5-pam.d pam.d
 
 %build
 %configure --with-krb5=/usr/kerberos
