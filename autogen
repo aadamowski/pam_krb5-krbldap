@@ -13,4 +13,4 @@ else
 fi
 set -x -e
 autoreconf -i -f
-./configure --libdir=$libdir --sysconfdir=/etc --mandir=$mandir $flags "$@"
+./configure --libdir=$libdir --sysconfdir=/etc --mandir=$mandir $flags "$@" --enable-maintainer-mode

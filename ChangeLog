@@ -1,4 +1,10 @@
 2004-04-21 nalin
+	* Makefile.am: make configure depend on pam_krb5.spec.
+	* autogen: run with --enable-maintainer-mode so that the dependency
+	gets honored when autogen is used.
+	* pam_krb5.spec: bump version.
+
+2004-04-21 nalin
 	* src/minikafs.c: print debug messages when doing realmofcell stuff.
 
 2004-04-21 nalin
