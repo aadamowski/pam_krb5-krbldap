@@ -692,6 +692,7 @@ get_config(krb5_context context, int argc, const char **argv)
 	krb5_get_default_realm(context, &ret->realm);
 	appdefault_string(context, "realm", argc, argv,
 			  ret->realm, &ret->realm);
+	krb5_set_default_realm(context, ret->realm);
 
 	/* Whether to get an addressless ticket, or to get a ticket containing
 	 * addresses of other hosts in addition to those of local interfaces. */
