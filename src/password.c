@@ -143,10 +143,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		password = NULL;
 		/* Obtain the current password. */
 		if (options->use_first_pass) {
-			/* Read the stored password.  This first time around,
-			 * it's the PAM_AUTHTOK item. */
+			/* Read the stored password. */
 			password = NULL;
-			i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK,
+			i = _pam_krb5_get_item_text(pamh, PAM_OLDAUTHTOK,
 						    &password);
 			/* Duplicate the password so that we can free it later
 			 * without corrupting the heap. */
