@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,18 +63,48 @@
 
 #ident "$Id$"
 
-/* These would be where we refresh the ticket and ccache files KRBTKFILE and
- * KRB5CCNAME point to, if set.  Until I figure out under what conditions that
- * can be considered safe, we're just not going to do that. */
+/* Store the v4 TGT in $KRBTKFILE. */
 static void
 sly_v4(krb5_context ctx, const char *v4tktfile,
        struct _pam_krb5_user_info *userinfo, struct _pam_krb5_stash *stash)
 {
+	int i;
+	char name[ANAME_SZ + 1], instance[INST_SZ + 1], realm[REALM_SZ + 1];
+
+	i = krb5_524_conv_principal(ctx, userinfo->principal_name,
+				    name, instance, realm);
+	if (i != 0) {
+		return;
+	}
+
+	tf_init(v4tktfile, W_TKT_FIL);
+	v4_in_tkt(name, instance, realm);
+	v4_save_credentials(KRB5_TGS_NAME, realm, realm,
+			    stash->v4creds.session,
+			    stash->v4creds.lifetime,
+			    stash->v4creds.kvno,
+			    &stash->v4creds.ticket_st,
+			    stash->v4creds.issue_date);
+	tf_close();
 }
+/* Store the v5 TGT in $KRB5CCNAME. */
 static int
 sly_v5(krb5_context ctx, const char *v5ccname,
        struct _pam_krb5_user_info *userinfo, struct _pam_krb5_stash *stash)
 {
+	krb5_ccache ccache;
+	int i;
+
+	ccache = NULL;
+	i = krb5_cc_default(ctx, &ccache);
+	if (i == 0) {
+		i = krb5_cc_initialize(ctx, ccache, userinfo->principal_name);
+		if (i == 0) {
+			i = krb5_cc_store_cred(ctx, ccache, &stash->v5creds);
+		}
+		krb5_cc_close(ctx, ccache);
+	}
+
 	return PAM_SUCCESS;
 }
 
@@ -90,6 +120,16 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	struct stat st;
 	int i, retval;
 	char *v5ccname, *v4tktfile;
+
+	/* Inexpensive checks. */
+	if (getenv("SUDO_COMMAND") != NULL) {
+		warn("won't refresh credentials while running under sudo");
+		return PAM_SERVICE_ERR;
+	}
+	if ((getuid() != geteuid()) || (getgid() != getegid())) {
+		warn("won't refresh credentials while running setuid/setgid");
+		return PAM_SERVICE_ERR;
+	}
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
@@ -151,13 +191,13 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
+	retval = PAM_SERVICE_ERR;
+
 	/* Save credentials in the right files. */
 	v5ccname = getenv("KRB5CCNAME");
 	if ((v5ccname != NULL) && (strncmp(v5ccname, "FILE:", 5) == 0)) {
 		v5ccname += 5;
 	}
-
-	retval = PAM_SERVICE_ERR;
 
 	if (v5ccname == NULL) {
 		/* Ignore us.  We have nothing to do. */
@@ -169,8 +209,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		if (access(v5ccname, R_OK | W_OK) == 0) {
 			if (lstat(v5ccname, &st) == 0) {
 				if (S_ISREG(st.st_mode) &&
-				    (getuid() == geteuid()) &&
-				    (getgid() == getegid()) &&
+				    ((st.st_mode & S_IRWXG) == 0) &&
+				    ((st.st_mode & S_IRWXO) == 0) &&
 				    (st.st_uid == userinfo->uid) &&
 				    (st.st_gid == userinfo->gid)) {
 					retval = sly_v5(ctx, v5ccname,
@@ -198,8 +238,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		if (access(v4tktfile, R_OK | W_OK) == 0) {
 			if (lstat(v4tktfile, &st) == 0) {
 				if (S_ISREG(st.st_mode) &&
-				    (getuid() == geteuid()) &&
-				    (getgid() == getegid()) &&
+				    ((st.st_mode & S_IRWXG) == 0) &&
+				    ((st.st_mode & S_IRWXO) == 0) &&
 				    (st.st_uid == userinfo->uid) &&
 				    (st.st_gid == userinfo->gid)) {
 					sly_v4(ctx, v4tktfile, userinfo, stash);

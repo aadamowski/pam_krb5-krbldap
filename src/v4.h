@@ -54,5 +54,13 @@ int v4_save(krb5_context ctx,
 	    char **ccname);
 void v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	        struct _pam_krb5_options *options);
-
+int v4_in_tkt(const char *name, const char *instance, const char *realm);
+int v4_save_credentials(const char *sname,
+			const char *sinstance,
+			const char *srealm,
+			unsigned char *session,
+			int lifetime,
+			int kvno,
+			KTEXT ticket,
+			int32_t issue_date);
 #endif

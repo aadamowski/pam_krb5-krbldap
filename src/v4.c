@@ -65,7 +65,7 @@
 
 #ifdef USE_KRB4
 
-static int
+int
 v4_in_tkt(const char *name, const char *instance, const char *realm)
 {
 	int i;
@@ -101,7 +101,7 @@ v4_in_tkt(const char *name, const char *instance, const char *realm)
 	return i;
 }
 
-static int
+int
 v4_save_credentials(const char *sname,
 		    const char *sinstance,
 		    const char *srealm,

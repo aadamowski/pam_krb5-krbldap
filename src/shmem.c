@@ -279,7 +279,7 @@ _pam_krb5_blob_from_shm(int key, void **block, size_t *block_size)
 	address = _pam_krb5_shm_attach(key, NULL);
 	if (address != NULL) {
 		if ((shmctl(key, IPC_STAT, &ds) == -1) ||
-		    (ds.shm_segsz < 0)|| (ds.shm_segsz > 0xffff) ||
+		    (ds.shm_segsz < 16)|| (ds.shm_segsz > 0xffff) ||
 		    (ds.shm_perm.cuid != getuid()) ||
 		    (ds.shm_perm.cuid != geteuid())) {
 			address = _pam_krb5_shm_detach(address);

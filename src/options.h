@@ -52,8 +52,8 @@ struct _pam_krb5_options {
 	int v4_for_afs;
 	int warn;
 
-	int ticket_lifetime;
-	int renew_lifetime;
+	krb5_deltat ticket_lifetime;
+	krb5_deltat renew_lifetime;
 
 	uid_t minimum_uid;
 

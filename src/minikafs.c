@@ -518,7 +518,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 		ENCTYPE_DES_CBC_MD4,
 		ENCTYPE_DES_CBC_MD5,
 	};
-	int i;
+	unsigned int i;
 
 	memset(&client, 0, sizeof(client));
 	memset(&server, 0, sizeof(server));
@@ -600,7 +600,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 {
 	krb5_context ctx;
 	krb5_ccache use_ccache;
-	int ret, i;
+	int ret;
+	unsigned int i;
 	char *principal, *defaultrealm, realm[PATH_MAX];
 	size_t principal_size;
 	const char *base[] = {"afs", "afsx"};
@@ -645,7 +646,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	if (ccache != NULL) {
 		use_ccache = ccache;
 	} else {
-		if (krb5_cc_default(ctx, &ccache) != 0) {
+		if (krb5_cc_default(ctx, &use_ccache) != 0) {
 			if (ctx != context) {
 				krb5_free_context(ctx);
 			}
@@ -766,7 +767,8 @@ static int
 minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 	      const char *cell, uid_t uid)
 {
-	int ret, i;
+	int ret;
+	unsigned int i;
 	char localrealm[PATH_MAX], realm[PATH_MAX];
 	char *base[] = {"afs", "afsx"}, *wcell;
 

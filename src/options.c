@@ -136,6 +136,28 @@ option_i(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 
 	return i;
 }
+static krb5_deltat
+option_t(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
+	 krb5_context ctx, const char *realm, const char *s)
+{
+	char *tmp, *p;
+	krb5_deltat d;
+	long i;
+
+	tmp = option_s(pamh, argc, argv, ctx, realm, s, "");
+
+	i = strtol(tmp, &p, 10);
+	if ((p == NULL) || (p == tmp) || (*p != '\0')) {
+		i = -1;
+		if (krb5_string_to_deltat(tmp, &d) == 0) {
+			free_s(tmp);
+			return d;
+		}
+	}
+	free_s(tmp);
+
+	return i;
+}
 static char **
 option_l(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	 krb5_context ctx, const char *realm, const char *s)
@@ -410,7 +432,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* private option */
-	options->ticket_lifetime = option_i(pamh, argc, argv,
+	options->ticket_lifetime = option_t(pamh, argc, argv,
 					    ctx, options->realm,
 					    "ticket_lifetime");
 	if (options->ticket_lifetime < 0) {
@@ -421,7 +443,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* library option */
-	options->renew_lifetime = option_i(pamh, argc, argv,
+	options->renew_lifetime = option_t(pamh, argc, argv,
 					   ctx, options->realm,
 					   "renew_lifetime");
 	if (options->renew_lifetime < 0) {

@@ -1,3 +1,13 @@
+2005-02-07 nalin
+	* src/minikafs.c(minikafs_5log): initialize use_ccache as a handle for
+	the default cred cache, not ccache, when ccache is NULL.
+	* src/options.c(option_t): add, for parsing a value as a krb5_deltat if
+	it can't be parsed as a normal integer.
+	* src/options.h: change normal and renewable lifetimes to krb5_deltat
+	* src/options.c(_pam_krb5_options_init): parse lifetimes using option_t
+	instead of option_i.
+	* src/*.c: random signed/unsigned warning corrections.
+
 2004-09-13 nalin
 	* src/tokens.c: skip getting tokens for the cell of /afs if that cell
 	is "dynroot", which is what OpenAFS's dynamic-root support gives us.

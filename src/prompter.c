@@ -138,7 +138,7 @@ _pam_krb5_prompter(krb5_context context, void *data,
 			_pam_krb5_maybe_free_responses(responses, num_prompts);
 			return KRB5_LIBOS_CANTREADPWD;
 		}
-		if (xstrlen(responses[i + offset].resp) >= prompts[i].reply->length) {
+		if ((unsigned int)xstrlen(responses[i + offset].resp) >= prompts[i].reply->length) {
 			_pam_krb5_maybe_free_responses(responses, num_prompts);
 			return KRB5_LIBOS_CANTREADPWD;
 		}
