@@ -911,7 +911,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	if((flags & PAM_DELETE_CRED) && (ret == KRB5_SUCCESS)) {
 		ret = pam_get_data(pamh,MODULE_STASH_NAME,(const void**)&stash);
-		if(strlen(stash->v5_path) > 0) {
+		if((ret == PAM_SUCCESS) && (strlen(stash->v5_path) > 0)) {
 			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
 			INFO("removing %s", stash->v5_path);
@@ -921,7 +921,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 		}
 #ifdef HAVE_LIBKRB524
-		if(strlen(stash->v4_path) > 0) {
+		if((ret == PAM_SUCCESS) && (strlen(stash->v4_path) > 0)) {
 			/* Delete the v4 ticket cache. */
 			INFO("removing %s", stash->v4_path);
 			if(remove(stash->v4_path) == -1) {
