@@ -31,6 +31,15 @@ instead of prompting the user for it.
 tells pam_krb5.so to check the password as with \fBuse_first_pass\fR,
 but to prompt the user for another one if the previously-entered one fails. This
 is the default mode of operation.
+.IP skip_first_pass
+tells pam_krb5.so to not bother checking a password that has been set by a
+module listed earlier in the stack.  This option is included mainly for
+completeness.
+.IP no_user_check
+tells pam_krb5.so to not check if a user exists on the local system, and
+to create ccache files owned by the current process's UID.  This is useful
+for situations where a non-privileged server process needs to use Kerberized
+services on behalf of remote users who may not have local access.
 
 .SH FILES
 \fI/etc/krb5.conf\fP

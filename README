@@ -67,13 +67,17 @@ Descriptions of configuration directives for use in /etc/pam.d:
    try_first_pass	Same as above, but prompt for another one to try the
 			one used by the other module fails.
    skip_first_pass	Skip trying previously-entered password altogether.
+   no_user_check	Don't check if the user has a local account, and let
+			the current process's UID own any ccache files that get
+			created.
    debug		Switch on debugging via syslog.
    tokens		Get tokens during authentication.  Needed for wu-ftpd,
 			Samba, and some other programs that don't use sessions
 			and don't call pam_setcred, but need tokens.  Note
                         that this is only supported by the pam_krb5afs module.
 
-This module was built and tested against MIT Kerberos 5 v1.1.1.
+This module was built and tested against MIT Kerberos 5 v1.2, but it should
+only require v1.1.x.
 
 Caveat: pam_pwdb will cause things to fail if your user information isn't stored
 in one of the databases it knows about (i.e., hesiod).  Switch to pam_unix if
@@ -82,4 +86,4 @@ that happens.
 Let me know if you have problems,
 
 Nalin Dahyabhai <nalin@redhat.com>
-7 January 1999
+27 June 2000

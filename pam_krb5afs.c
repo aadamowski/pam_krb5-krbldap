@@ -197,6 +197,7 @@ struct config {
 	unsigned char use_authtok;
 	unsigned char krb4_convert;
 	unsigned char setcred;
+	unsigned char no_user_check;
 	krb5_get_init_creds_opt creds_opt;
 	int lifetime;
 	char *banner;
@@ -434,6 +435,10 @@ static struct config *get_config(krb5_context context,
 			ret->use_authtok = 1;
 			continue;
 		}
+		if(strcmp(argv[i], "no_user_check") == 0) {
+			ret->no_user_check = 1;
+			continue;
+		}
 #ifdef AFS
 		/* Do a setcred() from inside of the auth function. */
 		if((strcmp(argv[i], "get_tokens") == 0) ||
@@ -537,7 +542,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	char *realm;
 	int ret = KRB5_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
-	struct passwd *pwd;
+	struct passwd *pwd = NULL;
 
 	/* First parse the arguments; if there are problems, bail. */
 	initialize_krb5_error_table();
@@ -595,14 +600,21 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	DEBUG("user is \"%s\"", user);
 
 	/* Try to get and save the user's UID. */
-	pwd = getpwnam(user);
-	if(pwd != NULL) {
-		stash->uid = pwd->pw_uid;
-		stash->gid = pwd->pw_gid;
-		DEBUG("%s has uid %d, gid %d", user, stash->uid, stash->gid);
+	if(config->no_user_check) {
+		stash->uid = getuid();
+		stash->gid = getgid();
+		DEBUG("using current uid %d, gid %d", stash->uid, stash->gid);
 	} else {
-		CRIT("getpwnam(\"%s\") failed", user);
-		ret = PAM_USER_UNKNOWN;
+		pwd = getpwnam(user);
+		if(pwd != NULL) {
+			stash->uid = pwd->pw_uid;
+			stash->gid = pwd->pw_gid;
+			DEBUG("%s has uid %d, gid %d", user,
+			      stash->uid, stash->gid);
+		} else {
+			CRIT("getpwnam(\"%s\") failed", user);
+			ret = PAM_USER_UNKNOWN;
+		}
 	}
 
 	/* Build the user's principal. */
@@ -784,9 +796,9 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 				       sizeof(stash->v4_creds));
 
 				/* Initial values. */
-				strncpy(&stash->v4_creds.pname, v4name,
+				strncpy((char*)&stash->v4_creds.pname, v4name,
 					sizeof(stash->v4_creds.pname) - 1);
-				strncpy(&stash->v4_creds.pinst, v4inst,
+				strncpy((char*)&stash->v4_creds.pinst, v4inst,
 					sizeof(stash->v4_creds.pinst) - 1);
 
 				/* Session key. */
