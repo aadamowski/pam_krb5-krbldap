@@ -1,4 +1,8 @@
 2005-03-04:
+	* configure.ac: bail if security/pam_appl.h or security/pam_modules.h
+	aren't found.
+
+2005-03-04:
 	* src/v4.h: restore the prototypes to avoid warnings, typedef the one
 	krb4 struct we pass around to avoid an error.
 

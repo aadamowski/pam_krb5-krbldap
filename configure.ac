@@ -55,7 +55,13 @@ fi
 
 
 AC_CHECK_HEADERS(security/pam_appl.h)
+if test x$ac_cv_header_security_pam_appl_h != xyes ; then
+	AC_MSG_ERROR([you must have PAM development files to build $PACKAGE])
+fi
 AC_CHECK_HEADERS(security/pam_modules.h)
+if test x$ac_cv_header_security_pam_modules_h != xyes ; then
+	AC_MSG_ERROR([you must have PAM development files to build $PACKAGE])
+fi
 AC_CHECK_HEADERS(security/pam_misc.h)
 AC_CHECK_FUNCS(getpwnam_r __posix_getpwnam_r)
 AC_CHECK_FUNC(crypt,,[AC_CHECK_LIB(crypt,crypt)])
