@@ -1,3 +1,8 @@
+2005-03-14:
+	* src/noafs.c: add.
+	* configure.ac: fix the keytab result message.  Add a --without-afs
+	flag.
+
 2005-03-04:
 	* configure.ac: bail if security/pam_appl.h or security/pam_modules.h
 	aren't found.

@@ -318,6 +318,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		      options->renewable == 0 ? " not renewable" : "");
 	}
 
+#ifdef HAVE_AFS
 	/* private option */
 	options->ignore_afs = option_b(pamh, argc, argv,
 				       ctx, options->realm, "ignore_afs");
@@ -340,6 +341,10 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	if (options->debug && options->tokens) {
 		debug("flag: tokens");
 	}
+#else
+	options->ignore_afs = 1;
+	options->tokens = 0;
+#endif
 
 	/* private option */
 	options->user_check = option_b(pamh, argc, argv,

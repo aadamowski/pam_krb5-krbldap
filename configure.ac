@@ -18,6 +18,23 @@ if test x$krb4 != xno ; then
 else
 	KRB4_CONFIG=:
 fi
+AC_ARG_WITH(afs,
+AC_HELP_STRING(--without-afs,[Disable AFS support [default=auto].]),
+	    afs=$withval,
+	    afs=auto)
+if test x$afs = xauto ; then
+	AC_MSG_CHECKING(if pam_krb5 knows how to set AFS tokens on $host_os)
+	case x$host_os in
+	*linux|*linux-*)	afs=yes;;
+	*)			afs=no;;
+	esac
+	AC_MSG_RESULT($afs)
+fi
+
+if test x$afs = xyes ; then
+	AC_DEFINE(HAVE_AFS,1,[Define to enable token-setting support.])
+fi
+AM_CONDITIONAL(AFS,[test "x$afs" = xyes])
 
 KRB5_BINDIR=`dirname $KRB5_CONFIG`
 AC_SUBST(KRB5_BINDIR)
@@ -198,7 +215,7 @@ AC_ARG_ENABLE(default-keytab-location,AC_HELP_STRING([--enable-default-keytab-lo
 AC_DEFINE_UNQUOTED(DEFAULT_KEYTAB_LOCATION,"$default_keytab",[Define to the default location for your keytab file, which will be used for verifying TGTs.])
 DEFAULT_KEYTAB="$default_keytab"
 AC_SUBST(DEFAULT_KEYTAB)
-AC_MSG_RESULT([Using "$default_realm" as the default keytab])
+AC_MSG_RESULT([Using "$default_keytab" as the default keytab])
 
 PAM_KRB5_APPNAME=pam
 AC_DEFINE_UNQUOTED(PAM_KRB5_APPNAME,"$PAM_KRB5_APPNAME",[Define to the application name, which defines which appdefaults section will be expected to hold this module's configuration in krb5.conf.])

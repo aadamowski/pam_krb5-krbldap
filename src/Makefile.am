@@ -5,9 +5,13 @@ security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = pam_krb5.5  pam_krb5.8
-noinst_PROGRAMS = afs5log pagsh harness
+noinst_PROGRAMS = harness
 noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8
+
+if AFS
+noinst_PROGRAMS += afs5log pagsh
+endif
 
 libpam_krb5_la_SOURCES = \
 	conv.c \
@@ -16,7 +20,6 @@ libpam_krb5_la_SOURCES = \
 	init.h \
 	items.c \
 	items.h \
-	minikafs.c \
 	minikafs.h \
 	prompter.c \
 	prompter.h \
@@ -42,7 +45,6 @@ pam_krb5_la_SOURCES = \
 	map.h \
 	options.c \
 	options.h \
-	tokens.c \
 	tokens.h \
 	userinfo.c \
 	userinfo.h \
@@ -54,6 +56,7 @@ pam_krb5_la_SOURCES = \
 	session.c \
 	sly.c \
 	sly.h
+
 pam_krb5_storetmp_SOURCES = \
 	pam_krb5_storetmp.c
 pam_krb5_storetmp_LIBS =
@@ -84,9 +87,15 @@ harness_LDADD = \
 	initopts.lo \
 	options.lo \
 	userinfo.lo \
-	tokens.lo \
 	sly.lo \
-	minikafs.lo \
 	v4.lo \
 	v5.lo
 harness_LDADD += @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+
+if AFS
+pam_krb5_la_SOURCES += tokens.c
+libpam_krb5_la_SOURCES += minikafs.c
+harness_LDADD += minikafs.lo tokens.lo
+else
+libpam_krb5_la_SOURCES += noafs.c
+endif
