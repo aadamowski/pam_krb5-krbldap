@@ -1,7 +1,7 @@
-Summary: Kerberos 5 Pluggable Authentication Module
+Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 1
-Release: 17
+Release: 18
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Wed Aug 16 2000 Nalin Dahyabhai <nalin@redhat.com>
+- change summary
+
 * Thu Aug 10 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix handling of null passwords
 
