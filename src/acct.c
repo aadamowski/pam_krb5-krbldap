@@ -95,7 +95,9 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 
 	/* Get information about the user and the user's principal name. */
 	userinfo = _pam_krb5_user_info_init(ctx, user, options->realm,
-					    options->user_check);
+					    options->user_check,
+					    options->n_mappings,
+					    options->mappings);
 	if (userinfo == NULL) {
 		warn("error getting information about '%s'", user);
 		_pam_krb5_options_free(pamh, ctx, options);
