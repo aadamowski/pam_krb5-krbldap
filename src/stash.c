@@ -172,3 +172,32 @@ _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 {
 	_pam_krb5_stash_clone(&stash->v4file, uid, gid);
 }
+
+static int
+_pam_krb5_stash_clean(char **stored_file)
+{
+	if (_pam_krb5_storetmp_delete(*stored_file) == 0) {
+		xstrfree(*stored_file);
+		*stored_file = NULL;
+		return 0;
+	} else {
+		if (unlink(*stored_file) == 0) {
+			xstrfree(*stored_file);
+			*stored_file = NULL;
+			return 0;
+		}
+	}
+	return -1;
+}
+
+int
+_pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash)
+{
+	return _pam_krb5_stash_clean(&stash->v4file);
+}
+
+int
+_pam_krb5_stash_clean_v5(struct _pam_krb5_stash *stash)
+{
+	return _pam_krb5_stash_clean(&stash->v5file);
+}

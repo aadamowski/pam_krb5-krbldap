@@ -71,17 +71,29 @@ main(int argc, const char **argv)
 		return 2;
 	}
 
-	/* We'll need a writable for use as the template. */
+	/* We'll need a writable string for use as the template. */
 	filename = strdup(argv[1]);
 	if (filename == NULL) {
 		return 3;
+	}
+
+	/* If the filename didn't end with XXXXXX, our job is to remove it. */
+	if ((argc == 2) && (strlen(filename) > 6)) {
+		p = filename + strlen(filename) - 6;
+		if (strcmp(p, "XXXXXX") != 0) {
+			if (unlink(filename) == 0) {
+				goto success;
+			} else {
+				return 4;
+			}
+		}
 	}
 
 	/* Parse the UID, if given. */
 	if (argc > 2) {
 		uid = strtoll(argv[2], &p, 0);
 		if ((p == NULL) || (*p != '\0')) {
-			return 4;
+			return 5;
 		}
 	} else {
 		uid = getuid();
@@ -91,7 +103,7 @@ main(int argc, const char **argv)
 	if (argc > 3) {
 		gid = strtoll(argv[3], &p, 0);
 		if ((p == NULL) || (*p != '\0')) {
-			return 5;
+			return 6;
 		}
 	} else {
 		gid = getgid();
@@ -109,7 +121,7 @@ main(int argc, const char **argv)
 	/* Create a temporary file. */
 	fd = mkstemp(filename);
 	if (fd == -1) {
-		return 6;
+		return 7;
 	}
 
 	/* Copy stdin to the file and then close it.  Slowest copy EVER. */
@@ -118,7 +130,8 @@ main(int argc, const char **argv)
 	}
 	close(fd);
 
-	/* Tell our caller what the name of the newly-created file and bail. */
+success:
+	/* Tell our caller what the name of the file and bail. */
 	write(STDOUT_FILENO, filename, strlen(filename));
 	if (isatty(STDOUT_FILENO)) {
 		write(STDOUT_FILENO, "\n", 1);

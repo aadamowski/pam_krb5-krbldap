@@ -57,6 +57,7 @@ void _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash,
 			      uid_t uid, gid_t gid);
 void _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash,
 			      uid_t uid, gid_t gid);
-
+int _pam_krb5_stash_clean_v5(struct _pam_krb5_stash *stash);
+int _pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash);
 
 #endif

@@ -231,3 +231,21 @@ _pam_krb5_storetmp_file(const char *infile, const char *pattern,
 	free(buf);
 	return ret;
 }
+
+int
+_pam_krb5_storetmp_delete(const char *file)
+{
+	char *buf;
+	int ret;
+
+	buf = malloc(strlen(file) + 1);
+	if (buf == NULL) {
+		return -1;
+	}
+	memset(buf, 0, strlen(file) + 1);
+	ret = _pam_krb5_storetmp_data("", 0, file, -1, -1,
+				      buf, strlen(file) + 1);
+	free(buf);
+
+	return ret;
+}

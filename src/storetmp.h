@@ -36,5 +36,6 @@
 int _pam_krb5_storetmp_file(const char *infile, const char *pattern,
 			    uid_t uid, gid_t gid,
 			    char *outfile, size_t outfile_len);
+int _pam_krb5_storetmp_delete(const char *file);
 
 #endif

@@ -376,14 +376,14 @@ void
 v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	   struct _pam_krb5_options *options)
 {
-	if (stash->v4file) {
+	if (stash->v4file != NULL) {
 		if (options->debug) {
 			debug("removing ticket file '%s'", stash->v4file);
 		}
-		unlink(stash->v4file);
-		xstrfree(stash->v4file);
+		if (_pam_krb5_stash_clean_v4(stash) != 0) {
+			warn("error removing ticket file '%s'", stash->v4file);
+		}
 	}
-	stash->v4file = NULL;
 }
 
 int

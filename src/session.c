@@ -286,10 +286,16 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	tokens_release(stash, options);
 
 	v5_destroy(ctx, stash, options);
+	if (options->debug) {
+		debug("destroyed v5 ticket file for '%s'", user);
+	}
 
 #ifdef USE_KRB4
 	if (stash->v4file != NULL) {
 		v4_destroy(ctx, stash, options);
+		if (options->debug) {
+			debug("destroyed v4 ticket file for '%s'", user);
+		}
 	}
 #endif
 	if (options->debug) {

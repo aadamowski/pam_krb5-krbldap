@@ -667,8 +667,8 @@ v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 			debug("removing ccache file '%s'",
 			      stash->v5file);
 		}
-		unlink(stash->v5file);
-		xstrfree(stash->v5file);
-		stash->v5file = NULL;
+		if (_pam_krb5_stash_clean_v5(stash) != 0) {
+			warn("error removing ccache file '%s'", stash->v5file);
+		}
 	}
 }
