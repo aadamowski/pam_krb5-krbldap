@@ -2,8 +2,8 @@ AC_INIT(README)
 
 AC_CONFIG_HEADER(config.h)
 AC_PROG_CC()
-CFLAGS=-g
-AC_PROG_INSTALL()
+CFLAGS=-g3
+AC_PROG_INSTALL
 AC_PATH_PROG(FLEX,flex)
 AC_PATH_PROG(YACC,yacc)
 
@@ -15,7 +15,7 @@ if test x$withval != xyes ; then
 	CFLAGS="-I$withval/include $CFLAGS"
 	LDFLAGS="-L$withval/lib $LDFLAGS"
 else
-	KRBAFS=/tmp
+	KRBAFS=/usr
 fi
 )
 
@@ -27,7 +27,7 @@ if test x$withval != xyes ; then
 	CFLAGS="-I$withval/include $CFLAGS"
 	LDFLAGS="-L$withval/lib $LDFLAGS"
 else
-	KRBAFS=/tmp
+	KRBAFS=/usr
 fi
 )
 
@@ -43,20 +43,21 @@ AC_CHECK_HEADERS(sys/stat.h sys/types.h stdio.h stdlib.h string.h unistd.h\
 AC_CHECK_HEADER(krb5.h,AC_DEFINE(HAVE_KRB5_H),
 	AC_ERROR(install Kerberos 5 or re-run configure with --with-krb5))
 
-AC_CHECK_LIB(c,sprintf,,,$LIBS)
-AC_CHECK_LIB(socket,connect,,,$LIBS)
-AC_CHECK_LIB(nsl,yp_bind,,,$LIBS)
-AC_CHECK_LIB(resolv,res_mkquery,,,$LIBS)
-AC_CHECK_LIB(crypt,crypt,,,$LIBS)
-AC_CHECK_LIB(dl,dlopen,,,$LIBS)
-AC_CHECK_LIB(com_err,error_message,,,$LIBS)
-AC_CHECK_LIB(k5crypto,krb5_des_string_to_key,,,$LIBS)
-AC_CHECK_LIB(krb5,krb5_init_context,,,$LIBS)
-AC_CHECK_LIB(des425,des_string_to_key,,,$LIBS)
+AC_CHECK_FUNC(sprintf)
+AC_CHECK_FUNC(connect,,AC_CHECK_LIB(socket,connect))
+AC_CHECK_FUNC(yp_bind,,AC_CHECK_LIB(nsl,yp_bind))
+AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
+AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
+AC_CHECK_FUNC(error_message,,AC_CHECK_LIB(com_err,error_message))
+AC_CHECK_FUNC(krb5_des_string_to_key,
+	      AC_CHECK_LIB(k5crypto,krb5_des_string_to_key))
+AC_CHECK_FUNC(krb5_init_context,,AC_CHECK_LIB(krb5,krb5_init_context))
+AC_CHECK_FUNC(des_string_to_key,,AC_CHECK_LIB(des425,des_string_to_key))
 AC_CHECK_HEADER(kerberosIV/krb.h,
 	AC_DEFINE(HAVE_KERBEROSIV_KRB_H)
-	AC_CHECK_LIB(krb4,in_tkt,,,$LIBS)
-	AC_CHECK_LIB(krb524,krb524_convert_creds_kdc,,,$LIBS)
+	AC_CHECK_FUNC(in_tkt,,AC_CHECK_LIB(krb4,in_tkt))
+	AC_CHECK_FUNC(krb524_convert_creds_kdc,
+		      AC_CHECK_LIB(krb524,krb524_convert_creds_kdc))
 )
 if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	AC_CHECK_HEADER(krbafs.h,
@@ -72,10 +73,12 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	,,$LIBS)
 fi
 AC_CHECK_HEADERS(kadm5/admin.h)
-AC_CHECK_LIB(gssrpc,svc_auth_any)
-AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context)
-AC_CHECK_LIB(kdb5,krb5_db_init)
-AC_CHECK_LIB(kadm5clnt,kadm5_init_with_password)
+AC_CHECK_FUNC(svc_auth_any,,AC_CHECK_LIB(gssrpc,svc_auth_any))
+AC_CHECK_FUNC(krb5_gss_init_sec_context,,
+	      AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context))
+AC_CHECK_FUNC(krb5_db_init,,AC_CHECK_LIB(kdb5,krb5_db_init))
+AC_CHECK_FUNC(kadm5_init_with_password,,
+	      AC_CHECK_LIB(kadm5clnt,kadm5_init_with_password))
 AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
 AC_CHECK_FUNCS(krb5_appdefault_string krb5_appdefault_boolean krb5_appdefault_boolean initialize_krb5_error_table initialize_ovk_error_table)
 	
