@@ -1,11 +1,7 @@
 /*******************************************************************************
  Module for Linux-PAM to do Kerberos 5 authentication, convert the
  Kerberos 5 ticket to a Kerberos 4 ticket, and use it to grab AFS
- tokens for specified cells.
-
- Copyright 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
- Distribution allowed under the X consortium license or the LGPL.
- Do me a favor and let me know if you're using it.
+ tokens for specified cells if possible.
  ******************************************************************************/
 
 #ident "$Id$"
@@ -83,8 +79,8 @@
 #define PASSWORD_CHANGE_SERVICE "kadmin/changepw"
 #endif
 
-#define MODULE_DATA_NAME "pam_krb5afs_cred_stash"
-#define MODULE_DATA_NAME "pam_krb5afs_ret_stash"
+#define MODULE_STASH_NAME "pam_krb5afs_cred_stash"
+#define MODULE_RET_NAME "pam_krb5afs_ret_stash"
 
 #define PAM_SM_AUTH
 #define PAM_SM_SESSION
@@ -465,7 +461,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	struct config *config;
 	const char *user = NULL;
 	const char *password = NULL;
-	int ret = KRB5_SUCCESS;
+	int ret = KRB5_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
 	struct passwd *pwd;
 
@@ -487,6 +483,15 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			DEBUG("default Kerberos realm is %s", realm);
 		} else {
 			ret = PAM_SYSTEM_ERR;
+			CRIT("Kerberos 5 initialize problem/malloc error");
+		}
+	}
+	if(ret == KRB5_SUCCESS) {
+		pret = malloc(sizeof(ret));
+		if(pret != NULL) {
+			*pret = PAM_SUCCESS;
+		} else {
+			ret = PAM_BUF_ERR;
 			CRIT("Kerberos 5 initialize problem/malloc error");
 		}
 	}
@@ -642,7 +647,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	}
 
 	if(ret == PAM_SUCCESS) {
-		ret = pam_set_data(pamh, MODULE_DATA_NAME, stash, cleanup);
+		ret = pam_set_data(pamh, MODULE_STASH_NAME, stash, cleanup);
 		DEBUG("credentials saved for %s", user);
 	}
 
@@ -679,8 +684,19 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Done with Kerberos. */
 	krb5_free_context(context);
 
+	*pret = ret;
+
+	ret = pam_set_data(pamh, MODULE_RET_NAME, pret, cleanup);
+	if(ret == PAM_SUCCESS) {
+		DEBUG("saved return code (%d) for later use", *pret);
+	} else {
+		INFO("error %d (%s) saving return code (%d)", ret,
+			pam_strerror(pamh, ret), *pret);
+	}
+	ret = *pret;
+
 	DEBUG("pam_sm_authenticate returning %d (%s)", ret,
-	      pam_strerror(pamh, ret));
+	      ret ? pam_strerror(pamh, ret) : "Success");
 
 	return ret;
 }
@@ -699,7 +715,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	char v4_path[PATH_MAX];
 	char v5_path[PATH_MAX];
 	const char *user = NULL;
-	int ret = KRB5_SUCCESS;
+	int ret = KRB5_SUCCESS, *pret = NULL;
 	struct config *config;
 
 	/* First parse the arguments; if there are problems, bail. */
@@ -717,7 +733,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	if((flags & PAM_ESTABLISH_CRED) && (ret == KRB5_SUCCESS)) {
 		/* Retrieve and create Kerberos tickets. */
-		ret = pam_get_data(pamh, MODULE_DATA_NAME, (void*)&stash);
+		ret = pam_get_data(pamh, MODULE_STASH_NAME, (void*)&stash);
 		if(ret == PAM_SUCCESS) {
 			DEBUG("credentials retrieved");
 
@@ -769,7 +785,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						       &v4_creds);
 
 			DEBUG("krb524_convert_creds returned \"%s\" for %s",
-			      error_message(ret), user);
+			      ret ? error_message(ret) : "Success", user);
 
 			if(ret == KRB5_SUCCESS) {
 				INFO("v4 ticket conversion succeeded for %s",
@@ -844,7 +860,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #endif
 
 	if((flags & PAM_DELETE_CRED) && (ret == KRB5_SUCCESS)) {
-		ret = pam_get_data(pamh,MODULE_DATA_NAME,(const void**)&stash);
+		ret = pam_get_data(pamh,MODULE_STASH_NAME,(const void**)&stash);
 		if(ret == PAM_SUCCESS) {
 			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
@@ -871,6 +887,16 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Done with Kerberos. */
 	krb5_free_context(context);
+
+	pam_get_data(pamh, MODULE_RET_NAME, (const void**) &pret);
+	if(pret) {
+		DEBUG("recovered return code %d from prior call to "
+		      "pam_sm_authenticate()", *pret);
+		ret = *pret;
+	}
+
+	DEBUG("pam_sm_setcred returning %d (%s)", ret,
+	      ret ? pam_strerror(pamh, ret) : "Success");
 
 	return ret;
 }
