@@ -57,6 +57,7 @@ pam_krb5_la_SOURCES = \
 pam_krb5_storetmp_SOURCES = \
 	pam_krb5_storetmp.c
 pam_krb5_storetmp_LIBS =
+pam_krb5_storetmp_LDADD = xstr.lo
 
 afs5log_SOURCES = \
 	afs5log.c \

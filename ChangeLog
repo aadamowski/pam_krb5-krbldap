@@ -1,3 +1,11 @@
+2005-02-28:
+	* src/minikafs.c: fix compilation against releases which didn't define
+	KRB_TICKET_GRANTING_TICKET.
+	* src/pagsh.c: add missing <stdio.h> inclusion.
+	* src/minikafs.c: handle cases where krb_life_to_time() isn't available.
+	* src/pagsh.c: add a --help flag, by assuming that the command will
+	never start with "-".
+
 2005-02-24 nalin
 	* src/logstdio.c: add a log_progname global to adjust log messages.
 	* src/afs5log.c,src/harness.c: set log_progname at startup.

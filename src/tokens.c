@@ -328,9 +328,9 @@ tokens_getcells(struct _pam_krb5_stash *stash,
 		for (i = 0; i < n_cells; i++) {
 			if ((options->afs_cells != NULL) &&
 			    (options->afs_cells[i] != NULL)) {
-				list[i] = strdup(options->afs_cells[i]);
+				list[i] = xstrdup(options->afs_cells[i]);
 			} else {
-				list[i] = strdup(cell);
+				list[i] = xstrdup(cell);
 			}
 		}
 	}
@@ -349,7 +349,7 @@ tokens_freelocalcells(struct _pam_krb5_stash *stash,
 		return;
 	}
 	for (i = 0; (cells != NULL) && (cells[i] != NULL); i++) {
-		free(cells[i]);
+		xstrfree(cells[i]);
 		cells[i] = NULL;
 	}
 	free(cells);

@@ -40,6 +40,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "xstr.h"
+
 #ident "$Id$"
 
 /* A simple (hopefully) helper which creates a file using mkstemp() and a
@@ -72,7 +74,7 @@ main(int argc, const char **argv)
 	}
 
 	/* We'll need a writable string for use as the template. */
-	filename = strdup(argv[1]);
+	filename = xstrdup(argv[1]);
 	if (filename == NULL) {
 		return 3;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <paths.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -55,6 +56,7 @@
 #include "options.h"
 #include "stash.h"
 #include "minikafs.h"
+#include "xstr.h"
 
 struct _pam_krb5_options;
 extern char *log_progname;
@@ -80,10 +82,16 @@ main(int argc, char **argv)
 	for (i = 0; i < argc; i++) {
 		switch (i) {
 		case 0:
-			new_argv[i] = strdup(shell);
+			new_argv[i] = xstrdup(shell);
 			break;
+		case 1:
+			if (argv[i][0] == '-') {
+				fprintf(stdout,
+					"Usage: pagsh [command [args ...]]\n");
+				return 1;
+			}
 		default:
-			new_argv[i] = strdup(argv[i]);
+			new_argv[i] = xstrdup(argv[i]);
 			break;
 		}
 	}

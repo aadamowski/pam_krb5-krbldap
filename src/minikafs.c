@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2005 Red Hat, Inc.
  * Copyright 2004 Kungliga Tekniska Högskolan
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,11 @@
 #include "log.h"
 #include "minikafs.h"
 #include "v5.h"
+#include "xstr.h"
+
+#ifndef KRB_TICKET_GRANTING_TICKET
+#define KRB_TICKET_GRANTING_TICKET "krbtgt"
+#endif
 
 #define OPENAFS_AFS_IOCTL_FILE  "/proc/fs/openafs/afs_ioctl"
 #define ARLA_AFS_IOCTL_FILE     "/proc/fs/nnpfs/afs_ioctl"
@@ -180,7 +185,7 @@ minikafs_cell_of_file(const char *file, char *cell, size_t length)
 	char *wfile;
 	int i;
 
-	wfile = strdup(file ? file : "/afs");
+	wfile = xstrdup(file ? file : "/afs");
 
 	memset(&iob, 0, sizeof(iob));
 	iob.in = wfile;
@@ -190,7 +195,7 @@ minikafs_cell_of_file(const char *file, char *cell, size_t length)
 
 	i = minikafs_pioctl(wfile, minikafs_pioctl_getcelloffile, &iob);
 
-	free(wfile);
+	xstrfree(wfile);
 	return i;
 }
 
@@ -756,7 +761,18 @@ minikafs_4log_with_principal(struct _pam_krb5_options *options,
 			return -1;
 		}
 	}
+#ifdef HAVE_KRB_LIFE_TO_TIME
+	/* Convert the ticket lifetime of the v4 credentials into Unixy
+	 * lifetime, which is the X coordinate along a curve where Y is the
+	 * actual length.  Again, this is magic. */
+
 	endtime = krb_life_to_time(creds.issue_date, creds.lifetime);
+#else
+	/* No life-to-time function means we have to treat this as if we were
+	 * measuring life units in 5-minute increments.  Is this ever right for
+	 * AFS? */
+	endtime = creds.issue_date + (creds.lifetime * (5 * 60));
+#endif
 	ret = minikafs_4settoken(cell, uid, creds.issue_date, endtime, &creds);
 	return ret;
 }
@@ -780,7 +796,7 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
 	}
-	wcell = strdup(cell);
+	wcell = xstrdup(cell);
 	if (wcell == NULL) {
 		return -1;
 	}
@@ -827,7 +843,7 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		}
 	}
 
-	free(wcell);
+	xstrfree(wcell);
 
 	return ret;
 }
