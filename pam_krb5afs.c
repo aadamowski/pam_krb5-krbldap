@@ -143,6 +143,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 struct stash {
 	uid_t uid;
 	gid_t gid;
+	pid_t pid;
 	krb5_creds v5_creds;
 };
 
@@ -509,6 +510,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		if(config->debug)
 		stash->uid = pwd->pw_uid;
 		stash->gid = pwd->pw_gid;
+		stash->pid = getpid();
 		DEBUG("%s has uid %d, gid %d", user, stash->uid, stash->gid);
 	} else {
 		CRIT("getpwnam(\"%s\") failed", user);
@@ -711,7 +713,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Set up the environment variable for Kerberos 5. */
 			snprintf(v5_path, sizeof(v5_path),
 				 "KRB5CCNAME=/tmp/krb5cc_%d_%d",
-				 stash->uid, getpid());
+				 stash->uid, stash->pid);
 			ret = pam_putenv(pamh, v5_path);
 			if(ret != PAM_SUCCESS) {
 				CRIT("%s setting environment",
@@ -721,7 +723,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 			/* Create the v5 ticket cache. */
 			snprintf(v5_path, sizeof(v5_path), "/tmp/krb5cc_%d_%d",
-				 stash->uid, getpid());
+				 stash->uid, stash->pid);
 			ret = krb5_cc_resolve(context, v5_path, &ccache);
 			if(ret == KRB5_SUCCESS) {
 				ret = krb5_cc_initialize(context, ccache,
@@ -773,7 +775,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Set up the environment variable for Kerberos 4. */
 			snprintf(v4_path, sizeof(v4_path),
 				 "KRBTKFILE=/tmp/tkt%d_%d",
-				 stash->uid, getpid());
+				 stash->uid, stash->pid);
 			ret = pam_putenv(pamh, v4_path);
 			if(ret != PAM_SUCCESS) {
 				CRIT("%s setting environment",
@@ -783,7 +785,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 			/* Create the v4 ticket cache. */
 			snprintf(v4_path, sizeof(v4_path),
-				 "/tmp/tkt%d_%d", stash->uid, getpid());
+				 "/tmp/tkt%d_%d", stash->uid, stash->pid);
 			DEBUG("opening ticket file \"%s\"", v4_path);
 			krb_set_tkt_string(strdup(v4_path));
 			ret = in_tkt(v4_creds.pname,
@@ -836,13 +838,13 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
 			snprintf(v5_path, sizeof(v5_path),
-				 "/tmp/krb5cc_%d_%d", stash->uid, getpid());
+				 "/tmp/krb5cc_%d_%d", stash->uid, stash->pid);
 			INFO("removing %s", v5_path);
 			remove(v5_path);
 #ifdef HAVE_LIBKRB524
 			/* Delete the v4 ticket cache. */
 			snprintf(v4_path, sizeof(v4_path),
-				 "/tmp/tkt%d_%d", stash->uid, getpid());
+				 "/tmp/tkt%d_%d", stash->uid, stash->pid);
 			INFO("removing %s", v4_path);
 			remove(v4_path);
 #endif
