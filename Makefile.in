@@ -21,7 +21,7 @@ MAN5TARGETS = @MAN5TARGETS@
 MAN8TARGETS = @MAN8TARGETS@
 mandir=/usr/share/man
 
-all: modules check
+all: krb5conf modules check
 
 modules: $(MODULES)
 
@@ -60,7 +60,7 @@ install-man:
 	@INSTALL@ -m 644 $(MAN8TARGETS) $(DESTDIR)$(mandir)/man8
 
 clean:
-	$(RM) *.so *.o krb5conf.l.c krb5conf.y.c main core krb5 kreset dlopen
+	$(RM) *.so *.o krb5conf.l.c krb5conf.y.c y.tab.c y.tab.h main core krb5 kreset dlopen
 
 distclean: clean
 	$(RM) Makefile config.cache config.log config.status config.h
@@ -69,9 +69,14 @@ distclean: clean
 check: dlopen
 	./dlopen $(MODULES)
 
-krb5conf.l.c: krb5conf.l krb5conf.y
-	$(FLEX) -Pxkrb5_conf_ -okrb5conf.l.c krb5conf.l
+y.tab.c: krb5conf.y
 	$(YACC) -pxkrb5_conf_ krb5conf.y
+
+krb5conf.l.c: krb5conf.l
+	$(FLEX) -Pxkrb5_conf_ -okrb5conf.l.c krb5conf.l
+
+krb5conf: krb5conf.l.c y.tab.c
+	$(CC) $(CFLAGS) -o $@ -DKRB5CONF_APP krb5conf.l.c -lfl
 
 pam_krb5afs.c: config.h krb5conf.l.c
 
@@ -82,8 +87,9 @@ dlopen: dlopen.c
 	$(CC) -o $@ $^ -lpam -ldl
 
 dist: archive
+
 archive:
-	cvs tag -cF $(CVSTAG) .
+	cvs tag -cF $(CVSTAG) . || :
 	@rm -rf /tmp/pam_krb5-$(VERSION) /tmp/pam_krb5
 	@( dir=`pwd`; cd /tmp; cvs -d `cat $$dir/CVS/Root` export -r$(CVSTAG) pam_krb5 )
 	@( cd /tmp/pam_krb5 ; autoheader ; autoconf )

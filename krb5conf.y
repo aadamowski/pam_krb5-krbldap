@@ -11,6 +11,8 @@ struct xkrb5_conf_entry {
 } *xkrb5_conf_entries = NULL;
 int xkrb5_conf_parse();
 int xkrb5_conf_lex();
+extern char *xkrb5_conf_text;
+extern FILE *xkrb5_conf_in;
 
 %}
 
@@ -23,8 +25,7 @@ int xkrb5_conf_lex();
 %type  <sval> strings
 %token EQUALS
 %token NEWLINE
-%token SQUARELEFT
-%token SQUARERIGHT
+%token <sval> SECTION
 %token CURLYLEFT
 %token CURLYRIGHT
 
@@ -40,16 +41,18 @@ line:
 	subsection;
 
 sectionstart:
-	SQUARELEFT STRING SQUARERIGHT NEWLINE
+	SECTION NEWLINE
 	{
 		if(xkrb5_conf_section) {
 			free(xkrb5_conf_section);
 		}
-		xkrb5_conf_section = $2;
+		xkrb5_conf_section = $1;
 	}
 
 subsection:
+	subsectionstart subsectionstop |
 	subsectionstart assignments subsectionstop;
+
 subsectionstart:
 	STRING EQUALS CURLYLEFT NEWLINE
 	{
@@ -78,7 +81,9 @@ subsectionstop:
 assignments:
 	assignment |
 	assignments assignment;
+
 assignment:
+	NEWLINE |
 	STRING EQUALS strings NEWLINE
 	{
 		struct xkrb5_conf_entry *entry = NULL;
@@ -101,7 +106,7 @@ strings:
 
 %%
 
-#if 0
+#ifdef KRB5CONF_APP
 #ifndef APPDEFAULT_APP
 #define APPDEFAULT_APP "pam"
 #endif
@@ -123,7 +128,7 @@ int
 yyerror(const char *error)
 {
 	CRIT("error parsing /etc/krb5.conf at line %d at `%s': %s\n",
-	     xkrb5_conf_lineno, yytext, error);
+	     xkrb5_conf_lineno, xkrb5_conf_text, error);
 	return 0;
 }
 
@@ -166,6 +171,9 @@ void
 xkrb5_conf_parse_file()
 {
 	static int parsed = FALSE;
+#ifdef KRB5CONF_APP
+	xkrb5_conf_debug = TRUE;
+#endif
 	if(!parsed) {
 		xkrb5_conf_in = fopen("/etc/krb5.conf", "r");
 		if(xkrb5_conf_in) {
@@ -177,3 +185,12 @@ xkrb5_conf_parse_file()
 		parsed = TRUE;
 	}
 }
+
+#ifdef KRB5CONF_APP
+int
+main()
+{
+	xkrb5_conf_parse_file();
+	return 0;
+}
+#endif
