@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Tue Feb 13 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't log unknown user names to syslog -- they might be sensitive information
+
 * Fri Feb  9 2001 Nalin Dahyabhai <nalin@redhat.com>
 - handle cases where krb5_init_context() fails
 

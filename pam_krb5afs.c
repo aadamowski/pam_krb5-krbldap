@@ -801,7 +801,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				DEBUG("%s has uid %d, gid %d", user,
 				      stash->uid, stash->gid);
 			} else {
-				CRIT("getpwnam(\"%s\") failed", user);
+				CRIT("getpwnam() failed for the user");
 				ret = PAM_USER_UNKNOWN;
 			}
 		}
