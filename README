@@ -13,7 +13,7 @@ documentation, as well as a few others listed below.
 With no arguments, the pam_sm_authenticate() function defaults to
 "try_first_pass" mode.  The TGT obtained and is saved for later use by
 the pam_sm_setcred() function, but the TGT is NOT stored on disk.  The
-new TGT is verified using a copy of the key for the local workstation's
+new TGT is validated using a copy of the key for the local workstation's
 host service if it is found in the local keytab file.
 
 The pam_sm_setcred() function creates a Kerberos 5 ticket file and, if
@@ -31,20 +31,30 @@ Because session-specific ticket files require that the KRBTKFILE and
 KRB5CCNAME environment variables are set correctly, certain programs that
 create their own environments but don't incorporate the results of
 pam_getenvlist() will work, but a user running 'klist' will think that
-she has no tickets.  Currently, this includes ssh (openssh works) and
-unpatched versions of every display manager known except gdm2 and newer.
+she has no tickets.  The number of cases where this happens should
+decrease with time.
 
 Certain settings for the module are now stored in the krb5.conf file, which
-is usually stored in /etc.  The section name is "pam":
+is usually stored in /etc.  The section name is "appdefaults", and the
+subsection name is "pam":
 
-[pam]
-   debug = true
-   ticket_lifetime = 36000
-   renew_lifetime = 36000
-   forwardable = true
-   krb4_convert = true
-   afs_cells = eos.ncsu.edu unity.ncsu.edu bp.ncsu.edu
-   hosts = thermo.stat.ncsu.edu alf.physics.ncsu.edu
+[appdefaults]
+  pam = {
+    debug = true
+    ticket_lifetime = 36000
+    renew_lifetime = 36000
+    forwardable = true
+    krb4_convert = true
+    afs_cells = eos.example.edu unity.example.edu bp.example.edu
+    hosts = thermo.stat.example.edu alf.physics.example.edu
+    max_timeout = 30
+    timeout_shift = 2
+    initial_timeout = 1
+  }
+
+Note that previous versions of pam_krb5 used the "pam" section instead of
+a subsection of the "appdefaults" section.  This is still supported, but
+not encouraged.  Mixing the two is sure to be confusing.
 
 Descriptions of the configuration file directives read by both modules:
    debug		Gratuitous debugging info via syslog.
@@ -63,11 +73,21 @@ Descriptions of the configuration file directives read by both modules:
 			to use /tmp, but some people prefer /var/tmp.
    banner		What the module should announce itself as when changing
 			passwords.  Defaults to "Kerberos 5".
-   keytab		The name of a keytab file to use for TGT verification.
+   keytab		The name of a keytab file to use for TGT validation.
 			The default is "/etc/krb5.keytab".
    required_tgs		The name of a service principal (with its key in the
-			given keytab file) which is to be used to verify TGTs.
+			given keytab file) which is to be used to validate TGTs.
 			The default is "host/<hostname>".
+   max_timeout		The maximum amount of time to wait for a response
+                        from the KDCs, in seconds
+   timeout_shift        The amount to increase the timeout (by left
+                        shifting) by after each failed request
+   initial_timeout      The time to wait for the first KDC to respond, in
+                        seconds
+   addressless          Whether tickets can be used from any address -
+                        useful from behind NATs, or on dialups where IP
+                        address changes regularly.  Conflicts with the
+			hosts option (above).
 
 Descriptions of configuration directives for use in /etc/pam.d:
    use_first_pass	Use password obtained by a previous module.
@@ -92,13 +112,15 @@ Descriptions of configuration directives for use in /etc/pam.d:
    no_warn		Ignored.
 
 This module was built and tested against MIT Kerberos 5 v1.2.1, but it should
-only require v1.1.x.
+only require v1.1.x.  Because some configuration options touch variables which
+are internal to the Kerberos libraries themselves, it may require adjustments
+to build correctly with other implementations.
 
 Caveat: pam_pwdb will cause things to fail if your user information isn't stored
-in one of the databases it knows about (i.e., hesiod).  Switch to pam_unix if
-that happens.
+in one of the databases it knows about (i.e., hesiod or LDAP).  Switch to
+pam_unix if that happens.
 
 Let me know if you have problems,
 
 Nalin Dahyabhai <nalin@redhat.com>
-18 October 2000
+29 May 2001

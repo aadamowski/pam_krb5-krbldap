@@ -165,6 +165,11 @@
 extern int krb524_convert_creds_kdc(krb5_context, krb5_creds *, CREDENTIALS *);
 #endif
 
+/* timeout stuff */
+extern int krb5_max_skdc_timeout;
+extern int krb5_skdc_timeout_shift;
+extern int krb5_skdc_timeout_1;
+
 /******************************************************************************/
 
 /* Authentication. */
@@ -541,6 +546,31 @@ appdefault_boolean(krb5_context context, const char *option,
 	}
 }
 
+static void
+appdefault_integer(krb5_context context, const char *option,
+		   int default_value, int *ret_value)
+{
+	int found = FALSE;
+	const char *tmp;
+	tmp = xkrb5_conf_read(option);
+	if (tmp) {
+		*ret_value=atol(tmp);
+		found = TRUE;
+	}
+#ifdef HAVE_KRB5_APPDEFAULT_STRING
+	if (!found) {
+		krb5_appdefault_string(context, APPDEFAULT_APP, NULL,
+				       option, "", &tmp);
+		if (strlen(tmp)!=0)
+			found = TRUE;
+	}
+#endif
+	if (!found) {
+		*ret_value = default_value;
+	}
+}
+
+
 static struct config *
 get_config(krb5_context context, int argc, const char **argv)
 {
@@ -604,34 +634,55 @@ get_config(krb5_context context, int argc, const char **argv)
 		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, FALSE);
 	}
 
-	/* Hosts to get tickets for. */
-	appdefault_string(context, "hosts", "", &hosts);
+	/* Support for changing timeouts. This plays with some internal
+	 * library stuff which will apparently "go away soon". When it does,
+	 * they'll hopefully replace it with the right way to do this
+	 */
+	appdefault_integer(context, "max_timeout",
+			   krb5_max_skdc_timeout, &krb5_max_skdc_timeout);
+	DEBUG("setting maximum timeout to %d",krb5_max_skdc_timeout);
+	appdefault_integer(context, "timeout_shift", 
+			   krb5_skdc_timeout_shift, &krb5_skdc_timeout_shift);
+	DEBUG("setting timeout shift to %d",krb5_skdc_timeout_shift);
+	appdefault_integer(context, "initial_timeout",
+			   krb5_skdc_timeout_1, &krb5_skdc_timeout_1);
+	DEBUG("setting initial timeout to %d",krb5_skdc_timeout_1);
 
-	/* Get the addresses of local interfaces, and count them. */
-	krb5_os_localaddr(context, &hostlist);
-	for(j = 0; hostlist[j] != NULL; j++) ;
+	appdefault_boolean(context,"addressless", FALSE, &i);
+	if (i) {
+		addresses=NULL;
+		DEBUG("Creating an addressless ticket");
+	} else {
+		DEBUG("Creating a ticket with addresses");
+		/* Hosts to get tickets for. */
+		appdefault_string(context, "hosts", "", &hosts);
 
-	/* Allocate enough space for all of these, plus one for the NULL. */
-	addresses = malloc(sizeof(krb5_address) * (num_words(hosts) + 1 + j));
-	if(addresses == NULL) {
-		free(ret);
-		return NULL;
-	}
+		/* Get the addresses of local interfaces, and count them. */
+		krb5_os_localaddr(context, &hostlist);
+		for(j = 0; hostlist[j] != NULL; j++) ;
 
-	/* Set the address list. */
-	memset(addresses, 0, sizeof(krb5_address) * (num_words(hosts) + 1 + j));
-	for(j = 0; hostlist[j] != NULL; j++) {
-		addresses[j] = hostlist[j];
-	}
-	for(i = 0; i < num_words(hosts); i++) {
-		foo = word_copy(nth_word(hosts, i));
-		if(foo == NULL) {
+		/* Allocate enough space for all of these, plus one for the NULL. */
+		addresses = malloc(sizeof(krb5_address) * (num_words(hosts) + 1 + j));
+		if(addresses == NULL) {
 			free(ret);
 			return NULL;
 		}
-		krb5_os_hostaddr(context, foo, &hostlist);
-		DEBUG("also getting ticket for host `%s'", foo);
-		addresses[i + j] = hostlist[0];
+
+		/* Set the address list. */
+		memset(addresses, 0, sizeof(krb5_address) * (num_words(hosts) + 1 + j));
+		for(j = 0; hostlist[j] != NULL; j++) {
+			addresses[j] = hostlist[j];
+		}
+		for(i = 0; i < num_words(hosts); i++) {
+			foo = word_copy(nth_word(hosts, i));
+			if(foo == NULL) {
+				free(ret);
+				return NULL;
+			}
+			krb5_os_hostaddr(context, foo, &hostlist);
+			DEBUG("also getting ticket for host `%s'", foo);
+			addresses[i + j] = hostlist[0];
+		}
 	}
 	krb5_get_init_creds_opt_set_address_list(&ret->creds_opt, addresses);
 

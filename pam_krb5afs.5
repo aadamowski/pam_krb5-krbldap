@@ -1,4 +1,4 @@
-.TH pam_krb5afs 5 2000/11/07 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5afs 5 2001/05/29 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5afs \- Kerberos 5 authentication with AFS support
 .SH DESCRIPTION
@@ -45,7 +45,7 @@ This is the only certain way to be absolutely sure the TGT hasn't been forged.
 The default is \fBhost\fP@\fIhostname\fP.
 .IP keytab
 specifies the name of a keytab file to find a key for the \fBrequired_tgs\fP in,
-for use in verifying TGTs.  The default is \fB/etc/krb5.keytab\fP.
+for use in validating TGTs.  The default is \fB/etc/krb5.keytab\fP.
 .IP ccache_dir
 specifies the directory to place credential cache files in.  The default is
 \fB/tmp\fR.

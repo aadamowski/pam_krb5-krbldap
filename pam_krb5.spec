@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.33
+Version: 1.34
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -39,6 +39,12 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Tue May 29 2001 Nalin Dahyabhai <nalin@redhat.com>
+- add max_timeout, timeout_shift, initial_timeout, and addressless options
+  (patches from Simon Wilkinson)
+- fix the README to document the [appdefaults] section instead of [pam]
+- change example host and cell names in the README to use example domains
+
 * Wed May  2 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't delete tokens unless we're also removing ticket files (report and
   patch from Sean Dilda)
