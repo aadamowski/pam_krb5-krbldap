@@ -136,6 +136,7 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 {
 	struct _pam_krb5_user_info *ret = NULL;
 	char local_name[LINE_MAX];
+	char qualified_name[LINE_MAX];
 	char mapped_name[LINE_MAX];
 
 	ret = malloc(sizeof(struct _pam_krb5_user_info));
@@ -147,22 +148,55 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 	/* See if we need to map this user name to a principal somehow. */
 	if (map_lname_aname(mappings, num_mappings,
 			    name, mapped_name, sizeof(mapped_name)) == 0) {
-		/* Parse the user's derived principal name into a principal
-		 * structure. */
-		if (krb5_parse_name(ctx, mapped_name,
-				    &ret->principal_name) != 0) {
-			warn("error parsing principal name '%s' derived from "
-			     "user name %s", mapped_name, name);
-			free(ret);
-			return NULL;
+		if (strchr(mapped_name, '@') == NULL) {
+			if (strlen(mapped_name) + 1 + strlen(realm) >=
+			    sizeof(qualified_name)) {
+				warn("principal name '%s' too long",
+				     mapped_name);
+				free(ret);
+				return NULL;
+			}
+			snprintf(qualified_name, sizeof(qualified_name),
+				 "%s@%s", mapped_name, realm);
+		} else {
+			if (strlen(mapped_name) >= sizeof(qualified_name)) {
+				warn("principal name '%s' too long",
+				     mapped_name);
+				free(ret);
+				return NULL;
+			}
+			snprintf(qualified_name, sizeof(qualified_name),
+				 "%s", mapped_name);
 		}
 	} else {
-		/* Parse the user's name into a principal structure as-is. */
-		if (krb5_parse_name(ctx, name, &ret->principal_name) != 0) {
-			warn("error parsing principal name '%s'", name);
-			free(ret);
-			return NULL;
+		if (strchr(name, '@') == NULL) {
+			if (strlen(name) + 1 + strlen(realm) >=
+			    sizeof(qualified_name)) {
+				warn("principal name '%s' too long", name);
+				free(ret);
+				return NULL;
+			}
+			snprintf(qualified_name, sizeof(qualified_name),
+				 "%s@%s", name, realm);
+		} else {
+			if (strlen(name) >= sizeof(qualified_name)) {
+				warn("principal name '%s' too long", name);
+				free(ret);
+				return NULL;
+			}
+			snprintf(qualified_name, sizeof(qualified_name),
+				 "%s", name);
 		}
+	}
+
+	/* Parse the user's determined principal name into a principal
+	 * structure. */
+	if (krb5_parse_name(ctx, qualified_name,
+			    &ret->principal_name) != 0) {
+		warn("error parsing principal name '%s' derived from "
+		     "user name '%s'", qualified_name, name);
+		free(ret);
+		return NULL;
 	}
 
 	/* Convert the principal back to a full principal name string. */
@@ -174,30 +208,9 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		return NULL;
 	}
 
-#if 0
-	/* Convert the principal name back into a local user's name.
-	 * If the principal is not in the local realm, this may fail
-	 * due to an unconfigured aname-to-lname mapping in krb5.conf.
-	 * If we don't map to a local user, stop now. */
-	memset(local_name, '\0', sizeof(local_name));
-	i = krb5_aname_to_localname(ctx, ret->principal_name,
-				    sizeof(local_name) - 1,
-				    local_name);
-	if (i != 0) {
-		warn("error converting principal name %s to user name "
-		     "(check auth_to_local and auth_to_local_names "
-		     "settings in krb5.conf): %s", ret->unparsed_name,
-		     v5_error_message(i));
-		v5_free_unparsed_name(ctx, ret->unparsed_name);
-		krb5_free_principal(ctx, ret->principal_name);
-		free(ret);
-		return NULL;
-	}
-#else
 	/* Use the local user name which the user gave us. */
 	strncpy(local_name, name, sizeof(local_name) - 1);
 	local_name[sizeof(local_name) - 1] = '\0';
-#endif
 
 	if (check_user) {
 		/* Look up the user's UID/GID. */
