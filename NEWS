@@ -1,0 +1,15 @@
+- 2.2: refreshing of preexisting credentials works, so unlocking your
+  screensaver should fetch new credentials and tokens.
+- 2.1: switch to a minikafs implementation to flush out lurking ABI differences
+  between the krb4 interface the kafs library used and the one which libkrb4
+  provides.  Also, we support "2b" tokens now.
+- 2.0: more or less complete rewrite.
+  Jettison our own krb5.conf parsing code in favor of the supported API.
+  This means that configuration settings which look like this:
+  [pam]
+    forwardable = yes
+  are no longer recognized, and must be changed to:
+  [appdefaults]
+    pam = {
+      forwardable = yes
+    }
