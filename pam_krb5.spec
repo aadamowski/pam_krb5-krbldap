@@ -32,15 +32,14 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %defattr(-,root,root)
 /lib/security/pam_krb5.so
 /lib/security/pam_krb5afs.so
-/usr/man/man5/pam_krb5.5
-/usr/man/man5/pam_krb5afs.5
-/usr/man/man8/pam_krb5.8
-/usr/man/man8/pam_krb5afs.8
+/usr/man/man5/*
+/usr/man/man8/*
 %doc README ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
 * Wed Feb  2 2000 Nalin Dahyabhai <nalin@redhat.com>
 - autoconf and putenv() fixes for broken apps
+- fix for compressed man pages
 
 * Fri Jan 14 2000 Nalin Dahyabhai <nalin@redhat.com>
 - tweak passwd, su, and vlock configuration files
