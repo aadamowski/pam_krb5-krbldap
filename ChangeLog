@@ -1,3 +1,9 @@
+2004-01-07 nalin
+	* src/v4.c(v4_save): make the stub v4_save function match the
+	non-stub's prototype.  Noted by Jörg Albert.
+	* src/v4.c(v4_destroy): don't return a value from this function, which
+	returns void.  Noted by Jörg Albert.
+
 2003-11-25 nalin
 	* README: updates
 

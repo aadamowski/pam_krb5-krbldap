@@ -399,6 +399,7 @@ v4_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
+	uid_t uid, gid_t gid,
 	const char **ccname)
 {
 	if (ccname != NULL) {
@@ -410,7 +411,7 @@ void
 v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	   struct _pam_krb5_options *options)
 {
-	return PAM_SERVICE_ERR;
+	return;
 }
 #endif
 
