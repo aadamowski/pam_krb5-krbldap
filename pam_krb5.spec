@@ -5,7 +5,7 @@ Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
-BuildPrereq: byacc, flex, krb5-devel, pam-devel
+BuildPrereq: byacc, flex, krb5-devel, /usr/include/security/pam_modules.h
 BuildRoot: %{_tmppath}/%{name}-root
 Requires: krbafs >= 1.0
 
@@ -42,6 +42,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 - don't twiddle ownerships until after we get AFS tokens
 - use the current time instead of the issue time when storing v4 creds, since
   we don't know the issuing host's byte order
+- depend on a PAM development header again instead of pam-devel
 
 * Tue Feb 20 2001 Nalin Dahyabhai <nalin@redhat.com>
 - add a separate config file parser for compatibility with settings that
