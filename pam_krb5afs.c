@@ -141,9 +141,10 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 /* Module-specific flags. */
 static struct {
 	unsigned char debug, pag, try_first_pass, try_second_pass, prompt;
+	krb5_flags kdc_options;
 	char **cellnames;
 	int cells;
-} globals = {0, 0, 0, 0, 0, NULL, 0};
+} globals = {0, 0, 0, 0, 0, 0, NULL, 0};
 
 /******************************************************************************/
 
@@ -160,6 +161,7 @@ static int check_flags(int argc, const char **argv)
 	globals.try_first_pass = 1;
 	globals.try_second_pass = 1;
 	globals.prompt = 1;
+	globals.kdc_options = 0;
 
 	/* Scan for flags we find interesting. */
 	for(i = 0; i < argc; i++) {
@@ -192,6 +194,19 @@ static int check_flags(int argc, const char **argv)
 		/* Provide debug info via syslog. */
 		if(strcmp(argv[i], "debug") == 0) {
 			globals.debug = 1;
+			continue;
+		}
+		/* Useful KDC options. */
+		if(strcmp(argv[i], "kdc_opt_forwardable") == 0) {
+			globals.kdc_options |= KDC_OPT_FORWARDABLE;
+			continue;
+		}
+		if(strcmp(argv[i], "kdc_opt_proxiable") == 0) {
+			globals.kdc_options |= KDC_OPT_PROXIABLE;
+			continue;
+		}
+		if(strcmp(argv[i], "kdc_opt_renewable") == 0) {
+			globals.kdc_options |= KDC_OPT_RENEWABLE;
 			continue;
 		}
 		/* It's a cell name.  Grab space to save it. */
@@ -231,7 +246,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 {
 	krb5_context context;
 	krb5_principal principal, server;
-	krb5_flags kdc_options = KDC_OPT_FORWARDABLE;
 	const char *user = NULL;
 	const char *first_pass = NULL, *second_pass = NULL;
 	const struct pam_conv *converse = NULL;
@@ -398,7 +412,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		/* Try the first password. */
 		if(globals.try_first_pass && first_pass && !done) {
 			ret = krb5_get_in_tkt_with_password(context,
-							    kdc_options,
+							    globals.kdc_options,
 							    NULL,
 							    NULL,
 							    KRB5_PADATA_NONE,
@@ -418,7 +432,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		   otherwise bad. */
 		if(globals.try_second_pass && second_pass && !done) {
 			ret = krb5_get_in_tkt_with_password(context,
-							    kdc_options,
+							    globals.kdc_options,
 							    NULL,
 							    NULL,
 							    KRB5_PADATA_NONE,
@@ -459,6 +473,48 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	}
 	D(("reached"));
 
+#ifdef CRITICAL_SERVICE
+{
+	/* Build a principal for the service credential we'll use for double-
+	   checking the validity of the TGT. */
+	krb5_principal tgs;
+	D(("Building service principal for \"%s\".", CRITICAL_SERVICE));
+	if(ret == KRB5_SUCCESS) {
+		ret = krb5_parse_name(context, CRITICAL_SERVICE, &tgs);
+		D(("krb5_parse_name = \"%s\".", error_message(ret)));
+		if(ret != KRB5_SUCCESS) {
+			syslog(LOG_CRIT, MODULE_NAME
+			       ": error building principal for %s",
+			       CRITICAL_SERVICE);
+			ret = PAM_SYSTEM_ERR;
+		}
+	}
+	/* Attempt to use our new TGT to obtain the service ticket. */
+	if(ret == KRB5_SUCCESS) {
+		krb5_creds creds, *out_creds;
+		memset(&creds, 0, sizeof(creds));
+		creds.client = stash->v5_creds.client;
+		creds.server = tgs;
+		ret = krb5_get_cred_via_tkt(context,
+					    &stash->v5_creds,
+					    0,
+					    NULL,
+					    &creds,
+					    &out_creds);
+		if(ret == KRB5_SUCCESS) {
+			syslog(LOG_INFO, MODULE_NAME
+			       ": TGT for %s verifies as good", user);
+		} else {
+			syslog(LOG_CRIT, MODULE_NAME
+			       ": TGT for %s was useless (%s)- spoofed?",
+			       user, error_message(ret));
+			ret = PAM_SYSTEM_ERR;
+		}
+	}
+}
+#endif
+
+	/* Retrieve a password that may already have been entered. */
 #ifdef PAM_KRB5_KRB4
 	/* Get Kerberos 4 credentials via the krb524 service. */
 	if(ret == KRB5_SUCCESS) {
@@ -530,6 +586,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	D(("Returning %d.", ret));
 	if(globals.debug)
 	syslog(LOG_DEBUG,MODULE_NAME ": pam_sm_authenticate returning %d", ret);
+
 	return ret;
 }
 
@@ -631,8 +688,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						    stash->v4_creds.kvno,
 						    &stash->v4_creds.ticket_st,
 						    stash->v4_creds.issue_date);
-				chown(v4_path, stash->uid, stash->gid);
 			}
+			chown(v4_path, stash->uid, stash->gid);
 #endif
 			/* Set up the environment variable for Kerberos 5. */
 			D(("Setting KRB5CCNAME in environment."));
