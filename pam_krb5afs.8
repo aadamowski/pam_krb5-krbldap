@@ -77,6 +77,8 @@ overrides the default realm set in \fI/etc/krb5.conf\fP, which pam_krb5afs.so
 will attempt to authenticate users to.
 .IP renew_lifetime=\fI36000\fP
 sets the default renewable lifetime for credentials.
+.IP retain_after_close
+tells pam_krb5afs.so to retain the ticket after the session has been closed.
 .IP skip_first_pass
 tells pam_krb5afs.so to not bother checking a password that has been set by a
 module listed earlier in the stack.  This option is included mainly for

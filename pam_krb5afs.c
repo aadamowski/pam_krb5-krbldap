@@ -196,6 +196,7 @@ struct config {
 	int renew_lifetime;
 	int warn_period;
 	int minimum_uid;
+	int retain_token;			/* retain token after session closed */
 	char *banner;
 	char **cell_list;
 	char *realm;
@@ -739,6 +740,10 @@ get_config(krb5_context context, int argc, const char **argv)
 			   ret->debug, &ret->debug);
 	DEBUG("get_config() called");
 			    
+	/* Whether or not to retain the KRB token after session closed. */
+	appdefault_boolean(context, "retain_after_close", argc, argv,
+			   ret->retain_token, &ret->retain_token);
+
 	/* The default realm we assume users are in unless told otherwise. */
 	krb5_get_default_realm(context, &ret->realm);
 	appdefault_string(context, "realm", argc, argv,
@@ -2097,7 +2102,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 #endif
 
-	if (RC_OK && (flags & PAM_DELETE_CRED)) {
+	if (RC_OK && (flags & PAM_DELETE_CRED) && config->retain_token) {
+		DEBUG("retaining token beyond session-closure");
+	}
+	else if (RC_OK && (flags & PAM_DELETE_CRED) && !config->retain_token) {
 		prc = pam_get_data(pamh,MODULE_STASH_NAME,(const void**)&stash);
 		if ((prc == PAM_SUCCESS) && (strlen(stash->v5_path) > 0)) {
 			/* Delete the v5 ticket cache. */

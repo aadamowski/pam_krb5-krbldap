@@ -64,6 +64,9 @@ the purpose of verifying that the TGT has not been forged.  The key is
 decrypted using a copy of the service's key stored in a local keytab file.
 This is the only certain way to be absolutely sure the TGT hasn't been forged.
 The default is \fBhost\fP@\fIhostname\fP.
+.IP retain_after_close=[\fItrue\fP|\fIfalse\fP]
+specifies whether or not to retain the ticket after closing the session.  The
+default is \fBfalse\fP.
 .IP ticket_lifetime=\fI36000\fP
 default credential lifetime.
 .IP timeout_shift

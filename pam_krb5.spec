@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.51
+Version: 1.52
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Mon Mar 18 2002 Nalin Dahyabhai <nalin@redhat.com> 1.52-1
+- apply patch from David Howells to add retain_tokens option
+
 * Thu Mar  7 2002 Nalin Dahyabhai <nalin@redhat.com> 1.51-1
 - fix what's hopefully the last parser bug
 
