@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 1.55
-Release: 1
+Release: 2
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -39,6 +39,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu May 16 2002 Nalin Dahyabhai <nalin@redhat.com> 1.55-2
+- rebuild in new environment
+
 * Mon Mar 25 2002 Nalin Dahyabhai <nalin@redhat.com> 1.55-1
 - handle account management for expired accounts correctly
 
