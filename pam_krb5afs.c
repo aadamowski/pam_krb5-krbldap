@@ -70,6 +70,10 @@
 #include <sys/syslog.h>
 #endif
 
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
+
 /******************************************************************************/
 
 #ifdef HAVE_COM_ERR_H
@@ -80,8 +84,16 @@
 #include <krb5.h>
 #endif
 
+#ifdef HEIMDAL
+#define KRB5KDC_ERR_KEY_EXP KRB5KDC_ERR_KEY_EXPIRED
+#endif
+
 #ifdef HAVE_KERBEROSIV_KRB_H
 #include <kerberosIV/krb.h>
+#endif
+
+#ifdef HAVE_KRB_H
+#include <krb.h>
 #endif
 
 #ifdef AFS
@@ -636,8 +648,7 @@ get_config(krb5_context context, int argc, const char **argv)
 
 	/* Support for changing timeouts. This plays with some internal
 	 * library stuff which will apparently "go away soon". When it does,
-	 * they'll hopefully replace it with the right way to do this
-	 */
+	 * it'll hopefully be replaced with the right way to do this. */
 	appdefault_integer(context, "max_timeout",
 			   krb5_max_skdc_timeout, &krb5_max_skdc_timeout);
 	DEBUG("setting maximum timeout to %d",krb5_max_skdc_timeout);

@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.42
+Version: 1.43
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,13 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Tue Jul 31 2001 Nalin Dahyabhai <nalin@redhat.com>
+- merge patch from Chris Chiappa for building with Heimdal
+
+* Mon Jul 24 2001 Nalin Dahyabhai <nalin@redhat.com>
+- note that we had to prepend the current directory to a given path in
+  dlopen.c when we had to (noted by Onime Clement)
+
 * Tue Jul 17 2001 Nalin Dahyabhai <nalin@redhat.com>
 - return PAM_NEW_AUTHTOK_REQD when attempts to get initial credentials
   fail with KRB5KDC_ERR_KEY_EXP (noted by Onime Clement)

@@ -2,7 +2,7 @@ AC_INIT(README)
 
 AC_CONFIG_HEADER(config.h)
 AC_PROG_CC()
-CFLAGS=-g3
+#CFLAGS=-g3
 AC_PROG_INSTALL
 AC_PATH_PROG(FLEX,flex)
 AC_PATH_PROG(YACC,yacc)
@@ -54,12 +54,46 @@ AC_CHECK_FUNC(mit_des_key_sched,,
 	      	AC_CHECK_LIB(k5crypto,mit_des_key_sched)))
 AC_CHECK_FUNC(krb5_init_context,,AC_CHECK_LIB(krb5,krb5_init_context))
 AC_CHECK_FUNC(des_string_to_key,,AC_CHECK_LIB(des425,des_string_to_key))
+
+# Stolen from openssh patch from simon@sxw.org.uk: 
+# http://www.sxw.org.uk/computing/patches/
+AC_MSG_CHECKING(whether we are using Heimdal)
+AC_TRY_COMPILE([ #include <krb5.h> ],
+        [ char *tmp = heimdal_version; ],
+        [ AC_MSG_RESULT(yes)
+          AC_DEFINE(HEIMDAL)
+          K5LIBS="-lkrb5 -lasn1"
+        ],
+        [ AC_MSG_RESULT(no)
+          K5LIBS="-lkrb5 -ldes -lk5crypto -lcom_err"
+        ]
+)
+
 AC_CHECK_HEADER(kerberosIV/krb.h,
-	AC_DEFINE(HAVE_KERBEROSIV_KRB_H)
+                have_krb_h="kerberosIV/krb.h"
+                AC_DEFINE(HAVE_KERBEROSIV_KRB_H),
+                AC_CHECK_HEADER(krb.h,
+                        have_krb_h="krb.h"
+                        AC_DEFINE(HAVE_KRB_H)
+                )
+
+)
+
+if test x$have_krb_h != x; then
 	AC_CHECK_FUNC(in_tkt,,AC_CHECK_LIB(krb4,in_tkt))
 	AC_CHECK_FUNC(krb524_convert_creds_kdc,,
 		      AC_CHECK_LIB(krb524,krb524_convert_creds_kdc))
-)
+        AC_MSG_CHECKING(whether we are using KTH Kerberos IV)
+        AC_TRY_COMPILE([#include <$have_krb_h>],
+                       [ char *tmp = krb4_version; ],
+                       [ AC_MSG_RESULT(yes)
+                         AC_DEFINE(KTH_KRB4)
+                       ],
+                       [ AC_MSG_RESULT(no)
+                       ]
+        )
+fi
+
 if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	AC_CHECK_HEADER(krbafs.h,
 			AC_DEFINE(HAVE_KRBAFS_H)

@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 		} else {
 			snprintf(buf, sizeof(buf), "./%s", argv[i]);
 			if(stat(buf, &st) == 0) {
-				fprintf(stdout, "dlopen() of \"%s\" "
+				fprintf(stdout, "dlopen() of \"./%s\" "
 					"succeeded.\n", argv[i]);
 			} else {
 				fprintf(stdout, "dlopen() of \"%s\" failed: "
