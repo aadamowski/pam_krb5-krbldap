@@ -1,3 +1,6 @@
+Thu Jan 30 2003 Nalin Dahyabhai <nalin@redhat.com>
+- Fix uninitialized pointer crash when we fail to retrieve cached return values.
+
 Wed Jan 29 2003 Nalin Dahyabhai <nalin@redhat.com>
 - Fix accidental double-free because libpam doesn't appear to make copies of
   the names for data items.
