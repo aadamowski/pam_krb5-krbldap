@@ -39,6 +39,10 @@ o no_user_check
   user and group ID instead of the user's.
 o realm=REALM
   Override the default realm.
+o renew_lifetime
+  Override the default renewable lifetime (set in libdefaults, else 0).
+o ticket_lifetime
+  Override the default ticket lifetime (24 hours with krbt 1.3, else 10 hours).
 o tokens
   Obtain AFS tokens during the authentication phase.
 o validate
@@ -48,8 +52,8 @@ o validate
 Configuration file only:
 o afs_cells = cell1 cell2 cell3
 
-This module's CVS repository is hosted on elvis.redhat.com.  To check the
+This module's CVS repository is hosted on rhlinux.redhat.com.  To check the
 current sources out of CVS, use the anoncvs access.
-    cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS login
-    cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS co pam_krb5
+    cvs -d :pserver:anoncvs@rhlinux.redhat.com:/usr/local/CVS login
+    cvs -d :pserver:anoncvs@rhlinux.redhat.com:/usr/local/CVS co pam_krb5
 
