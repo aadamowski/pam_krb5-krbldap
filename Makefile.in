@@ -27,10 +27,10 @@ all: krb5conf modules check
 
 modules: $(MODULES)
 
-pam_krb5.o: pam_krb5afs.c krb5conf.l.c
+pam_krb5.o: pam_krb5afs.c krb5conf.l.c config.h
 	$(CC) $(CFLAGS) -c -o $@ pam_krb5afs.c
 
-pam_krb5afs.o: pam_krb5afs.c krb5conf.l.c
+pam_krb5afs.o: pam_krb5afs.c krb5conf.l.c config.h
 	$(CC) $(CFLAGS) -DAFS -c -o $@ pam_krb5afs.c
 
 ifeq ($(OS),Linux)
