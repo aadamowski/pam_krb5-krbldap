@@ -79,8 +79,8 @@
 #define PASSWORD_CHANGE_SERVICE "kadmin/changepw"
 #endif
 
-#define MODULE_STASH_NAME "pam_krb5afs_cred_stash"
-#define MODULE_RET_NAME "pam_krb5afs_ret_stash"
+#define MODULE_STASH_NAME MODULE_NAME "_cred_stash"
+#define MODULE_RET_NAME MODULE_NAME "_ret_stash"
 
 #define PAM_SM_AUTH
 #define PAM_SM_SESSION
@@ -523,7 +523,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Try to get and save the user's UID. */
 	pwd = getpwnam(user);
 	if(pwd != NULL) {
-		if(config->debug)
 		stash->uid = pwd->pw_uid;
 		stash->gid = pwd->pw_gid;
 		stash->pid = getpid();
