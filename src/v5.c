@@ -154,6 +154,16 @@ v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
 {
 	return (creds->keyblock.length > 0) ? 0 : 1;
 }
+int
+v5_creds_key_length(krb5_creds *creds)
+{
+	return creds->keyblock.length;
+}
+unsigned char *
+v5_creds_key_contents(krb5_creds *creds)
+{
+	return creds->keyblock.contents;
+}
 #elif defined(HAVE_KRB5_CREDS_SESSION) && defined(HAVE_KRB5_KEYBLOCK_KEYTYPE)
 int
 v5_creds_get_etype(krb5_context ctx, krb5_creds *creds)
@@ -169,6 +179,16 @@ int
 v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
 {
 	return (creds->session.keyvalue.length > 0) ? 0 : 1;
+}
+int
+v5_creds_key_length(krb5_creds *creds)
+{
+	return creds->session.keyvalue.length;
+}
+unsigned char *
+v5_creds_key_contents(krb5_creds *creds)
+{
+	return creds->session.keyvalue.data;
 }
 #else
 #error "Don't know how to read/write key types for your Kerberos implementation!"
@@ -670,4 +690,16 @@ v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 			warn("error removing ccache file '%s'", stash->v5file);
 		}
 	}
+}
+
+int
+v5_cc_retrieve_match(void)
+{
+#if defined(KRB5_TC_MATCH_KTYPE)
+	return KRB5_TC_MATCH_KTYPE;
+#elif defined(KRB5_TC_MATCH_KEYTYPE)
+	return KRB5_TC_MATCH_KEYTYPE;
+#else
+#error "Don't know how to search ccaches!"
+#endif
 }

@@ -44,6 +44,7 @@
 #include <limits.h>
 #include <netdb.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -64,6 +65,7 @@
 
 #include "log.h"
 #include "minikafs.h"
+#include "v5.h"
 
 /* A structure specifying input/output buffers to minikafs_syscall() or
  * minikafs_pioctl(). */
@@ -314,7 +316,7 @@ minikafs_5settoken(const char *cell, krb5_creds *creds, uid_t uid)
 	struct minikafs_ioblock iob;
 	u_int32_t size;
 
-	if (creds->keyblock.length != 8) {
+	if (v5_creds_key_length(creds) != 8) {
 		return -1;
 	}
 
@@ -326,8 +328,8 @@ minikafs_5settoken(const char *cell, krb5_creds *creds, uid_t uid)
 	/* our key, plus housekeeping */
 	plain_token.kvno = 0x100; /* magic number, signals OpenAFS 1.2.8 and
 				     later that the ticket is a v5 ticket */
-	memcpy(&plain_token.key, creds->keyblock.contents,
-	       creds->keyblock.length);
+	memcpy(&plain_token.key, v5_creds_key_contents(creds),
+	       v5_creds_key_length(creds));
 	plain_token.uid = uid;
 	plain_token.start = creds->times.starttime;
 	plain_token.end = creds->times.endtime;
@@ -435,8 +437,8 @@ minikafs_5log_with_principal(krb5_context ctx,
 		memset(&creds, 0, sizeof(creds));
 		mcreds.client = client;
 		mcreds.server = server;
-		mcreds.keyblock.enctype = etypes[i];
-		if (krb5_cc_retrieve_cred(ctx, ccache, KRB5_TC_MATCH_KTYPE,
+		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		if (krb5_cc_retrieve_cred(ctx, ccache, v5_cc_retrieve_match(),
 					  &mcreds, &creds) == 0) {
 			if (try_v5_2b &&
 			    (minikafs_5settoken(cell, &creds, uid) == 0)) {
@@ -461,7 +463,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 		memset(&mcreds, 0, sizeof(mcreds));
 		mcreds.client = client;
 		mcreds.server = server;
-		mcreds.keyblock.enctype = etypes[i];
+		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
 		new_creds = NULL;
 		if (krb5_get_credentials(ctx, 0, ccache,
 					 &mcreds, &new_creds) == 0) {
@@ -593,7 +595,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		krb5_cc_close(ctx, use_ccache);
 	}
 	if (defaultrealm != NULL) {
-		krb5_free_default_realm(ctx, defaultrealm);
+		v5_free_default_realm(ctx, defaultrealm);
 	}
 	if (ctx != context) {
 		krb5_free_context(ctx);

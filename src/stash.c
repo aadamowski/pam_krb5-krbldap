@@ -165,11 +165,18 @@ _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 	_pam_krb5_stash_clone(&stash->v5file, uid, gid);
 }
 
+#ifdef USE_KRB4
 void
 _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 {
 	_pam_krb5_stash_clone(&stash->v4file, uid, gid);
 }
+#else
+void
+_pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
+{
+}
+#endif
 
 static int
 _pam_krb5_stash_clean(char **stored_file)
@@ -188,11 +195,19 @@ _pam_krb5_stash_clean(char **stored_file)
 	return -1;
 }
 
+#ifdef USE_KRB4
 int
 _pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash)
 {
 	return _pam_krb5_stash_clean(&stash->v4file);
 }
+#else
+int
+_pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash)
+{
+	return 0;
+}
+#endif
 
 int
 _pam_krb5_stash_clean_v5(struct _pam_krb5_stash *stash)

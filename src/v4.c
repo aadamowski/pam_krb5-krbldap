@@ -506,12 +506,24 @@ v4_get_creds(krb5_context ctx,
 #else
 
 int
+v4_get_creds(krb5_context ctx,
+	     pam_handle_t *pamh,
+	     struct _pam_krb5_stash *stash,
+	     struct _pam_krb5_user_info *userinfo,
+	     struct _pam_krb5_options *options,
+	     char *password,
+	     int *result)
+{
+	return -1;
+}
+
+int
 v4_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
 	uid_t uid, gid_t gid,
-	const char **ccname)
+	char **ccname)
 {
 	if (ccname != NULL) {
 		*ccname = NULL;

@@ -84,4 +84,9 @@ const char *v5_error_message(int error);
 int v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 			   const char *realm);
 
+int v5_cc_retrieve_match(void);
+
+int v5_creds_key_length(krb5_creds *creds);
+unsigned char *v5_creds_key_contents(krb5_creds *creds);
+
 #endif

@@ -4,8 +4,8 @@ AC_PROG_CC
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
-AC_PATH_PROG(KRB5_CONFIG,krb5-config,,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
-AC_PATH_PROG(KRB4_CONFIG,krb4-config,,[$PATH:/usr/kerberos/bin:/usr/krb4/bin])
+AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
+AC_PATH_PROG(KRB4_CONFIG,krb4-config,:,[$PATH:/usr/kerberos/bin:/usr/krb4/bin])
 if $KRB5_CONFIG --libs krb4 > /dev/null 2> /dev/null; then
 	AC_MSG_RESULT(Using krb4 provided with krb5.)
 	KRB4_CONFIG="$KRB5_CONFIG krb4"
@@ -19,6 +19,8 @@ KRB5_CFLAGS=`$KRB5_CONFIG --cflags krb5`
 KRB4_CFLAGS=`$KRB4_CONFIG --cflags krb4`
 KRB5_LIBS=`$KRB5_CONFIG --libs krb5`
 KRB4_LIBS=`$KRB4_CONFIG --libs krb4`
+LIBS="$LIBS `$KRB5_CONFIG --libs | sed s,'-l[^ 	]*',,g`"
+LIBS="$LIBS `$KRB4_CONFIG --libs | sed s,'-l[^ 	]*',,g`"
 
 AC_MSG_CHECKING(for KRB5_CFLAGS)
 AC_SUBST(KRB5_CFLAGS)

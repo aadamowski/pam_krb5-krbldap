@@ -1,3 +1,13 @@
+2004-04-15 nalin
+	* configure.ac: default krb5-config and krb4-config to ':', add non
+	library arguments output by --libs to LIBS
+	* src/minikafs.c: add missing <stdio.h> include.
+	* src/stash.c: fix compile for non-USE_KRB4 case.
+	* src/v4.c: fix compile for non-USE_KRB4 case.
+	* src/v5.c(v5_cc_retrieve_match): add.
+	* src/v5.c(v5_creds_key_length): add.
+	* src/v5.c(v5_creds_key_contents): add.
+
 2004-03-23 nalin
 	* configure.ac: remove kafs/krbafs checks.
 	* src/Makefile.am: add EXTRA_PROGRAMS target for afs5log.
