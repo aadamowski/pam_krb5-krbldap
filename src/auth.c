@@ -283,9 +283,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	if (retval == PAM_SUCCESS) {
-		notice("authentication succeeds for '%s'", user);
+		notice("authentication succeeds for '%s' (%s)", user,
+		       userinfo->unparsed_name);
 	} else {
-		notice("authentication fails for '%s': %s (%s)", user,
+		notice("authentication fails for '%s' (%s): %s (%s)", user,
+		       userinfo->unparsed_name,
 		       pam_strerror(pamh, retval),
 		       v5_error_message(stash->v5result));
 	}
