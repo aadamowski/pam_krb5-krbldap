@@ -1,0 +1,42 @@
+.TH pam_krb5 8 1999/11/28 "Linux" "System Administrator's Manual"
+.SH NAME
+pam_krb5 \- Kerberos 5 authentication
+.SH SYNOPSIS
+.B auth required /lib/security/pam_krb5.so
+.br
+.B session optional /lib/security/pam_krb5.so
+.SH DESCRIPTION
+pam_krb5.so is designed to allow smooth integration of Kerberos 5 password-
+checking with applications built using PAM.  It also supports session-specific
+ticket files (which are neater), and Kerberos IV ticket file grabbing for
+compatibility.  Its main use is as an authentication module, but it also
+supplies the same functions as a session-management module to better support
+poorly-written applications, and a couple of other workarounds as well.
+
+When a user logs in, the module's authentication function performs a simple
+password check and, if possible, obtains Kerberos 5 and Kerberos IV credentials,
+caching them for later use.  When the application requests initialization of
+credentials (or opens a session), the usual ticket files are created.
+When the application subsequently requests deletion of
+credentials or closing of the session, the module destroys the ticket files.
+
+.SH ARGUMENTS
+.IP debug
+turns on debugging via \fBsyslog(3)\fR.
+.IP use_first_pass
+tells pam_krb5.so to get the user's entered password as it was stored by
+a module listed earlier in the stack, usually \fBpam_unix\fR or \fBpam_pwdb\fR,
+instead of prompting the user for it.
+.IP try_first_pass
+tells pam_krb5.so to check the password as with \fBuse_first_pass\fR,
+but to prompt the user for another one if the previously-entered one fails. This
+is the default mode of operation.
+
+.SH FILES
+\fI/etc/krb5.conf\fP
+.br
+.SH "SEE ALSO"
+.BR pam_krb5 (5)
+.br
+.SH BUGS
+Let's hope not.

@@ -1,0 +1,54 @@
+.TH pam_krb5afs 8 1999/11/28 "Linux" "System Administrator's Manual"
+.SH NAME
+pam_krb5afs \- Kerberos 5 authentication with AFS support
+.SH SYNOPSIS
+.B auth required /lib/security/pam_krb5afs.so
+.br
+.B session optional /lib/security/pam_krb5afs.so
+.SH DESCRIPTION
+pam_krb5afs.so is designed to allow smooth integration of Kerberos 5 password-
+checking with applications built using PAM.  It also supports session-specific
+ticket files (which are neater), Kerberos IV ticket file grabbing, and AFS
+token-grabbing.  Its main use is as an authentication module, but it also
+supplies the same functions as a session-management module to better support
+poorly-written applications, and a couple of other workarounds as well.
+
+When a user logs in, the module's authentication function performs a simple
+password check and, if possible, obtains Kerberos 5 and Kerberos IV credentials,
+caching them for later use.  When the application requests initialization of
+credentials (or opens a session), the usual ticket files are created and AFS
+tokens are obtained.  When the application subsequently requests deletion of
+credentials or closing of the session, the module destroys the tokens for the
+current PAG and deletes the ticket files.
+
+Some applications (notably, wu-ftpd, wu-imapd, and Samba) neither create
+credentials nor open sessions.  For these applications, it's best to use the
+\fBtokens\fR option to force token-grabbing during the password check, which is
+usually the right thing to do for these server apps.
+
+.SH ARGUMENTS
+.IP debug
+turns on debugging via \fBsyslog(3)\fR.
+.IP use_first_pass
+tells pam_krb5afs.so to get the user's entered password as it was stored by
+a module listed earlier in the stack, usually \fBpam_unix\fR or \fBpam_pwdb\fR,
+instead of prompting the user for it.
+.IP try_first_pass
+tells pam_krb5afs.so to check the password as with \fBuse_first_pass\fR,
+but to prompt the user for another one if the previously-entered one fails. This
+is the default mode of operation.
+.IP tokens
+tells pam_krb5afs.so to get AFS tokens for the user immediately if the password
+check succeeds.  This is necessary for some programs that never open sessions or
+attempt to initialize credentials (PAM's credentials, not Kerberos's).  If you
+have a server app that requires access to the user's file space, you might need
+this.
+
+.SH FILES
+\fI/etc/krb5.conf\fP
+.br
+.SH "SEE ALSO"
+.BR pam_krb5afs (5)
+.br
+.SH BUGS
+Let's hope not.

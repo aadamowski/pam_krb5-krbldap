@@ -1,0 +1,64 @@
+.TH pam_krb5afs 5 1999/11/28 "Linux" "System Administrator's Manual"
+.SH NAME
+pam_krb5afs \- Kerberos 5 authentication with AFS support
+.SH DESCRIPTION
+pam_krb5afs.so uses a portion of \fBkrb5.conf\fR to get its configuration
+information.  You should read the \fBkrb5.conf(5)\fR man page before continuing
+here.  The module expects its configuration information to be in the \fBpam\fR
+section of the \fBkrb5.conf\fR configuration file.
+
+.SH DIRECTIVES
+.IP debug
+can be set to \fBtrue\fR or \fBfalse\fR
+turns on debugging via \fBsyslog(3)\fR.
+.IP ticket_lifetime
+default ticket lifetime.  If not specified, the default is 36000 seconds (10
+hours).
+.IP renew_lifetime
+default renewable lifetime.  This specifies how much time you have after
+getting credentials to renew them.  If not specified, the default is 36000
+seconds (10 hours).
+.IP forwardable
+controls whether or not tickets are forwardable.  If not specified, they are.
+.IP krb4_convert
+controls whether or not pam_krb5afs tries to get Kerberos IV tickets using the
+\fBkrb524d\fR service on the KDC and create ticket files with them.  Unless
+you've converted \fIeverything\fR on your system over to use Kerberos 5, you'll
+want to leave this set to \fBtrue\fR.
+.IP afs_cells
+specifies which cells you want to get tokens for.  Set this to the list of all
+of your local cells.
+.IP hosts
+specifies which other hosts tickets obtained by pam_krb5afs will be good on.  If
+your host is behind a firewall, you should add the IP address or name that the
+\fIKDC\fR sees it as to this list.
+.IP required_tgs
+specifies a principal for which a user must be able to get a TGS for in order
+to be allowed access.  This is the only certain way to be absolutely sure the
+TGT hasn't been forged, and should always be used.  This test is disabled by
+default because its value is site-specific.
+
+.SH EXAMPLE
+
+[pam]
+    debug = true
+    ticket_lifetime = 36000
+    renew_lifetime = 36000
+    forwardable = true
+    krb4_convert = true
+    afs_cells = eos.ncsu.edu unity.ncsu.edu bp.ncsu.edu
+    hosts = thermo.stat.ncsu.edu alf.physics.ncsu.edu
+    required_tgs = zephyr/zephyr
+
+.SH FILES
+\fI/etc/krb5.conf\fP
+.br
+.SH "SEE ALSO"
+.BR pam_krb5afs (8)
+.br
+.SH BUGS
+Possibly.  Very few people have bothered to debug this module, or even audit it
+for security purposes.  Send the author email if you have trouble, and check
+for new versions at <http://www.pobox.com/~nalin.dahyabhai/sources/>.
+.SH AUTHOR
+Nalin Dahyabhai <nalin.dahyabhai@pobox.com>

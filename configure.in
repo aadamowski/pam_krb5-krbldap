@@ -1,0 +1,66 @@
+AC_INIT(README)
+
+AC_CONFIG_HEADER(config.h)
+AC_PROG_CC()
+CFLAGS=-g
+AC_PROG_INSTALL()
+
+AC_ARG_WITH(krb5,
+[  --with-krb5=dir         use Kerberos 5 headers and libs under dir],
+if test x$withval != xyes ; then
+	KRB5=$withval
+	CPPFLAGS="-I$withval/include $CPPFLAGS"
+	CFLAGS="-I$withval/include $CFLAGS"
+	LDFLAGS="-L$withval/lib $LDFLAGS"
+fi
+)
+
+AC_ARG_WITH(krbafs,
+[  --with-krbafs=dir       use Kerberos 5-hacked krbafs package under dir],
+if test x$withval != xyes ; then
+	KRBAFS=$withval
+	CPPFLAGS="-I$withval/include $CPPFLAGS"
+	CFLAGS="-I$withval/include $CFLAGS"
+	LDFLAGS="-L$withval/lib $LDFLAGS"
+fi
+)
+
+AC_CHECK_HEADERS(sys/stat.h sys/types.h stdio.h stdlib.h string.h unistd.h\
+		 fcntl.h limits.h pwd.h dlfcn.h com_err.h syslog.h sys/syslog.h\
+		 ctype.h security/pam_appl.h security/pam_modules.h)
+AC_CHECK_HEADER(krb5.h,AC_DEFINE(HAVE_KRB5_H),
+	AC_ERROR(install Kerberos 5 or re-run configure with --with-krb5))
+AC_CHECK_HEADER(kerberosIV/krb.h,AC_DEFINE(HAVE_KERBEROSIV_KRB_H),
+	AC_WARN(omitting Kerberos IV compatibility))
+
+TARGET=pam_krb5afs
+
+AC_CHECK_LIB(c,sprintf,,,$LIBS)
+AC_CHECK_LIB(socket,connect,,,$LIBS)
+AC_CHECK_LIB(nsl,yp_bind,,,$LIBS)
+AC_CHECK_LIB(resolv,res_mkquery,,,$LIBS)
+AC_CHECK_LIB(crypt,crypt,,,$LIBS)
+AC_CHECK_LIB(dl,dlopen,,,$LIBS)
+AC_CHECK_LIB(com_err,error_message,,,$LIBS)
+AC_CHECK_LIB(k5crypto,krb5_des_string_to_key,,,$LIBS)
+AC_CHECK_LIB(krb5,krb5_init_context,,,$LIBS)
+AC_CHECK_LIB(des425,des_string_to_key,,,$LIBS)
+AC_CHECK_LIB(krb4,in_tkt,,,$LIBS)
+AC_CHECK_LIB(krb524,krb524_convert_creds_kdc,
+	LIBS="-lkrb524 $LIBS"
+	AC_DEFINE(HAVE_LIBKRB524)
+	AC_CHECK_HEADER(krbafs.h,AC_DEFINE(HAVE_KRBAFS_H)
+		AC_CHECK_LIB(krbafs,krb_afslog,,,$LIBS),
+		AC_WARN(omitting token-grabbing functions)
+		TARGET=pam_krb5
+		)
+,,$LIBS)
+AC_CHECK_FUNCS(krb5_prompter_posix)
+AC_SUBST(KRB5)
+AC_SUBST(KRBAFS)
+
+SHLIBDEP=`uname`
+AC_SUBST(SHLIBDEP)
+AC_SUBST(TARGET)
+
+AC_OUTPUT(Makefile)

@@ -1,0 +1,36 @@
+Fri December 31 1999 Nalin Dahyabhai <nalin@redhat.com>
+- change to using ticket files created with mkstemp()
+
+Tue December 28 1999 Nalin Dahyabhai <nalin@redhat.com>
+- make setcred() return the same code as authenticate() to make sure that libpam
+  walks the auth stack the same way for both functions
+
+Wed December 22 1999 Nalin Dahyabhai <nalin@redhat.com>
+- add man pages that don't mention AFS at all
+
+Tue November 30 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- add linking with libcrypt, remove linking with libpam
+
+Mon November 29 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- Make creating the Kerberos IV ticket a non-fatal error if there are problems.
+- Add man pages.
+
+Mon November 8 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- Clean up PAM_AUTHTOK_RECOVER{,Y}_ERR definition problems and Solaris LD flags.
+  Problems spotted and solution proposed by Nitin Dahyabhai <nitind@pobox.com>.
+
+Wed November 3 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- Massive restructuring and cleaning out of 1.0-specific code.
+
+Mon October 4 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- Update for krb5 1.1 release
+
+Mon July 26 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- Configure should die if krb5.h or krbafs.h isn't found (bfdimmic)
+
+Thu July 15 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- Added reason to authentication failure messages (wjlyerly)
+- Only prompt for second password if first password fails
+
+Fri June 18 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+- First public release.  Bwah-ha-ha-ha-ha-ha-ha!
