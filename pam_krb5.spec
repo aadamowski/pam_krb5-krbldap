@@ -35,9 +35,12 @@ make install DESTDIR=$RPM_BUILD_ROOT
 /lib/security/pam_krb5afs.so
 /usr/man/man5/*
 /usr/man/man8/*
-%doc README ChangeLog TODO pam.d krb5afs-pam.d
+%doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Mon Mar 20 2000 Nalin Dahyabhai <nalin@redhat.com>
+- add proper copyright statements
+
 * Fri Mar 03 2000 Nalin Dahyabhai <nalin@redhat.com>
 - clean up prompter
 
