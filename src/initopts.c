@@ -255,7 +255,14 @@ _pam_krb5_set_init_opts(krb5_context ctx, krb5_get_init_creds_opt *k5_options,
 		krb5_get_init_creds_opt_set_proxiable(k5_options,
 						      options->proxiable);
 	}
-	if ((options->renewable != -1) && (options->renew_lifetime != -1)) {
+	if ((options->ticket_lifetime != -1) &&
+	    (options->ticket_lifetime > 0)) {
+		krb5_get_init_creds_opt_set_tkt_life(k5_options,
+						     options->ticket_lifetime);
+	}
+	if ((options->renewable != -1) &&
+	    (options->renew_lifetime != -1) &&
+	    (options->renew_lifetime > 0)) {
 		krb5_get_init_creds_opt_set_renew_life(k5_options,
 						       options->renewable ?
 						       options->renew_lifetime :
