@@ -60,7 +60,7 @@ distclean: clean
 all: modules check
 
 check: dlopen
-	./dlopen ./$(SHTARGETS).so
+	./dlopen $(SHTARGETS)
 
 pam_krb5afs.c: config.h
 

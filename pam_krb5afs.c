@@ -297,7 +297,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	}
 
 	/* Cells to get tokens for. */
-#ifdef HAVE_KRBAFS_H
+#ifdef AFS
 	profile_get_string(profile, PROFILE_NAME, "afs_cells", NULL,
 			   DEFAULT_CELLS, &cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
@@ -371,7 +371,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 			ret->use_authtok = 1;
 			continue;
 		}
-#ifdef HAVE_KRBAFS_H
+#ifdef AFS
 		/* Do a setcred() from inside of the auth function. */
 		if((strcmp(argv[i], "get_tokens") == 0) ||
 		   (strcmp(argv[i], "tokens") == 0) ||
@@ -655,7 +655,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		DEBUG("credentials saved for %s", user);
 	}
 
-#ifdef HAVE_KRBAFS_H
+#ifdef AFS
 	/* Get tokens. */
 	if(config->setcred) {
 		pam_sm_setcred(pamh, PAM_ESTABLISH_CRED, argc, argv);
@@ -896,7 +896,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #endif
 	}
 
-#ifdef HAVE_KRBAFS_H
+#ifdef AFS
 	/* Use the new tickets to create tokens. */
 	if((ret == PAM_SUCCESS) && config->get_tokens && config->cell_list) {
 		if(!k_hasafs()) {
@@ -936,7 +936,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 		}
 #endif
-#ifdef HAVE_KRBAFS_H
+#ifdef AFS
 		/* Clear tokens unless we need them. */
 		if(!config->setcred && k_hasafs()) {
 			INFO("destroying tokens");
