@@ -1,4 +1,8 @@
 2004-06-14 nalin
+	* src/session.c(pam_sm_open_session,pam_sm_close_session): log what
+	we return, and why, if debugging is enabled.
+
+2004-06-14 nalin
 	* src/acct.c(pam_sm_acct_mgmt): likewise, catch and log specific error
 	information for EAGAIN, KRB5_REALM_CANT_RESOLVE, and KRB5_KDC_UNREACH
 	errors.

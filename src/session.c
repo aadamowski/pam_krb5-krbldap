@@ -107,6 +107,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (options->debug) {
 			debug("no user info for '%s'", user);
 		}
+		if (options->debug) {
+			debug("pam_open_session returning %d (%s)",
+			      PAM_USER_UNKNOWN,
+			      pam_strerror(pamh, PAM_USER_UNKNOWN));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_USER_UNKNOWN;
@@ -118,6 +123,10 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			      (unsigned long) options->minimum_uid);
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (options->debug) {
+			debug("pam_open_session returning %d (%s)", PAM_IGNORE,
+			      pam_strerror(pamh, PAM_IGNORE));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_IGNORE;
@@ -128,6 +137,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if (stash == NULL) {
 		warn("no stash for '%s' (shouldn't happen)", user);
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (options->debug) {
+			debug("pam_open_session returning %d (%s)",
+			      PAM_SERVICE_ERR,
+			      pam_strerror(pamh, PAM_SERVICE_ERR));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_SERVICE_ERR;
@@ -138,6 +152,10 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		debug("no v5 creds for user '%s', skipping session setup",
 		      user);
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (options->debug) {
+			debug("pam_open_session returning %d (%s)", PAM_SUCCESS,
+			      pam_strerror(pamh, PAM_SUCCESS));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_SUCCESS;
@@ -203,6 +221,13 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 #endif
 
+	/* If we didn't create ccache files because we couldn't, just
+	 * pretend everything's fine. */
+	if ((i != PAM_SUCCESS) &&
+	    (v5_creds_check_initialized(ctx, &stash->v5creds) != 0)) {
+		i = PAM_SUCCESS;
+	}
+
 	/* Clean up. */
 	if (options->debug) {
 		debug("pam_open_session returning %d (%s)", i,
@@ -211,12 +236,6 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	_pam_krb5_options_free(pamh, ctx, options);
 	_pam_krb5_user_info_free(ctx, userinfo);
 
-	/* If we didn't create ccache files because we couldn't, just
-	 * pretend everything's fine. */
-	if ((i != PAM_SUCCESS) &&
-	    (v5_creds_check_initialized(ctx, &stash->v5creds) != 0)) {
-		i = PAM_SUCCESS;
-	}
 
 	krb5_free_context(ctx);
 	return i;
@@ -261,6 +280,11 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 					    options->mappings);
 	if (userinfo == NULL) {
 		warn("no user info for %s (shouldn't happen)", user);
+		if (options->debug) {
+			debug("pam_close_session returning %d (%s)",
+			      PAM_USER_UNKNOWN,
+			      pam_strerror(pamh, PAM_USER_UNKNOWN));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_USER_UNKNOWN;
@@ -273,6 +297,10 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 			debug("ignoring '%s' -- uid below minimum", user);
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (options->debug) {
+			debug("pam_close_session returning %d (%s)", PAM_IGNORE,
+			      pam_strerror(pamh, PAM_IGNORE));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_IGNORE;
@@ -283,6 +311,11 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	if (stash == NULL) {
 		warn("no stash for user %s (shouldn't happen)", user);
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (options->debug) {
+			debug("pam_close_session returning %d (%s)",
+			      PAM_SERVICE_ERR,
+			      pam_strerror(pamh, PAM_SERVICE_ERR));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_SERVICE_ERR;
@@ -293,6 +326,11 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		debug("no v5 creds for user '%s', skipping session cleanup",
 		      user);
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (options->debug) {
+			debug("pam_close_session returning %d (%s)",
+			      PAM_SUCCESS,
+			      pam_strerror(pamh, PAM_SUCCESS));
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
 		return PAM_SUCCESS;
@@ -318,6 +356,11 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		      pam_strerror(pamh, 0));
 	}
 	_pam_krb5_user_info_free(ctx, userinfo);
+	if (options->debug) {
+		debug("pam_close_session returning %d (%s)",
+		      PAM_SUCCESS,
+		      pam_strerror(pamh, PAM_SUCCESS));
+	}
 	_pam_krb5_options_free(pamh, ctx, options);
 	krb5_free_context(ctx);
 	return PAM_SUCCESS;
