@@ -191,6 +191,12 @@ static int check_flags(int argc, const char **argv)
 
 	/* Scan for flags we find interesting. */
 	for(i = 0; i < argc; i++) {
+		/* Provide debug info via syslog. */
+		if(strcmp(argv[i], "debug") == 0) {
+			globals.debug = 1;
+		}
+	}
+	for(i = 0; i < argc; i++) {
 		D(("Processing flag \"%s\".", argv[i]));
 		/* Required arguments that we don't use but need to recognize.*/
 		if(strcmp(argv[i], "no_warn") == 0) {
@@ -223,11 +229,6 @@ static int check_flags(int argc, const char **argv)
 			globals.use_authtok = 1;
 			continue;
 		}
-		/* Provide debug info via syslog. */
-		if(strcmp(argv[i], "debug") == 0) {
-			globals.debug = 1;
-			continue;
-		}
 		/* Useful KDC options. */
 		if(strcmp(argv[i], "kdc_opt_forwardable") == 0) {
 			globals.kdc_options |= KDC_OPT_FORWARDABLE;
@@ -248,6 +249,7 @@ static int check_flags(int argc, const char **argv)
 		if(globals.cellnames) {
 			/* Save the cell name. */
 			D(("Processing cell \"%s\".", argv[i]));
+			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": option '%s' is a cell name.", argv[i]);
 			globals.cellnames[globals.cells - 1] = strdup(argv[i]);
@@ -1231,7 +1233,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef MAIN
 /* Don't actually run this.  This function is only here for helping to ensure
-   that all necessary libraries are listed at link-time, and will probably
+   that all necessary libraries are included at link-time, and will probably
    segfault all over the place if you actually try to run it. */
 int main(int argc, char **argv)
 {
