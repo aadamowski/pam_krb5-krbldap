@@ -63,6 +63,9 @@
 
 #ident "$Id$"
 
+/* These would be where we refresh the ticket and ccache files KRBTKFILE and
+ * KRB5CCNAME point to, if set.  Until I figure out under what conditions that
+ * can be considered safe, we're just not going to do that. */
 static void
 sly_v4(krb5_context ctx, const char *v4tktfile,
        struct _pam_krb5_user_info *userinfo, struct _pam_krb5_stash *stash)
@@ -121,7 +124,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		     user);
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_SERVICE_ERR;
+		return PAM_USER_UNKNOWN;
 	}
 
 	if ((options->minimum_uid != -1) &&
