@@ -448,6 +448,9 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	/* Read a TGT from $KRB5CCNAME. */
 	ccname = pam_getenv(pamh, "KRB5CCNAME");
 	if ((ccname != NULL) && (strlen(ccname) > 0)) {
+		if (options->debug) {
+			debug("KRB5CCNAME is set to \"%s\"", ccname);
+		}
 		if (stash->v5ctx != NULL) {
 			ctx = stash->v5ctx;
 		} else {
