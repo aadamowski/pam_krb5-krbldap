@@ -2,6 +2,9 @@
 
 #include <stdio.h>
 #define KRB5_CONFIG "/etc/krb5.conf"
+#ifdef KRB5CONF_APP
+#define YYDEBUG 1
+#endif
 
 int xkrb5_conf_lineno = 1;
 char *xkrb5_conf_section = NULL;
@@ -49,7 +52,7 @@ sectionstart:
 			free(xkrb5_conf_section);
 		}
 		xkrb5_conf_section = $1;
-	}
+	};
 
 subsection:
 	subsectionstart subsectionstop |
@@ -67,7 +70,8 @@ subsectionstart:
 			free(xkrb5_conf_section);
 			xkrb5_conf_section = tmp;
 		}
-	}
+	};
+
 subsectionstop:
 	CURLYRIGHT NEWLINE
 	{
@@ -78,7 +82,7 @@ subsectionstop:
 				*p = '\0';
 			}
 		}
-	}
+	};
 
 assignments:
 	assignment |
