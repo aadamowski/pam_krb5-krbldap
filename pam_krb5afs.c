@@ -812,7 +812,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, ret));
 			} else {
-				ret = putenv(pamh, v5_path);
+				ret = putenv(v5_path);
 				if(ret != PAM_SUCCESS) {
 					CRIT("%s setting environment",
 					     pam_strerror(pamh, ret));
@@ -877,7 +877,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, ret));
 			} else {
-				ret = putenv(pamh, v4_path);
+				ret = putenv(v4_path);
 				if(ret != PAM_SUCCESS) {
 					CRIT("%s setting environment",
 					     pam_strerror(pamh, ret));
