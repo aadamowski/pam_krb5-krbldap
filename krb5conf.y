@@ -1,5 +1,7 @@
 %{
+
 #include <stdio.h>
+
 int xkrb5_conf_lineno = 1;
 char *xkrb5_conf_section = NULL;
 struct xkrb5_conf_entry {
@@ -9,6 +11,7 @@ struct xkrb5_conf_entry {
 } *xkrb5_conf_entries = NULL;
 int xkrb5_conf_parse();
 int xkrb5_conf_lex();
+
 %}
 
 %union {
@@ -97,6 +100,24 @@ strings:
 	strings STRING;
 
 %%
+
+#if 0
+#ifndef APPDEFAULT_APP
+#define APPDEFAULT_APP "pam"
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef TRUE
+#define TRUE (!FALSE)
+#endif
+
+#ifndef CRIT
+#define CRIT printf
+#endif
+#endif
 
 int
 yyerror(const char *error)

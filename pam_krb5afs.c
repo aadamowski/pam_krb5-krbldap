@@ -197,6 +197,7 @@ struct stash {
 	char v5_path[PATH_MAX];
 	char v4_path[PATH_MAX];
 	krb5_creds v5_creds;
+	krb5_creds admin_creds;
 #ifdef HAVE_LIBKRB4
 	int have_v4_creds;
 	CREDENTIALS v4_creds;
@@ -763,7 +764,7 @@ cleanup(pam_handle_t *pamh, void *data, int error_status)
 /* Prompt the user for a single piece of information. */
 static int
 pam_prompt_for(pam_handle_t *pamh, int msg_style,
-	       const char *msg, const char **out)
+	       const char *msg, char **out)
 {
 	const struct pam_message prompt_message = {msg_style, msg};
 	struct pam_response *responses;
@@ -808,7 +809,7 @@ pam_prompter(krb5_context context, void *data, const char *name,
 	     const char *banner, int num_prompts, krb5_prompt prompts[])
 {
 	int i = 0, ret = PAM_SUCCESS;
-	const char *p = NULL;
+	char *p = NULL;
 	char *q = NULL, *tmp = NULL;
 	for(i = 0; i < num_prompts; i++) {
 		int l = strlen(prompts[i].prompt) + strlen(": ") + 1;
@@ -968,7 +969,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_context context;
 	krb5_principal principal;
 	struct config *config = NULL;
-	const char *user = NULL;
+	char *user = NULL;
 	const char *password = NULL;
 	char *realm, *tmp;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
@@ -981,16 +982,19 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if(krc == KRB5_SUCCESS) {
 		krb5_init_ets(context);
 	} else {
+		CRIT("error initializing Kerberos");
 		prc = PAM_SYSTEM_ERR;
 	}
 
 	if(RC_OK) {
 		if(!(config = get_config(context, argc, argv))) {
+			CRIT("error parsing configuration");
 			prc = PAM_SYSTEM_ERR;
 		}
 	}
 
-	DEBUG("pam_sm_authenticate() called");
+	DEBUG("pam_sm_authenticate() called (prc = %s)",
+	      pam_strerror(pamh, prc));
 
 	/* Initialize Kerberos and grab some memory for the creds structures. */
 	if(RC_OK) {
@@ -998,7 +1002,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		if(stash != NULL) {
 			memset(stash, 0, sizeof(struct stash));
 			krb5_get_default_realm(context, &realm);
-			DEBUG("default Kerberos realm is %s", realm);
+			DEBUG("default Kerberos realm is `%s'", realm);
 		} else {
 			prc = PAM_SYSTEM_ERR;
 			CRIT("Kerberos 5 initialize problem/malloc error");
@@ -1021,27 +1025,18 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Get the user's name, by any means possible. */
 	if(RC_OK) {
-		/* First try the PAM library. */
-		pam_get_user(pamh, &user, "login: ");
-
-		/* If there was an error, use the conversation function. */
-		if((user == NULL) || (strlen(user) == 0)) {
-			DEBUG("prompting for login");
+		const char *rouser = NULL;
+		prc = pam_get_user(pamh, &rouser, "login: ");
+		if((prc == PAM_SUCCESS) && (rouser != NULL)) {
+			DEBUG("pam_get_user returned `%s'", rouser);
+			user = strdup(rouser);
+		} else {
+			CRIT("couldn't determine user (first guess was `%s'), "
+			     "prompting for user name");
 			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_ON,
 					     "login: ", &user);
-			if(RC_OK) {
-				pam_set_item(pamh, PAM_USER, (const void*)user);
-			}
 		}
-
-		/* If we got a login from either method, use it. */
-		prc = pam_get_user(pamh, &user, "login: ");
-		if(prc != PAM_SUCCESS) {
-			CRIT("cannot determine user's login");
-			prc = PAM_USER_UNKNOWN;
-		}
-
-		if((user == NULL) || (strlen(user) == 0)) {
+		if((prc != PAM_SUCCESS) || (strlen(user) == 0)) {
 			CRIT("cannot determine user's login");
 			prc = PAM_USER_UNKNOWN;
 		}
@@ -1060,7 +1055,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(pwd != NULL) {
 				stash->uid = pwd->pw_uid;
 				stash->gid = pwd->pw_gid;
-				DEBUG("%s has uid %d, gid %d", user,
+				DEBUG("`%s' has uid %d, gid %d", user,
 				      stash->uid, stash->gid);
 			} else {
 				CRIT("getpwnam() failed for the user");
@@ -1073,7 +1068,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if(RC_OK) {
 		krc = krb5_parse_name(context, user, &principal);
 		if(krc != KRB5_SUCCESS) {
-			CRIT("%s building user principal for %s",
+			CRIT("%s building user principal for `%s'",
 			     error_message(krc), user);
 			prc = PAM_SYSTEM_ERR;
 		}
@@ -1091,7 +1086,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if(RC_OK) {
 		int authenticated = FALSE;
 
-		DEBUG("attempting to authenticate %s", user);
+		DEBUG("attempting to authenticate `%s'", user);
 
 		/* Set up the creds structure. */
 		memset(&stash->v5_creds, 0, sizeof(stash->v5_creds));
@@ -1163,25 +1158,53 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	/* Verify that the TGT is good (i.e., that the reply wasn't spoofed). */
 	if(RC_OK) {
 		if(config->validate) {
+#if 0
 			if(validate_tgt(user, context, config, stash) == 0) {
 				prc = PAM_AUTH_ERR;
 			}
+#else
+			krc = krb5_verify_init_creds(context, &stash->v5_creds,
+						     NULL, NULL, NULL, NULL);
+			if(krc != KRB5_SUCCESS) {
+				CRIT("TGT verification failed for `%s'");
+			}
+#endif
+		}
+	}
+
+	if(RC_OK) {
+		memset(&stash->admin_creds, 0, sizeof(stash->admin_creds));
+		stash->admin_creds.client = principal;
+		krc = krb5_get_init_creds_password(context,
+						   &stash->admin_creds,
+						   principal,
+						   (char*)password,
+						   pam_prompter,
+						   pamh,
+						   0,
+						   ADMIN_SERVICE,
+						   &config->creds_opt);
+		if(krc != KRB5_SUCCESS) {
+			INFO("failed to get admin creds for `%s'", user);
+			memset(&stash->admin_creds, 0,
+			       sizeof(stash->admin_creds));
+			krc = KRB5_SUCCESS;
 		}
 	}
 
 	/* Log something. */
 	if(RC_OK) {
-		INFO("authentication succeeds for %s", user);
+		INFO("authentication succeeds for `%s'", user);
 	} else {
-		INFO("authentication fails for %s", user);
+		INFO("authentication fails for `%s'", user);
 	}
 
 	if(RC_OK) {
 		prc = pam_set_data(pamh, MODULE_STASH_NAME, stash, cleanup);
 		if(prc == PAM_SUCCESS) {
-			DEBUG("credentials saved for %s", user);
+			DEBUG("credentials saved for `%s'", user);
 		} else {
-			DEBUG("error saving credentials for %s", user);
+			DEBUG("error saving credentials for `%s'", user);
 		}
 	}
 
@@ -1356,18 +1379,22 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	prc = convert_kerror(krc);
 
 	/* Done with Kerberos. */
-	krb5_free_context(context);
+	if(context != NULL) {
+		krb5_free_context(context);
+	}
 
 	/* Save the return code for later use by setcred(). */
-	*pret = prc;
-	prc = pam_set_data(pamh, MODULE_RET_NAME, pret, cleanup);
-	if(prc == PAM_SUCCESS) {
-		DEBUG("saved return code (%d) for later use", *pret);
-	} else {
-		INFO("error %d (%s) saving return code (%d)", prc,
-			pam_strerror(pamh, prc), *pret);
+	if(RC_OK) {
+		*pret = prc;
+		prc = pam_set_data(pamh, MODULE_RET_NAME, pret, cleanup);
+		if(prc == PAM_SUCCESS) {
+			DEBUG("saved return code (%d) for later use", *pret);
+		} else {
+			INFO("error %d (%s) saving return code (%d)", prc,
+				pam_strerror(pamh, prc), *pret);
+		}
+		prc = *pret;
 	}
-	prc = *pret;
 
 	DEBUG("pam_sm_authenticate returning %d (%s)", prc,
 	      prc ? pam_strerror(pamh, prc) : "Success");
@@ -1386,7 +1413,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_ccache ccache;
 	char v4_path[PATH_MAX];
 	char v5_path[PATH_MAX];
-	const char *user = NULL;
+	char *user = NULL;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
 	struct config *config = NULL;
 
@@ -1407,7 +1434,19 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Retrieve information about the user. */
 	if(RC_OK) {
-		prc = pam_get_item(pamh, PAM_USER, (const void**)&user);
+		const void *rouser = NULL;
+		prc = pam_get_item(pamh, PAM_USER, &rouser);
+		if(prc != PAM_SUCCESS) {
+			CRIT("couldn't determine user");
+			prc = PAM_USER_UNKNOWN;
+		}
+		if(rouser != NULL) {
+			user = strdup(rouser);
+		}
+		if((user != NULL) && (strlen(user) == 0)) {
+			CRIT("cannot determine user's login");
+			prc = PAM_USER_UNKNOWN;
+		}
 	}
 
 	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED))) {
@@ -1452,7 +1491,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						        stash->v5_creds.client);
 			}
 			if(krc != KRB5_SUCCESS) {
-				CRIT("error initializing ccache %s for %s: "
+				CRIT("error initializing ccache %s for `%s': "
 				     "%s", v5_path, user, error_message(krc));
 			}
 
@@ -1482,7 +1521,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG("%s", v5_path);
 		} else {
 			DEBUG("Kerberos 5 credential retrieval failed for "
-			      "%s, user is probably local", user);
+			      "`%s', user is probably local", user);
 			stash = NULL;
 			prc = PAM_CRED_UNAVAIL;
 		}
@@ -1491,20 +1530,20 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		/* Get Kerberos 4 credentials if we haven't already. */
 		if(RC_OK && config->krb4_convert) {
 			if(!stash->have_v4_creds) {
-				DEBUG("converting credentials for %s", user);
+				DEBUG("converting credentials for `%s'", user);
 
 				krc = krb524_convert_creds_kdc(context,
 							      &stash->v5_creds,
 							      &stash->v4_creds);
 
 				DEBUG("krb524_convert_creds returned `%s' "
-				      "for %s",
+				      "for `%s'",
 				      krc ? error_message(krc) :
 				      "Success", user);
 
 				if(krc == KRB5_SUCCESS) {
 					INFO("v4 ticket conversion succeeded "
-					     "for %s", user);
+					     "for `%s'", user);
 					stash->have_v4_creds = TRUE;
 				} else {
 					/* This shouldn't happen.  Either krb524d isn't
@@ -1512,7 +1551,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 					   misconfigured, or something weirder
 					   still happened: we succeeded. */
 					CRIT("v4 ticket conversion failed for "
-					     "%s: %d (%s)", user,
+					     "`%s': %d (%s)", user,
 					     krc, error_message(krc));
 					krc = KRB5_SUCCESS;
 				}
@@ -1666,7 +1705,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #endif
 #ifdef AFS
 		/* Clear tokens unless we need them. */
-		if(!config->setcred && k_hasafs()) {
+		if((prc == PAM_SUCCESS) && !config->setcred && k_hasafs()) {
 			DEBUG("destroying tokens");
 			k_unlog();
 		}
@@ -1674,7 +1713,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 
 	/* Done with Kerberos. */
-	krb5_free_context(context);
+	if(context != NULL) {
+		krb5_free_context(context);
+	}
 
 	pam_get_data(pamh, MODULE_RET_NAME, (const void**) &pret);
 	if(pret) {
@@ -1685,6 +1726,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	DEBUG("pam_sm_setcred returning %d (%s)", prc,
 	      (prc != PAM_SUCCESS) ? pam_strerror(pamh, prc) : "Success");
+
+	if(user != NULL) {
+		free(user);
+	}
 
 	return prc;
 }
@@ -1707,7 +1752,9 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 	DEBUG("pam_sm_open_session() called");
-	if(context) krb5_free_context(context);
+	if(context != NULL) {
+		krb5_free_context(context);
+	}
 
 	return pam_sm_setcred(pamh, flags | PAM_ESTABLISH_CRED, argc, argv);
 }
@@ -1728,7 +1775,9 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 	DEBUG("pam_sm_close_session() called");
-	if(context) krb5_free_context(context);
+	if(context != NULL) {
+		krb5_free_context(context);
+	}
 
 	return pam_sm_setcred(pamh, flags | PAM_DELETE_CRED, argc, argv);
 }
@@ -1740,8 +1789,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_principal principal = NULL;
 	kadm5_principal_ent_rec principal_ent;
 	void *kadm5_handle = NULL;
-	const char *user = NULL;
-	const char *authtok = NULL;
+	char *user = NULL;
+	char *authtok = NULL;
 	struct config *config = NULL;
 	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS;
 	int tmpfd;
@@ -1761,9 +1810,17 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Figure out who the user is. */
 	if(RC_OK) {
-		prc = pam_get_user(pamh, &user, "login: ");
+		const char *rouser = NULL;
+		prc = pam_get_user(pamh, &rouser, "login: ");
 		if(prc != PAM_SUCCESS) {
-			INFO("couldn't determine user");
+			CRIT("couldn't determine user");
+			prc = PAM_USER_UNKNOWN;
+		}
+		if(rouser != NULL) {
+			user = strdup(rouser);
+		}
+		if((user != NULL) && (strlen(user) == 0)) {
+			CRIT("cannot determine user's login");
 			prc = PAM_USER_UNKNOWN;
 		}
 	}
@@ -1778,11 +1835,15 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Retrieve the user's password. */
 	if(RC_OK) {
-		prc = pam_get_item(pamh, PAM_AUTHTOK, &authtok);
-		if(authtok == NULL) {
+		const void *roauthtok = NULL;
+		prc = pam_get_item(pamh, PAM_AUTHTOK, &roauthtok);
+		if(roauthtok == NULL) {
 			INFO("couldn't determine user's password");
 			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     "Password: ", &authtok);
+		}
+		if(roauthtok != NULL) {
+			authtok = strdup((const char *)roauthtok);
 		}
 	}
 
@@ -1846,6 +1907,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if(prc == PAM_SUCCESS) {
 		prc = convert_kerror(krc);
 	}
+	if(user != NULL) {
+		free(user);
+	}
+	if(authtok != NULL) {
+		free(authtok);
+	}
 
 	dEBUG("acct_mgmt returning %d: `%s'", prc, pam_strerror(pamh, prc));
 	return prc;
@@ -1856,8 +1923,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context = NULL;
 	krb5_principal principal;
-	const void *kadm5_handle = NULL;
-	const char *user = NULL, *authtok = NULL, *old_authtok = NULL;
+	void *kadm5_handle = NULL;
+	char *user = NULL, *authtok = NULL, *old_authtok = NULL;
 	char current_pass[LINE_MAX], new_pass[LINE_MAX], retype_pass[LINE_MAX];
 	struct config *config = NULL;
 	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS;
@@ -1885,9 +1952,17 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Figure out who the user is. */
 	if(RC_OK) {
-		prc = pam_get_user(pamh, &user, "login: ");
+		const char *rouser = NULL;
+		prc = pam_get_user(pamh, &rouser, "login: ");
 		if(prc != PAM_SUCCESS) {
-			INFO("couldn't determine user");
+			CRIT("couldn't determine user");
+			prc = PAM_USER_UNKNOWN;
+		}
+		if(rouser != NULL) {
+			user = strdup(rouser);
+		}
+		if((user != NULL) && (strlen(user) == 0)) {
+			CRIT("cannot determine user's login");
 			prc = PAM_USER_UNKNOWN;
 		}
 	}
@@ -1991,7 +2066,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 		if(RC_OK && ((authtok == NULL) || (strlen(authtok) == 0)) &&
 		   !config->use_authtok) {
-			const char *authtok2 = NULL;
+			char *authtok2 = NULL;
 
 			DEBUG("prompting for new password (1)");
 			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
@@ -2057,7 +2132,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 
 	/* Clean up and return. */
-	if(context) krb5_free_context(context);
+	if(context != NULL) {
+		krb5_free_context(context);
+	}
 	return prc;
 }
 

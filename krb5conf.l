@@ -1,8 +1,12 @@
 %{
+
 #include "string.h"
 #include "y.tab.c"
+
 %}
+
 %%
+
 [[:blank:]]*			{};
 [^[:blank:]#;\[\]{}=\n]*	{ yylval.sval = strdup(yytext); return STRING; };
 \#.*				{};

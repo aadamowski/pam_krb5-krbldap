@@ -39,6 +39,11 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed May  2 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't delete tokens unless we're also removing ticket files (report and
+  patch from Sean Dilda)
+- report initialization errors better
+
 * Thu Apr 26 2001 Nalin Dahyabhai <nalin@redhat.com>
 - treat semicolons as a comment character, like hash marks (bug reported by
   Greg Francis at Gonzaga University)
