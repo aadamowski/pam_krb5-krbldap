@@ -288,6 +288,18 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 	}
 
+	/* If we got this far, check the target user's .k5login file. */
+	if ((retval == PAM_SUCCESS) && options->user_check) {
+		if (krb5_kuserok(ctx, userinfo->principal_name, user) == 0) {
+			notice("account checks fail for '%s': user disallowed "
+			       "by .k5login file for '%s'",
+			       userinfo->unparsed_name, user);
+			retval = PAM_PERM_DENIED;
+		}
+	}
+
+	/* Log the authentication status, optionally saving the credentials in
+	 * a piece of shared memory. */
 	if (retval == PAM_SUCCESS) {
 		if (options->use_shmem) {
 			_pam_krb5_stash_shm_write(pamh, stash, options,

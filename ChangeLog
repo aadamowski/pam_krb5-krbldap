@@ -1,3 +1,9 @@
+2004-09-13 nalin
+	* src/tokens.c: skip getting tokens for the cell of /afs if that cell
+	is "dynroot", which is what OpenAFS's dynamic-root support gives us.
+	* src/auth.c: run the krb5_kuserok() check in the authentication phase
+	as well (Douglas E. Engert).
+
 2004-09-02 nalin
 	* src/minikafs.c: add copyright statement because the ioctl patch is
 	too much like heimdal's implementation.

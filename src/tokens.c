@@ -114,9 +114,11 @@ tokens_obtain(krb5_context context,
 
 	/* Get the name of the local cell.  The root.afs volume which is
 	 * mounted in /afs is mounted from the local cell, so we'll use that
-	 * to determine which cell is considered the local cell. */
+	 * to determine which cell is considered the local cell.  Avoid getting
+	 * tripped up by dynamic root support in clients. */
 	memset(cell, '\0', sizeof(cell));
-	if (minikafs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) {
+	if ((minikafs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) &&
+	    (strcmp(cell, "dynroot") != 0)) {
 		if (options->debug) {
 			debug("obtaining tokens for '%s'", cell);
 		}
