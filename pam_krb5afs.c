@@ -645,7 +645,12 @@ appdefault_integer(krb5_context context, const char *option,
 
 	for(i = 0; i < argc; i++) {
 		if(strncmp(argv[i], buf, buflen) == 0) {
-			*ret_value = atoi(argv[i] + buflen);
+			int tmp;
+			char *p;
+			tmp = strtol(argv[i] + buflen, &p, 10);
+			if((p == NULL) || (*p == '\0')) {
+				*ret_value = tmp;
+			}
 		}
 	}
 }
@@ -1275,6 +1280,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				      user, stash->uid, stash->gid);
 				/* Check if we care about this user. */
 				if(stash->uid < config->minimum_uid) {
+					DEBUG("ignoring user; uid is too low");
 					prc = PAM_IGNORE;
 				}
 			} else {
@@ -1595,7 +1601,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 #endif
 
-	prc = convert_kerror(krc);
+	if(prc == PAM_SUCCESS) {
+		prc = convert_kerror(krc);
+	}
 
 	/* Save the return code for later use by setcred(). */
 	if(RC_OK) {

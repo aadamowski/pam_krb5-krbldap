@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.43
+Version: 1.44
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,8 +39,11 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu Aug 23 2001 Nalin Dahyabhai <nalin@redhat.com> 1.44-1
+- only use Kerberos error codes when there is no PAM error yet
+
 * Wed Aug 22 2001 Nalin Dahyabhai <nalin@redhat.com> 1.43-1
-- add minimum UID support (suggested by Matthew Miller)
+- add minimum UID support (#52358)
 - don't link pam_krb5 with libkrbafs
 - make all options in krb5.conf available as PAM config arguments
 
