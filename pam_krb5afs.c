@@ -95,6 +95,12 @@
 #include <security/pam_modules.h>
 #endif
 
+#ifndef PAM_AUTHTOK_RECOVERY_ERR
+#ifdef PAM_AUTHTOK_RECOVER_ERR
+#define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
+#endif
+#endif
+
 #ifndef PAM_EXTERN
 #define PAM_EXTERN extern
 #endif
@@ -932,7 +938,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				pam_set_item(pamh, PAM_OLDAUTHTOK,
 					     (const void*)old_authtok);
 			} else {
-				ret = PAM_AUTHTOK_RECOVER_ERR;
+				ret = PAM_AUTHTOK_RECOVERY_ERR;
 			}
 		}
 		if(ret == KRB5_SUCCESS) {
@@ -977,7 +983,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(ret != PAM_SUCCESS) {
 				INFO("error in conversation: %s",
 				     error_message(ret));
-				ret = PAM_AUTHTOK_RECOVER_ERR;
+				ret = PAM_AUTHTOK_RECOVERY_ERR;
 			}
 		}
 
