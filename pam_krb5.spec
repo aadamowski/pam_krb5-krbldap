@@ -24,7 +24,7 @@ make
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
-%{makeinstall}
+make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT

@@ -17,6 +17,7 @@ OSTARGETS = @OSTARGETS@
 SHTARGETS = @SHTARGETS@
 MAN5TARGETS = @MAN5TARGETS@
 MAN8TARGETS = @MAN8TARGETS@
+mandir=/usr/man
 
 modules: $(OSTARGETS)
 
@@ -45,10 +46,10 @@ install-modules:
 	@INSTALL@ -m 755 $(SHTARGETS) $(DESTDIR)/lib/security
 
 install-man:
-	test -d $(DESTDIR)/usr/man/man5 || mkdir -p $(DESTDIR)/usr/man/man5
-	@INSTALL@ -m 644 $(MAN5TARGETS) $(DESTDIR)/usr/man/man5
-	test -d $(DESTDIR)/usr/man/man8 || mkdir -p $(DESTDIR)/usr/man/man8
-	@INSTALL@ -m 644 $(MAN8TARGETS) $(DESTDIR)/usr/man/man8
+	test -d $(DESTDIR)$(mandir)/man5 || mkdir -p $(DESTDIR)$(mandir)/man5
+	@INSTALL@ -m 644 $(MAN5TARGETS) $(DESTDIR)$(mandir)/man5
+	test -d $(DESTDIR)$(mandir)/man8 || mkdir -p $(DESTDIR)$(mandir)/man8
+	@INSTALL@ -m 644 $(MAN8TARGETS) $(DESTDIR)$(mandir)/man8
 
 clean:
 	$(RM) *.so *.o main core krb5 kreset dlopen
