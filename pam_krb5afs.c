@@ -160,6 +160,7 @@ struct config {
 	char *banner;
 	char **cell_list;
 	char *realm;
+	char *required_tgs;
 };
 
 static void dEBUG(const char *x,...) {
@@ -170,6 +171,7 @@ static void dEBUG(const char *x,...) {
 	va_end(a);
 	syslog(LOG_DEBUG, "%s", buf);
 }
+#if 0
 static void NOTICE(const char *x,...) {
 	char buf[LINE_MAX];
 	va_list a;
@@ -178,6 +180,7 @@ static void NOTICE(const char *x,...) {
 	va_end(a);
 	syslog(LOG_NOTICE, "%s", buf);
 }
+#endif
 static void INFO(const char *x,...) {
 	char buf[LINE_MAX];
 	va_list a;
@@ -323,7 +326,12 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 			   "true", &foo);
 	if(!strcmp(foo, "true")) ret->krb4_convert = TRUE;
 	dEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
-			    
+
+	/* Get the name of a service ticket the user must be able to obtain,
+	   as a double-check. */
+	profile_get_string(profile, PROFILE_NAME, "required_tgs",
+			 NULL, "", &ret->required_tgs);
+
 	for(i = 0; i < argc; i++) {
 		/* Required argument that we don't use but need to recognize.*/
 		if(strcmp(argv[i], "no_warn") == 0) {
@@ -349,6 +357,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 			ret->use_authtok = 1;
 			continue;
 		}
+#ifdef HAVE_KRBAFS_H
 		/* Do a setcred() from inside of the auth function. */
 		if((strcmp(argv[i], "get_tokens") == 0) ||
 		   (strcmp(argv[i], "tokens") == 0) ||
@@ -356,6 +365,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 			ret->setcred = 1;
 			continue;
 		}
+#endif
 	}
 
 	return ret;
@@ -438,6 +448,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 {
 	krb5_context context;
 	krb5_principal principal;
+	krb5_principal tgs;
 	struct config *config;
 	const char *user = NULL;
 	const char *password = NULL;
@@ -583,42 +594,41 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		INFO("authentication fails for %s", user);
 	}
 
-#ifdef CRITICAL_SERVICE
-{
 	/* Build a principal for the service credential we'll use for double-
 	   checking the validity of the TGT. */
-	krb5_principal tgs;
-	if(ret == KRB5_SUCCESS) {
-		ret = krb5_parse_name(context, CRITICAL_SERVICE, &tgs);
+	if((ret == KRB5_SUCCESS) && (config->required_tgs != NULL) &&
+	   (strlen(config->required_tgs) > 0)) {
+		ret = krb5_parse_name(context, config->required_tgs, &tgs);
 		if(ret != KRB5_SUCCESS) {
 			CRIT("%s building principal for %s",
-			     error_message(ret), CRITICAL_SERVICE);
+			     error_message(ret), config->required_tgs);
 			ret = PAM_SYSTEM_ERR;
 		}
-	}
 
-	/* Attempt to use our new TGT to obtain the service ticket. */
-	if(ret == KRB5_SUCCESS) {
-		krb5_creds creds, *out_creds;
-		memset(&creds, 0, sizeof(creds));
-		creds.client = stash->v5_creds.client;
-		creds.server = tgs;
-		ret = krb5_get_cred_via_tkt(context,
-					    &stash->v5_creds,
-					    0,
-					    NULL,
-					    &creds,
-					    &out_creds);
+		/* Attempt to use our new TGT to obtain a service ticket. */
 		if(ret == KRB5_SUCCESS) {
-			INFO("TGT for %s verifies as good", user);
-		} else {
-			CRIT("TGT for %s was useless (%s) - spoofed?",
-			     user, error_message(ret));
-			ret = PAM_SYSTEM_ERR;
+			krb5_creds creds, *out_creds;
+			memset(&creds, 0, sizeof(creds));
+			creds.client = stash->v5_creds.client;
+			creds.server = tgs;
+			ret = krb5_get_cred_via_tkt(context,
+						    &stash->v5_creds,
+						    0,
+						    NULL,
+						    &creds,
+						    &out_creds);
+			if(ret == KRB5_SUCCESS) {
+				INFO("TGT for %s verifies", user);
+			} else {
+				CRIT("TGT for %s was useless (%s)",
+				     user, error_message(ret));
+				ret = PAM_SYSTEM_ERR;
+			}
 		}
+	} else {
+		INFO("TGT for %s not verified (no required_tgs "
+		     "defined)", user);
 	}
-}
-#endif
 
 	if(ret == PAM_SUCCESS) {
 		ret = pam_set_data(pamh, MODULE_DATA_NAME, stash, cleanup);
@@ -626,11 +636,13 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		DEBUG("credentials saved for %s", user);
 	}
 
+#ifdef HAVE_KRBAFS_H
 	/* Get tokens. */
 	if(config->setcred) {
 		pam_sm_setcred(pamh, PAM_ESTABLISH_CRED, argc, argv);
 		pam_sm_setcred(pamh, PAM_DELETE_CRED, argc, argv);
 	}
+#endif
 
 	/* Catch any Kerberos error codes that fall through cracks and
 	   convert them to appropriate PAM error codes. */
