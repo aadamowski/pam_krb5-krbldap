@@ -1,4 +1,11 @@
 2003-08-14 nalin
+	* src/auth.c(pam_sm_authenticate): log the PAM error code we're
+	returning if we're returning a failure after all attempts have been
+	made.  Save the password entered by the user in the normal we-prompted
+	case.
+	* pam_krb5.spec: bump version to 2.0.1
+
+2003-08-14 nalin
 	* src/auth.c, src/acct.c, src/session.c, src/password.c: return
 	PAM_USER_UNKNOWN instead of PAM_SERVICE_ERR if we fail to get
 	information about the user.

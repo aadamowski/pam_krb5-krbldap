@@ -124,6 +124,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (i == PAM_SUCCESS) {
 				/* Save the password for the next module. */
 				if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
+					if (options->debug) {
+						debug("saving newly-entered "
+						      "password for use by "
+						      "other modules");
+					}
 					pam_set_item(pamh, PAM_AUTHTOK, password);
 				}
 			}
@@ -213,6 +218,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		if ((i == PAM_SUCCESS) && (password != NULL)) {
 			/* Save the password for the next module. */
 			if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
+				if (options->debug) {
+					debug("saving newly-entered "
+					      "password for use by "
+					      "other modules");
+				}
 				pam_set_item(pamh, PAM_AUTHTOK, password);
 			}
 			/* Get creds. */
@@ -229,6 +239,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
 				      v5_error_message(stash->v5result));
+			}
+			/* Save the password for the next module. */
+			if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
+				if (options->debug) {
+					debug("saving newly-entered "
+					      "password for use by "
+					      "other modules");
+				}
+				pam_set_item(pamh, PAM_AUTHTOK, password);
 			}
 		} else {
 			warn("error reading password for '%s'", user);
@@ -257,7 +276,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	if (retval == PAM_SUCCESS) {
 		notice("authentication succeeds for '%s'", user);
 	} else {
-		notice("authentication fails for '%s' (%s)", user,
+		notice("authentication fails for '%s': %s (%s)", user,
+		       pam_strerror(pamh, retval),
 		       v5_error_message(stash->v5result));
 	}
 
