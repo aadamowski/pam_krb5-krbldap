@@ -99,7 +99,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		warn("error getting information about '%s'", user);
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_SERVICE_ERR;
+		return PAM_USER_UNKNOWN;
 	}
 
 	/* Check the minimum UID argument. */

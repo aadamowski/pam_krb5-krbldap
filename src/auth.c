@@ -130,7 +130,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_SERVICE_ERR;
+		return PAM_USER_UNKNOWN;
 	}
 	if (options->debug) {
 		debug("authenticating '%s'", userinfo->unparsed_name);

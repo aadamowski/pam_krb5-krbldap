@@ -107,7 +107,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_SERVICE_ERR;
+		return PAM_USER_UNKNOWN;
 	}
 	if ((options->minimum_uid != -1) &&
 	    (userinfo->uid < options->minimum_uid)) {
