@@ -350,9 +350,10 @@ static struct config *get_config(krb5_context context,
 	/* Hosts to get tickets for. */
 	profile_get_string(profile, PROFILE_NAME, "hosts", NULL,
 			   "", &cells);
-	addresses = malloc(sizeof(krb5_address) * (num_words(cells) + 2));
-	memset(addresses, 0, sizeof(krb5_address) * (num_words(cells) + 2));
 	krb5_os_localaddr(context, &hostlist);
+	for(j = 0; hostlist[j] != NULL; j++) ;
+	addresses = malloc(sizeof(krb5_address) * (num_words(cells) + 1 + j));
+	memset(addresses, 0, sizeof(krb5_address) * (num_words(cells) + 1 + j));
 	for(j = 0; hostlist[j] != NULL; j++) {
 		addresses[j] = hostlist[j];
 	}
