@@ -378,8 +378,8 @@ convert_kerror(int error)
 			prc = PAM_NEW_AUTHTOK_REQD;
 			break;
 		case KRB5KDC_ERR_NAME_EXP:
-			prc = PAM_AUTHTOK_EXPIRED; /* Is this right?  The
-						    * principal has expired. */
+			prc = PAM_ACCT_EXPIRED; /* Is this right?  The
+						 * principal has expired. */
 			break;
 		default:
 			prc = PAM_AUTH_ERR;
@@ -2308,10 +2308,21 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if (rep != NULL) {
 				krb5_free_kdc_rep(context, rep);
 			}
-			if (krc == KRB5KDC_ERR_KEY_EXP) {
-				prc = PAM_NEW_AUTHTOK_REQD;
+			switch (krc) {
+				case KRB5_SUCCESS:
+				case KRB5KDC_ERR_NONE:
+				case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
+				case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN:
+				case KRB5_REALM_UNKNOWN:
+				case KRB5_SERVICE_UNKNOWN:
+				case KRB5KRB_AP_ERR_BAD_INTEGRITY:
+				case KRB5KDC_ERR_KEY_EXP:
+				case KRB5KDC_ERR_NAME_EXP:
+					prc = convert_kerror(krc);
+					break;
+				default:
+					krc = KRB5_SUCCESS;
 			}
-			krc = KRB5_SUCCESS;
 		} else {
 			prc = convert_kerror(krc);
 		}
