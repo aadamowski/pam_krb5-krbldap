@@ -1,7 +1,7 @@
 # shamelessly stolen from the usermode makefile
-VERSION=$(shell awk '/^Version:/ { print $$2 }' < pam_krb5.spec)
-REVISION=$(shell awk '/^Release:/ { print $$2 }' < pam_krb5.spec)
-CVSTAG = pk$(subst .,-,$(VERSION))$(subst .,-,$(REVISION))
+VERSION=$(shell awk '/^Version:/ { print $$NF }' pam_krb5.spec)
+REVISION=$(shell awk '/^Release:/ { print $$NF }' pam_krb5.spec)
+CVSTAG = pk$(subst .,-,$(VERSION))-$(subst .,-,$(REVISION))
 
 KRB5=@KRB5@
 KRBAFS=@KRBAFS@
@@ -77,7 +77,7 @@ archive:
 	@rm -rf /tmp/pam_krb5-$(VERSION) /tmp/pam_krb5
 	@( cd /tmp; cvs export -r$(CVSTAG) pam_krb5 )
 	@( cd /tmp/pam_krb5 ; autoheader ; autoconf )
-	@mv /tmp/pam_krb5 /tmp/pam_krb5-$(VERSION)
-	@dir=$$PWD; cd /tmp; tar cvzf $$dir/pam_krb5-$(VERSION).tar.gz pam_krb5-$(VERSION)
-	@rm -rf /tmp/pam_krb5-$(VERSION)
-	@echo "The archive is in pam_krb5-$(VERSION).tar.gz"
+	@mv /tmp/pam_krb5 /tmp/pam_krb5-$(VERSION)-$(REVISION)
+	@dir=$$PWD; cd /tmp; tar cvzf $$dir/pam_krb5-$(VERSION)-$(REVISION).tar.gz pam_krb5-$(VERSION)-$(REVISION)
+	@rm -rf /tmp/pam_krb5-$(VERSION)-$(REVISION)
+	@echo "The archive is in pam_krb5-$(VERSION)-$(REVISION).tar.gz"

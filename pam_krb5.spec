@@ -16,7 +16,7 @@ creation, and optional TGT verification and conversion to Kerberos IV tickets.
 The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %prep
-%setup -q
+%setup -q -n pam_krb5-%{version}-%{release}
 
 %build
 %configure --with-krb5=/usr/kerberos --with-krbafs=/usr/kerberos
