@@ -217,7 +217,6 @@ Makefile
 src/Makefile
 src/pam_krb5.5
 src/pam_krb5.8
-pam.d/Makefile
 tests/Makefile
 tests/config/Makefile
 tests/config/krb5.conf
