@@ -1,4 +1,9 @@
 2004-03-16 nalin
+	* src/pam_krb5_storetmp.c: only attempt to change to the required
+	UID/GID if we are not already running with that UID/GID, and only
+	attempt to clear the supplemental groups list if uid == 0 (we're root).
+
+2004-03-16 nalin
 	* src/session.c: remove explict calls to chown(), which would be denied
 	by SELinux in enforcing mode, instead expecting the helper to handle it
 	all.

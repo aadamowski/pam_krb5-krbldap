@@ -114,9 +114,15 @@ main(int argc, const char **argv)
 	 * and that is expressly allowed (we're mainly here to do the open(),
 	 * anything else is "gravy". */
 	current_gid = getgid();
-	setgroups(0, &current_gid);
-	setregid(gid, gid);
-	setreuid(uid, uid);
+	if (getuid() == 0) {
+		setgroups(0, &current_gid);
+	}
+	if (getgid() != gid) {
+		setregid(gid, gid);
+	}
+	if (getuid() != uid) {
+		setreuid(uid, uid);
+	}
 
 	/* Create a temporary file. */
 	fd = mkstemp(filename);
