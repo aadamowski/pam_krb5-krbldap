@@ -31,8 +31,9 @@
  */
 
  /*
-  * A miniature afslog implementation.  Requires a running krb524 server
-  * or a v4-capable KDC, or cells served by OpenAFS 1.2.8 or later.
+  * A miniature afslog implementation.  Requires a running krb524 server or a
+  * v4-capable KDC, or cells served by OpenAFS 1.2.8 or later in combination
+  * with MIT Kerberos 1.2.6 or later.
   */
 
 #include "../config.h"
@@ -41,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
 #include <signal.h>
@@ -66,6 +68,25 @@
 #include "log.h"
 #include "minikafs.h"
 #include "v5.h"
+
+#define OPENAFS_AFS_IOCTL_FILE  "/proc/fs/openafs/afs_ioctl"
+#define ARLA_AFS_IOCTL_FILE     "/proc/fs/nnpfs/afs_ioctl"
+#define VIOC_SYSCALL            _IOW('C', 1, void *)
+
+/* A structure specifying parameters to the VIOC_SYSCALL ioctl.  An array would
+ * do as well, but this makes the order of items clearer. */
+struct minikafs_procdata {
+	long param4;
+	long param3;
+	long param2;
+	long param1;
+	long function;
+};
+
+/* Global(!) containing the path to the file/device/whatever in /proc which we
+ * can use to get the effect of the AFS syscall.  If we ever need to be
+ * thread-safe, we'll have to lock around accesses to this. */
+static const char *minikafs_procpath = NULL;
 
 /* A structure specifying input/output buffers to minikafs_syscall() or
  * minikafs_pioctl(). */
@@ -101,6 +122,29 @@ enum minikafs_pioctl_fn {
 	minikafs_pioctl_getcelloffile = PIOCTL_FN(30),
 };
 
+/* Call AFS using an ioctl. Might not port to your system. */
+static int
+minikafs_ioctlcall(long function, long arg1, long arg2, long arg3, long arg4)
+{
+	int fd, ret, saved_errno;
+	struct minikafs_procdata data;
+	fd = open(minikafs_procpath, O_RDWR);
+	if (fd == -1) {
+		errno = EINVAL;
+		return -1;
+	}
+	data.function = function;
+	data.param1 = arg1;
+	data.param2 = arg2;
+	data.param3 = arg3;
+	data.param4 = arg4;
+	ret = ioctl(fd, VIOC_SYSCALL, &data);
+	saved_errno = errno;
+	close(fd);
+	errno = saved_errno;
+	return ret;
+}
+
 /* Call the AFS syscall. Might not port to your system. */
 static int
 minikafs_syscall(long function, long arg1, long arg2, long arg3, long arg4)
@@ -108,13 +152,23 @@ minikafs_syscall(long function, long arg1, long arg2, long arg3, long arg4)
 	return syscall(__NR_afs_syscall, function, arg1, arg2, arg3, arg4);
 }
 
+/* Call into AFS, somehow. */
+static int
+minikafs_call(long function, long arg1, long arg2, long arg3, long arg4)
+{
+	if (minikafs_procpath != NULL) {
+		return minikafs_ioctlcall(function, arg1, arg2, arg3, arg4);
+	}
+	return minikafs_syscall(function, arg1, arg2, arg3, arg4);
+}
+
 /* Make an AFS pioctl. Might not port to your system. */
 static int
 minikafs_pioctl(char *file, enum minikafs_pioctl_fn subfunction,
 		struct minikafs_ioblock *iob)
 {
-	return minikafs_syscall(minikafs_subsys_pioctl, (long) file,
-				subfunction, (long) iob, 0);
+	return minikafs_call(minikafs_subsys_pioctl, (long) file,
+			     subfunction, (long) iob, 0);
 }
 
 /* Determine in which cell a given file resides.  Returns 0 on success. */
@@ -145,8 +199,23 @@ int
 minikafs_has_afs(void)
 {
 	char cell[PATH_MAX];
-	int i, ret;
+	int fd, i, ret;
 	struct sigaction news, olds;
+
+	fd = open(OPENAFS_AFS_IOCTL_FILE, O_RDWR);
+	if (fd != -1) {
+		minikafs_procpath = OPENAFS_AFS_IOCTL_FILE;
+		close(fd);
+		return 1;
+	}
+	if (fd == -1) {
+		fd = open(ARLA_AFS_IOCTL_FILE, O_RDWR);
+		if (fd != -1) {
+			minikafs_procpath = ARLA_AFS_IOCTL_FILE;
+			close(fd);
+			return 1;
+		}
+	}
 
 	memset(&news, 0, sizeof(news));
 	news.sa_handler = SIG_IGN;
@@ -270,7 +339,7 @@ minikafs_realm_of_cell(struct _pam_krb5_options *options,
 int
 minikafs_setpag(void)
 {
-	return minikafs_syscall(minikafs_subsys_setpag, 0, 0, 0, 0);
+	return minikafs_call(minikafs_subsys_setpag, 0, 0, 0, 0);
 }
 
 #ifdef USE_KRB4
