@@ -428,6 +428,9 @@ v4_get_creds(krb5_context ctx,
 	    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
 		i = krb5_524_convert_creds(ctx, in_creds, &stash->v4creds);
 		if (i == 0) {
+			if (options->debug) {
+				debug("conversion succeeded");
+			}
 			stash->v4present = 1;
 			if (result) {
 				*result = i;
@@ -451,6 +454,9 @@ v4_get_creds(krb5_context ctx,
 	    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
 		i = krb524_convert_creds_kdc(ctx, in_creds, &stash->v4creds);
 		if (i == 0) {
+			if (options->debug) {
+				debug("conversion succeeded");
+			}
 			stash->v4present = 1;
 			if (result) {
 				*result = i;
