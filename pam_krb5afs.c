@@ -5,25 +5,49 @@
 
  Copyright 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
  Distribution allowed under the X consortium license, the LGPL, and/or the
- Artistic License.  Do me a favor and let me know if you're using it.
+ Artistic License.  Do me a favor and let me know if you're using it, though.
  ******************************************************************************/
 
 #ident "$Id$"
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
+#ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
 
 /******************************************************************************/
 
+#ifdef HAVE_COM_ERR_H
 #include <com_err.h>
+#endif
+#ifdef HAVE_KRB5_H
 #include <krb5.h>
+#endif
 
 #ifdef  PAM_KRB5_KRBAFS_DYNAMIC
 #ifndef PAM_KRB5_KRBAFS
@@ -38,7 +62,9 @@
 #endif
 
 #ifdef PAM_KRB5_KRB4
+#ifdef HAVE_KERBEROSIV_KRB_H
 #include <kerberosIV/krb.h>
+#endif
 #endif
 
 #ifdef PAM_KRB5_KRBAFS
@@ -83,6 +109,7 @@ int(*k_setpag)(void) = NULL;
 #ifndef KADM5_API_VERSION_2
 #define KADM5_API_VERSION_2     (KADM5_API_VERSION_MASK|0x02)
 #endif
+
 typedef long	kadm5_ret_t;
 kadm5_ret_t	kadm5_init_with_password(const char*, const char*, const char*,
 					 struct _kadm5_config_params*,
@@ -140,7 +167,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 /* Module-specific flags. */
 static struct {
-	unsigned char debug, pag, try_first_pass, try_second_pass, prompt;
+	unsigned char debug, pag, try_first_pass, try_second_pass, use_authtok;
 	krb5_flags kdc_options;
 	char **cellnames;
 	int cells;
@@ -160,7 +187,6 @@ static int check_flags(int argc, const char **argv)
 	globals.pag = 1;
 	globals.try_first_pass = 1;
 	globals.try_second_pass = 1;
-	globals.prompt = 1;
 	globals.kdc_options = 0;
 
 	/* Scan for flags we find interesting. */
@@ -189,6 +215,12 @@ static int check_flags(int argc, const char **argv)
 		/* Don't try the password stored in PAM_AUTHTOK. */
 		if(strcmp(argv[i], "skip_first_pass") == 0) {
 			globals.try_first_pass = 0;
+			continue;
+		}
+		/* Rely exclusively on PAM_AUTHTOK and PAM_OLDAUTHTOK for
+		   password-changing. */
+		if(strcmp(argv[i], "use_authtok") == 0) {
+			globals.use_authtok = 1;
 			continue;
 		}
 		/* Provide debug info via syslog. */
@@ -250,7 +282,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	const char *first_pass = NULL, *second_pass = NULL;
 	const struct pam_conv *converse = NULL;
 	int ret = KRB5_SUCCESS;
-	struct stash *stash;
+	struct stash *stash = NULL;
 	struct passwd *pwd;
 
 	D(("... called."));
@@ -276,6 +308,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			       ": default Kerberos realm is %s", realm);
 			krb5_init_ets(context);
 		} else {
+			D(("Kerberos 5 initialize problem/malloc error"));
 			syslog(LOG_CRIT, MODULE_NAME
 			       ": Kerberos 5 initialize problem/malloc error");
 			ret = PAM_SYSTEM_ERR;
@@ -322,6 +355,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		if(ret == PAM_SUCCESS) {
 			ret = pam_get_user(pamh, &user, "login:");
 		} else {
+			D(("cannot determine user's login"));
 			syslog(LOG_CRIT, MODULE_NAME
 			       ": cannot determine user's login");
 			ret = PAM_USER_UNKNOWN;
@@ -336,10 +370,12 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	if(pwd != NULL) {
 		stash->uid = pwd->pw_uid;
 		stash->gid = pwd->pw_gid;
+		D(("%s has uid %d, gid %d", user, stash->uid, stash->gid));
 		if(globals.debug)
 		syslog(LOG_DEBUG, MODULE_NAME ": %s has uid %d, gid %d",
 		       user, stash->uid, stash->gid);
 	} else {
+		D(("getpwnam(\"%s\") failed", user));
 		syslog(LOG_CRIT, MODULE_NAME ": getpwnam(\"%s\") failed", user);
 		ret = PAM_SYSTEM_ERR;
 	}
@@ -348,8 +384,11 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	if(ret == KRB5_SUCCESS) {
 		ret = krb5_parse_name(context, user, &principal);
 		if(ret != KRB5_SUCCESS) {
+			D(("%s building user principal for %s",
+			   error_message(ret), user));
 			syslog(LOG_CRIT, MODULE_NAME
-			       ": error building user principal for %s", user);
+			       ": %s building user principal for %s",
+			       error_message(ret), user);
 			ret = PAM_SYSTEM_ERR;
 		}
 	}
@@ -369,8 +408,11 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 					       0);
 		D(("Build_principal_ext = \"%s\".", error_message(ret)));
 		if(ret != KRB5_SUCCESS) {
+			D(("%s building TGT principal for %s",
+			   error_message(ret), user));
 			syslog(LOG_CRIT, MODULE_NAME
-			       ": error building TGT principal for %s", user);
+			       ": %s building TGT principal for %s",
+			       error_message(ret), user);
 			ret = PAM_SYSTEM_ERR;
 		}
 	}
@@ -401,6 +443,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Now try to get a TGT using one of the passwords. */
 	if(ret == KRB5_SUCCESS) {
 		int done = 0;
+		D(("attempting to authenticate %s", user));
 		syslog(LOG_NOTICE, MODULE_NAME
 		       ": attempting to authenticate %s", user);
 		/* Set up the creds structure. */
@@ -440,10 +483,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							    0,
 							    &stash->v5_creds,
 							    NULL);
+			D(("get_in_tkt2 returned \"%s\".", error_message(ret)));
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_int_tkt returned %s", error_message(ret));
-			D(("get_in_tkt2 returned \"%s\".", error_message(ret)));
 			if(ret == KRB5_SUCCESS) {
 				/* Save the good authtok in case another module
 				   needs it. */
@@ -453,6 +496,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			}
 		}
 		if(ret != KRB5_SUCCESS) {
+			D(("get_in_tkt failed(\"%s\")", error_message(ret)));
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_in_tkt failed (\"%s\"), failing auth",
 			       error_message(ret));
@@ -484,8 +528,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		D(("krb5_parse_name = \"%s\".", error_message(ret)));
 		if(ret != KRB5_SUCCESS) {
 			syslog(LOG_CRIT, MODULE_NAME
-			       ": error building principal for %s",
-			       CRITICAL_SERVICE);
+			       ": %s building principal for %s",
+			       error_message(ret), CRITICAL_SERVICE);
 			ret = PAM_SYSTEM_ERR;
 		}
 	}
@@ -502,11 +546,14 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 					    &creds,
 					    &out_creds);
 		if(ret == KRB5_SUCCESS) {
+			D(("TGT for %s verifies as good", user));
 			syslog(LOG_INFO, MODULE_NAME
 			       ": TGT for %s verifies as good", user);
 		} else {
+			D(("TGT for %s was useless (%s) - spoofed?", user,
+			   error_message(ret)));
 			syslog(LOG_CRIT, MODULE_NAME
-			       ": TGT for %s was useless (%s)- spoofed?",
+			       ": TGT for %s was useless (%s) - spoofed?",
 			       user, error_message(ret));
 			ret = PAM_SYSTEM_ERR;
 		}
@@ -533,15 +580,17 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		       error_message(ret), user);
 
 		if(ret == KRB5_SUCCESS) {
+			D(("Krb4 creds obtained successfully."));
 			syslog(LOG_NOTICE, MODULE_NAME ": v4 ticket conversion "
 			       "succeeded for %s", user);
-			D(("Krb4 creds obtained successfully."));
 		} else {
 			/* This shouldn't happen.  Either krb524d isn't running
 			   or either the KDC or the module is misconfigured. */
-			D(("Error in convert_creds()."));
+			D(("v4 ticket conversion failed for %s: %s (shouldn't "
+			   "happen)", user, error_message(ret)));
 			syslog(LOG_CRIT, MODULE_NAME ": v4 ticket conversion "
-			       "failed for %s (shouldn't happen)", user);
+			       "failed for %s: %s (shouldn't happen)", user,
+			       error_message(ret));
 		}
 	}
 	D(("reached"));
@@ -550,10 +599,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Save all of the Kerberos credentials as module-specific data. */
 	if(ret == PAM_SUCCESS) {
 		ret = pam_set_data(pamh, MODULE_DATA_NAME, stash, cleanup);
+		D(("Credentials saved for %s.", user));
 		if(globals.debug)
 		syslog(LOG_DEBUG, MODULE_NAME ": credentials saved for %s",
 		       user);
-		D(("Creds saved."));
 	}
 	D(("reached"));
 
@@ -583,9 +632,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Done with Kerberos. */
 	krb5_free_context(context);
 
-	D(("Returning %d.", ret));
+	D(("Returning %d (%s).", ret, pam_strerror(pamh, ret)));
 	if(globals.debug)
-	syslog(LOG_DEBUG,MODULE_NAME ": pam_sm_authenticate returning %d", ret);
+	syslog(LOG_DEBUG,MODULE_NAME ": pam_sm_authenticate returning %d (%s)",
+	       ret, pam_strerror(pamh, ret));
 
 	return ret;
 }
@@ -618,20 +668,22 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Create a Kerberos context. */
 	if(ret == PAM_SUCCESS) {
-		char *realm;
 		ret = krb5_init_context(&context);
-		if(ret == KRB5_SUCCESS) {
-			krb5_get_default_realm(context, &realm);
-			D(("Default Kerberos realm is \"%s\".", realm));
-			if(globals.debug)
-			syslog(LOG_DEBUG, MODULE_NAME ": default realm is %s",
-			       realm);
-			krb5_init_ets(context);
-		} else {
+		if(ret != KRB5_SUCCESS) {
+			D(("error intializing Kerberos 5"));
 			syslog(LOG_CRIT, MODULE_NAME
-			       ": error intializing Kerberos 5: %s");
+			       ": error intializing Kerberos 5");
 			ret = PAM_SYSTEM_ERR;
 		}
+	}
+
+	if(ret == PAM_SUCCESS) {
+		char *realm;
+		krb5_get_default_realm(context, &realm);
+		D(("Default Kerberos realm is \"%s\".", realm));
+		if(globals.debug)
+		syslog(LOG_DEBUG, MODULE_NAME ": default realm is %s", realm);
+		krb5_init_ets(context);
 	}
 
 	if((flags & PAM_ESTABLISH_CRED) && (ret == KRB5_SUCCESS)) {
@@ -651,7 +703,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			ret = pam_putenv(pamh, v4_path);
 			if(ret != PAM_SUCCESS) {
 				D(("%s setting environment",
-				  pam_strerror(pamh, ret)));
+				   pam_strerror(pamh, ret)));
 				syslog(LOG_CRIT, "%s setting environment",
 				       pam_strerror(pamh, ret));
 			}
@@ -703,9 +755,9 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				syslog(LOG_CRIT, "%s setting environment",
 				       pam_strerror(pamh, ret));
 			}
+			D(("%s", v5_path));
 			if(globals.debug)
 			syslog(LOG_DEBUG,MODULE_NAME ": %s", v5_path);
-			D(("%s", v5_path));
 
 			/* Create the v5 ticket cache. */
 			snprintf(v5_path, sizeof(v5_path), "/tmp/krb5cc_%d_%d",
@@ -717,9 +769,11 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						        stash->v5_creds.client);
 			}
 			if(ret != KRB5_SUCCESS) {
+				D(("error initializing ccache %s for %s: %s",
+				   v5_path, user, error_message(ret)));
 				syslog(LOG_CRIT, MODULE_NAME
-				       ": error initializing ccache %s for %s",
-				       v5_path, user);
+				       ": error initializing ccache %s for %s: "
+				       "%s", v5_path, user, error_message(ret));
 			}
 
 			/* Store credentials in the cache. */
@@ -797,7 +851,9 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				       krb5_princ_realm(context, stash->v5_creds.client)->length);
 				/* Afslog to all of the specified cells. */
 				for(i = 0; i < globals.cells; i++) {
+					#ifdef DEBUG
 					int krbafsret =
+					#endif
 					krb_afslog(globals.cellnames[i], realm);
 					D(("afslog()ing to \"%s\" gave %d.",
 					   globals.cellnames[i], krbafsret));
@@ -889,33 +945,104 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_context context = NULL;
 	krb5_principal server, client;
 	krb5_creds creds;
-	const char *user, *password;
-	const void *kadm5_handle;
+	const char *user = NULL, *authtok = NULL, *old_authtok = NULL;
+	const void *kadm5_handle = NULL;
+	const struct pam_conv *converse = NULL;
 	int ret = 0;
+
+	D(("called with flags: %s%s",
+	   flags & PAM_PRELIM_CHECK ? "PRELIM_CHECK " : "",
+	   flags & PAM_UPDATE_AUTHTOK ? "UPDATE_AUTHTOK " : ""));
 
 	/* Initialize Kerberos. */
 	ret = krb5_init_context(&context);
 	if(ret != KRB5_SUCCESS) {
-		syslog(LOG_INFO, "%s\n", error_message(ret));
-		ret = PAM_AUTH_ERR;
+		D(("error initializing Kerberos 5"));
+		syslog(LOG_CRIT, MODULE_NAME ": error initializing Kerberos 5");
+		ret = PAM_SYSTEM_ERR;
+	}
+
+	/* Parse the arguments; if there are problems, bail. */
+	if(!check_flags(argc, argv)) {
+		ret = PAM_BUF_ERR;
 	}
 
 	/* Initialize the error table. */
 	if(ret == KRB5_SUCCESS) {
 		krb5_init_ets(context);
 	}
-	if(ret != KRB5_SUCCESS) {
-		syslog(LOG_INFO, "%s\n", error_message(ret));
-		ret = PAM_AUTH_ERR;
+
+	/* Figure out who the user is. */
+	if(ret == KRB5_SUCCESS) {
+		ret = pam_get_user(pamh, &user, "login:");
+		D(("user is \"%s\"", user));
+		if(ret != PAM_SUCCESS) {
+			syslog(LOG_INFO, MODULE_NAME
+			       ": couldn't determine user");
+			ret = PAM_USER_UNKNOWN;
+		}
 	}
 
 	/* Build a principal structure out of the user's login. */
 	if(ret == KRB5_SUCCESS) {
 		ret = krb5_parse_name(context, user, &client);
+		if(ret != KRB5_SUCCESS) {
+			D(("%s\n", error_message(ret)));
+			syslog(LOG_CRIT, MODULE_NAME
+			       ": %s\n", error_message(ret));
+			ret = PAM_AUTH_ERR;
+		}
 	}
-	if(ret != KRB5_SUCCESS) {
-		syslog(LOG_INFO, "%s\n", error_message(ret));
-		ret = PAM_AUTH_ERR;
+
+	/* If we need to prompt the user ourselves, get the conversation ptr. */
+	if(!globals.use_authtok && (ret == PAM_SUCCESS)) {
+		ret = pam_get_item(pamh, PAM_CONV, &converse);
+		if(ret != PAM_SUCCESS) {
+			syslog(LOG_CRIT, MODULE_NAME
+			       ": use_authtok not specified and "
+			       "no conversation function supplied");
+			ret = PAM_AUTHTOK_RECOVER_ERR;
+		}
+	}
+
+	/* Read the old password.  It's okay if this fails. */
+	if(ret == PAM_SUCCESS) {
+		ret = pam_get_item(pamh, PAM_OLDAUTHTOK, &old_authtok);
+		D(("old password is \"%s\"", old_authtok));
+	}
+
+	/* Read the old password and save it. */
+	if(!globals.use_authtok&&(old_authtok == NULL)&&(ret == PAM_SUCCESS)) {
+		const struct pam_message prompt_message[] = {
+			{ PAM_PROMPT_ECHO_OFF, "Enter password: " },
+		};
+		const struct pam_message* promptlist[] = {
+			&prompt_message[0], NULL
+		};
+		struct pam_response *responses = NULL;
+		D(("About to ask the user for current password."));
+		ret = converse->conv(1, promptlist, &responses,
+				     converse->appdata_ptr);
+		if(ret == PAM_SUCCESS) {
+			ret = pam_set_item(pamh, PAM_OLDAUTHTOK,
+					   strdup(responses[0].resp));
+		} else {
+			syslog(LOG_INFO, MODULE_NAME
+			       ": %s reading current password for %s",
+			       pam_strerror(pamh, ret), user);
+			ret = PAM_AUTHTOK_RECOVER_ERR;
+		}
+	}
+
+	/* Read the old password.  Require success this time. */
+	if(ret == PAM_SUCCESS) {
+		ret = pam_get_item(pamh, PAM_OLDAUTHTOK, &old_authtok);
+		D(("old password is \"%s\"", old_authtok));
+		if((ret != PAM_SUCCESS) || (old_authtok == NULL)) {
+			syslog(LOG_CRIT, MODULE_NAME
+			       ": couldn't recover old password");
+			ret = PAM_AUTHTOK_RECOVER_ERR;
+		}
 	}
 
 	/* We have two cases we have to deal with.  The first: check auth. */
@@ -927,8 +1054,8 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 								client)->length,
 						       krb5_princ_realm(context,
 								client)->data,
-						       KRB5_TGS_NAME,
 						       KRB5_TGS_NAME_SIZE,
+						       KRB5_TGS_NAME,
 						       krb5_princ_realm(context,
 								client)->length,
 						       krb5_princ_realm(context,
@@ -936,7 +1063,9 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						       NULL);
 		}
 		if(ret != KRB5_SUCCESS) {
-			syslog(LOG_INFO, "%s\n", error_message(ret));
+			D(("%s\n", error_message(ret)));
+			syslog(LOG_INFO, MODULE_NAME ": %s\n",
+			       error_message(ret));
 			ret = PAM_AUTH_ERR;
 		}
 
@@ -945,43 +1074,80 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		creds.server = server;
 
 		/* See if we can get an in-memory-only ticket. */
-		if(ret == KRB5_SUCCESS) {
-			ret = pam_get_item(pamh, PAM_USER, &user);
-			if(ret != PAM_SUCCESS) {
-				syslog(LOG_INFO, "couldn't determine user");
-				ret = PAM_USER_UNKNOWN;
-			}
-		}
-		if(ret == KRB5_SUCCESS) {
-			ret = pam_get_item(pamh, PAM_OLDAUTHTOK, &password);
-			if(ret != 0) {
-				syslog(LOG_INFO, MODULE_NAME
-				       ": couldn't determine old password");
-				/* FIXME: need to call conversation function
-				   here! */
-				ret = PAM_AUTHTOK_RECOVER_ERR;
-			}
-		}
 		if(ret == PAM_SUCCESS) {
 			ret = krb5_get_in_tkt_with_password(context,
 							    0,
 							    NULL,
 							    NULL,
 							    KRB5_PADATA_NONE,
-							    password,
+							    old_authtok,
 							    0,
 							    &creds,
 							    NULL);
+			D(("%s getting TGT", error_message(ret)));
 			if(ret != KRB5_SUCCESS) {
-				D(("%s", error_message(ret)));
-				syslog(LOG_INFO, "%s", error_message(ret));
+				syslog(LOG_INFO, MODULE_NAME "%s",
+				       error_message(ret));
 				ret = PAM_AUTH_ERR;
 			}
 		}
 	}
 
-	/* Actually handle the password-change. */
+	/* The second case:  actually handle the password-change. */
 	if(flags & PAM_UPDATE_AUTHTOK) {
+		/* Read the new password and save it. */
+		if(!globals.use_authtok && (ret == PAM_SUCCESS)) {
+			const struct pam_message prompt_message[] = {
+				{ PAM_PROMPT_ECHO_OFF, "New Kerberos password:" },
+				{ PAM_PROMPT_ECHO_OFF, "Retype new Kerberos password: " },
+			};
+			const struct pam_message* promptlist[] = {
+				&prompt_message[0], &prompt_message[1], NULL
+			};
+			struct pam_response *responses = NULL;
+			D(("About to ask the user for new password."));
+			ret = converse->conv(2, promptlist, &responses,
+					     converse->appdata_ptr);
+			if(strcmp(responses[0].resp, responses[1].resp) != 0) {
+				D(("new passwords for %s don't match", user));
+				syslog(LOG_INFO, MODULE_NAME
+				       ": new passwords for %s not same", user);
+				ret = PAM_AUTHTOK_ERR;
+			}
+			if(ret == PAM_SUCCESS) {
+				ret = pam_set_item(pamh, PAM_AUTHTOK,
+						   strdup(responses[0].resp));
+			} else {
+				D(("error reading %s's current password",user));
+				syslog(LOG_INFO, MODULE_NAME
+				       ": error reading current password for %s", user);
+				ret = PAM_AUTHTOK_RECOVER_ERR;
+			}
+		}
+
+		/* Read the old password. */
+		if(ret == PAM_SUCCESS) {
+			ret = pam_get_item(pamh, PAM_OLDAUTHTOK, &old_authtok);
+			D(("old password is \"%s\"", old_authtok));
+			if((ret != PAM_SUCCESS) || (old_authtok == NULL)) {
+				syslog(LOG_CRIT, MODULE_NAME
+				       ": couldn't recover old password");
+				ret = PAM_AUTHTOK_RECOVER_ERR;
+			}
+		}
+		/* Read the new password. */
+		if(ret == PAM_SUCCESS) {
+			ret = pam_get_item(pamh, PAM_AUTHTOK, &authtok);
+			D(("new password is \"%s\"", authtok));
+			if((ret != PAM_SUCCESS) || (authtok == NULL)) {
+				syslog(LOG_CRIT, MODULE_NAME
+				       ": couldn't read new password");
+				ret = PAM_AUTHTOK_ERR;
+			}
+			ret = PAM_SUCCESS;
+		}
+
+		/* Build the password-changing service principal. */
 		if(ret == KRB5_SUCCESS) {
 			ret = krb5_build_principal(context, &server,
 						   krb5_princ_realm(context,
@@ -990,7 +1156,9 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 								client)->data,
 						   "kadmin", "changepw", NULL);
 			if(ret != KRB5_SUCCESS) {
-				syslog(LOG_INFO, "%s\n", error_message(ret));
+				D(("%s\n", error_message(ret)));
+				syslog(LOG_CRIT, MODULE_NAME ": %s\n",
+				       error_message(ret));
 				ret = PAM_SYSTEM_ERR;
 			}
 		}
@@ -999,40 +1167,35 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		creds.client = client;
 		creds.server = server;
 
-		if(ret == KRB5_SUCCESS) {
-			ret = pam_get_item(pamh, PAM_USER, &user);
-			if(ret != 0) {
-				syslog(LOG_INFO, MODULE_NAME
-				       ": couldn't determine user's login");
-				/* FIXME: need to call conversation function
-				   here! */
-				ret = PAM_USER_UNKNOWN;
-			}
-		}
-		if(ret == KRB5_SUCCESS) {
-			ret = pam_get_item(pamh, PAM_AUTHTOK, &password);
-			if(ret != PAM_SUCCESS) {
-				syslog(LOG_INFO, MODULE_NAME
-				       "couldn't determine old password");
-				ret = PAM_AUTHTOK_ERR;
-			}
-		}
+		/* Read the old password. */
 		if(ret == PAM_SUCCESS) {
-			ret = kadm5_init_with_password(user, password,
+			ret = pam_get_item(pamh, PAM_OLDAUTHTOK, &old_authtok);
+			D(("old password is \"%s\"", old_authtok));
+			if(ret != PAM_SUCCESS) {
+				syslog(LOG_CRIT, MODULE_NAME
+				       ": couldn't determine old password");
+				ret = PAM_AUTHTOK_RECOVER_ERR;
+			}
+		}
+
+		if(ret == PAM_SUCCESS) {
+			ret = kadm5_init_with_password(user, old_authtok,
 						       KADM5_CHANGEPW_SERVICE,
 						       NULL,
 						       KADM5_STRUCT_VERSION,
 						       KADM5_API_VERSION_2,
 						       &kadm5_handle);
-			if(ret != 0) {
-				syslog(LOG_INFO, "%s\n", error_message(ret));
+			D(("%s in kadm5_init", error_message(ret)));
+			if(ret != KRB5_SUCCESS) {
+				syslog(LOG_INFO, MODULE_NAME
+				       ": %s\n", error_message(ret));
 				ret = PAM_AUTH_ERR;
 			}
 		}
 
 		if(ret == KRB5_SUCCESS) {
 			ret = kadm5_chpass_principal(&kadm5_handle, client,
-						     password);
+						     authtok);
 		}
 	}
 
@@ -1040,15 +1203,18 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	switch(ret) {
 		case KRB5_SUCCESS:
 		case KRB5KDC_ERR_NONE: {
+			D(("Kerberos status = %s", error_message(ret)));
 			break;
 		}
 		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
 		case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN: {
+			D(("Kerberos status = %s", error_message(ret)));
 			ret = PAM_USER_UNKNOWN;
 			break;
 		}
 		case KRB5_REALM_UNKNOWN:
 		case KRB5_SERVICE_UNKNOWN: {
+			D(("Kerberos status = %s", error_message(ret)));
 			ret = PAM_SYSTEM_ERR;
 			break;
 		}
@@ -1059,6 +1225,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Clean up and return. */
 	if(context) krb5_free_context(context);
+	D(("returning %d (%s)", ret, pam_strerror(pamh, ret)));
 	return ret;
 }
 
