@@ -1,4 +1,8 @@
 2004-02-27 nalin
+	* src/session.c(pam_sm_open_session): only set variables if the ticket
+	files have non-zero-length filenames.
+
+2004-02-27 nalin
 	* src/storetmp.c(_pam_krb5_storetmp_data): open /dev/null three times to
 	ensure that pipe() won't give us any stdio descriptors.  Reintroduce the
 	call to execl() which got dropped earlier.

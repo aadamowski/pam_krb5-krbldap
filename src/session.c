@@ -156,7 +156,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		debug("creating v5 ccache for '%s'", user);
 	}
 	i = v5_save(ctx, stash,  userinfo, options, &ccname);
-	if (i == PAM_SUCCESS) {
+	if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
 		if (options->debug) {
 			debug("created v5 ccache '%s' for '%s'", ccname, user);
 		}
@@ -166,7 +166,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	chown(ccname, userinfo->uid, userinfo->gid);
 
 #ifdef USE_KRB4
-	if ((i == PAM_SUCCESS) && (stash->v4present)) {
+	if ((i == PAM_SUCCESS) && (stash->v4present) && (strlen(ccname) > 0)) {
 		if (options->debug) {
 			debug("creating v4 ticket file for '%s'", user);
 		}
