@@ -24,7 +24,6 @@ make
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
-ln -s -f krb5-pam.d pam.d
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
