@@ -42,7 +42,7 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 
 # $Id$
 %changelog
-* Fri Oct 10 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.3-1
+* Fri Oct 10 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.4-1
 - update to 2.0.4
 
 * Fri Sep 19 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.3-1
