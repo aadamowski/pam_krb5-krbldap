@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.25
+Version: 1.26
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Fri Feb  9 2001 Nalin Dahyabhai <nalin@redhat.com>
+- handle cases where krb5_init_context() fails
+
 * Wed Jan 17 2001 Nalin Dahyabhai <nalin@redhat.com>
 - be more careful around memory allocation (fixes from David J. MacKenzie)
 

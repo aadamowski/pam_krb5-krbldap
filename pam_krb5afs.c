@@ -723,9 +723,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* First parse the arguments; if there are problems, bail. */
 	initialize_krb5_error_table();
-	ret = krb5_init_context(&context);
-	if(!(config = get_config(context, argc, argv))) {
+	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
+	}
+	if(ret == KRB5_SUCCESS) {
+		if(!(config = get_config(context, argc, argv))) {
+			ret = PAM_SYSTEM_ERR;
+		}
 	}
 	krb5_init_ets(context);
 	DEBUG("pam_sm_authenticate() called");
@@ -1131,9 +1135,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* First parse the arguments; if there are problems, bail. */
 	initialize_krb5_error_table();
-	ret = krb5_init_context(&context);
-	if(!(config = get_config(context, argc, argv))) {
+	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
+	}
+	if(ret == KRB5_SUCCESS) {
+		if(!(config = get_config(context, argc, argv))) {
+			ret = PAM_SYSTEM_ERR;
+		}
 	}
 	krb5_init_ets(context);
 	DEBUG("pam_sm_setcred() called");
@@ -1420,9 +1428,13 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_context context = NULL;
 	int ret;
 
-	ret = krb5_init_context(&context);
-	if(!(config = get_config(context, argc, argv))) {
+	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
+	}
+	if(ret == KRB5_SUCCESS) {
+		if(!(config = get_config(context, argc, argv))) {
+			ret = PAM_SYSTEM_ERR;
+		}
 	}
 	DEBUG("pam_sm_open_session() called");
 	if(context) krb5_free_context(context);
@@ -1437,9 +1449,13 @@ int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 	krb5_context context = NULL;
 	int ret;
 
-	ret = krb5_init_context(&context);
-	if(!(config = get_config(context, argc, argv))) {
+	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
+	}
+	if(ret == KRB5_SUCCESS) {
+		if(!(config = get_config(context, argc, argv))) {
+			ret = PAM_SYSTEM_ERR;
+		}
 	}
 	DEBUG("pam_sm_close_session() called");
 	if(context) krb5_free_context(context);
@@ -1461,9 +1477,13 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	/* Initialize Kerberos. */
 	initialize_krb5_error_table();
 	initialize_ovk_error_table();
-	ret = krb5_init_context(&context);
-	if(!(config = get_config(context, argc, argv))) {
+	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
+	}
+	if(ret == KRB5_SUCCESS) {
+		if(!(config = get_config(context, argc, argv))) {
+			ret = PAM_SYSTEM_ERR;
+		}
 	}
 	DEBUG("pam_sm_chauthtok() called");
 

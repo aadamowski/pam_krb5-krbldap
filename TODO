@@ -1,1 +1,3 @@
 * Maybe use krb5_aname_to_localname to do principal/login mapping?
+* Ensure we're compliant with the PAM specs wrt return values.
+* Separate PAM and Kerberos error-checking variables.
