@@ -132,7 +132,7 @@ yyerror(const char *error)
 	return 0;
 }
 
-int
+static int
 yywrap()
 {
 	return 1;

@@ -7,6 +7,8 @@ AC_PROG_INSTALL
 AC_PATH_PROG(FLEX,flex)
 AC_PATH_PROG(YACC,yacc)
 
+libsave="$LIBS"
+
 AC_ARG_WITH(krb5,
 [  --with-krb5=dir         use Kerberos 5 headers and libs under dir],
 if test x$withval != xyes ; then
@@ -43,7 +45,7 @@ AC_CHECK_HEADERS(sys/stat.h sys/types.h stdio.h stdlib.h string.h unistd.h\
 AC_CHECK_HEADER(krb5.h,AC_DEFINE(HAVE_KRB5_H),
 	AC_ERROR(install Kerberos 5 or re-run configure with --with-krb5))
 
-AC_CHECK_FUNC(sprintf)
+AC_CHECK_FUNC(snprintf)
 AC_CHECK_FUNC(connect,,AC_CHECK_LIB(socket,connect))
 AC_CHECK_FUNC(yp_bind,,AC_CHECK_LIB(nsl,yp_bind))
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
@@ -53,7 +55,6 @@ AC_CHECK_FUNC(mit_des_key_sched,,
 	      AC_CHECK_LIB(crypto,mit_des_key_sched,,
 	      	AC_CHECK_LIB(k5crypto,mit_des_key_sched)))
 AC_CHECK_FUNC(krb5_init_context,,AC_CHECK_LIB(krb5,krb5_init_context))
-AC_CHECK_FUNC(des_string_to_key,,AC_CHECK_LIB(des425,des_string_to_key))
 
 # Stolen from openssh patch from simon@sxw.org.uk: 
 # http://www.sxw.org.uk/computing/patches/
@@ -62,10 +63,10 @@ AC_TRY_COMPILE([ #include <krb5.h> ],
         [ char *tmp = heimdal_version; ],
         [ AC_MSG_RESULT(yes)
           AC_DEFINE(HEIMDAL)
-          K5LIBS="-lkrb5 -lasn1"
+          LIBS="-lkrb5 -lasn1 $LIBS"
         ],
         [ AC_MSG_RESULT(no)
-          K5LIBS="-lkrb5 -ldes -lk5crypto -lcom_err"
+          LIBS="-lkrb5 -lk5crypto -lcom_err $LIBS"
         ]
 )
 
@@ -80,7 +81,9 @@ AC_CHECK_HEADER(kerberosIV/krb.h,
 )
 
 if test x$have_krb_h != x; then
-	AC_CHECK_FUNC(in_tkt,,AC_CHECK_LIB(krb4,in_tkt))
+	AC_CHECK_FUNC(in_tkt,,
+		      AC_CHECK_LIB(krb4,in_tkt,,
+				   AC_CHECK_LIB(krb,in_tkt)))
 	AC_CHECK_FUNC(krb524_convert_creds_kdc,,
 		      AC_CHECK_LIB(krb524,krb524_convert_creds_kdc))
         AC_MSG_CHECKING(whether we are using KTH Kerberos IV)
@@ -93,6 +96,7 @@ if test x$have_krb_h != x; then
                        ]
         )
 fi
+KRB5LIBS="$LIBS"
 
 if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	AC_CHECK_HEADER(krbafs.h,
@@ -107,10 +111,19 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 			AC_WARN(AFS token-grabbing disabled)
 	,,$LIBS)
 fi
+KRB5AFSLIBS="$LIBS"
+
 AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
-AC_CHECK_FUNCS(krb5_appdefault_string krb5_appdefault_boolean krb5_appdefault_boolean initialize_krb5_error_table getpwnam_r)
-AC_CHECK_FUNCS(__posix_getpwnam_r)
+AC_CHECK_FUNC(krb5_appdefault_string)
+AC_CHECK_FUNC(krb5_appdefault_boolean)
 AC_CHECK_FUNC(krb5_change_password,,AC_WARN(password-changing disabled))
+AC_CHECK_FUNC(initialize_krb5_error_table)
+AC_CHECK_FUNC(krb5_verify_init_creds)
+
+LIBS="$libsave"
+
+AC_CHECK_FUNC(getpwnam_r)
+AC_CHECK_FUNC(__posix_getpwnam_r)
 
 AC_SUBST(KRB5)
 AC_SUBST(KRBAFS)
@@ -120,6 +133,8 @@ OSTARGETS=`echo $SHTARGETS | sed "s^\.so^\.so\.$OS^g"`
 AC_SUBST(OS)
 AC_SUBST(SHTARGETS)
 AC_SUBST(OSTARGETS)
+AC_SUBST(KRB5LIBS)
+AC_SUBST(KRB5AFSLIBS)
 AC_SUBST(MAN5TARGETS)
 AC_SUBST(MAN8TARGETS)
 

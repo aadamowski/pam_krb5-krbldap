@@ -14,8 +14,10 @@ YACC=@YACC@
 #CFLAGS=-Wall -Wshadow -Wcast-align @CFLAGS@ $(DEFS)
 CFLAGS=-Wcast-align @CFLAGS@ $(DEFS)
 LDFLAGS=@LDFLAGS@ @LIBS@
-CCSHLIBFLAGS=-Wl,-rpath=$(KRB5)/lib -Wl,-rpath=$(KRBAFS) $(LDFLAGS)
-LDSHLIBFLAGS=-R$(KRB5)/lib -R$(KRBAFS) $(LDFLAGS)
+KRB5LIBS=@KRB5LIBS@
+KRB5AFSLIBS=@KRB5AFSLIBS@
+CCSHLIBFLAGS=$(LDFLAGS)
+LDSHLIBFLAGS=$(LDFLAGS)
 MODULES = pam_krb5.so pam_krb5afs.so
 MAN5TARGETS = @MAN5TARGETS@
 MAN8TARGETS = @MAN8TARGETS@
@@ -33,18 +35,18 @@ pam_krb5afs.o: pam_krb5afs.c krb5conf.l.c
 
 ifeq ($(OS),Linux)
 pam_krb5.so: pam_krb5.o Versions
-	$(CC) -shared -o pam_krb5.so pam_krb5.o $(CCSHLIBFLAGS) -Wl,--version-script=Versions
+	$(CC) -shared -o pam_krb5.so pam_krb5.o $(KRB5LIBS) $(CCSHLIBFLAGS) -Wl,--version-script=Versions
 
 pam_krb5afs.so: pam_krb5afs.o Versions
-	$(CC) -shared -o pam_krb5afs.so pam_krb5afs.o $(CCSHLIBFLAGS) -Wl,--version-script=Versions
+	$(CC) -shared -o pam_krb5afs.so pam_krb5afs.o $(KRB5AFSLIBS) $(CCSHLIBFLAGS) -Wl,--version-script=Versions
 endif
 
 ifeq ($(OS),SunOS)
 pam_krb5.so: pam_krb5.o
-	/usr/ccs/bin/ld -G -o pam_krb5.so $^ $(LDSHLIBFLAGS) flock.o -lpam -ldyn
+	/usr/ccs/bin/ld -G -o pam_krb5.so $^ $(KRB5LIBS) $(LDSHLIBFLAGS) flock.o -lpam -ldyn
 
 pam_krb5afs.so: pam_krb5afs.o
-	/usr/ccs/bin/ld -G -o pam_krb5afs.so $^ $(LDSHLIBFLAGS) flock.o -lpam -ldyn
+	/usr/ccs/bin/ld -G -o pam_krb5afs.so $^ $(KRB5AFSLIBS) $(LDSHLIBFLAGS) flock.o -lpam -ldyn
 endif
 
 install: $(SHLIBDEP) install-modules install-man

@@ -39,6 +39,11 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed Aug 22 2001 Nalin Dahyabhai <nalin@redhat.com> 1.43-1
+- add minimum UID support (suggested by Matthew Miller)
+- don't link pam_krb5 with libkrbafs
+- make all options in krb5.conf available as PAM config arguments
+
 * Tue Jul 31 2001 Nalin Dahyabhai <nalin@redhat.com>
 - merge patch from Chris Chiappa for building with Heimdal
 
@@ -46,7 +51,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 - note that we had to prepend the current directory to a given path in
   dlopen.c when we had to (noted by Onime Clement)
 
-* Tue Jul 17 2001 Nalin Dahyabhai <nalin@redhat.com>
+* Tue Jul 17 2001 Nalin Dahyabhai <nalin@redhat.com> 1.42-1
 - return PAM_NEW_AUTHTOK_REQD when attempts to get initial credentials
   fail with KRB5KDC_ERR_KEY_EXP (noted by Onime Clement)
 

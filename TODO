@@ -1,7 +1,9 @@
 * Ensure we're compliant with the PAM docs wrt return values.  It's not the
   RFC, but it's something.
-* Add support for account expiration.  (Isn't krb5_get_init_creds_password
-  already taking care of this, though?)
+* Add support for account expiration.  We get an expired error from the KDC
+  when we try the initial authentication (whether or not the user gave us
+  the right password), so we need to figure out how to do this right in an
+  acct_mgmt() function.
 * Make use of krb5_verify_init_creds() contingent on an autoconf check,
   instead of hard-coding our preference of it over the internal validate_tgt()
   function (for older versions of krb5).

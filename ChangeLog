@@ -1,3 +1,121 @@
+Wed Aug 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Add minimum UID support (suggested by Matthew Miller).
+- Don't link pam_krb5 with libkrbafs.
+- Make all options in krb5.conf available as PAM config options.  This should
+  make things more interesting.
+
+Tue Jul 31 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Merge patch from Chris Chiappa for building with Heimdal.
+
+Mon Jul 24 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Note that we had to prepend the current directory to a given path in
+  dlopen.c when we had to (noted by Onime Clement).
+
+Tue Jul 17 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Return PAM_NEW_AUTHTOK_REQD when attempts to get initial credentials
+  fail with KRB5KDC_ERR_KEY_EXP (noted by Onime Clement).
+
+Thu Jul 12 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Add info about accessing the CVS repository to the README.
+- Parser cleanups (thanks to Dane Skow for a more complicated sample).
+
+Fri Jul  6 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't set forwardable and assorted other flags when getting password-
+  changing service ticket (noted, and fix supplied, by Onime Clement).
+- Try __posix_getpwnam_r on Solaris before we try getpwnam_r, which may
+  or may not be expecting the same number/type of arguments (noted by
+  Onime Clement).
+- Use krb5_aname_to_localname to convert the principal to a login name
+  and set PAM_USER to the result when authenticating.
+- Some autoconf fixes for failure cases.
+
+Wed Jun 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Use krb5_change_password() to change passwords.
+
+Tue Jun 12 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Use getpwnam_r instead of getpwnam when available.
+
+Fri Jun  8 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Cleanup some autoconf checks.
+
+Thu Jun  7 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't call initialize_krb5_error_table() or initialize_ovk_error_table()
+  if they're not found at compile-time (reported for RHL 6.x by Chris Riley).
+
+Thu May 31 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Note that [pam] is still checked in addition to [appdefaults].
+- Note that AFS and Kerberos IV support requires working Kerberos IV
+  configuration files (i.e., kinit -4 needs to work) (doc changes
+  suggested by Martin Schulz).
+
+Tue May 29 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Add max_timeout, timeout_shift, initial_timeout, and addressless options
+  (patches from Simon Wilkinson).
+- Fix the README to document the [appdefaults] section instead of [pam].
+- Change example host and cell names in the README to use example domains.
+
+Wed May  2 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't delete tokens unless we're also removing ticket files (report and
+  patch from Sean Dilda).
+- Report initialization errors better.
+
+Thu Apr 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Treat semicolons as a comment character, like hash marks (bug reported by
+  Greg Francis at Gonzaga University).
+- Use the [:blank:] equivalence class to simplify the configuration file parser.
+- Don't mess with the real environment.
+- Implement mostly-complete aging support.
+
+Sat Apr  7 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Tweak the man page (can't use italics and bold simultaneously).
+
+Fri Apr  6 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Restore the default TGS value (#35015).
+
+Wed Mar 28 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Fix a debug message.
+- Fix uninitialized pointer error.
+
+Mon Mar 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't fail to fixup the krb5 ccache if something goes wrong obtaining
+  v4 credentials or creating a krb4 ticket file (#33262).
+
+Thu Mar 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Fixup the man page.
+- Log return code from k_setpag() when debugging.
+- Create credentials and get tokens when setcred is called for REINITIALIZE.
+
+Wed Mar 21 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't twiddle ownerships until after we get AFS tokens.
+- Use the current time instead of the issue time when storing v4 creds, since
+  we don't know the issuing host's byte order.
+- Depend on a PAM development header again instead of pam-devel.
+
+Tue Mar 20 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Add a separate config file parser for compatibility with settings that
+  predate the appdefault API.
+- Use a version script under Linux to avoid polluting the global namespace.
+- Don't have a default for afs_cells.
+- Need to close the file when we succeed in fixing permissions (noted by
+  jlkatz@eos.ncsu.edu).
+
+Mon Mar 19 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Use the appdefault API to read krb5.conf if available.
+- Create v4 tickets in such a way as to allow 1.2.2 to not think there's
+  something fishy going on.
+
+Tue Feb 13 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't log unknown user names to syslog -- they might be sensitive information.
+
+Fri Feb  9 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Handle cases where krb5_init_context() fails.
+
+Wed Jan 17 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Be more careful around memory allocation (fixes from David J. MacKenzie).
+
+Mon Jan 15 2001 Nalin Dahyabhai <nalin@redhat.com>
+- No fair trying to make me authenticate '(null)'!
+
 Wed Nov  7 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Only try to delete ccache files once.
 - Ignore extra data in v4 TGTs, but do log it.

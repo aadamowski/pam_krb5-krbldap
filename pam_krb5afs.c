@@ -90,22 +90,18 @@
 
 #ifdef HAVE_KERBEROSIV_KRB_H
 #include <kerberosIV/krb.h>
-#endif
-
+#else
 #ifdef HAVE_KRB_H
 #include <krb.h>
 #endif
+#endif
 
-#ifdef AFS
-#ifdef HAVE_KRBAFS_H
+#if defined(AFS) && defined(HAVE_KRBAFS_H)
 #include <krbafs.h>
 #define MODULE_NAME "pam_krb5afs"
-#else /* HAVE_KRBAFS_H */
+#else
 #define MODULE_NAME "pam_krb5"
-#endif /* HAVE_KRBAFS_H */
-#else /* AFS */
-#define MODULE_NAME "pam_krb5"
-#endif /* AFS */
+#endif
 
 #ifndef KRB5_SUCCESS
 #define KRB5_SUCCESS 0
@@ -137,11 +133,12 @@
 #define PAM_EXTERN extern
 #endif
 
-#define APPDEFAULT_APP	"pam"
-#define DEFAULT_SERVICE	"host"
-#define DEFAULT_KEYTAB	"/etc/krb5.keytab"
-#define DEFAULT_LIFE	"36000"
-#define DEFAULT_TKT_DIR	"/tmp"
+#define APPDEFAULT_APP		"pam"
+#define DEFAULT_BANNER		"Kerberos 5"
+#define DEFAULT_CCACHE_DIR	"/tmp"
+#define DEFAULT_KEYTAB		"/etc/krb5.keytab"
+#define DEFAULT_LIFE		36000
+#define DEFAULT_SERVICE		"host"
 
 #ifndef TRUE
 #define FALSE 0
@@ -173,16 +170,19 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 			      const char **argv);
 
+/* Account management. */
+PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
+				const char **argv);
+
 /* Session management. */
 PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
 				   const char **argv);
-
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 				    const char **argv);
     
 /* Password-setting. */
-PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
-                                int argc, const char **argv);
+PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc,
+				const char **argv);
 
 /******************************************************************************/
 
@@ -211,12 +211,13 @@ struct config {
 	int use_authtok;
 	int krb4_convert;
 	int setcred;
-	int no_user_check;
+	int user_check;
 	int validate;
 	krb5_get_init_creds_opt creds_opt;
-	long ticket_lifetime;
-	long renew_lifetime;
-	time_t warn_period;
+	int ticket_lifetime;
+	int renew_lifetime;
+	int warn_period;
+	int minimum_uid;
 	char *banner;
 	char **cell_list;
 	char *realm;
@@ -318,6 +319,15 @@ xstrnlen(const char *str, int max_len)
 	return -1;
 }
 
+static int
+truefalse(const char *t)
+{
+	if((*t == 'T') || (*t == 't') || (*t == 'Y') || (*t == 'y')) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
 /* Convert a few Kerberos error codes and convert to PAM equivalents. */
 static int
 convert_kerror(int error)
@@ -325,35 +335,29 @@ convert_kerror(int error)
 	int prc;
 	switch(error) {
 		case KRB5_SUCCESS:
-		case KRB5KDC_ERR_NONE: {
+		case KRB5KDC_ERR_NONE:
 			prc = PAM_SUCCESS;
 			break;
-		}
-		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN: {
+		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
 			prc = PAM_USER_UNKNOWN;
 			break;
-		}
 		case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN:
 		case KRB5_REALM_UNKNOWN:
-		case KRB5_SERVICE_UNKNOWN: {
+		case KRB5_SERVICE_UNKNOWN:
 			prc = PAM_SYSTEM_ERR;
 			break;
-		}
-		case KRB5KRB_AP_ERR_BAD_INTEGRITY: {
+		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
 			prc = PAM_PERM_DENIED;
 			break;
-		}
-		case KRB5KDC_ERR_KEY_EXP: {
+		case KRB5KDC_ERR_KEY_EXP:
 			prc = PAM_NEW_AUTHTOK_REQD;
 			break;
-		}
-		case KRB5KDC_ERR_NAME_EXP: {
+		case KRB5KDC_ERR_NAME_EXP:
 			prc = PAM_AUTHTOK_EXPIRED; /* is this right? */
 			break;
-		}
-		default: {
+		default:
 			prc = PAM_AUTH_ERR;
-		}
+			break;
 	}
 	return prc;
 }
@@ -376,24 +380,22 @@ safe_create(struct config *config, const char *filename)
 	}
 
 	if(fd == -1) {
-		NOTICE("error opening `%s': %s",
-		       filename, strerror(errno));
+		NOTICE("error opening `%s': %s", filename, strerror(errno));
 		return -1;
 	}
 
 	rc = fstat(fd, &nst);
 	if(rc == -1) {
-		NOTICE("error getting information about `%s': %s",
-		       filename, strerror(errno));
+		NOTICE("error getting information about `%s': %s", filename,
+		       strerror(errno));
 		close(fd);
 		return -1;
 	}
 
 	if(preexisting) {
-		if((ost.st_dev != nst.st_dev) ||
-		   (ost.st_ino != nst.st_ino)) {
-			NOTICE("sanity test failed for `%s': %s",
-			       filename, strerror(errno));
+		if((ost.st_dev != nst.st_dev) || (ost.st_ino != nst.st_ino)) {
+			NOTICE("sanity test failed for `%s': %s", filename,
+			       strerror(errno));
 			close(fd);
 			return -1;
 		}
@@ -416,9 +418,9 @@ safe_create(struct config *config, const char *filename)
 	return fd;
 }
 
-/* Yes, this is very messy.  But the kerberos libraries will nuke any
- * temporary file we supply and create a new one, so keeping a file
- * handle around and fchown()ing it won't work. */
+/* Yes, this is very messy.  But the kerberos libraries will nuke any temporary
+ * file we supply and create a new one, so keeping a file handle around and
+ * fchown()ing it later won't work. */
 static int
 safe_fixup(struct config *config, const char *filename, struct stash *stash)
 {
@@ -471,8 +473,7 @@ safe_fixup(struct config *config, const char *filename, struct stash *stash)
 	      stash->uid, stash->gid);
 	rc = fchown(fd, stash->uid, stash->gid);
 	if((rc == -1) && (geteuid() == 0)) {
-		CRIT("`%s' setting owner of ccache",
-		     strerror(errno));
+		CRIT("`%s' setting owner of ccache", strerror(errno));
 		close(fd);
 		return PAM_SYSTEM_ERR;
 	}
@@ -481,8 +482,7 @@ safe_fixup(struct config *config, const char *filename, struct stash *stash)
 	      S_IRUSR | S_IWUSR);
 	rc = fchmod(fd, S_IRUSR | S_IWUSR);
 	if(rc == -1) {
-		CRIT("`%s' setting mode of ticket file",
-		     strerror(errno));
+		CRIT("`%s' setting mode of ticket file", strerror(errno));
 		close(fd);
 		return PAM_SYSTEM_ERR;
 	}
@@ -494,10 +494,14 @@ safe_fixup(struct config *config, const char *filename, struct stash *stash)
 
 static void
 appdefault_string(krb5_context context, const char *option,
-		  const char *default_value, char ** ret_value)
+		  int argc, const char **argv,
+		  const char *default_value, char **ret_value)
 {
-	int found = FALSE;
+	int found = FALSE, i;
 	const char *tmp;
+	char buf[LINE_MAX];
+	size_t buflen;
+
 	tmp = xkrb5_conf_read(option);
 	if(tmp) {
 		*ret_value = strdup(tmp);
@@ -505,33 +509,60 @@ appdefault_string(krb5_context context, const char *option,
 	}
 #ifdef HAVE_KRB5_APPDEFAULT_STRING
 	if(!found) {
-		krb5_appdefault_string(context, APPDEFAULT_APP, NULL,
-				       option, default_value, ret_value);
+		krb5_appdefault_string(context, APPDEFAULT_APP, NULL, option,
+				       default_value, ret_value);
 		found = TRUE;
 	}
 #endif
 	if(!found) {
-		*ret_value = strdup(default_value);
+		*ret_value = default_value ? strdup(default_value) : NULL;
+	}
+
+	snprintf(buf, sizeof(buf), "%s=", option);
+	buflen = strlen(buf);
+
+	for(i = 0; i < argc; i++) {
+		if(strncmp(argv[i], buf, buflen) == 0) {
+			*ret_value = strdup(argv[i] + buflen);
+		}
 	}
 }
 
 static void
 appdefault_boolean(krb5_context context, const char *option,
+		   int argc, const char **argv,
 		   int default_value, int *ret_value)
 {
-	int found = FALSE;
+	int found = FALSE, i;
 	const char *tmp;
+	char buf[LINE_MAX];
+	size_t buflen;
+
 	tmp = xkrb5_conf_read(option);
 	if(tmp) {
-		if(!strcasecmp(tmp, "FALSE") ||
-		   !strcasecmp(tmp, "OFF") ||
-		   !strcasecmp(tmp, "NO")) {
+		if((strcasecmp(tmp, "FALSE") == 0) ||
+		   (strcasecmp(tmp, "OFF") == 0) ||
+		   (strcasecmp(tmp, "NO") == 0)) {
 			*ret_value = FALSE;
 			found = TRUE;
-		}
-		if(!strcasecmp(tmp, "TRUE") ||
-		   !strcasecmp(tmp, "ON") ||
-		   !strcasecmp(tmp, "YES")) {
+		} else
+		if((strcasecmp(tmp, "TRUE") == 0) ||
+		   (strcasecmp(tmp, "ON") == 0) ||
+		   (strcasecmp(tmp, "YES") == 0)) {
+			*ret_value = TRUE;
+			found = TRUE;
+		} else
+		if((tmp[0] == 'F') ||
+		   (tmp[0] == 'f') ||
+		   (tmp[0] == 'N') ||
+		   (tmp[0] == 'n')) {
+			*ret_value = FALSE;
+			found = TRUE;
+		} else
+		if((tmp[0] == 'T') ||
+		   (tmp[0] == 't') ||
+		   (tmp[0] == 'Y') ||
+		   (tmp[0] == 'y')) {
 			*ret_value = TRUE;
 			found = TRUE;
 		}
@@ -539,36 +570,83 @@ appdefault_boolean(krb5_context context, const char *option,
 #ifdef HAVE_KRB5_APPDEFAULT_BOOLEAN
 	if(!found) {
 		krb5_appdefault_boolean(context, APPDEFAULT_APP, NULL,
-					option, default_value, ret_value);
+				        option, default_value, ret_value);
 		found = TRUE;
 	}
 #endif
 	if(!found) {
 		*ret_value = default_value;
 	}
+
+	snprintf(buf, sizeof(buf), "%s=", option);
+	buflen = strlen(buf);
+
+	for(i = 0; i < argc; i++) {
+		if(strncmp(argv[i], buf, buflen) == 0) {
+			*ret_value = truefalse(argv[i] + buflen);
+		} else
+		if(strcmp(argv[i], option) == 0) {
+			*ret_value = TRUE;
+		} else
+		if(strncmp(argv[i], "no", 2) == 0) {
+			if(strcmp(argv[i] + 2, option) == 0) {
+				*ret_value = FALSE;
+			}
+		}
+		if(strncmp(argv[i], "no_", 3) == 0) {
+			if(strcmp(argv[i] + 3, option) == 0) {
+				*ret_value = FALSE;
+			}
+		}
+		if(strncmp(argv[i], "not", 3) == 0) {
+			if(strcmp(argv[i] + 3, option) == 0) {
+				*ret_value = FALSE;
+			}
+		}
+		if(strncmp(argv[i], "not_", 4) == 0) {
+			if(strcmp(argv[i] + 4, option) == 0) {
+				*ret_value = FALSE;
+			}
+		}
+	}
 }
 
 static void
 appdefault_integer(krb5_context context, const char *option,
-		   int default_value, int *ret_value)
+		int argc, const char **argv,
+		int default_value, int *ret_value)
 {
-	int found = FALSE;
+	int found = FALSE, i;
 	const char *tmp;
+	char buf[LINE_MAX];
+	size_t buflen;
+
 	tmp = xkrb5_conf_read(option);
 	if (tmp) {
-		*ret_value=atol(tmp);
+		*ret_value=atoi(tmp);
 		found = TRUE;
 	}
 #ifdef HAVE_KRB5_APPDEFAULT_STRING
 	if (!found) {
 		krb5_appdefault_string(context, APPDEFAULT_APP, NULL,
-				       option, "", &tmp);
-		if (strlen(tmp)!=0)
+				       option, "", (char**)&tmp);
+		if (strlen(tmp)!=0) {
+			*ret_value = atoi(tmp);
 			found = TRUE;
+		}
 	}
 #endif
 	if (!found) {
 		*ret_value = default_value;
+	}
+
+	snprintf(buf, sizeof(buf), "%s=", option);
+	buflen = strlen(buf);
+
+	for(i = 0; i < argc; i++) {
+		if(strncmp(argv[i], buf, buflen) == 0) {
+			*ret_value = atoi(argv[i] + buflen);
+		}
 	}
 }
 
@@ -601,86 +679,42 @@ get_config(krb5_context context, int argc, const char **argv)
 	ret->try_second_pass = 1;
 
 	/* Whether or not to debug via syslog. */
-	appdefault_boolean(context, "debug", ret->debug, &ret->debug);
-	for(i = 0; i < argc; i++) {
-		if(strcmp(argv[i], "debug") == 0) {
-			ret->debug = 1;
-		}
-	}
+	appdefault_boolean(context, "debug", argc, argv,
+			   ret->debug, &ret->debug);
 	DEBUG("get_config() called");
 			    
-	/* The local realm. */
+	/* The default realm we assume users are in unless told otherwise. */
 	krb5_get_default_realm(context, &ret->realm);
+	appdefault_string(context, "realm", argc, argv,
+			  ret->realm, &ret->realm);
 
-	/* Renewable lifetime. */
-	appdefault_string(context, "renew_lifetime", DEFAULT_LIFE, &foo);
-	ret->renew_lifetime = atol(foo);
-	DEBUG("setting renewable lifetime to %d", ret->renew_lifetime);
-	krb5_get_init_creds_opt_set_renew_life(&ret->creds_opt,
-					       ret->renew_lifetime);
-
-	/* Ticket lifetime. */
-	appdefault_string(context, "ticket_lifetime", DEFAULT_LIFE, &foo);
-	ret->ticket_lifetime = atol(foo);
-	DEBUG("setting ticket lifetime to %d", ret->ticket_lifetime);
-	krb5_get_init_creds_opt_set_tkt_life(&ret->creds_opt,
-					     ret->ticket_lifetime);
-
-	/* Forwardable? */
-	appdefault_boolean(context, "forwardable", TRUE, &i);
-	if(i) {
-		DEBUG("making tickets forwardable");
-		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, TRUE);
-	} else {
-		DEBUG("making tickets non-forwardable");
-		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, FALSE);
-	}
-
-	/* Proxiable? */
-	appdefault_boolean(context, "proxiable", TRUE, &i);
-	if(i) {
-		DEBUG("making tickets proxiable");
-		krb5_get_init_creds_opt_set_proxiable(&ret->creds_opt, TRUE);
-	} else {
-		DEBUG("making tickets non-proxiable");
-		krb5_get_init_creds_opt_set_proxiable(&ret->creds_opt, FALSE);
-	}
-
-	/* Support for changing timeouts. This plays with some internal
-	 * library stuff which will apparently "go away soon". When it does,
-	 * it'll hopefully be replaced with the right way to do this. */
-	appdefault_integer(context, "max_timeout",
-			   krb5_max_skdc_timeout, &krb5_max_skdc_timeout);
-	DEBUG("setting maximum timeout to %d",krb5_max_skdc_timeout);
-	appdefault_integer(context, "timeout_shift", 
-			   krb5_skdc_timeout_shift, &krb5_skdc_timeout_shift);
-	DEBUG("setting timeout shift to %d",krb5_skdc_timeout_shift);
-	appdefault_integer(context, "initial_timeout",
-			   krb5_skdc_timeout_1, &krb5_skdc_timeout_1);
-	DEBUG("setting initial timeout to %d",krb5_skdc_timeout_1);
-
-	appdefault_boolean(context,"addressless", FALSE, &i);
+	/* Whether to get an addressless ticket, or to get a ticket containing
+	 * addresses of other hosts in addition to those of local interfaces. */
+	appdefault_boolean(context, "addressless", argc, argv, FALSE, &i);
 	if (i) {
-		addresses=NULL;
 		DEBUG("Creating an addressless ticket");
+		addresses = NULL;
 	} else {
+		/* Additional hosts credentials should be good for. */
 		DEBUG("Creating a ticket with addresses");
-		/* Hosts to get tickets for. */
-		appdefault_string(context, "hosts", "", &hosts);
+		appdefault_string(context, "hosts", argc, argv, "", &hosts);
 
 		/* Get the addresses of local interfaces, and count them. */
 		krb5_os_localaddr(context, &hostlist);
 		for(j = 0; hostlist[j] != NULL; j++) ;
 
-		/* Allocate enough space for all of these, plus one for the NULL. */
-		addresses = malloc(sizeof(krb5_address) * (num_words(hosts) + 1 + j));
+		/* Allocate enough space for all of these, plus one for
+		 * the NULL. */
+		addresses = malloc(sizeof(krb5_address) *
+				   (num_words(hosts) + 1 + j));
 		if(addresses == NULL) {
 			free(ret);
 			return NULL;
 		}
 
 		/* Set the address list. */
-		memset(addresses, 0, sizeof(krb5_address) * (num_words(hosts) + 1 + j));
+		memset(addresses, 0, sizeof(krb5_address) *
+		       (num_words(hosts) + 1 + j));
 		for(j = 0; hostlist[j] != NULL; j++) {
 			addresses[j] = hostlist[j];
 		}
@@ -697,31 +731,9 @@ get_config(krb5_context context, int argc, const char **argv)
 	}
 	krb5_get_init_creds_opt_set_address_list(&ret->creds_opt, addresses);
 
-	/* Which directory to put ticket files in. */
-	appdefault_string(context, "ccache_dir", "/tmp", &ret->ccache_dir);
-	DEBUG("ticket directory set to `%s'", ret->ccache_dir);
-
-	/* What to say we are when changing passwords. */
-	appdefault_string(context, "banner", "Kerberos", &ret->banner);
-	DEBUG("password-changing banner set to `%s'", ret->banner);
-
-	/* Whether to get krb4 tickets using krb524convertcreds() or
-	 * a v4 TGT request. */
-	appdefault_boolean(context, "krb4_convert", FALSE, &ret->krb4_convert);
-	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
-
-	/* Whether to validate TGTs or not. */
-	appdefault_boolean(context, "validate", FALSE, &ret->validate);
-	DEBUG("validate %s", ret->validate ? "true" : "false");
-
-	/* Warning period before the user's password expires. */
-	appdefault_string(context, "warn", "604800", &foo);
-	ret->warn_period = atol(foo);
-	DEBUG("warn %d", ret->warn_period);
-
 #ifdef AFS
 	/* Cells to get tokens for. */
-	appdefault_string(context, "afs_cells", "", &cells);
+	appdefault_string(context, "afs_cells", argc, argv, "", &cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
 	if(ret->cell_list == NULL) {
 		free(ret);
@@ -743,8 +755,78 @@ get_config(krb5_context context, int argc, const char **argv)
 	ret->get_tokens = TRUE;
 #endif
 
+	/* What to say we are when changing passwords. */
+	appdefault_string(context, "banner", argc, argv,
+			  DEFAULT_BANNER, &ret->banner);
+	DEBUG("password-changing banner set to `%s'", ret->banner);
+
+	/* Which directory to put ticket files in. */
+	appdefault_string(context, "ccache_dir", argc, argv,
+			  DEFAULT_CCACHE_DIR, &ret->ccache_dir);
+	DEBUG("ccache directory set to `%s'", ret->ccache_dir);
+
+	/* Forwardable? */
+	appdefault_boolean(context, "forwardable", argc, argv, TRUE, &i);
+	if(i) {
+		DEBUG("making tickets forwardable");
+		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, TRUE);
+	} else {
+		DEBUG("making tickets non-forwardable");
+		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, FALSE);
+	}
+
+	/* Support for changing timeouts. This plays with some internal library
+	 * stuff which will apparently "go away soon".  When it does, it'll
+	 * hopefully be replaced with the right way to do this. This sets the
+	 * initial timeout when attempting to contact the KDC. */
+	appdefault_integer(context, "initial_timeout", argc, argv,
+			   krb5_skdc_timeout_1, &krb5_skdc_timeout_1);
+	DEBUG("setting initial timeout to %d", krb5_skdc_timeout_1);
+
+	/* Path to the keytab file. */
+	appdefault_string(context, "keytab", argc, argv,
+			  DEFAULT_KEYTAB, &ret->keytab);
+	DEBUG("keytab file name set to `%s'", ret->keytab);
+
+	/* Whether to get krb4 tickets using either krb524_convert_creds() or
+	 * a v4 TGT request. */
+	appdefault_boolean(context, "krb4_convert", argc, argv,
+			   FALSE, &ret->krb4_convert);
+	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
+
+	/* Support for changing timeouts. This plays with some internal library
+	 * stuff which will apparently "go away soon".  When it does, it'll
+	 * hopefully be replaced with the right way to do this. This sets the
+	 * maximum timeout when attempting to contact the KDC. */
+	appdefault_integer(context, "max_timeout", argc, argv,
+			   krb5_max_skdc_timeout, &krb5_max_skdc_timeout);
+	DEBUG("setting maximum timeout to %d", krb5_max_skdc_timeout);
+
+	/* Minimum user UID we care about. */
+	appdefault_integer(context, "minimum_uid", argc, argv,
+			   0, &ret->minimum_uid);
+	DEBUG("will only attempt to authenticate users when UID >= %d",
+	      ret->minimum_uid);
+
+	/* Proxiable? */
+	appdefault_boolean(context, "proxiable", argc, argv, TRUE, &i);
+	if(i) {
+		DEBUG("making tickets proxiable");
+		krb5_get_init_creds_opt_set_proxiable(&ret->creds_opt, TRUE);
+	} else {
+		DEBUG("making tickets non-proxiable");
+		krb5_get_init_creds_opt_set_proxiable(&ret->creds_opt, FALSE);
+	}
+
+	/* Renewable lifetime. */
+	appdefault_integer(context, "renew_lifetime", argc, argv,
+			   DEFAULT_LIFE, &ret->renew_lifetime);
+	DEBUG("setting renewable lifetime to %d", ret->renew_lifetime);
+	krb5_get_init_creds_opt_set_renew_life(&ret->creds_opt,
+					       ret->renew_lifetime);
+
 	/* Get the name of a service ticket the user must be able to obtain and
-	 * a keytab with the key for the service in it which we can use to
+	 * a keytab with the key for the service in it, which we can use to
 	 * decrypt the credential to make sure the KDC's response wasn't
 	 * spoofed.  This is an undocumented way to do it, but it's what people
 	 * do if they need to validate the TGT. */
@@ -752,13 +834,48 @@ get_config(krb5_context context, int argc, const char **argv)
 		       sizeof(tgsname) - strlen(tgsname) - 1) == -1) {
 		memset(&tgsname, 0, sizeof(tgsname));
 	}
-	appdefault_string(context, "required_tgs", tgsname, &ret->required_tgs);
+	appdefault_string(context, "required_tgs", argc, argv,
+			  tgsname, &ret->required_tgs);
 	DEBUG("required_tgs set to `%s'", ret->required_tgs);
 
-	/* Path to the keytab file. */
-	appdefault_string(context, "keytab", "/etc/krb5.keytab", &ret->keytab);
-	DEBUG("keytab file name set to `%s'", ret->keytab);
+	/* Ticket lifetime. */
+	appdefault_integer(context, "ticket_lifetime", argc, argv,
+		           DEFAULT_LIFE, &ret->ticket_lifetime);
+	DEBUG("setting ticket lifetime to %d", ret->ticket_lifetime);
+	krb5_get_init_creds_opt_set_tkt_life(&ret->creds_opt,
+					     ret->ticket_lifetime);
 
+	/* Support for changing timeouts. This plays with some internal library
+	 * stuff which will apparently "go away soon".  When it does, it'll
+	 * hopefully be replaced with the right way to do this. This sets the
+	 * timeout_shift value used when attempting to contact a KDC. */
+	appdefault_integer(context, "timeout_shift", argc, argv,
+			   krb5_skdc_timeout_shift, &krb5_skdc_timeout_shift);
+	DEBUG("setting timeout shift to %d", krb5_skdc_timeout_shift);
+
+	/* Rely exclusively on PAM_AUTHTOK for password-changing. */
+	appdefault_boolean(context, "use_authtok", argc, argv,
+			   FALSE, &ret->use_authtok);
+	DEBUG("use_authtok %s", ret->use_authtok ? "true" : "false");
+
+	/* Don't check that the user exists, and don't do ccache
+	   permission munging. */
+	appdefault_boolean(context, "user_check", argc, argv,
+			   TRUE, &ret->user_check);
+	DEBUG("user_check %s", ret->user_check ? "true" : "false");
+
+	/* Whether to validate TGTs or not. */
+	appdefault_boolean(context, "validate", argc, argv,
+			   FALSE, &ret->validate);
+	DEBUG("validate %s", ret->validate ? "true" : "false");
+
+	/* Warning period before the user's password expires. */
+	appdefault_integer(context, "warn_period", argc, argv, 604800, &i);
+	ret->warn_period = i;
+	DEBUG("warn_period %d", ret->warn_period);
+
+	/* Parse the rest of the arguments which don't fit the above
+	 * scheme very well. */
 	for(i = 0; i < argc; i++) {
 		/* Required argument that we don't use but need to recognize.*/
 		if(strcmp(argv[i], "no_warn") == 0) {
@@ -779,36 +896,12 @@ get_config(krb5_context context, int argc, const char **argv)
 			ret->try_first_pass = 0;
 			continue;
 		}
-		/* Rely exclusively on PAM_AUTHTOK for password-changing. */
-		if(strcmp(argv[i], "use_authtok") == 0) {
-			ret->use_authtok = 1;
-			continue;
-		}
-		/* Don't check that the user exists, and don't do ccache
-		   permission munging. */
-		if(strcmp(argv[i], "no_user_check") == 0) {
-			ret->no_user_check = 1;
-			continue;
-		}
-		/* Validate the TGT we get against a local key. */
-		if(strcmp(argv[i], "validate") == 0) {
-			ret->validate = 1;
-			continue;
-		}
-		/* Period of time before expiration when we'll warn the user. */
-		if(strcmp(argv[i], "warn") == 0) {
-			ret->warn_period = atol(argv[i] + 4);
-			continue;
-		}
-#ifdef AFS
 		/* Do a setcred() from inside of the auth function. */
 		if((strcmp(argv[i], "get_tokens") == 0) ||
 		   (strcmp(argv[i], "tokens") == 0) ||
 		   (strcmp(argv[i], "force_cred") == 0)) {
 			ret->setcred = 1;
-			continue;
 		}
-#endif
 	}
 
 	return ret;
@@ -825,8 +918,7 @@ cleanup(pam_handle_t *pamh, void *data, int error_status)
 
 /* Prompt the user for a single piece of information. */
 static int
-pam_prompt_for(pam_handle_t *pamh, int msg_style,
-	       const char *msg, char **out)
+pam_prompt_for(pam_handle_t *pamh, int msg_style, const char *msg, char **out)
 {
 	const struct pam_message prompt_message = {msg_style, msg};
 	struct pam_response *responses;
@@ -858,8 +950,8 @@ pam_prompt_for(pam_handle_t *pamh, int msg_style,
 				}
 			}
 		} else {
-			INFO("%s in conversation function getting "
-			     "info from the user", pam_strerror(pamh, ret));
+			INFO("%s in conversation function getting info from "
+			     "the user", pam_strerror(pamh, ret));
 		}
 	}
 
@@ -884,7 +976,8 @@ pam_prompter(krb5_context context, void *data, const char *name,
 				     prompts[i].hidden ?
 				     PAM_PROMPT_ECHO_OFF :
 				     PAM_PROMPT_ECHO_ON,
-				     q, &p);
+				     q,
+				     &p);
 		if(ret == PAM_SUCCESS) {
 			tmp = strdup(p);
 			if(tmp == NULL) {
@@ -905,12 +998,12 @@ pam_prompter(krb5_context context, void *data, const char *name,
 }
 
 #ifdef HAVE_VALIDATION
-/* Validate the TGT in stash->v5_creds using the keytab and required_tgs
- * set in config.  Return zero only if validation fails, required_tgs is
- * set, and we can read the keytab file. */
+/* Validate the TGT in stash->v5_creds using the keytab and required_tgs set in
+ * config.  Return zero only if validation fails, required_tgs is set, and we
+ * can read the keytab file. */
 static int
-validate_tgt(const char *user, krb5_context context,
-	     struct config *config, struct stash *stash)
+validate_tgt(const char *user, krb5_context context, struct config *config,
+	     struct stash *stash)
 {
 	krb5_keytab keytab;
 	krb5_keytab_entry entry;
@@ -926,7 +1019,8 @@ validate_tgt(const char *user, krb5_context context,
 		DEBUG("TGT not verified because required_tgs was not set");
 		return 1;
 	}
-	if((stat(config->keytab, &buf) == -1) && (errno == ENOENT)) {
+	if((stat(config->keytab, &buf) == -1) &&
+	   (errno == ENOENT)) {
 		DEBUG("TGT not verified because keytab file %s doesn't exist",
 		      config->keytab);
 		return 1;
@@ -967,8 +1061,8 @@ validate_tgt(const char *user, krb5_context context,
 	/* Open the keytab. */
 	ret = krb5_kt_resolve(context, config->keytab, &keytab);
 	if(ret) {
-		DEBUG("error trying to open %s: %s",
-		      config->keytab, error_message(ret));
+		DEBUG("error trying to open %s: %s", config->keytab,
+		      error_message(ret));
 		krb5_free_principal(context, server);
 		krb5_free_creds(context, tgs);
 		krb5_free_ticket(context, ticket);
@@ -976,10 +1070,8 @@ validate_tgt(const char *user, krb5_context context,
 	}
 
 	/* Read the key for the service. */
-	ret = krb5_kt_get_entry(context, keytab, server,
-				ticket->enc_part.kvno,
-				ticket->enc_part.enctype,
-				&entry);
+	ret = krb5_kt_get_entry(context, keytab, server, ticket->enc_part.kvno,
+				ticket->enc_part.enctype, &entry);
 	if(ret) {
 		if(ret == EACCES) {
 			DEBUG("error reading keys from %s: %s",
@@ -999,8 +1091,7 @@ validate_tgt(const char *user, krb5_context context,
 	/* Try to decrypt the encrypted part with the key. */
 	ret = krb5_decrypt_tkt_part(context, &entry.key, ticket);
 	if(ret) {
-		CRIT("verification error: %s",
-		     error_message(ret));
+		CRIT("verification error: %s", error_message(ret));
 	} else {
 		INFO("TGT for %s successfully verified", user);
 	}
@@ -1015,8 +1106,8 @@ validate_tgt(const char *user, krb5_context context,
 }
 #else
 static int
-validate_tgt(const char *user, krb5_context context,
-	   struct config *config, struct stash *stash)
+validate_tgt(const char *user, krb5_context context, struct config *config,
+	     struct stash *stash)
 {
 	CRIT("verification error: verification not available because "
 	     "krb5_decode_ticket() not available");
@@ -1045,7 +1136,8 @@ get_pw(const char *user)
 	struct passwd *pwd = NULL;
 	char buf[LINE_MAX];
 	memset(&rec, 0, sizeof(rec));
-	if(getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0){
+	getpwnam_r(user, &rec, buf, sizeof(buf), &pwd);
+	if(pwd == &rec){
 		return &rec;
 	}
 	return NULL;
@@ -1131,8 +1223,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		} else {
 			CRIT("couldn't determine user (first guess was `%s'), "
 			     "prompting for user name");
-			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_ON,
-					     "login: ", &user);
+			prc = pam_prompt_for(pamh,
+					     PAM_PROMPT_ECHO_ON,
+					     "login: ",
+					     &user);
 		}
 		if((prc != PAM_SUCCESS) || (strlen(user) == 0)) {
 			CRIT("cannot determine user's login");
@@ -1151,10 +1245,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 
-	/* Convert the principal name to a user name and store it as the PAM_USER. */
+	/* Convert the principal name to a user name and store it as the
+	 * PAM_USER. */
 	if(RC_OK) {
 		memset(&localname, '\0', sizeof(localname));
-		if(krb5_aname_to_localname(context, principal, sizeof(localname) - 1,
+		if(krb5_aname_to_localname(context, principal,
+					   sizeof(localname) - 1,
 					   localname) == KRB5_SUCCESS) {
 			if(strcmp(user, localname) != 0) {
 				user = strdup(localname);
@@ -1164,7 +1260,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Try to get and save the user's UID. */
 	if(RC_OK) {
-		if(config->no_user_check) {
+		if(!config->user_check) {
 			stash->uid = getuid();
 			stash->gid = getgid();
 			DEBUG("using current uid %d, gid %d",
@@ -1175,8 +1271,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(pwd != NULL) {
 				stash->uid = pwd->pw_uid;
 				stash->gid = pwd->pw_gid;
-				DEBUG("`%s' has uid %d, gid %d", user,
-				      stash->uid, stash->gid);
+				DEBUG("`%s' has uid %d, gid %d",
+				      user, stash->uid, stash->gid);
+				/* Check if we care about this user. */
+				if(stash->uid < config->minimum_uid) {
+					prc = PAM_IGNORE;
+				}
 			} else {
 				CRIT("getpwnam() failed for the user");
 				prc = PAM_USER_UNKNOWN;
@@ -1234,8 +1334,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		/* Try to converse if the password failed. */
 		if(config->try_second_pass && !authenticated) {
 			password = NULL;
-			pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
-				       "Password: ", &password);
+			pam_prompt_for(pamh,
+				       PAM_PROMPT_ECHO_OFF,
+				       "Password: ",
+				       &password);
 			if(password) {
 				tmp = strdup(password);
 				if(tmp) {
@@ -1260,22 +1362,27 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 		/* Figure out where to go from here. */
 		if(krc != KRB5_SUCCESS) {
-			CRIT("authenticate error: %s (%d)", error_message(krc), krc);
+			CRIT("authenticate error: %s (%d)",
+			     error_message(krc), krc);
 		}
 	}
 
 	/* Verify that the TGT is good (i.e., that the reply wasn't spoofed). */
 	if(RC_OK) {
 		if(config->validate) {
-#if 0
-			if(validate_tgt(user, context, config, stash) == 0) {
-				prc = PAM_AUTH_ERR;
-			}
-#else
-			krc = krb5_verify_init_creds(context, &stash->v5_creds,
-						     NULL, NULL, NULL, NULL);
+#ifdef HAVE_KRB5_VERIFY_INIT_CREDS
+			krc = krb5_verify_init_creds(context,
+						     &stash->v5_creds,
+						     NULL,
+						     NULL,
+						     NULL,
+						     NULL);
 			if(krc != KRB5_SUCCESS) {
 				CRIT("TGT verification failed for `%s'");
+			}
+#else
+			if(validate_tgt(user, context, config, stash) == 0) {
+				prc = PAM_AUTH_ERR;
 			}
 #endif
 		}
@@ -1335,8 +1442,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		memset(sname, '\0', sizeof(sname));
 		memset(sinst, '\0', sizeof(sinst));
 
-		if(krb5_524_conv_principal(context, principal,
-					   v4name, v4inst, v4realm) == KSUCCESS) {
+		if(krb5_524_conv_principal(context, principal, v4name, v4inst,
+					   v4realm) == KSUCCESS) {
 			KTEXT_ST ciphertext_st;
 			KTEXT ciphertext = &ciphertext_st;
 			des_cblock key;
@@ -1368,11 +1475,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				des_key_sched(key, key_schedule);
 
 				/* Decrypt the TGT. */
-				des_pcbc_encrypt(ciphertext->dat,
-						 ciphertext->dat,
+				des_pcbc_encrypt((C_Block*)ciphertext->dat,
+						 (C_Block*)ciphertext->dat,
 						 ciphertext->length,
 						 key_schedule,
-						 key,
+						 (C_Block*)key,
 						 0);
 				memset(key, 0, sizeof(key));
 				memset(key_schedule, 0, sizeof(key_schedule));
@@ -1402,7 +1509,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						sizeof(stash->v4_creds.service)
 						- 1);
 				} else {
-					INFO("service name in v4 TGT too long: %.8s", p);
+					INFO("service name in v4 TGT too long: "
+					     "%.8s", p);
 				}
 				p += (strlen(stash->v4_creds.service) + 1);
 				l -= (strlen(stash->v4_creds.service) + 1);
@@ -1437,7 +1545,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				/* Ticket data. */
 				if(l >= stash->v4_creds.ticket_st.length) {
 					memcpy(stash->v4_creds.ticket_st.dat, p,
-					      stash->v4_creds.ticket_st.length);
+					       stash->v4_creds.ticket_st.length);
 				}
 				p += stash->v4_creds.ticket_st.length;
 				l -= stash->v4_creds.ticket_st.length;
@@ -1497,7 +1605,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG("saved return code (%d) for later use", *pret);
 		} else {
 			INFO("error %d (%s) saving return code (%d)", prc,
-				pam_strerror(pamh, prc), *pret);
+			     pam_strerror(pamh, prc), *pret);
 		}
 		prc = *pret;
 	}
@@ -1602,16 +1710,16 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 		if(RC_OK) {
 			/* Open the ccache via Kerberos. */
-			snprintf(v5_path, sizeof(v5_path), "FILE:%s",
-				 stash->v5_path);
+			snprintf(v5_path, sizeof(v5_path),
+				 "FILE:%s", stash->v5_path);
 			krc = krb5_cc_resolve(context, v5_path, &ccache);
 			if(krc == KRB5_SUCCESS) {
 				krc = krb5_cc_initialize(context, ccache,
-						        stash->v5_creds.client);
+							 stash->v5_creds.client);
 			}
 			if(krc != KRB5_SUCCESS) {
-				CRIT("error initializing ccache %s for `%s': "
-				     "%s", v5_path, user, error_message(krc));
+				CRIT("error initializing ccache %s for `%s': %s",
+				     v5_path, user, error_message(krc));
 			}
 
 			/* Store credentials in the cache. */
@@ -1626,8 +1734,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			tmpfd = -1;
 
 			/* Set the environment variable to point to the cache.*/
-			snprintf(v5_path, sizeof(v5_path),
-				 "KRB5CCNAME=FILE:%s", stash->v5_path);
+			snprintf(v5_path, sizeof(v5_path), "KRB5CCNAME=FILE:%s",
+				 stash->v5_path);
 			prc = pam_putenv(pamh, v5_path);
 			if(prc != PAM_SUCCESS) {
 				CRIT("%s setting environment",
@@ -1639,8 +1747,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 			DEBUG("%s", v5_path);
 		} else {
-			DEBUG("Kerberos 5 credential retrieval failed for "
-			      "`%s', user is probably local", user);
+			DEBUG("Kerberos 5 credential retrieval failed for `%s',"
+			      " user is probably local", user);
 			stash = NULL;
 			prc = PAM_CRED_UNAVAIL;
 		}
@@ -1652,26 +1760,29 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				DEBUG("converting credentials for `%s'", user);
 
 				krc = krb524_convert_creds_kdc(context,
-							      &stash->v5_creds,
-							      &stash->v4_creds);
+							       &stash->v5_creds,
+							       &stash->v4_creds);
 
-				DEBUG("krb524_convert_creds returned `%s' "
-				      "for `%s'",
-				      krc ? error_message(krc) :
-				      "Success", user);
+				DEBUG("krb524_convert_creds returned `%s' for "
+				      "`%s'",
+				      krc ?
+				      error_message(krc) :
+				      "Success",
+				      user);
 
 				if(krc == KRB5_SUCCESS) {
 					INFO("v4 ticket conversion succeeded "
 					     "for `%s'", user);
 					stash->have_v4_creds = TRUE;
 				} else {
-					/* This shouldn't happen.  Either krb524d isn't
-					   running on the KDC or the module is
-					   misconfigured, or something weirder
-					   still happened: we succeeded. */
+					/* This shouldn't happen.  Either
+					 * krb524d isn't running on the KDC or
+					 * the module is misconfigured, or
+					 * something weirder still happened:
+					 * we succeeded. */
 					CRIT("v4 ticket conversion failed for "
-					     "`%s': %d (%s)", user,
-					     krc, error_message(krc));
+					     "`%s': %d (%s)", user, krc,
+					     error_message(krc));
 					krc = KRB5_SUCCESS;
 				}
 			}
@@ -1700,7 +1811,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				prc = PAM_SYSTEM_ERR;
 			} else {
 				/* Mess with the file's ownership to make
-				 * libkrb happy. */
+				 * libkrb4 happy. */
 				fchown(tmpfd, getuid(), getgid());
 			}
 		}
@@ -1723,8 +1834,10 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if((krc == KRB5_SUCCESS) && save) {
 				DEBUG("save v4 creds (%s%s%s@%s:%d), %d",
 				      stash->v4_creds.service,
-				      strlen(stash->v4_creds.instance) ? "." : "",
-				      stash->v4_creds.instance ? stash->v4_creds.instance : "",
+				      strlen(stash->v4_creds.instance) ?
+				      "." : "",
+				      stash->v4_creds.instance ?
+				      stash->v4_creds.instance : "",
 				      stash->v4_creds.realm,
 				      stash->v4_creds.kvno,
 				      stash->v4_creds.lifetime);
@@ -1785,13 +1898,15 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Fix permissions on this file so that the user logging in will
 	 * be able to use it. */
-	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
+	if(RC_OK &&
+	   (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
 	   (strlen(stash->v5_path) > 0)) {
 		prc = safe_fixup(config, stash->v5_path, stash);
 	}
 
 #ifdef HAVE_LIBKRB4
-	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
+	if(RC_OK &&
+	   (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
 	   (strlen(stash->v4_path) > 0)) {
 		prc = safe_fixup(config, stash->v4_path, stash);
 	}
@@ -1800,7 +1915,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if(RC_OK && (flags & PAM_DELETE_CRED)) {
 		prc = pam_get_data(pamh,MODULE_STASH_NAME,(const void**)&stash);
 		if((prc == PAM_SUCCESS) && (strlen(stash->v5_path) > 0)) {
-			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
 			DEBUG("removing %s", stash->v5_path);
 			if(remove(stash->v5_path) == -1) {
@@ -1901,6 +2015,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	return pam_sm_setcred(pamh, flags | PAM_DELETE_CRED, argc, argv);
 }
 
+#if 1
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
@@ -1914,10 +2029,11 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		if(!(config = get_config(context, argc, argv))) {
 			prc = PAM_SYSTEM_ERR;
 		} else {
-			pam_get_data(pamh, MODULE_RET_NAME, (const void**) &pret);
+			pam_get_data(pamh, MODULE_RET_NAME,
+				     (const void**) &pret);
 			if(pret) {
-				DEBUG("recovered return code %d from prior call to "
-				      "pam_sm_authenticate()", *pret);
+				DEBUG("recovered return code %d from prior call"
+				      " to pam_sm_authenticate()", *pret);
 				prc = *pret;
 			}
 		}
@@ -1925,8 +2041,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 	return prc;
 }
-
-#if 0
+#else
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
@@ -1988,8 +2103,10 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		prc = pam_get_item(pamh, PAM_AUTHTOK, &roauthtok);
 		if(roauthtok == NULL) {
 			INFO("couldn't determine user's password");
-			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
-					     "Password: ", &authtok);
+			prc = pam_prompt_for(pamh,
+					     PAM_PROMPT_ECHO_OFF,
+					     "Password: ",
+					     &authtok);
 		}
 		if(roauthtok != NULL) {
 			authtok = strdup((const char *)roauthtok);
@@ -2096,8 +2213,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	DEBUG("pam_sm_chauthtok() called");
 	/* Reset the flags, since we're doing password changing. */
 	if(RC_OK) {
-		krb5_get_init_creds_opt_set_forwardable(&config->creds_opt, FALSE);
-		krb5_get_init_creds_opt_set_proxiable(&config->creds_opt, FALSE);
+		krb5_get_init_creds_opt_set_forwardable(&config->creds_opt,
+							FALSE);
+		krb5_get_init_creds_opt_set_proxiable(&config->creds_opt,
+						      FALSE);
 		krb5_get_init_creds_opt_set_renew_life(&config->creds_opt, 0);
 	}
 
@@ -2172,8 +2291,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				prc = PAM_USER_UNKNOWN;
 			} else
 			if(krc == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN) {
-				DEBUG("password-changing service does "
-				      "not exist?!?!?");
+				DEBUG("password-changing service does not "
+				      "exist?!?!?");
 				prc = PAM_SYSTEM_ERR;
 			} else {
 				krc = PAM_SUCCESS;
@@ -2185,16 +2304,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if(RC_OK && (flags & PAM_PRELIM_CHECK)) {
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
 			DEBUG("prompting for current password");
-			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+			prc = pam_prompt_for(pamh,
+					     PAM_PROMPT_ECHO_OFF,
 					     current_pass,
 					     &old_authtok);
 			if(RC_OK) {
-				pam_set_item(pamh, PAM_OLDAUTHTOK,
+				pam_set_item(pamh,
+					     PAM_OLDAUTHTOK,
 					     (const void*)old_authtok);
 			} else {
 				prc = PAM_AUTHTOK_RECOVERY_ERR;
-				INFO("can't read current password for %s: %d (%s)",
-				     user, prc, pam_strerror(pamh, prc));
+				INFO("can't read current password for %s: %d "
+				     "(%s)", user, prc,
+				     pam_strerror(pamh, prc));
 			}
 		}
 		if(RC_OK) {
@@ -2222,7 +2344,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
 			DEBUG("prompting for current password");
-			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+			prc = pam_prompt_for(pamh,
+					     PAM_PROMPT_ECHO_OFF,
 					     current_pass,
 					     &old_authtok);
 			if(prc != PAM_SUCCESS) {
@@ -2238,12 +2361,16 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			char *authtok2 = NULL;
 
 			DEBUG("prompting for new password (1)");
-			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
-					     new_pass, &authtok);
+			prc = pam_prompt_for(pamh,
+					     PAM_PROMPT_ECHO_OFF,
+					     new_pass,
+					     &authtok);
 			if(RC_OK) {
 				DEBUG("prompting for new password (2)");
-				prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
-						   retype_pass, &authtok2);
+				prc = pam_prompt_for(pamh,
+						     PAM_PROMPT_ECHO_OFF,
+						     retype_pass,
+						     &authtok2);
 				if(prc != PAM_SUCCESS) {
 					INFO("error in conversation: %s",
 					     pam_strerror(pamh, prc));
@@ -2252,12 +2379,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 			if(RC_OK) {
 				if(strcmp(authtok, authtok2) != 0) {
-					pam_prompt_for(pamh, PAM_ERROR_MSG,
-						     "passwords do not match",
-						     NULL);
+					pam_prompt_for(pamh,
+						       PAM_ERROR_MSG,
+						       "passwords do not match",
+						       NULL);
 					prc = PAM_TRY_AGAIN;
 				} else {
-					pam_set_item(pamh, PAM_AUTHTOK,
+					pam_set_item(pamh,
+						     PAM_AUTHTOK,
 						     (const void*) authtok);
 				}
 			}
@@ -2294,8 +2423,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if((krc == KRB5_SUCCESS) &&
 			   (result_code == KRB5_KPASSWD_SUCCESS)) {
 				INFO("%s's %s password has been changed",
-				     user,
-				     config->banner);
+				     user, config->banner);
 			} else {
 				INFO("changing %s's %s password failed: %*s "
 				     "(%d: %*s)",
@@ -2322,8 +2450,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef MAIN
 /* Don't actually run this.  This function is only here for helping to ensure
-   that all necessary libraries are included at link-time, and will probably
-   segfault all over the place if you actually try to run it. */
+ * that all necessary libraries are included at link-time, and will probably
+ * segfault all over the place if you actually try to run it. */
 int
 main(int argc, char **argv)
 {

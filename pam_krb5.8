@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2001/05/29 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 8 2001/08/21 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
 .SH SYNOPSIS
@@ -8,8 +8,8 @@ pam_krb5 \- Kerberos 5 authentication
 .SH DESCRIPTION
 pam_krb5.so is designed to allow smooth integration of Kerberos 5 password-
 checking with applications built using PAM.  It also supports session-specific
-ticket files (which are neater), and Kerberos IV ticket file grabbing for
-compatibility.  Its main use is as an authentication module, but it also
+ticket files (which are neater) and Kerberos IV ticket file grabbing.
+Its main use is as an authentication module, but it also
 supplies the same functions as a session-management module to better support
 poorly-written applications, and a couple of other workarounds as well.
 
@@ -18,27 +18,43 @@ password check and, if possible, obtains Kerberos 5 and Kerberos IV credentials,
 caching them for later use.  When the application requests initialization of
 credentials (or opens a session), the usual ticket files are created.
 When the application subsequently requests deletion of
-credentials or closing of the session, the module deletes the ticket files.
+credentials or closing of the session, the module 
+deletes the ticket files.
+
+Some applications (notably, wu-ftpd, wu-imapd, and Samba) neither create
+credentials nor open sessions.  For these applications, it's best to use the
+\fBtokens\fR option to force token-grabbing during the password check, which is
+usually the right thing to do for these server apps.
 
 .SH ARGUMENTS
 .IP debug
-turns on debugging via \fBsyslog(3)\fR.
-.IP use_first_pass
-tells pam_krb5.so to get the user's entered password as it was stored by
-a module listed earlier in the stack, usually \fBpam_unix\fR or \fBpam_pwdb\fR,
-instead of prompting the user for it.
-.IP try_first_pass
-tells pam_krb5.so to check the password as with \fBuse_first_pass\fR,
-but to prompt the user for another one if the previously-entered one fails. This
-is the default mode of operation.
-.IP skip_first_pass
-tells pam_krb5.so to not bother checking a password that has been set by a
-module listed earlier in the stack.  This option is included mainly for
-completeness.
-.IP use_authtok
-tells pam_krb5.so to never prompt for passwords when changing passwords.
-This is useful if you are using pam_cracklib.so to try to enforce use of
-less-easy-to-guess passwords.
+turns on debugging via \fBsyslog(3)\fR.  Debugging messages are logged with
+priority LOG_DEBUG.
+.IP addressless
+tells pam_krb5.so to obtain credentials without address lists.  This may
+be necessary if your network uses NAT, and should otherwise not be used.
+.IP hosts=\fIhost\fP
+tells pam_krb5.so to obtain credentials using the address of the given
+host in addition to the addresses of interfaces on the local workstation.  For
+example, if your workstation is behind a masquerading firewall, specifying the
+firewall's outward-facing address here should allow Kerberos authentication to
+succeed.
+.IP banner=\fIKerberos 5\fP
+tells pam_krb5.so how to identify itself when users attempt to change their
+passwords.
+.IP ccache_dir=\fI/tmp\fP
+tells pam_krb5.so which directory to use for storing credential caches.
+.IP forwardable
+tells pam_krb5.so that credentials it obtains should be forwardable.
+.IP keytab=\fI/etc/krb5.keytab\fP
+tells pam_krb5.so the location of a keytab to use when validating
+credentials obtained from KDCs.
+.IP krb4_convert
+tells pam_krb5.so to obtain Kerberos IV credentials for users, in
+addition to Kerberos 5 credentials.
+.IP minimum_uid=\fI0\fP
+tells pam_krb5.so to ignore authentication attempts by users with
+UIDs below the specified number.
 .IP no_user_check
 tells pam_krb5.so to not check if a user exists on the local system, and
 to create ccache files owned by the current process's UID.  This is useful
@@ -46,6 +62,31 @@ for situations where a non-privileged server process needs to use Kerberized
 services on behalf of remote users who may not have local access.  Note that
 such a server should have an encrypted connection with its client in order
 to avoid allowing the user's password to be eavesdropped.
+.IP proxiable
+tells pam_krb5.so that credentials it obtains should be proxiable.
+.IP realm=\fIrealm\fP
+overrides the default realm set in \fI/etc/krb5.conf\fP, which pam_krb5.so
+will attempt to authenticate users to.
+.IP renew_lifetime=\fI36000\fP
+sets the default renewable lifetime for credentials.
+.IP skip_first_pass
+tells pam_krb5.so to not bother checking a password that has been set by a
+module listed earlier in the stack.  This option is included mainly for
+completeness.
+.IP ticket_lifetime=\fI36000\fP
+sets the default lifetime for credentials.
+.IP try_first_pass
+tells pam_krb5.so to check the password as with \fBuse_first_pass\fR,
+but to prompt the user for another one if the previously-entered one fails. This
+is the default mode of operation.
+.IP use_first_pass
+tells pam_krb5.so to get the user's entered password as it was stored by
+a module listed earlier in the stack, usually \fBpam_unix\fR or \fBpam_pwdb\fR,
+instead of prompting the user for it.
+.IP use_authtok
+tells pam_krb5.so to never prompt for passwords when changing passwords.
+This is useful if you are using pam_cracklib.so to try to enforce use of
+less-easy-to-guess passwords.
 .IP validate
 tells pam_krb5.so to verify that the TGT obtained from the realm's servers
 has not been spoofed.
@@ -57,6 +98,6 @@ has not been spoofed.
 .BR pam_krb5 (5)
 .br
 .SH BUGS
-Possibly, but let's hope not.  If you find any, please email the author.
+Probably, but let's hope not.  If you find any, please email the author.
 .SH AUTHOR
 Nalin Dahyabhai <nalin@redhat.com>

@@ -1,4 +1,4 @@
-.TH pam_krb5afs 5 2001/07/06 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5afs 5 2001/08/21 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5afs \- Kerberos 5 authentication with AFS support
 .SH DESCRIPTION
@@ -10,69 +10,68 @@ configuration file (for backward compatibility, the \fBpam\fP section is
 also checked for the same directives).
 
 .SH DIRECTIVES
-.IP debug
-can be set to \fBtrue\fR or \fBfalse\fR
+.IP debug=[\fItrue\fP|\fIfalse\fP]
 turns on debugging via \fBsyslog(3)\fR.
-.IP ticket_lifetime
-default ticket lifetime.  If not specified, the default is 36000 seconds (10
-hours).
-.IP renew_lifetime
-default renewable lifetime.  This specifies how much time you have after
-getting credentials to renew them.  If not specified, the default is 36000
-seconds (10 hours).
-.IP forwardable
+.IP addressless=[\fItrue\fP|\fIfalse\fP]
+disables the checking of the address in the ticket. Allows the ticket to be
+used from behind NAT firewalls, or on machines whose IP address changes
+regularly.
+.IP afs_cells=\fIcells\fP
+specifies which cells you want to get tokens for.  Set this to the list of all
+of your local cells.
+.IP banner=\fIKerberos 5\fP
+specifies what kind of password the module claims to be changing when called
+to change passwords.  The default is \fBKerberos 5\fP.
+.IP ccache_dir=\fI/tmp\fP
+specifies the directory to place credential cache files in.
+.IP forwardable=[\fItrue\fP|\fIfalse\fP]
 controls whether or not credentials are forwardable.  If not specified, they
 are.
-.IP proxiable
-controls whether or not credentials are proxiable.  If not specified, they
-are.
-.IP krb4_convert
+.IP hosts=\fIhostnames\fP
+specifies which other hosts credentials obtained by pam_krb5afs will be good on.
+If your host is behind a firewall, you should add the IP address or name that
+the \fIKDC\fR sees it as to this list.
+.IP initial_timemout
+specifies the number of seconds to wait for the first KDC to respond, before
+attempting incremental backoff.
+.IP keytab=\fI/etc/krb5.keytab\fP
+specifies the name of a keytab file to find a key for the \fBrequired_tgs\fP in,
+for use in validating TGTs.
+.IP krb4_convert=[\fItrue\fP|\fIfalse\fP]
 controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
 KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
 them.  Unless you've converted \fIeverything\fR on your network over to use
 Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
 requires valid Kerberos IV configuration data to be present in
 \fB/etc/krb.conf\fP and \fB/etc/krb.realms\fP.
-.IP afs_cells
-specifies which cells you want to get tokens for.  Set this to the list of all
-of your local cells.
-.IP hosts
-specifies which other hosts credentials obtained by pam_krb5afs will be good on.
-If your host is behind a firewall, you should add the IP address or name that
-the \fIKDC\fR sees it as to this list.
-.IP validate
-specifies whether or not to attempt validation of the TGT.  The default is
-\fBfalse\fP.
-.IP required_tgs
+.IP max_timeout=\fI30\fP
+specifies the maximum amount of time to spend in attempting to get a reply
+from the \fIKDC\fRs, in seconds. This in effect determines the amount of
+time before PAM tries the next authentication scheme, if the network is
+not available.
+.IP minimum_uid=\fI0\fP
+specifies the minimum UID of users being authenticated.  If a user with a UID
+less than this value attempts authentication, the request will be ignored.
+.IP proxiable=[\fItrue\fP|\fIfalse\fP]
+controls whether or not credentials are proxiable.  If not specified, they
+are.
+.IP renew_lifetime=\fI36000\fP
+default renewable lifetime.  This specifies how much time you have after
+getting credentials to renew them.
+.IP required_tgs=[\fIservice\fP]
 specifies a principal for which a user must be able to get a session key for for
 the purpose of verifying that the TGT has not been forged.  The key is
 decrypted using a copy of the service's key stored in a local keytab file.
 This is the only certain way to be absolutely sure the TGT hasn't been forged.
 The default is \fBhost\fP@\fIhostname\fP.
-.IP keytab
-specifies the name of a keytab file to find a key for the \fBrequired_tgs\fP in,
-for use in validating TGTs.  The default is \fB/etc/krb5.keytab\fP.
-.IP ccache_dir
-specifies the directory to place credential cache files in.  The default is
-\fB/tmp\fR.
-.IP banner
-specifies what kind of password the module claims to be changing when called
-to change passwords.  The default is \fBKerberos 5\fP.
-.IP max_timeout
-specifies the maximum amount of time to spend in attempting to get a reply
-from the \fIKDC\fRs, in seconds. This in effect determines the amount of
-time before PAM tries the next authentication scheme, if the network is
-not available.
+.IP ticket_lifetime=\fI36000\fP
+default credential lifetime.
 .IP timeout_shift
 specifies the number of bits left to shift after each timeout, in
-implementing the incremental backoff in talking to the KDCs
-.IP initial_timemout
-specifies the number of seconds to wait for the first KDC to respond, before
-attempting incremental backoff.
-.IP addressless
-disables the checking of the address in the ticket. Allows the ticket to be
-used from behind NAT firewalls, or on machines whose IP address changes
-regularly.
+implementing the incremental backoff in talking to the KDCs.
+.IP validate=[\fItrue\fP|\fIfalse\fP]
+specifies whether or not to attempt validation of the TGT.  The default is
+\fBfalse\fP.
 
 .SH EXAMPLE
 
@@ -97,6 +96,6 @@ regularly.
 .BR pam_krb5afs (8)
 .br
 .SH BUGS
-Possibly, but let's hope not.  If you find any, please email the author.
+Probably, but let's hope not.  If you find any, please email the author.
 .SH AUTHOR
 Nalin Dahyabhai <nalin@redhat.com>
