@@ -36,8 +36,8 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 %files
 %defattr(-,root,root)
-/lib/security/pam_krb5.so
-/lib/security/pam_krb5afs.so
+/%{_lib}/security/pam_krb5.so
+/%{_lib}/security/pam_krb5afs.so
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
