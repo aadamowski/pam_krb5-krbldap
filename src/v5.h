@@ -57,7 +57,7 @@ int v5_save(krb5_context ctx,
 	    struct _pam_krb5_stash *stash,
 	    struct _pam_krb5_user_info *userinfo,
 	    struct _pam_krb5_options *options,
-	    const char **ccname);
+	    char **ccname);
 
 void v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	        struct _pam_krb5_options *options);

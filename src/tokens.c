@@ -64,7 +64,17 @@
 
 #ifdef USE_AFS
 int
-tokens_obtain(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
+tokens_useful(void)
+{
+	if (k_hasafs()) {
+		return 1;
+	}
+	return 0;
+}
+
+int
+tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
+	      struct _pam_krb5_options *options)
 {
 	int i, ret;
 	char cell[LINE_MAX];
@@ -184,7 +194,8 @@ tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 }
 #else
 int
-tokens_obtain(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
+tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
+	      struct _pam_krb5_options *options)
 {
 	if (options->debug) {
 		debug("afs support not compiled");
@@ -198,5 +209,10 @@ tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 		debug("afs support not compiled");
 	}
 	return PAM_SUCCESS;
+}
+int
+tokens_useful(void)
+{
+	return 0;
 }
 #endif

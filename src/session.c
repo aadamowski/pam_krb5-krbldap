@@ -69,7 +69,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 {
 	PAM_KRB5_MAYBE_CONST char *user;
 	char envstr[PATH_MAX + 20];
-	const char *ccname;
+	char *ccname;
 	krb5_context ctx;
 	struct _pam_krb5_options *options;
 	struct _pam_krb5_user_info *userinfo;
@@ -151,6 +151,24 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 #endif
 
+	/* Obtain tokens, if necessary. */
+	if ((i == PAM_SUCCESS) && tokens_useful()) {
+		uid_t uid;
+		gid_t gid;
+		uid = userinfo->uid;
+		gid = userinfo->gid;
+		userinfo->uid = getuid();
+		userinfo->gid = getgid();
+		v5_save(ctx, stash, userinfo, options, NULL);
+		v4_save(ctx, stash, userinfo, options,
+			-1, -1, NULL);
+		tokens_obtain(ctx, stash, options);
+		v4_destroy(ctx, stash, options);
+		v5_destroy(ctx, stash, options);
+		userinfo->uid = uid;
+		userinfo->gid = gid;
+	}
+
 	/* Create credential files. */
 	if (options->debug) {
 		debug("creating v5 ccache for '%s'", user);
@@ -163,7 +181,6 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
 		pam_putenv(pamh, xstrdup(envstr));
 	}
-	chown(ccname, userinfo->uid, userinfo->gid);
 
 #ifdef USE_KRB4
 	if ((i == PAM_SUCCESS) && (stash->v4present) && (strlen(ccname) > 0)) {
@@ -180,12 +197,6 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			pam_putenv(pamh, xstrdup(envstr));
 		}
 	}
-#endif
-
-	tokens_obtain(stash, options);
-
-#ifdef USE_KRB4
-	chown(ccname, userinfo->uid, userinfo->gid);
 #endif
 
 	/* Clean up. */

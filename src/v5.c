@@ -260,7 +260,7 @@ v5_appdefault_boolean(krb5_context ctx,
 
 static int
 v5_validate(krb5_context ctx, krb5_creds *creds,
-	    struct _pam_krb5_options *options)
+	    const struct _pam_krb5_options *options)
 {
 	int i;
 	char *principal;
@@ -468,7 +468,7 @@ v5_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
-	const char **ccname)
+	char **ccname)
 {
 	char tktfile[PATH_MAX + 6];
 	krb5_ccache ccache;
@@ -532,7 +532,6 @@ v5_save(krb5_context ctx,
 	/* Save the new file's name in the stash, and optionally return it to
 	 * the caller. */
 	stash->v5file = xstrdup(tktfile + 5);
-	chown(stash->v5file, userinfo->uid, userinfo->gid);
 	/* Generate a *new* ticket file with the same contents as this one. */
 	_pam_krb5_stash_clone_v5(stash, userinfo->uid, userinfo->gid);
 	if (ccname != NULL) {

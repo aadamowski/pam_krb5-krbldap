@@ -280,7 +280,7 @@ v4_save(krb5_context ctx,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
 	uid_t uid, gid_t gid,
-	const char **ccname)
+	char **ccname)
 {
 	char name[ANAME_SZ + 1], instance[INST_SZ + 1], realm[REALM_SZ + 1];
 	char tktfile[PATH_MAX];
@@ -361,7 +361,6 @@ v4_save(krb5_context ctx,
 	/* Destroy any old ticket files we might have.  One per customer. */
 	v4_destroy(ctx, stash, options);
 	stash->v4file = xstrdup(tktfile);
-	chown(stash->v4file, uid, gid);
 
 	/* Generate a *new* ticket file with the same contents as this one. */
 	_pam_krb5_stash_clone_v4(stash, userinfo->uid, userinfo->gid);

@@ -272,7 +272,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				v5_save(ctx, stash, userinfo, options, NULL);
 				v4_save(ctx, stash, userinfo, options,
 					-1, -1, NULL);
-				tokens_obtain(stash, options);
+				tokens_obtain(ctx, stash, options);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
 			}

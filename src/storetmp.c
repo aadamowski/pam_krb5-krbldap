@@ -118,6 +118,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 {
 	int i;
 	int inpipe[2], outpipe[2], dummy[3];
+	char uidstr[100], gidstr[100];
 	pid_t child;
 	void (*saved_sigchld_handler)(int);
 	for (i = 0; i < 3; i++) {
@@ -159,8 +160,14 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		}
 		dup2(outpipe[1], STDOUT_FILENO);
 		dup2(inpipe[0], STDIN_FILENO);
+		snprintf(uidstr, sizeof(uidstr), "%llu", (long long unsigned) uid);
+		snprintf(gidstr, sizeof(gidstr), "%llu", (long long unsigned) gid);
+		if ((strlen(uidstr) > sizeof(uidstr) - 2) ||
+		    (strlen(gidstr) > sizeof(gidstr) - 2)) {
+			_exit(-1);
+		}
 		execl(PKGSECURITYDIR "/pam_krb5_storetmp", "pam_krb5_storetmp",
-		      pattern, NULL);
+		      pattern, uidstr, gidstr, NULL);
 		_exit(-1);
 		break;
 	default:

@@ -1,3 +1,20 @@
+2004-03-16 nalin
+	* src/session.c: remove explict calls to chown(), which would be denied
+	by SELinux in enforcing mode, instead expecting the helper to handle it
+	all.
+	* src/v5.c: remove explict calls to chown(), which would be denied by
+	SELinux in enforcing mode, instead expecting the helper to handle it
+	all.
+	* src/v4.c: remove explict calls to chown(), which would be denied by
+	SELinux in enforcing mode, instead expecting the helper to handle it
+	all.
+	* src/storetmp.c: pass the user's uid and gid to the helper, it already
+	knows what to do.
+	* src/tokens.c(tokens_useful): add.
+	* src/session.c: when opening a session, create temporary tickets for
+	grabbing tokens with the current permissions so that libkrb4 doesn't
+	reject them, then clean them up, then create those for the user.
+
 2004-03-10 nalin
 	* src/pam_krb5_storetmp.c: if the filename pattern supplied is not a
 	valid pattern (does not end with XXXXXX), delete the file instead,
