@@ -2,9 +2,9 @@
  Module for Linux-PAM to do Kerberos 5 authentication, convert the
  Kerberos 5 ticket to a Kerberos 4 ticket, and use it to grab AFS
  tokens for specified cells.
- $Id$
  ******************************************************************************/
 
+#ident "$Id$"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -648,3 +648,9 @@ int main(int argc, char **argv)
 	return 0;
 }
 #endif
+
+/*******************************************************************************
+ Copyright 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
+ Distribution allowed under the X consortium license, the LGPL,
+ and/or the Artistic License.
+ ******************************************************************************/
