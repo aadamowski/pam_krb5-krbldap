@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.29
+Version: 1.30
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -41,6 +41,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %changelog
 * Wed Mar 28 2001 Nalin Dahyabhai <nalin@redhat.com>
 - fix a debug message
+- fix uninitialized pointer error
 
 * Mon Mar 26 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't fail to fixup the krb5 ccache if something goes wrong obtaining

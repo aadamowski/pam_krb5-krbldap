@@ -503,7 +503,7 @@ static struct config *
 get_config(krb5_context context, int argc, const char **argv)
 {
 	int i, j;
-	struct config *ret = NULL, *config;
+	struct config *ret = NULL, *config = NULL;
 	char *foo, *hosts;
 #ifdef AFS
 	char *cells;
@@ -909,7 +909,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context;
 	krb5_principal principal;
-	struct config *config;
+	struct config *config = NULL;
 	const char *user = NULL;
 	const char *password = NULL;
 	char *realm, *tmp;
@@ -1351,7 +1351,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	char v5_path[PATH_MAX];
 	const char *user = NULL;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
-	struct config *config;
+	struct config *config = NULL;
 
 	/* First parse the arguments; if there are problems, bail. */
 	initialize_krb5_error_table();
@@ -1659,14 +1659,14 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 int
 pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-	struct config *config;
+	struct config *config = NULL;
 	krb5_context context = NULL;
-	int ret;
+	int ret = PAM_SUCCESS;
 
 	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
 	}
-	if(ret == KRB5_SUCCESS) {
+	if(ret == PAM_SUCCESS) {
 		if(!(config = get_config(context, argc, argv))) {
 			ret = PAM_SYSTEM_ERR;
 		}
@@ -1680,14 +1680,14 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 			 const char **argv)
 {
-	struct config *config;
+	struct config *config = NULL;
 	krb5_context context = NULL;
-	int ret;
+	int ret = PAM_SUCCESS;
 
 	if(krb5_init_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
 	}
-	if(ret == KRB5_SUCCESS) {
+	if(ret == PAM_SUCCESS) {
 		if(!(config = get_config(context, argc, argv))) {
 			ret = PAM_SYSTEM_ERR;
 		}
@@ -1706,7 +1706,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	void *kadm5_handle = NULL;
 	const char *user = NULL, *authtok = NULL, *old_authtok = NULL;
 	char current_pass[LINE_MAX], new_pass[LINE_MAX], retype_pass[LINE_MAX];
-	struct config *config;
+	struct config *config = NULL;
 	int ret = PAM_SUCCESS;
 
 	/* Initialize Kerberos. */
