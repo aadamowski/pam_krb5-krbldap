@@ -507,6 +507,7 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 {
 	int i = 0, ret = PAM_SUCCESS;
 	const char *p = NULL;
+	dEBUG("pam_prompter() called for %d items", num_prompts);
 	for(i = 0; i < num_prompts; i++) {
 		char *q = NULL;
 		int l = strlen(prompts[i].prompt) + strlen(": ") + 1;
@@ -647,7 +648,9 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		/* Who we're representing. */
 		stash->v5_creds.client = principal;
 		/* Try the password, if we have one. */
-		if(password == NULL) {
+		if((password == NULL) &&
+		   (config->try_first_pass) &&
+		   (!config->try_second_pass)) {
 			done = 1;
 			ret = KRB5_LIBOS_CANTREADPWD;
 		}
@@ -669,7 +672,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		}
 
 		/* Try to converse if the password failed. */
-		if(config->try_second_pass && password && !done) {
+		if(config->try_second_pass && !done) {
 			ret = krb5_get_init_creds_password(context,
 							   &stash->v5_creds,
 							   principal,
