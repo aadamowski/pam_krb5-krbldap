@@ -5,13 +5,13 @@ pam_krb5 \- Kerberos 5 authentication
 
 .SH DESCRIPTION
 pam_krb5.so reads its configuration information from the \fBappdefaults\fP
-section of \fBkrb5.conf\fR(5).  You should read the \fBkrb5.conf(5)\fR man page
+section of \fBkrb5.conf\fP(5).  You should read the \fBkrb5.conf(5)\fP man page
 before continuing here.  The module expects its configuration information to be
-in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fP section.
+in the \fB@PAM_KRB5_APPNAME@\fP subsection of the \fBappdefaults\fP section.
 
 .SH DIRECTIVES
 .IP debug=[\fItrue\fP|\fIfalse\fP]
-turns on debugging via \fBsyslog(3)\fR.  Debug messages are logged with
+turns on debugging via \fBsyslog(3)\fP.  Debug messages are logged with
 priority \fILOG_DEBUG\fP.
 
 .IP addressless=[\fItrue\fP|\fIfalse\fP]
@@ -22,7 +22,8 @@ regularly.  This directive is deprecated in favor of the \fBlibdefaults\fP
 
 .IP afs_cells=\fIcell1.example.com cell2.example.com\fP
 tells pam_krb5.so to obtain tokens for cell1.example.com and cell2.example.com,
-in addition to the local cell, for the user.
+in addition to the local cell and the cell which contains the user's home
+directory, for the user.
 
 .IP banner=\fIKerberos 5\fP
 specifies what sort of password the module claims to be changing whenever it is
@@ -45,7 +46,7 @@ This directive is deprecated in favor of the \fBlibdefaults\fP
 .IP hosts=\fIhostnames\fP
 specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that
-the \fIKDC\fR sees it as to this list.
+the \fIKDC\fP sees it as to this list.
 This directive is deprecated in favor of the \fBlibdefaults\fP
 \fBextra_addresses\fP directive.
 
@@ -55,11 +56,22 @@ for use in validating TGTs.
 
 .IP krb4_convert=[\fItrue\fP|\fIfalse\fP]
 controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
-KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
-them.  Unless you've converted \fIeverything\fR on your network over to use
-Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
+KDC (or using the \fBkrb524d\fP service on the KDC) and create ticket files with
+them.  Unless you've converted \fIeverything\fP on your network over to use
+Kerberos 5, you'll want to leave this set to \fBtrue\fP.  Note that this
 may require valid Kerberos IV configuration data to be present in
 \fB/etc/krb.conf\fP and \fB/etc/krb.realms\fP.
+
+.IP mappings=[\fIregex1 regex2\fP]
+specifies that pam_krb5 should derive the user's principal name from the Unix
+user name by first checking if the user name matches \fBregex1\fP, and
+formulating a principal name using \fBregex2\fP.  For example,
+\fBmappings = EXAMPLE\\(.*) $1@EXAMPLE.COM\fP
+would map any user with a name of the form "EXAMPLE\whatever" to a principal
+name of "whatever@EXAMPLE.COM".  This is primarily targeted at allowing
+pam_krb5 to be used to authenticate users whose user information is provided by
+winbindd(8).  This will frequently require the reverse to be configured by
+setting up an auth_to_local rule elsewhere in krb5.conf(5).
 
 .IP minimum_uid=\fI0\fP
 specifies the minimum UID of users being authenticated.  If a user with a UID

@@ -27,10 +27,30 @@ o banner=Kerberos
   passwords (unset to avoid using any term other than "password").
 o ccache_dir=/tmp
   Directory in which to store ccache and ticket files.
+o external
+  external = service1 service2
+  Attempt to reuse credentials stored in a ccache pointed to by the KRB5CCNAME
+  variable in the PAM environment.  This is mainly useful for situations where
+  the calling application authenticated the user using GSSAPI, the user
+  delegated credentials to the calling application, and you're using pam_krb5
+  to obtain a v4 Kerberos ticket via krb524, or AFS tokens.
 o keytab=/etc/krb5.keytab
   Default keytab to use when validating initial credentials.
 o krb4_convert
   Obtain Kerberos IV ticket files, even if not required for the sake of AFS.
+o mappings = regex regex [regex regex...]
+  Specifies that pam_krb5 should derive the user's principal name from the Unix
+  user name by first checking if the user name matches the first regex, and
+  if it matches, formulating a principal name using the second regex.  Multiple
+  pairs of regular expressions can be used.
+  For example,
+    mappings = EXAMPLE\\(.*) $1@EXAMPLE.COM
+  would map any user with a name of the form "EXAMPLE\whatever" to a principal
+  name of "whatever@EXAMPLE.COM".  This is primarily targeted at allowing
+  pam_krb5 to be used to authenticate users whose user information is provided
+  by winbindd.
+  Note that this will frequently require the reverse to be configured by
+  setting up an auth_to_local rule elsewhere in krb5.conf.
 o minimum_uid=NUMBER
   Default keytab to use when validating initial credentials.
 o no_user_check
@@ -49,7 +69,8 @@ o ticket_lifetime
   maximum allowable lifetime configured in your KDC's configuration.
 o tokens
   Obtain AFS tokens during the authentication phase.  By default, tokens are
-  obtained for the local cell.
+  obtained for the local cell and the cell which contains the user's home
+  directory.
 o use_shmem
   Pass credentials from authentication to session management using shared
   memory instead of PAM data items.  This allows authentication and session-

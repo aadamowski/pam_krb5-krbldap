@@ -140,7 +140,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		retval = i;
 		/* Except catch the expected-wrong-password case. */
 		if ((retval == PAM_AUTH_ERR) &&
-		    (stash->v5result == KRB5KRB_AP_ERR_BAD_INTEGRITY)) {
+		    ((stash->v5result == KRB5KRB_AP_ERR_BAD_INTEGRITY) ||
+		     (stash->v5result == KRB5KDC_ERR_PREAUTH_FAILED))) {
 			retval = PAM_SUCCESS;
 		}
 	} else {

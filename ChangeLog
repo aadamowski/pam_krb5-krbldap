@@ -1,4 +1,9 @@
 2005-02-08 nalin
+	* src/acct.c: treat a KRB5KDC_ERR_PREAUTH_FAILED error as if it were
+	a KRB5KRB_AP_ERR_BAD_INTEGRITY error.
+	* README,src/pam_krb5.5.in,src/pam_krb5.8.in: doc updates.
+
+2005-02-08 nalin
 	* src/userinfo.c,src/userinfo.h: look up and make note of the user's
 	home directory.
 	* src/tokens.c(tokens_obtain): attempt to determine the cell in which
