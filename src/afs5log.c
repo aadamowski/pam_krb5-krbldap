@@ -56,6 +56,8 @@
 #include "minikafs.h"
 #include "xstr.h"
 
+extern char *log_progname;
+
 int
 main(int argc, char **argv)
 {
@@ -73,6 +75,7 @@ main(int argc, char **argv)
 	try_v5_2b = 1;
 #endif
 	cells = 0;
+	log_progname = "afs5log";
 	uid = getuid();
 	memset(&log_options, 0, sizeof(log_options));
 	memset(&ccache, 0, sizeof(ccache));

@@ -73,4 +73,19 @@ pagsh_SOURCES = \
 pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
 
 harness_SOURCES = harness.c
-harness_LDADD = @PAM_LIBS@ $(pam_krb5_la_OBJECTS) libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+harness_LDADD = \
+	auth.lo \
+	acct.lo \
+	password.lo \
+	session.lo \
+	logstdio.lo \
+	map.lo \
+	initopts.lo \
+	options.lo \
+	userinfo.lo \
+	tokens.lo \
+	sly.lo \
+	minikafs.lo \
+	v4.lo \
+	v5.lo
+harness_LDADD += @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@

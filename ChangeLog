@@ -1,4 +1,16 @@
 2005-02-24 nalin
+	* src/logstdio.c: add a log_progname global to adjust log messages.
+	* src/afs5log.c,src/harness.c: set log_progname at startup.
+	* src/prompter.c: suppress prompts for the previously-entered password.
+	* src/userinfo.c: clean up some valgrind-caught weirdness.
+	* src/harness.c: use getpass() instead of fgets() for
+	PAM_PROMPT_ECHO_OFF prompts.  Kids, don't try that at home.
+	* src/sly.c: only refresh the default krb5 ccache if its principal is
+	the one we've authenticated.
+	* src/tokens.c: log a debug message if we create a new PAG.  When
+	determining the user's home cell, if the user's home directory is a
+	symlink, chase it.
+2005-02-24 nalin
 	* configure.ac: add a --enable-default-keytab-location flag.
 	* src/options.c,src/pam_krb5.5.in,src/pam_krb5.8.in: obey it.
 	* README: document that it can be overridden.  (Don't want to change

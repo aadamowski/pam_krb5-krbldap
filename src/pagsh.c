@@ -57,6 +57,7 @@
 #include "minikafs.h"
 
 struct _pam_krb5_options;
+extern char *log_progname;
 
 int
 main(int argc, char **argv)
@@ -66,6 +67,7 @@ main(int argc, char **argv)
 	int i;
 
 	memset(&log_options, 0, sizeof(log_options));
+	log_progname = "pagsh";
 	shell = getenv("SHELL");
 	if ((shell == NULL) || (strlen(shell) == 0)) {
 		shell = _PATH_BSHELL;

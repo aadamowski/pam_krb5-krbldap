@@ -86,13 +86,16 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid, char **homedir)
 #else
 		i = __posix_getpwnam_r(name, &passwd, buffer, size, &pwd);
 #endif
-		xstrfree(buffer);
 
 		/* If we got 0 back, AND pwd now points to the passwd
 		 * structure, then we succeeded. */
 		if ((i == 0) && (pwd == &passwd)) {
 			break;
 		}
+
+		/* Free the buffer -- we'll reallocate it later. */
+		xstrfree(buffer);
+		buffer = NULL;
 
 		/* We need to use more space if we got ERANGE back, and errno
 		 * is ERANGE, so bail on any other condition. */
@@ -105,14 +108,18 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid, char **homedir)
 	} while (size > 0);
 
 	/* If we exited successfully, then pull out the UID/GID. */
-	if ((i == 0) && (pwd != NULL)) {
+	if ((i == 0) && (pwd != NULL) && (buffer != NULL)) {
 		*uid = pwd->pw_uid;
 		*gid = pwd->pw_gid;
 		*homedir = xstrdup(pwd->pw_dir);
+		free(buffer);
 		return 0;
 	}
 
 	/* Failed. */
+	if (buffer != NULL) {
+		free(buffer);
+	}
 	return 1;
 }
 #else

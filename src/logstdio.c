@@ -56,17 +56,18 @@
 #include "minikafs.h"
 
 struct _pam_krb5_options log_options;
+char *log_progname = "pam_krb5";
 
 void
 debug(const char *fmt, ...)
 {
 	va_list va;
 	char *fmt2;
-	fmt2 = malloc(strlen(fmt) + strlen("afs5log: \n") + 1);
+	fmt2 = malloc(strlen(fmt) + strlen(log_progname) + strlen(": \n") + 1);
 	if (fmt2 == NULL) {
 		return;
 	}
-	sprintf(fmt2, "afs5log: %s\n", fmt);
+	sprintf(fmt2, "%s: %s\n", log_progname, fmt);
 	if (log_options.debug > 0) {
 		va_start(va, fmt);
 		vfprintf(stderr, fmt2, va);
@@ -80,11 +81,11 @@ notice(const char *fmt, ...)
 {
 	va_list va;
 	char *fmt2;
-	fmt2 = malloc(strlen(fmt) + strlen("afs5log: \n") + 1);
+	fmt2 = malloc(strlen(fmt) + strlen(log_progname) + strlen(": \n") + 1);
 	if (fmt2 == NULL) {
 		return;
 	}
-	sprintf(fmt2, "afs5log: %s\n", fmt);
+	sprintf(fmt2, "%s: %s\n", log_progname, fmt);
 	va_start(va, fmt);
 	vfprintf(stderr, fmt2, va);
 	va_end(va);
@@ -96,11 +97,11 @@ crit(const char *fmt, ...)
 {
 	va_list va;
 	char *fmt2;
-	fmt2 = malloc(strlen(fmt) + strlen("afs5log: \n") + 1);
+	fmt2 = malloc(strlen(fmt) + strlen(log_progname) + strlen(": \n") + 1);
 	if (fmt2 == NULL) {
 		return;
 	}
-	sprintf(fmt2, "afs5log: %s\n", fmt);
+	sprintf(fmt2, "%s: %s\n", log_progname, fmt);
 	va_start(va, fmt);
 	vfprintf(stderr, fmt2, va);
 	va_end(va);

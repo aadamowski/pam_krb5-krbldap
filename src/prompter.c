@@ -65,6 +65,22 @@ _pam_krb5_maybe_free_responses(struct pam_response *responses, int n_responses)
 #endif
 }
 
+static int
+_pam_krb5_prompt_is_password(krb5_prompt *prompt, const char *password)
+{
+	size_t length;
+	if (password == NULL) {
+		return 0;
+	}
+	length = strlen(password);
+	if (prompt->reply->length == length) {
+		if (memcmp(prompt->reply->data, password, length) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 krb5_error_code
 _pam_krb5_prompter(krb5_context context, void *data,
 		   const char *name, const char *banner,
@@ -72,29 +88,29 @@ _pam_krb5_prompter(krb5_context context, void *data,
 {
 	struct pam_message *messages;
 	struct pam_response *responses;
-	int offset, i, ret;
+	int headers, i, j, ret, num_msgs;
 	char *tmp;
 	struct _pam_krb5_prompter_data *pdata = data;
 
 	/* If we have a name or banner, we need to make space for it in the
-	 * messages structure, so keep track of the offset to the first actual
-	 * prompt. */
+	 * messages structure, so keep track of the number of non-prompts which
+	 * we'll be throwing at the user. */
 	if ((name != NULL) && (strlen(name) > 0)) {
-		offset = 1;
+		headers = 1;
 	} else {
-		offset = 0;
+		headers = 0;
 	}
 	if ((banner != NULL) && (strlen(banner) > 0)) {
-		offset++;
+		headers++;
 	}
 
 	/* Allocate space for the prompts. */
-	messages = malloc(sizeof(struct pam_message) * (num_prompts + offset));
+	messages = malloc(sizeof(struct pam_message) * (num_prompts + headers));
 	if (messages == NULL) {
 		return KRB5_LIBOS_CANTREADPWD;
 	}
 	memset(messages, 0,
-	       sizeof(struct pam_message) * (num_prompts + offset));
+	       sizeof(struct pam_message) * (num_prompts + headers));
 
 	/* If the name and/or banner were given, make them the first prompts. */
 	if ((name != NULL) && (strlen(name) > 0)) {
@@ -111,54 +127,78 @@ _pam_krb5_prompter(krb5_context context, void *data,
 		}
 	}
 	/* Copy the prompt strings over. */
-	for (i = 0; i < num_prompts; i++) {
+	for (i = j = 0; i < num_prompts; i++) {
+		/* Skip any prompt for which the supplied default answer is the
+		 * previously-entered password -- it's just a waste of the
+		 * user's time.  */
+		if (_pam_krb5_prompt_is_password(&prompts[i],
+						 pdata->previous_password)) {
+			continue;
+		}
 		tmp = malloc(strlen(prompts[i].prompt) + 3);
 		if (tmp != NULL) {
 			sprintf(tmp, "%s: ", prompts[i].prompt);
 		}
-		messages[i + offset].msg = tmp;
-		messages[i + offset].msg_style = prompts[i].hidden ?
+		messages[j + headers].msg = tmp;
+		messages[j + headers].msg_style = prompts[i].hidden ?
 						 PAM_PROMPT_ECHO_OFF :
 						 PAM_PROMPT_ECHO_ON;
+		j++;
 	}
+	num_msgs = j + headers;
 
 	/* Get some responses. */
 	responses = NULL;
-	ret = _pam_krb5_conv_call(pdata->pamh,
-				  messages, num_prompts + offset,
-				  &responses);
+	ret = _pam_krb5_conv_call(pdata->pamh, messages, num_msgs, &responses);
 
 	/* We can discard the messages now. */
-	for (i = 0; i < num_prompts; i++) {
-		free((char*) messages[i + offset].msg);
+	for (i = j = 0; i < num_prompts; i++) {
+		if (_pam_krb5_prompt_is_password(&prompts[i],
+						 pdata->previous_password)) {
+			continue;
+		}
+		free((char*) messages[j + headers].msg);
+		messages[j + headers].msg = NULL;
+		j++;
 	}
 	free(messages);
 	messages = NULL;
 
 	/* If we failed, and we asked questions, bail now. */
 	if ((ret != PAM_SUCCESS) ||
-	    ((num_prompts > 0) && (responses == NULL))) {
+	    ((j > 0) && (responses == NULL))) {
 		return KRB5_LIBOS_CANTREADPWD;
 	}
 
 	/* Check for successfully-read responses. */
-	for (i = 0; i < num_prompts; i++) {
-		if (responses[i + offset].resp_retcode != PAM_SUCCESS) {
-			_pam_krb5_maybe_free_responses(responses, num_prompts);
+	for (i = j = 0; i < num_prompts; i++) {
+		if (_pam_krb5_prompt_is_password(&prompts[i],
+						 pdata->previous_password)) {
+			continue;
+		}
+		if (responses[j + headers].resp_retcode != PAM_SUCCESS) {
+			_pam_krb5_maybe_free_responses(responses, num_msgs);
 			return KRB5_LIBOS_CANTREADPWD;
 		}
-		if ((unsigned int)xstrlen(responses[i + offset].resp) >= prompts[i].reply->length) {
-			_pam_krb5_maybe_free_responses(responses, num_prompts);
+		if ((unsigned int)xstrlen(responses[j + headers].resp) >= prompts[i].reply->length) {
+			_pam_krb5_maybe_free_responses(responses, num_msgs);
 			return KRB5_LIBOS_CANTREADPWD;
 		}
+		j++;
 	}
 
 	/* Gather up the results. */
-	for (i = 0; i < num_prompts; i++) {
-		strcpy(prompts[i].reply->data, responses[i + offset].resp);
+	for (i = j = 0; i < num_prompts; i++) {
+		if (_pam_krb5_prompt_is_password(&prompts[i],
+						 pdata->previous_password)) {
+			continue;
+		}
+		strcpy(prompts[i].reply->data, responses[j + headers].resp);
+		prompts[i].reply->length = strlen(responses[j + headers].resp);
+		j++;
 	}
 
-	_pam_krb5_maybe_free_responses(responses, num_prompts);
+	_pam_krb5_maybe_free_responses(responses, num_msgs);
 	return 0; /* success! */
 }
 

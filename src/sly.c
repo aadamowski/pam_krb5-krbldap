@@ -93,11 +93,20 @@ sly_v5(krb5_context ctx, const char *v5ccname,
        struct _pam_krb5_user_info *userinfo, struct _pam_krb5_stash *stash)
 {
 	krb5_ccache ccache;
+	krb5_principal princ;
 	int i;
 
 	ccache = NULL;
 	i = krb5_cc_default(ctx, &ccache);
 	if (i == 0) {
+		princ = NULL;
+		if (krb5_cc_get_principal(ctx, ccache, &princ) == 0) {
+			if (krb5_principal_compare(ctx, princ,
+						   userinfo->principal_name) == FALSE) {
+				krb5_cc_close(ctx, ccache);
+				return PAM_SERVICE_ERR;
+			}
+		}
 		i = krb5_cc_initialize(ctx, ccache, userinfo->principal_name);
 		if (i == 0) {
 			i = krb5_cc_store_cred(ctx, ccache, &stash->v5creds);
@@ -118,7 +127,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
 	struct stat st;
-	int i, retval;
+	int i, retval, stored;
 	char *v5ccname, *v4tktfile;
 
 	/* Inexpensive checks. */
@@ -204,6 +213,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		retval = PAM_SUCCESS;
 	}
 
+	stored = 0;
+
 	if ((v5_creds_check_initialized(ctx, &stash->v5creds) == 0) &&
 	    (v5ccname != NULL)) {
 		if (access(v5ccname, R_OK | W_OK) == 0) {
@@ -215,11 +226,13 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				    (st.st_gid == userinfo->gid)) {
 					retval = sly_v5(ctx, v5ccname,
 							userinfo, stash);
+					stored = (retval == 0);
 				} else {
 					if (options->debug) {
 						debug("not updating '%s'",
 						      v5ccname);
 					}
+					retval = PAM_SUCCESS;
 				}
 			} else {
 				if (errno == ENOENT) {
@@ -243,11 +256,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				    (st.st_uid == userinfo->uid) &&
 				    (st.st_gid == userinfo->gid)) {
 					sly_v4(ctx, v4tktfile, userinfo, stash);
-					if (!options->ignore_afs) {
-						tokens_obtain(ctx, stash,
-							      options,
-							      userinfo, 0);
-					}
+					stored = 1;
 				} else {
 					if (options->debug) {
 						debug("not updating '%s'",
@@ -264,6 +273,10 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 			/* Touch nothing. */
 			retval = PAM_SUCCESS;
 		}
+	}
+
+	if (stored && !options->ignore_afs) {
+		tokens_obtain(ctx, stash, options, userinfo, 0);
 	}
 
 	if (options->debug) {

@@ -117,10 +117,10 @@ option is deprecated in favor of the \fIrenew_lifetime\fP option in the
 sets the default lifetime for credentials.
 
 .IP tokens
-signals that pam_krb5.so should obtain AFS tokens during authentication in
-addition to session setup.  This is primarily useful in server applications
-which need to access a user's files but which do not open PAM sessions before
-doing so.
+signals that pam_krb5.so should create a new AFS PAG and obtain AFS tokens
+during authentication in addition to session setup.  This is primarily useful
+in server applications which need to access a user's files but which do not
+open PAM sessions before doing so.
 
 .IP try_first_pass
 tells pam_krb5.so to check the previously-entered password as with

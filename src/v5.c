@@ -152,7 +152,10 @@ v5_creds_set_etype(krb5_context ctx, krb5_creds *creds, int etype)
 int
 v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
 {
-	return (creds->keyblock.length > 0) ? 0 : 1;
+	return ((creds->client != NULL) &&
+	        (creds->server != NULL) &&
+	        (creds->keyblock.length > 0) &&
+	        (creds->ticket.length > 0)) ? 0 : 1;
 }
 int
 v5_creds_key_length(krb5_creds *creds)

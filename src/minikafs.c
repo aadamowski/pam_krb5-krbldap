@@ -837,14 +837,14 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 int
 minikafs_log(krb5_context ctx, krb5_ccache ccache,
 	     struct _pam_krb5_options *options,
-	     const char *cell, uid_t uid, int try_v5_2b)
+	     const char *cell, uid_t uid, int try_v5_2b_first)
 {
 	int i;
-	i = minikafs_5log(ctx, ccache, options, cell, uid, try_v5_2b);
+	i = minikafs_5log(ctx, ccache, options, cell, uid, try_v5_2b_first);
 	if (i != 0) {
 		if (options->debug) {
 			debug("v5 afslog (2b=%d) failed to \"%s\"",
-			      try_v5_2b, cell);
+			      try_v5_2b_first, cell);
 		}
 	}
 #ifdef USE_KRB4
@@ -860,7 +860,7 @@ minikafs_log(krb5_context ctx, krb5_ccache ccache,
 		}
 	}
 #endif
-	if ((i != 0) && (!try_v5_2b)) {
+	if ((i != 0) && (!try_v5_2b_first)) {
 		if (options->debug) {
 			debug("retrying v5 with 2b=1");
 		}

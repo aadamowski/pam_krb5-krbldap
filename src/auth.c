@@ -298,7 +298,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 	}
 
-	/* If we didn't have a password, try here. */
+	/* If we didn't use any password, try here. */
 	if ((retval != PAM_SUCCESS) &&
 	    (!options->use_first_pass) && (!options->use_second_pass)) {
 		password = NULL;

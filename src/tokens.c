@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
@@ -77,7 +78,8 @@ tokens_obtain(krb5_context context,
 	      struct _pam_krb5_user_info *info, int newpag)
 {
 	int i, ret;
-	char localcell[LINE_MAX], homecell[LINE_MAX], homedir[LINE_MAX];
+	char localcell[LINE_MAX], homecell[LINE_MAX], homedir[LINE_MAX],
+	     lnk[LINE_MAX];
 	struct stat st;
 	krb5_ccache ccache;
 
@@ -100,6 +102,9 @@ tokens_obtain(krb5_context context,
 
 	/* Create a PAG. */
 	if (newpag) {
+		if (options->debug) {
+			debug("creating new PAG");
+		}
 		minikafs_setpag();
 		stash->afspag = 1;
 	}
@@ -149,6 +154,19 @@ tokens_obtain(krb5_context context,
 	strncpy(homedir, info->homedir ? info->homedir : "/afs",
 		sizeof(homedir) - 1);
 	homedir[sizeof(homedir) - 1] = '\0';
+	/* A common configuration is to have the home directory be a symlink
+	 * into /afs.  If the homedir is a symlink, chase it, *once*. */
+	if (lstat(homedir, &st) == 0) {
+		if (st.st_mode & S_IFLNK) {
+			/* Read the link. */
+			memset(lnk, '\0', sizeof(lnk));
+			readlink(homedir, lnk, sizeof(lnk) - 1);
+			/* If it's an absolute link, check it instead. */
+			if ((strlen(lnk) > 0) && (lnk[0] == '/')) {
+				strcpy(homedir, lnk);
+			}
+		}
+	}
 	do {
 		memset(homecell, '\0', sizeof(homecell));
 		i = minikafs_cell_of_file(homedir, homecell,

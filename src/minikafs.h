@@ -58,6 +58,6 @@ int minikafs_unlog(void);
 /* Try to get tokens for the named cell using every available mechanism. */
 int minikafs_log(krb5_context ctx, krb5_ccache ccache,
 		 struct _pam_krb5_options *options,
-		 const char *cell, uid_t uid, int try_v5_2b);
+		 const char *cell, uid_t uid, int try_v5_2b_first);
 
 #endif

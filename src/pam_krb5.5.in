@@ -98,9 +98,10 @@ This directive is deprecated in favor of the \fBlibdefaults\fP
 default credential lifetime.
 
 .IP tokens
-signals that pam_krb5.so should obtain tokens during authentication in addition
-to session setup.  This is primarily useful in server applications which need
-to access a user's files but which do not open PAM sessions before doing so.
+signals that pam_krb5.so should create an AFS PAG and obtain tokens during
+authentication in addition to session setup.  This is primarily useful in
+server applications which need to access a user's files but which do not open
+PAM sessions before doing so.
 
 .IP use_shmem=\fItrue\fP
 .IP use_shmem=\fIsshd ftp\fP

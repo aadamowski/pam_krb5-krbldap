@@ -45,6 +45,15 @@
 #include <security/pam_misc.h>
 #endif
 
+#include <krb5.h>
+#ifdef USE_KRB4
+#include KRB4_DES_H
+#include KRB4_KRB_H
+#ifdef KRB4_KRB_ERR_H
+#include KRB4_KRB_ERR_H
+#endif
+#endif
+
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -52,9 +61,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "logstdio.h"
+#include "stash.h"
+#include "minikafs.h"
+#include "options.h"
 #include "xstr.h"
 
 #ident "$Id$"
+
+extern char *log_progname;
 
 static int
 local_conv(int num_msg, const struct pam_message **msgm,
@@ -101,7 +116,10 @@ local_conv(int num_msg, const struct pam_message **msgm,
 		case PAM_PROMPT_ECHO_OFF:
 			fflush(stdout);
 			(*response)[i].resp_retcode = 0;
-			fgets(buffer, sizeof(buffer), stdin);
+			if (msg->msg_style == PAM_PROMPT_ECHO_OFF) {
+				strcpy(buffer, getpass(""));
+			} else
+				fgets(buffer, sizeof(buffer), stdin);
 			(*response)[i].resp = xstrndup(buffer,
 						       strcspn(buffer, "\r\n"));
 			break;
@@ -175,8 +193,10 @@ main(int argc, char **argv)
 	struct pam_conv conv;
 	pam_handle_t *pamh;
 
+	log_progname = "harness";
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s [flags]\n"
+			"\t--debug\n"
 			"\t--toggle-abi\n"
 			"\t--setservice SERVICE\n"
 			"\t--setuser USER\n"
@@ -204,6 +224,7 @@ main(int argc, char **argv)
 	pamh = NULL;
 
 	memset(&conv, 0, sizeof(conv));
+	memset(&log_options, 0, sizeof(log_options));
 	conv.conv = local_conv;
 	abi_flag = 0;
 	conv.appdata_ptr = &abi_flag;
@@ -212,6 +233,10 @@ main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		fflush(stdout);
+		if (strcmp(argv[i], "--debug") == 0) {
+			log_options.debug++;
+			continue;
+		}
 		if (strcmp(argv[i], "--toggle-abi") == 0) {
 			abi_flag = !abi_flag;
 			continue;
@@ -242,14 +267,18 @@ main(int argc, char **argv)
 			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
 			ret = pam_sm_authenticate(pamh, 0, pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("authenticate: %d\n", ret);
+			printf("authenticate: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--open-session") == 0) {
 			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
 			ret = pam_sm_open_session(pamh, 0, pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("open session: %d\n", ret);
+			printf("open session: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--setcred-establish") == 0) {
@@ -257,7 +286,9 @@ main(int argc, char **argv)
 			ret = pam_sm_setcred(pamh, PAM_ESTABLISH_CRED,
 					     pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("setcred: %d\n", ret);
+			printf("setcred: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--setcred-reinitialize") == 0) {
@@ -265,7 +296,9 @@ main(int argc, char **argv)
 			ret = pam_sm_setcred(pamh, PAM_REINITIALIZE_CRED,
 					     pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("setcred: %d\n", ret);
+			printf("setcred: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--setcred-delete") == 0) {
@@ -273,28 +306,36 @@ main(int argc, char **argv)
 			ret = pam_sm_setcred(pamh, PAM_DELETE_CRED,
 					     pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("setcred: %d\n", ret);
+			printf("setcred: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--close-session") == 0) {
 			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
 			ret = pam_sm_close_session(pamh, 0, pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("close session: %d\n", ret);
+			printf("close session: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--acct-mgmt") == 0) {
 			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
 			ret = pam_sm_acct_mgmt(pamh, 0, pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("acct mgmt: %d\n", ret);
+			printf("acct mgmt: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		if (strcmp(argv[i], "--chauthtok") == 0) {
 			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
 			ret = pam_sm_chauthtok(pamh, 0, pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("chauthtok: %d\n", ret);
+			printf("chauthtok: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
 		fprintf(stderr, "Unrecognized argument: %s\n", argv[i]);
