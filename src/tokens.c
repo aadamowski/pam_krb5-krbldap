@@ -77,7 +77,7 @@ tokens_obtain(krb5_context context,
 	      struct _pam_krb5_user_info *info, int newpag)
 {
 	int i, ret;
-	char cell[LINE_MAX];
+	char localcell[LINE_MAX], homecell[LINE_MAX], homedir[LINE_MAX];
 	struct stat st;
 	krb5_ccache ccache;
 
@@ -116,23 +116,71 @@ tokens_obtain(krb5_context context,
 	 * mounted in /afs is mounted from the local cell, so we'll use that
 	 * to determine which cell is considered the local cell.  Avoid getting
 	 * tripped up by dynamic root support in clients. */
-	memset(cell, '\0', sizeof(cell));
-	if ((minikafs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) &&
-	    (strcmp(cell, "dynroot") != 0)) {
+	memset(localcell, '\0', sizeof(localcell));
+	if ((minikafs_cell_of_file("/afs", localcell,
+				   sizeof(localcell) - 1) == 0) &&
+	    (strcmp(localcell, "dynroot") != 0)) {
 		if (options->debug) {
-			debug("obtaining tokens for '%s'", cell);
+			debug("obtaining tokens for local cell '%s'",
+			      localcell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   cell, info->uid, 0);
+				   localcell, info->uid, 0);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
 				     "tokens for %s",
-				     ret, error_message(ret), cell);
+				     ret, error_message(ret), localcell);
 			} else {
-				debug("got error %d (%s) while obtaining "
-				      "tokens for %s",
-				      ret, error_message(ret), cell);
+				if (options->debug) {
+					debug("got error %d (%s) while "
+					      "obtaining tokens for %s",
+					      ret, error_message(ret),
+					      localcell);
+				}
+			}
+		}
+	}
+	/* Get the name of the cell which houses the user's home directory.  In
+	 * case intervening directories aren't readable by system:anyuser
+	 * (which gives us an error), keep walking the directory chain until we
+	 * either succeed or run out of path components to remove.  And try to
+	 * avoid doing the same thing twice. */
+	strncpy(homedir, info->homedir ? info->homedir : "/afs",
+		sizeof(homedir) - 1);
+	homedir[sizeof(homedir) - 1] = '\0';
+	do {
+		memset(homecell, '\0', sizeof(homecell));
+		i = minikafs_cell_of_file(homedir, homecell,
+					  sizeof(homecell) - 1);
+		if (i != 0) {
+			if (strchr(homedir, '/') != NULL) {
+				*(strrchr(homedir, '/')) = '\0';
+			} else {
+				strcpy(homedir, "");
+			}
+		}
+	} while ((i != 0) && (strlen(homedir) > 0));
+	if ((i == 0) &&
+	    (strcmp(homecell, "dynroot") != 0) &&
+	    (strcmp(homecell, localcell) != 0)) {
+		if (options->debug) {
+			debug("obtaining tokens for home cell '%s'", homecell);
+		}
+		ret = minikafs_log(context, ccache, options,
+				   homecell, info->uid, 0);
+		if (ret != 0) {
+			if (stash->v5attempted != 0) {
+				warn("got error %d (%s) while obtaining "
+				     "tokens for %s",
+				     ret, error_message(ret), homecell);
+			} else {
+				if (options->debug) {
+					debug("got error %d (%s) while "
+					      "obtaining tokens for %s",
+					      ret, error_message(ret),
+					      homecell);
+				}
 			}
 		}
 	}
@@ -153,6 +201,12 @@ tokens_obtain(krb5_context context,
 
 	/* Iterate through the list of other cells. */
 	for (i = 0; options->afs_cells[i] != NULL; i++) {
+		if (strcmp(options->afs_cells[i], localcell) == 0) {
+			continue;
+		}
+		if (strcmp(options->afs_cells[i], homecell) == 0) {
+			continue;
+		}
 		if (options->debug) {
 			debug("obtaining tokens for '%s'",
 			      options->afs_cells[i]);
@@ -163,11 +217,15 @@ tokens_obtain(krb5_context context,
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
 				     "tokens for %s",
-				     ret, error_message(ret), cell);
+				     ret, error_message(ret),
+				     options->afs_cells[i]);
 			} else {
-				debug("got error %d (%s) while obtaining "
-				      "tokens for %s",
-				      ret, error_message(ret), cell);
+				if (options->debug) {
+					debug("got error %d (%s) while "
+					      "obtaining tokens for %s",
+					      ret, error_message(ret),
+					      options->afs_cells[i]);
+				}
 			}
 		}
 	}

@@ -37,6 +37,8 @@
 #include "stash.h"
 #include "userinfo.h"
 
+#define PAM_KRB5_PRINCIPAL_COMPONENT_SEPARATORS ",/@"
+
 int v5_get_creds(krb5_context ctx,
 		 pam_handle_t *pamh,
 		 krb5_creds *creds,

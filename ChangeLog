@@ -1,3 +1,17 @@
+2005-02-08 nalin
+	* src/userinfo.c,src/userinfo.h: look up and make note of the user's
+	home directory.
+	* src/tokens.c(tokens_obtain): attempt to determine the cell in which
+	the user's home directory resides, and default to obtaining tokens for
+	that cell as well, unless it's the same as the default cell.  Skip
+	cells given to the afs_cells option if they are the same as either the
+	local cell or the user's home cell.
+	* src/options.c: handle "external" like we handle "use_shmem".
+	* src/stash.c: read a krbtgt key from $KRB5CCNAME if "external" was
+	set.  Try to reuse the passed-in krb5_context, if possible.
+	* src/session.c: don't create new ccache or ticket files if KRB5CCNAME
+	or KRBTKFILE are already set in the PAM environment, respectively.
+
 2005-02-07 nalin
 	* src/minikafs.c(minikafs_5log): initialize use_ccache as a handle for
 	the default cred cache, not ccache, when ccache is NULL.

@@ -37,6 +37,7 @@ struct _pam_krb5_options {
 	int debug;
 
 	int addressless;
+	int external;
 	int forwardable;
 	int ignore_afs;
 	int proxiable;

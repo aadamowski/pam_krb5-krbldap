@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2003/08/08 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 8 2005/02/08 "Red Hat Linux" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -62,6 +62,12 @@ passwords.  The default setting is "Kerberos 5".
 .IP ccache_dir=\fI@default_ccache_dir@\fP
 tells pam_krb5.so which directory to use for storing credential caches.  The
 default setting is \fI@default_ccache_dir@\fP.
+
+.IP external
+.IP external=\fIsshd\fP
+tells pam_krb5.so to use Kerberos credentials provided by the calling
+application during session setup.  This is most often useful for obtaining
+AFS tokens or a krb4 ticket.
 
 .IP forwardable
 tells pam_krb5.so that credentials it obtains should be forwardable.  This

@@ -194,31 +194,47 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Create credential files. */
-	if (options->debug) {
-		debug("creating v5 ccache for '%s'", user);
-	}
-	i = v5_save(ctx, stash,  userinfo, options, &ccname);
-	if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
+	if (pam_getenv(pamh, "KRB5CCNAME") != NULL) {
 		if (options->debug) {
-			debug("created v5 ccache '%s' for '%s'", ccname, user);
+			debug("KRB5CCNAME is already set, not creating new v5 "
+			      "ccache for '%s'", user);
 		}
-		sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
-		pam_putenv(pamh, xstrdup(envstr));
+	} else {
+		if (options->debug) {
+			debug("creating v5 ccache for '%s'", user);
+		}
+		i = v5_save(ctx, stash,  userinfo, options, &ccname);
+		if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
+			if (options->debug) {
+				debug("created v5 ccache '%s' for '%s'",
+				      ccname, user);
+			}
+			sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
+			pam_putenv(pamh, xstrdup(envstr));
+		}
 	}
 
 #ifdef USE_KRB4
 	if ((i == PAM_SUCCESS) && (stash->v4present) && (strlen(ccname) > 0)) {
-		if (options->debug) {
-			debug("creating v4 ticket file for '%s'", user);
-		}
-		i = v4_save(ctx, stash,  userinfo, options, -1, -1, &ccname);
-		if (i == PAM_SUCCESS) {
+		if (pam_getenv(pamh, "KRBTKFILE") != NULL) {
 			if (options->debug) {
-				debug("created v4 ticket file '%s' for '%s'",
-				      ccname, user);
+				debug("KRBTKFILE is set, not creating new v4 "
+				      "ticket file for '%s'", user);
 			}
-			sprintf(envstr, "KRBTKFILE=%s", ccname);
-			pam_putenv(pamh, xstrdup(envstr));
+		} else {
+			if (options->debug) {
+				debug("creating v4 ticket file for '%s'", user);
+			}
+			i = v4_save(ctx, stash,  userinfo, options, -1, -1,
+				    &ccname);
+			if (i == PAM_SUCCESS) {
+				if (options->debug) {
+					debug("created v4 ticket file '%s' for "
+					      "'%s'", ccname, user);
+				}
+				sprintf(envstr, "KRBTKFILE=%s", ccname);
+				pam_putenv(pamh, xstrdup(envstr));
+			}
 		}
 	}
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,6 +57,7 @@
 #include "stash.h"
 #include "storetmp.h"
 #include "userinfo.h"
+#include "v5.h"
 #include "xstr.h"
 
 #ident "$Id$"
@@ -139,15 +140,21 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 
 	/* Read the first credential from the file. */
-	if (_pam_krb5_init_ctx(&ctx, 0, NULL) != PAM_SUCCESS) {
-		warn("error initializing kerberos");
-		unlink(tktfile + 5);
-		close(fd);
-		return;
+	if (stash->v5ctx != NULL) {
+		ctx = stash->v5ctx;
+	} else {
+		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != PAM_SUCCESS) {
+			warn("error initializing kerberos");
+			unlink(tktfile + 5);
+			close(fd);
+			return;
+		}
 	}
 	if (krb5_cc_resolve(ctx, tktfile, &ccache) != 0) {
 		warn("error creating ccache in \"%s\"", tktfile + 5);
-		krb5_free_context(ctx);
+		if (ctx != stash->v5ctx) {
+			krb5_free_context(ctx);
+		}
 		unlink(tktfile + 5);
 		close(fd);
 		return;
@@ -155,7 +162,9 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	if (krb5_cc_start_seq_get(ctx, ccache, &cursor) != 0) {
 		warn("error iterating through ccache in \"%s\"", tktfile + 5);
 		krb5_cc_close(ctx, ccache);
-		krb5_free_context(ctx);
+		if (ctx != stash->v5ctx) {
+			krb5_free_context(ctx);
+		}
 		unlink(tktfile + 5);
 		close(fd);
 		return;
@@ -168,7 +177,9 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	/* Clean up. */
 	krb5_cc_end_seq_get(ctx, ccache, &cursor);
 	krb5_cc_close(ctx, ccache);
-	krb5_free_context(ctx);
+	if (ctx != stash->v5ctx) {
+		krb5_free_context(ctx);
+	}
 	unlink(tktfile + 5);
 	close(fd);
 
@@ -207,16 +218,22 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 
 	/* Write the credentials to that file. */
-	if (_pam_krb5_init_ctx(&ctx, 0, NULL) != PAM_SUCCESS) {
-		warn("error initializing Kerberos context");
-		unlink(tktfile + 5);
-		close(fd);
-		return;
+	if (stash->v5ctx != NULL) {
+		ctx = stash->v5ctx;
+	} else {
+		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != PAM_SUCCESS) {
+			warn("error initializing kerberos");
+			unlink(tktfile + 5);
+			close(fd);
+			return;
+		}
 	}
 	if (krb5_cc_resolve(ctx, tktfile, &ccache) != 0) {
 		warn("error opening credential cache file \"%s\" for writing",
 		     tktfile + 5);
-		krb5_free_context(ctx);
+		if (ctx != stash->v5ctx) {
+			krb5_free_context(ctx);
+		}
 		unlink(tktfile + 5);
 		close(fd);
 		return;
@@ -225,7 +242,9 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		warn("error initializing credential cache file \"%s\"",
 		     tktfile + 5);
 		krb5_cc_close(ctx, ccache);
-		krb5_free_context(ctx);
+		if (ctx != stash->v5ctx) {
+			krb5_free_context(ctx);
+		}
 		unlink(tktfile + 5);
 		close(fd);
 		return;
@@ -234,7 +253,9 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		warn("error writing to credential cache file \"%s\"",
 		     tktfile + 5);
 		krb5_cc_close(ctx, ccache);
-		krb5_free_context(ctx);
+		if (ctx != stash->v5ctx) {
+			krb5_free_context(ctx);
+		}
 		unlink(tktfile + 5);
 		close(fd);
 		return;
@@ -255,7 +276,9 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 
 	/* Clean up. */
 	krb5_cc_close(ctx, ccache);
-	krb5_free_context(ctx);
+	if (ctx != stash->v5ctx) {
+		krb5_free_context(ctx);
+	}
 	unlink(tktfile + 5);
 	close(fd);
 
@@ -409,19 +432,102 @@ _pam_krb5_stash_shm_write(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 #endif
 }
 
-/* Check for KRB5CCNAME in the PAM environment.  If it's there, incorporate the
- * named file. */
+/* Check for KRB5CCNAME and KRBTKFILE in the PAM environment.  If either
+ * exists, incorporate contents of the named ccache/tktfiles into the stash. */
 static void
 _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			      struct _pam_krb5_options *options)
 {
-#if 0
-	/* Is this even safe? */
-	if (pam_getenv(pamh, "KRB5CCNAME") != NULL) {
-		if (options->debug) {
-			debug("KRB5CCNAME set, don't know what to do with it");
+	krb5_context ctx;
+	krb5_ccache ccache;
+	krb5_cc_cursor cursor;
+	int i;
+	const char *ccname, *tktname;
+	char *unparsed;
+
+	/* Read a TGT from $KRB5CCNAME. */
+	ccname = pam_getenv(pamh, "KRB5CCNAME");
+	if ((ccname != NULL) && (strlen(ccname) > 0)) {
+		if (stash->v5ctx != NULL) {
+			ctx = stash->v5ctx;
+		} else {
+			if (_pam_krb5_init_ctx(&ctx, 0, NULL) != PAM_SUCCESS) {
+				warn("error initializing kerberos");
+				return;
+			}
+		}
+		ccache = NULL;
+		i = krb5_cc_resolve(ctx, ccname, &ccache);
+		if (i != 0) {
+			warn("error opening ccache \"%s\", ignoring", ccname);
+		} else {
+			cursor = NULL;
+			if (krb5_cc_start_seq_get(ctx, ccache, &cursor) == 0) {
+				memset(&stash->v5creds, 0, sizeof(stash->v5creds));
+				while (krb5_cc_next_cred(ctx, ccache, &cursor,
+							 &stash->v5creds) == 0) {
+					unparsed = NULL;
+					i = krb5_unparse_name(ctx,
+							      stash->v5creds.server,
+							      &unparsed);
+					if ((i == 0) && (unparsed != NULL)) {
+						i = strcspn(unparsed,
+							    PAM_KRB5_PRINCIPAL_COMPONENT_SEPARATORS);
+						if (strncmp(unparsed,
+							    KRB5_TGS_NAME,
+							    KRB5_TGS_NAME_SIZE) == 0) {
+							if (options->debug) {
+								debug("using credential for \"%s\" as a v5 TGT", unparsed);
+							}
+							v5_free_unparsed_name(ctx, unparsed);
+							unparsed = NULL;
+							stash->v5attempted = 1;
+							stash->v5result = 0;
+							break;
+						}
+						if (options->debug) {
+							debug("not using credential for \"%s\" as a v5 TGT", unparsed);
+						}
+						v5_free_unparsed_name(ctx, unparsed);
+						unparsed = NULL;
+					}
+					krb5_free_cred_contents(ctx, &stash->v5creds);
+					memset(&stash->v5creds, 0, sizeof(stash->v5creds));
+				}
+				krb5_cc_end_seq_get(ctx, ccache, &cursor);
+			}
+			krb5_cc_close(ctx, ccache);
+		}
+		if (ctx != stash->v5ctx) {
+			krb5_free_context(ctx);
 		}
 	}
+
+#if 0
+#ifdef USE_KRB4
+	/* Read a TGT from $KRBTKFILE. */
+	tktname = pam_getenv(pamh, "KRBTKFILE");
+	if ((tktname != NULL) && (strlen(tktname) > 0) &&
+	    (stash->v4present == 0)) {
+		char name[ANAME_SZ + 1], instance[INST_SZ + 1],
+		     realm[REALM_SZ + 1];
+
+		if (tf_init(pam_getenv(pamh, "KRBTKFILE"), R_TKT_FILE) == 0) {
+			if ((tf_get_pname(name) == 0) &&
+			    (tf_get_pinst(instance) == 0)) {
+				while (tf_get_cred(&stash->v4creds) == 0) {
+					if (strncmp(stash->v4creds.service,
+						    KRB5_TGS_NAME,
+						    KRB5_TGS_NAME_SIZE) == 0) {
+	    					stash->v4present = 1;
+						break;
+					}
+				}
+			}
+			tf_close();
+		}
+	}
+#endif
 #endif
 }
 
@@ -450,6 +556,9 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	if ((_pam_krb5_get_data_stash(pamh, key, &stash) == PAM_SUCCESS) &&
 	    (stash != NULL)) {
 	    	free(key);
+		if (options->external && (stash->v5attempted == 0)) {
+			_pam_krb5_stash_external_read(pamh, stash, options);
+		}
 		return stash;
 	}
 
@@ -475,7 +584,7 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	if (options->use_shmem) {
 		_pam_krb5_stash_shm_read(pamh, key, stash, options);
 	}
-	if ((stash->v5attempted == 0) || (stash->v5result != 0)) {
+	if (options->external && (stash->v5attempted == 0)) {
 		_pam_krb5_stash_external_read(pamh, stash, options);
 	}
 	pam_set_data(pamh, key, stash, _pam_krb5_stash_cleanup);

@@ -38,6 +38,7 @@
 struct _pam_krb5_user_info {
 	uid_t uid;
 	gid_t gid;
+	char *homedir;
 	krb5_principal principal_name;
 	char *unparsed_name;
 };

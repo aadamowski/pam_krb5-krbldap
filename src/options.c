@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -413,6 +413,30 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 	if (options->debug && (options->use_shmem == 0)) {
 		debug("flag: no use_shmem");
+	}
+
+	/* private option */
+	options->external = option_b(pamh, argc, argv,
+				     ctx, options->realm, "external");
+	if (options->external != 1) {
+		options->external = 0;
+		if (service != NULL) {
+			list = option_l(pamh, argc, argv, ctx, options->realm,
+					"external");
+			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
+				if (strcmp(list[i], service) == 0) {
+					options->external = 1;
+					break;
+				}
+			}
+			free_l(list);
+		}
+	}
+	if (options->debug && (options->external == 1)) {
+		debug("flag: external");
+	}
+	if (options->debug && (options->external == 0)) {
+		debug("flag: no external");
 	}
 
 	/* private option */

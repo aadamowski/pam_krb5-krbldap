@@ -64,7 +64,7 @@
 #define CHUNK_SIZE 128
 /* Convert a name to a UID/GID pair. */
 static int
-_get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
+_get_pw_nam(const char *name, uid_t *uid, gid_t *gid, char **homedir)
 {
 	struct passwd passwd, *pwd;
 	char *buffer;
@@ -108,6 +108,7 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
 	if ((i == 0) && (pwd != NULL)) {
 		*uid = pwd->pw_uid;
 		*gid = pwd->pw_gid;
+		*homedir = xstrdup(pwd->pw_dir);
 		return 0;
 	}
 
@@ -116,13 +117,14 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
 }
 #else
 static int
-_get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
+_get_pw_nam(const char *name, uid_t *uid, gid_t *gid, char **homedir)
 {
 	struct passwd *pwd;
 	pwd = getpwnam(name);
 	if (pwd != NULL) {
 		*uid = pwd->pw_uid;
 		*gid = pwd->pw_gid;
+		*homedir = xstrdup(pwd->pw_dir);
 		return 0;
 	}
 	return 1;
@@ -214,7 +216,8 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 
 	if (check_user) {
 		/* Look up the user's UID/GID. */
-		if (_get_pw_nam(local_name, &ret->uid, &ret->gid) != 0) {
+		if (_get_pw_nam(local_name, &ret->uid, &ret->gid,
+				&ret->homedir) != 0) {
 			warn("error resolving user name '%s' to uid/gid pair",
 			     local_name);
 			v5_free_unparsed_name(ctx, ret->unparsed_name);
@@ -226,6 +229,7 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		/* Set things to the current UID/GID. */
 		ret->uid = getuid();
 		ret->gid = getgid();
+		ret->homedir = xstrdup("/");
 	}
 
 	return ret;
@@ -236,6 +240,7 @@ _pam_krb5_user_info_free(krb5_context ctx, struct _pam_krb5_user_info *info)
 {
 	krb5_free_principal(ctx, info->principal_name);
 	v5_free_unparsed_name(ctx, info->unparsed_name);
+	xstrfree(info->homedir);
 	memset(info, 0, sizeof(struct _pam_krb5_user_info));
 	free(info);
 }
