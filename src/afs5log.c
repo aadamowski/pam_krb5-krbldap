@@ -141,11 +141,21 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			switch (argv[i][1]) {
+			case 'v':
+				options.debug++;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
 			case '5':
 				try_v5_2b = !try_v5_2b;
 				break;
 			case 'v':
-				options.debug++;
 				break;
 			default:
 				printf("%s: [ [-v] [-5] [cell] ] [...]\n",
