@@ -157,7 +157,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (options->debug) {
 			debug("creating v4 ticket file for '%s'", user);
 		}
-		i = v4_save(ctx, stash,  userinfo, options, &ccname);
+		i = v4_save(ctx, stash,  userinfo, options, -1, -1, &ccname);
 		if (i == PAM_SUCCESS) {
 			if (options->debug) {
 				debug("created v4 ticket file '%s' for '%s'",
@@ -170,6 +170,10 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 #endif
 
 	tokens_obtain(options);
+
+#ifdef USE_KRB4
+	chown(ccname, userinfo->uid, userinfo->gid);
+#endif
 
 	/* Clean up. */
 	if (options->debug) {

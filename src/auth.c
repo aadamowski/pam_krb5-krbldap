@@ -241,7 +241,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			}
 			if (stash->v4present && (options->tokens == 1)) {
 				v5_save(ctx, stash, userinfo, options, NULL);
-				v4_save(ctx, stash, userinfo, options, NULL);
+				v4_save(ctx, stash, userinfo, options,
+					-1, -1, NULL);
 				tokens_obtain(options);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
