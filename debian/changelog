@@ -1,0 +1,19 @@
+libpam-heimdal (1.56-1_1.1-2) unstable; urgency=medium
+
+  * Fixed typo in the main pam_krb5
+  
+ -- Balazs GAL <balsa@rit.bme.hu>  Fri,  7 Jun 2002 14:39:56 +0200
+
+libpam-heimdal (1.56-1) unstable; urgency=low
+
+  * New upsteam release
+  * krb5 tgt to krb4 tgt converting, afs token grabing etc...
+  
+ -- Balazs GAL <balsa@rit.bme.hu>  Thu,  6 Jun 2002 20:28:15 +0200
+ 
+libpam-heimdal (1.47-balsa.1) unstable; urgency=low
+
+  * Initial Release
+  * This pam_krb5 is the debianized version of RedHat pam_krb5 module.
+  
+ -- Balazs Gal <balsa@vectra.startv.hu>  Fri, 11 Jan 2002 15:27:17 +0100

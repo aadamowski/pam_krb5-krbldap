@@ -1,0 +1,15 @@
+Source: libpam-heimdal
+Section: non-US/main
+Priority: optional
+Maintainer: Balazs GAL <balsa@rit.bme.hu>
+Standards-Version: 3.0.1
+Build-Depends: debhelper, heimdal-dev (>= 0.4e-6), kerberos4kth-dev (>=1.1-7),libpam0g-dev, libdb3-dev, libssl096-dev
+
+Package: libpam-heimdal
+Architecture: any
+Depends: ${shlibs:Depends}
+Conflicts: libpam-krb5
+Description: PAM module for Heimdal Kerberos 5
+ A Kerberos PAM module for use with Heimdal Kerberos 5. This
+ module should only be used for local or for encrypted networking
+ logins unless you really know what you are doing.

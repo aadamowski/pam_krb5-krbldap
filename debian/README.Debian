@@ -1,0 +1,6 @@
+pam-krb5 for Debian
+----------------------
+
+The original pam_krb5 was portred to Heimdal by Balazs Gal
+
+ -- Balazs GAL <balsa@rit.bme.hu>, Thu,  6 Jun 2002 20:14:15 +0200

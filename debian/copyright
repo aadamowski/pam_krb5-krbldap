@@ -1,0 +1,29 @@
+This package was debianized by Balazs Gal (balsa) <balsa@rit.bme.hu>
+
+Upstream Author: Nalin Dahyabhai <nalin@redhat.com> 
+
+Copyright:
+GPL, please read /usr/share/common-licenses/GPL for more information.
+
+/*******************************************************************************
+ A module for Linux-PAM to do Kerberos 5 authentication, convert the
+ Kerberos 5 ticket to a Kerberos 4 ticket, and use it to grab AFS
+ tokens for specified cells if possible.
+
+ Copyright 2000-2002 Red Hat, Inc.
+ Portions Copyright 1999 Nalin Dahyabhai.
+ 
+ This is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ ******************************************************************************/
