@@ -1,3 +1,9 @@
+Fri May 24 2002 Nalin Dahyabhai <nalin@redhat.com>
+- Fix a parser bug, pointed out by Balazs GAL.
+
+Wed May 22 2002 Nalin Dahyabhai <nalin@redhat.com>
+- Guess that the current cell name is the same as the realm name, lower-cased.
+
 Fri Feb 15 2002 Nalin Dahyabhai <nalin@redhat.com>
 - Update docs to give info about the account management function.
 

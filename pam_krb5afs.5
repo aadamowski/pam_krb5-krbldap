@@ -18,7 +18,8 @@ used from behind NAT firewalls, or on machines whose IP address changes
 regularly.
 .IP afs_cells=\fIcells\fP
 specifies which cells you want to get tokens for.  Set this to the list of all
-of your local cells.
+of your local cells.  The default is the current realm name converted to lower
+case.
 .IP banner=\fIKerberos 5\fP
 specifies what kind of password the module claims to be changing when called
 to change passwords.  The default is \fBKerberos 5\fP.

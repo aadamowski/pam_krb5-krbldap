@@ -46,7 +46,7 @@ firewall's outward-facing address here should allow Kerberos authentication to
 succeed.
 .IP afs_cells=\fIcell\fP
 tells pam_krb5afs.so to obtain tokens for users in the given cell when they
-log in.
+log in.  The default is the current realm name converted to lower case.
 .IP banner=\fIKerberos 5\fP
 tells pam_krb5afs.so how to identify itself when users attempt to change their
 passwords.

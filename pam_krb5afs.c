@@ -715,7 +715,7 @@ get_config(krb5_context context, int argc, const char **argv)
 	struct config *ret = NULL, *config = NULL;
 	char *foo, *hosts;
 #ifdef AFS
-	char *cells;
+	char *cells, *default_cell = "";
 #endif
 	krb5_address **addresses = NULL;
 	krb5_address **hostlist;
@@ -802,8 +802,16 @@ get_config(krb5_context context, int argc, const char **argv)
 	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
 
 #ifdef AFS
+	/* Guess at a default cell name equal to the realm name, lower-cased. */
+	default_cell = strdup(ret->realm);
+	for (i = 0; default_cell[i] != '\0'; i++) {
+		default_cell[i] = tolower(default_cell[i]);
+	}
 	/* Cells to get tokens for. */
-	appdefault_string(context, "afs_cells", argc, argv, "", &cells);
+	appdefault_string(context, "afs_cells", argc, argv,
+			  default_cell, &cells);
+	free(default_cell);
+	default_cell = NULL;
 	DEBUG("will afslog to cells `%s'", cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
 	if (ret->cell_list == NULL) {
@@ -998,26 +1006,33 @@ free_config(struct config *cfg)
 	if (cfg != NULL) {
 		if (cfg->banner) {
 			free(cfg->banner);
+			cfg->banner = NULL;
 		}
 		for (i = 0;
 		     (cfg->cell_list != NULL) && (cfg->cell_list[i] != NULL);
 		     i++) {
 			free(cfg->cell_list[i]);
+			cfg->cell_list[i] = NULL;
 		}
 		if (cfg->cell_list) {
 			free(cfg->cell_list);
+			cfg->cell_list = NULL;
 		}
 		if (cfg->realm) {
 			free(cfg->realm);
+			cfg->realm = NULL;
 		}
 		if (cfg->required_tgs) {
 			free(cfg->required_tgs);
+			cfg->required_tgs = NULL;
 		}
 		if (cfg->ccache_dir) {
 			free(cfg->ccache_dir);
+			cfg->ccache_dir = NULL;
 		}
 		if (cfg->keytab) {
 			free(cfg->keytab);
+			cfg->keytab = NULL;
 		}
 		free(cfg);
 	}
