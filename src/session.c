@@ -135,6 +135,10 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if ((stash->v5attempted == 0) || (stash->v5result != 0)) {
 		debug("no v5 creds for user '%s', skipping session setup",
 		      user);
+		_pam_krb5_user_info_free(ctx, userinfo);
+		_pam_krb5_options_free(pamh, ctx, options);
+		krb5_free_context(ctx);
+		return PAM_SUCCESS;
 	}
 
 	/* Nuke any old credential files which we have lying around. */
@@ -266,8 +270,12 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 
 	/* If we didn't obtain any credentials, then we're done. */
 	if ((stash->v5attempted == 0) || (stash->v5result != 0)) {
-		debug("no v5 creds for user '%s', skipping session setup",
+		debug("no v5 creds for user '%s', skipping session cleanup",
 		      user);
+		_pam_krb5_user_info_free(ctx, userinfo);
+		_pam_krb5_options_free(pamh, ctx, options);
+		krb5_free_context(ctx);
+		return PAM_SUCCESS;
 	}
 
 	tokens_release(stash, options);

@@ -1,3 +1,6 @@
+2003-09-22 nalin
+	* src/session.c: actually return where we were supposed to return.
+
 2003-09-19 nalin
 	* src/session.c: if v5attempted is 0 or v5result is not 0, don't
 	mess with tokens or credentials.  This allows apps which change their
