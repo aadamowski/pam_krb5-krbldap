@@ -55,9 +55,9 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	AC_CHECK_HEADER(krbafs.h,
 			AC_DEFINE(HAVE_KRBAFS_H)
 			AC_CHECK_LIB(krbafs,krb_afslog,
-				SHTARGETS="$SHTARGETS pam_krb5afs.so",
+				SHTARGETS="$SHTARGETS pam_krb5afs.so"
 				MAN5TARGETS="$MAN5TARGETS pam_krb5afs.5"
-				MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8"
+				MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8",
 				AC_WARN(omitting token-grabbing functions),
 				$LIBS),
 			AC_WARN(omitting token-grabbing functions)
