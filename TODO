@@ -1,0 +1,4 @@
+- Document the "mappings" option.
+- Figure out how mappings should work with
+  krb5_aname_to_localname
+  krb5_kuserok
