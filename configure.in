@@ -72,14 +72,12 @@ AC_TRY_COMPILE([ #include <krb5.h> ],
 )
 
 AC_CHECK_HEADER(kerberosIV/krb.h,
-                have_krb_h="kerberosIV/krb.h"
-                AC_DEFINE(HAVE_KERBEROSIV_KRB_H),
-                AC_CHECK_HEADER(krb.h,
+                [have_krb_h="kerberosIV/krb.h"
+                 AC_DEFINE(HAVE_KERBEROSIV_KRB_H)],
+                [AC_CHECK_HEADER(krb.h,[
                         have_krb_h="krb.h"
                         AC_DEFINE(HAVE_KRB_H)
-                )
-
-)
+                ])])
 
 if test x$have_krb_h != x; then
 	AC_CHECK_FUNC(in_tkt,,
@@ -87,29 +85,26 @@ if test x$have_krb_h != x; then
 				   AC_CHECK_LIB(krb,in_tkt)))
 	AC_CHECK_FUNC(krb524_convert_creds_kdc,,
 		      AC_CHECK_LIB(krb524,krb524_convert_creds_kdc))
-        AC_MSG_CHECKING(whether we are using KTH Kerberos IV)
+        AC_MSG_CHECKING([whether we are using KTH Kerberos IV])
         AC_TRY_COMPILE([#include <$have_krb_h>],
                        [ char *tmp = krb4_version; ],
                        [ AC_MSG_RESULT(yes)
-                         AC_DEFINE(KTH_KRB4)
-                       ],
-                       [ AC_MSG_RESULT(no)
-                       ]
-        )
+                         AC_DEFINE(KTH_KRB4)],
+                       [ AC_MSG_RESULT(no) ])
 fi
 KRB5LIBS="$LIBS"
 
 if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	AC_CHECK_HEADER(krbafs.h,
-			AC_DEFINE(HAVE_KRBAFS_H)
-			AC_CHECK_LIB(krbafs,krb_afslog,
-				LIBS="-lkrbafs $LIBS"
-				SHTARGETS="$SHTARGETS pam_krb5afs.so"
-				MAN5TARGETS="$MAN5TARGETS pam_krb5afs.5"
-				MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8",
-				AC_WARN(AFS token-grabbing disabled),
-				$LIBS),
-			AC_WARN(AFS token-grabbing disabled)
+			[AC_DEFINE(HAVE_KRBAFS_H)
+			 AC_CHECK_LIB(krbafs,krb_afslog,
+				[LIBS="-lkrbafs $LIBS"
+				 SHTARGETS="$SHTARGETS pam_krb5afs.so"
+				 MAN5TARGETS="$MAN5TARGETS pam_krb5afs.5"
+				 MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8"],
+				 AC_MSG_WARN(AFS token-grabbing disabled),
+				$LIBS)],
+			AC_MSG_WARN([AFS token-grabbing disabled])
 	,,$LIBS)
 fi
 KRB5AFSLIBS="$LIBS"
@@ -117,7 +112,7 @@ KRB5AFSLIBS="$LIBS"
 AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
 AC_CHECK_FUNC(krb5_appdefault_string)
 AC_CHECK_FUNC(krb5_appdefault_boolean)
-AC_CHECK_FUNC(krb5_change_password,,AC_WARN(password-changing disabled))
+AC_CHECK_FUNC(krb5_change_password,,AC_MSG_WARN([password-changing disabled]))
 AC_CHECK_FUNC(initialize_krb5_error_table)
 AC_CHECK_FUNC(krb5_verify_init_creds)
 
