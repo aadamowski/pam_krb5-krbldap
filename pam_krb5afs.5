@@ -5,7 +5,8 @@ pam_krb5afs \- Kerberos 5 authentication with AFS support
 pam_krb5afs.so uses a portion of \fBkrb5.conf\fR to get its configuration
 information.  You should read the \fBkrb5.conf(5)\fR man page before continuing
 here.  The module expects its configuration information to be in the \fBpam\fR
-section of the \fBkrb5.conf\fR configuration file.
+subsection of the \fBappdefaults\fP section of the \fBkrb5.conf\fR
+configuration file.
 
 .SH DIRECTIVES
 .IP debug
@@ -54,7 +55,8 @@ to change passwords.  The default is \fBKerberos 5\fP.
 
 .SH EXAMPLE
 
-[pam]
+[appdefaults]
+  pam = {
     debug = true
     ticket_lifetime = 36000
     renew_lifetime = 36000
@@ -65,6 +67,7 @@ to change passwords.  The default is \fBKerberos 5\fP.
     validate = true
     required_tgs = host/thermo.example.edu
     ccache_dir = /var/tmp
+  }
 
 .SH FILES
 \fI/etc/krb5.conf\fP

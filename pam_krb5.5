@@ -52,7 +52,8 @@ to change passwords.  The default is \fBKerberos 5\fP.
 
 .SH EXAMPLE
 
-[pam]
+[appdefaults]
+  pam = {
     debug = true
     ticket_lifetime = 36000
     renew_lifetime = 36000
@@ -62,6 +63,7 @@ to change passwords.  The default is \fBKerberos 5\fP.
     validate = true
     required_tgs = host/thermo.example.edu
     ccache_dir = /var/tmp
+  }
 
 .SH FILES
 \fI/etc/krb5.conf\fP

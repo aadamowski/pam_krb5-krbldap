@@ -587,11 +587,11 @@ get_config(krb5_context context, int argc, const char **argv)
 
 	/* Which directory to put ticket files in. */
 	appdefault_string(context, "ccache_dir", "/tmp", &ret->ccache_dir);
-	DEBUG("ticket directory set to \"%s\"", ret->ccache_dir);
+	DEBUG("ticket directory set to `%s'", ret->ccache_dir);
 
 	/* What to say we are when changing passwords. */
 	appdefault_string(context, "banner", "Kerberos", &ret->banner);
-	DEBUG("password-changing banner set to \"%s\"", ret->banner);
+	DEBUG("password-changing banner set to `%s'", ret->banner);
 
 	/* Whether to get krb4 tickets using krb524convertcreds() or
 	 * a v4 TGT request. */
@@ -636,11 +636,11 @@ get_config(krb5_context context, int argc, const char **argv)
 		memset(&tgsname, 0, sizeof(tgsname));
 	}
 	appdefault_string(context, "required_tgs", "", &ret->required_tgs);
-	DEBUG("required_tgs set to \"%s\"", ret->required_tgs);
+	DEBUG("required_tgs set to `%s'", ret->required_tgs);
 
 	/* Path to the keytab file. */
 	appdefault_string(context, "keytab", "/etc/krb5.keytab", &ret->keytab);
-	DEBUG("keytab file name set to \"%s\"", ret->keytab);
+	DEBUG("keytab file name set to `%s'", ret->keytab);
 
 	for(i = 0; i < argc; i++) {
 		/* Required argument that we don't use but need to recognize.*/
@@ -980,7 +980,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			prc = PAM_USER_UNKNOWN;
 		}
 	}
-	DEBUG("user is \"%s\"", user);
+	DEBUG("user is `%s'", user);
 
 	/* Try to get and save the user's UID. */
 	if(RC_OK) {
@@ -1253,7 +1253,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				l -= 4;
 
 
-				DEBUG("Got v4 TGT for \"%s%s%s@%s\"",
+				DEBUG("Got v4 TGT for `%s%s%s@%s'",
 				      stash->v4_creds.service,
 				      strlen(stash->v4_creds.instance) ?
 				      "." : "",
@@ -1357,7 +1357,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		prc = pam_get_item(pamh, PAM_USER, &user);
 	}
 
-	if(RC_OK && (flags & PAM_ESTABLISH_CRED)) {
+	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED))) {
 		int tmpfd = -1;
 
 		/* Retrieve credentials and create a ccache. */
@@ -1445,7 +1445,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 							      &stash->v5_creds,
 							      &stash->v4_creds);
 
-				DEBUG("krb524_convert_creds returned \"%s\" "
+				DEBUG("krb524_convert_creds returned `%s' "
 				      "for %s",
 				      krc ? error_message(krc) :
 				      "Success", user);
@@ -1495,7 +1495,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		if(RC_OK && config->krb4_convert) {
 			int save = TRUE;
 
-			DEBUG("opening ticket file \"%s\"", stash->v4_path);
+			DEBUG("opening ticket file `%s'", stash->v4_path);
 			krb_set_tkt_string(stash->v4_path);
 			krc = in_tkt(stash->v4_creds.pname,
 				     stash->v4_creds.pinst);
@@ -1551,18 +1551,18 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef AFS
 	/* Use the new tickets to create tokens. */
-	if((flags & PAM_ESTABLISH_CRED) && RC_OK &&
+	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) && RC_OK &&
 	   config->get_tokens && config->cell_list) {
 		if(!k_hasafs()) {
 			CRIT("cells specified but AFS not running");
-			prc = PAM_SYSTEM_ERR;
-		}
-		if(prc == PAM_SUCCESS) {
+		} else {
 			int i, rc;
 			/* Afslog to all of the specified cells. */
-			k_setpag();
+			DEBUG("k_setpag()");
+			rc = k_setpag();
+			DEBUG("k_setpag() returned %d", rc);
 			for(i = 0; config->cell_list[i] != NULL; i++) {
-				DEBUG("afslog() to cell %s",
+				DEBUG("afslog() to cell `%s'",
 				      config->cell_list[i]);
 				rc = krb_afslog(config->cell_list[i],
 						config->realm);
@@ -1574,12 +1574,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Fix permissions on this file so that the user logging in will
 	 * be able to use it. */
-	if((flags & PAM_ESTABLISH_CRED) && RC_OK) {
+	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) && RC_OK) {
 		prc = safe_fixup(stash->v5_path, stash);
 	}
 
 #ifdef HAVE_LIBKRB4
-	if((flags & PAM_ESTABLISH_CRED) && config->krb4_convert && RC_OK) {
+	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
+	   config->krb4_convert && RC_OK) {
 		prc = safe_fixup(stash->v4_path, stash);
 	}
 #endif
@@ -1814,7 +1815,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				ret = PAM_AUTHTOK_RECOVERY_ERR;
 			}
 		}
-		/* DEBUG("old_authtok = \"%s\"", old_authtok); */
+		/* DEBUG("old_authtok = `%s'", old_authtok); */
 
 		if(((authtok == NULL) || (strlen(authtok) == 0)) &&
 		   !config->use_authtok) {
@@ -1845,7 +1846,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				}
 			}
 		}
-		/* DEBUG("authtok = \"%s\"", authtok); */
+		/* DEBUG("authtok = `%s'", authtok); */
 
 		if(ret == KRB5_SUCCESS) {
 			kadm5_handle = NULL;

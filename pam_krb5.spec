@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.27
+Version: 1.28
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -38,6 +38,11 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Thu Feb 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+- fixup the man page
+- log return code from k_setpag() when debugging
+- create credentials and get tokens when setcred is called for REINITIALIZE
+
 * Wed Feb 21 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't twiddle ownerships until after we get AFS tokens
 - use the current time instead of the issue time when storing v4 creds, since
