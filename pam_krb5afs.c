@@ -280,6 +280,46 @@ static void cleanup(pam_handle_t *pamh, void *data, int error_status)
 
 /******************************************************************************/
 
+/* Prompt the user for some info. */
+static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
+			  const char *msg, const char **out)
+{
+	struct pam_message prompt_message;
+	struct pam_response *responses;
+	struct pam_conv *converse = NULL;
+	int ret = PAM_SUCCESS;
+	struct pam_message* promptlist[] = {
+		&prompt_message,
+		NULL
+	};
+
+	/* Get the conversation structure passed in by the app. */
+	ret = pam_get_item(pamh, PAM_CONV, converse);
+	if(ret != PAM_SUCCESS) {
+	if(globals.debug)
+		syslog(LOG_DEBUG, MODULE_NAME
+		       ": no conversation function supplied");
+		ret = PAM_CONV_ERR;
+	}
+
+	/* Now actually prompt the user for that information. */
+	if(ret == PAM_SUCCESS) {
+		prompt_message.msg_style = msg_style;
+		prompt_message.msg = msg;
+		ret = converse->conv(1, promptlist, &responses,
+				     converse->appdata_ptr);
+		if(ret == PAM_SUCCESS) {
+			*out = strdup(responses[0].resp);
+		} else {
+			syslog(LOG_INFO, MODULE_NAME
+			       ": %s in conversation function getting "
+			       "info from the user", pam_strerror(pamh, ret));
+		}
+	}
+
+	return ret;
+}
+
 /* Big authentication module. */
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			const char **argv)
@@ -431,23 +471,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		pam_get_item(pamh, PAM_AUTHTOK, &first_pass);
 	}
 
-	/* Obtain a password via the conversation function. */
-	if(globals.try_second_pass && converse && (ret == PAM_SUCCESS)) {
-		/* Try to retrieve a password via the conversation function. */
-		const struct pam_message prompt_message[] = {
-			{ PAM_PROMPT_ECHO_OFF, "Password: " },
-		};
-		const struct pam_message* promptlist[] = {
-			&prompt_message[0], NULL
-		};
-		struct pam_response *responses = NULL;
-		ret = converse->conv(1, promptlist, &responses,
-				     converse->appdata_ptr);
-		if(ret == PAM_SUCCESS) {
-			second_pass = strdup(responses[0].resp);
-		}
-	}
-
 	/* Now try to get a TGT using one of the passwords. */
 	if(ret == KRB5_SUCCESS) {
 		int done = 0;
@@ -482,6 +505,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		/* Try the second password if the first one failed or was
 		   otherwise bad. */
 		if(globals.try_second_pass && second_pass && !done) {
+			if(converse) {
+				pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+					       "Password: ", &second_pass);
+			}
 			ret = krb5_get_in_tkt_with_password(context,
 							    globals.kdc_options,
 							    NULL,
@@ -521,7 +548,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	} else {
 		D(("Authentication failed."));
 		syslog(LOG_NOTICE, MODULE_NAME
-		       ": authentication fails for %s", user);
+		       ": authentication fails for %s: %s", user,
+		       error_message(ret));
 	}
 	D(("reached"));
 
