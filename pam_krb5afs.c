@@ -103,9 +103,7 @@
 #define MODULE_RET_NAME MODULE_NAME "_ret_stash"
 
 #define PAM_SM_AUTH
-#ifdef  PAM_KRB5_EXPERIMENTAL
 #define PAM_SM_ACCT_MGMT
-#endif
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
@@ -1892,7 +1890,32 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	return pam_sm_setcred(pamh, flags | PAM_DELETE_CRED, argc, argv);
 }
 
-#ifdef PAM_ACCT_MGMT
+int
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
+{
+	krb5_context context = NULL;
+	int prc = PAM_SUCCESS, *pret;
+	struct config *config = NULL;
+
+	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
+		prc = PAM_SYSTEM_ERR;
+	} else {
+		if(!(config = get_config(context, argc, argv))) {
+			prc = PAM_SYSTEM_ERR;
+		} else {
+			pam_get_data(pamh, MODULE_RET_NAME, (const void**) &pret);
+			if(pret) {
+				DEBUG("recovered return code %d from prior call to "
+				      "pam_sm_authenticate()", *pret);
+				prc = *pret;
+			}
+		}
+		krb5_free_context(context);
+	}
+	return prc;
+}
+
+#if 0
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
