@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.45
+Version: 1.46
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,12 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed Sep  5 2001 Nalin Dahyabhai <nalin@redhat.com> 1.46-1
+- link with libresolv to get res_search, tip from Justin McNutt, who
+  built it statically
+- explicitly link with libdes425
+- handle cases where getpwnam_r fails but still sets the result pointer
+
 * Mon Aug 27 2001 Nalin Dahyabhai <nalin@redhat.com> 1.45-1
 - set the default realm when a default realm is specified
 

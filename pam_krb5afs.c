@@ -1140,11 +1140,12 @@ get_pw(const char *user)
 {
 	static struct passwd rec;
 	struct passwd *pwd = NULL;
-	char buf[LINE_MAX];
+	static char buf[LINE_MAX];
 	memset(&rec, 0, sizeof(rec));
-	getpwnam_r(user, &rec, buf, sizeof(buf), &pwd);
-	if(pwd == &rec){
-		return &rec;
+	if(getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0) {
+		if(pwd == &rec){
+			return &rec;
+		}
 	}
 	return NULL;
 }

@@ -46,6 +46,7 @@ AC_CHECK_HEADER(krb5.h,AC_DEFINE(HAVE_KRB5_H),
 	AC_ERROR(install Kerberos 5 or re-run configure with --with-krb5))
 
 AC_CHECK_FUNC(snprintf)
+AC_CHECK_FUNC(res_search,,AC_CHECK_LIB(resolv,res_search))
 AC_CHECK_FUNC(connect,,AC_CHECK_LIB(socket,connect))
 AC_CHECK_FUNC(yp_bind,,AC_CHECK_LIB(nsl,yp_bind))
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
@@ -66,7 +67,7 @@ AC_TRY_COMPILE([ #include <krb5.h> ],
           LIBS="-lkrb5 -lasn1 $LIBS"
         ],
         [ AC_MSG_RESULT(no)
-          LIBS="-lkrb5 -lk5crypto -lcom_err $LIBS"
+          LIBS="-lkrb5 -ldes425 -lk5crypto -lcom_err $LIBS"
         ]
 )
 
