@@ -1,4 +1,9 @@
 2004-08-26 nalin
+	* src/options.h,options.c: add an ignore_afs flag to the options
+	structure, heavily based on Matthew Miller's patch (#126345).
+	* auth.c, session.c, sly.c: obey ignore_afs.
+
+2004-08-26 nalin
 	* src/acct.c(pam_sm_acct_mgmt): skip .k5login check of user_check was
 	disabled -- it's not as if we can expect an unknown user to have a home
 	directory.

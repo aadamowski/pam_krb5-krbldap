@@ -292,6 +292,19 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* private option */
+	options->ignore_afs = option_b(pamh, argc, argv,
+				       ctx, options->realm, "ignore_afs");
+	if (options->ignore_afs == -1) {
+		options->ignore_afs = 0;
+	}
+	if (options->debug && (options->ignore_afs == 1)) {
+		debug("flag: ignore_afs");
+	}
+	if (options->debug && (options->ignore_afs == 0)) {
+		debug("flag: no krb4_convert");
+	}
+
+	/* private option */
 	options->tokens = option_b(pamh, argc, argv,
 				   ctx, options->realm, "tokens");
 	if (options->tokens == -1) {
@@ -441,24 +454,27 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* If /afs is on a different device from /, this suggests that AFS is
-	 * running. */
-	if (stat("/", &stroot) == 0) {
-		if (stat("/afs", &stafs) == 0) {
-			if (stroot.st_dev != stafs.st_dev) {
-				options->v4_for_afs = 1;
+	 * running.  Set up to get tokens for the local cell and attempt to
+	 * get that cell's name if we're not ignoring AFS altogether. */
+	if (!options->ignore_afs) {
+		if (stat("/", &stroot) == 0) {
+			if (stat("/afs", &stafs) == 0) {
+				if (stroot.st_dev != stafs.st_dev) {
+					options->v4_for_afs = 1;
+				}
 			}
 		}
-	}
-	options->afs_cells = option_l(pamh, argc, argv,
-				      ctx, options->realm, "afs_cells");
-	if ((options->afs_cells != NULL) &&
-	    (options->afs_cells[0] != NULL)) {
-		options->v4_for_afs = 1;
-	}
-	if (options->debug && options->afs_cells) {
-		int i;
-		for (i = 0; options->afs_cells[i] != NULL; i++) {
-			debug("afs cell: %s", options->afs_cells[i]);
+		options->afs_cells = option_l(pamh, argc, argv,
+					      ctx, options->realm, "afs_cells");
+		if ((options->afs_cells != NULL) &&
+		    (options->afs_cells[0] != NULL)) {
+			options->v4_for_afs = 1;
+		}
+		if (options->debug && options->afs_cells) {
+			int i;
+			for (i = 0; options->afs_cells[i] != NULL; i++) {
+				debug("afs cell: %s", options->afs_cells[i]);
+			}
 		}
 	}
 

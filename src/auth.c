@@ -175,6 +175,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	/* Try with the stored password, if we've been told to do so. */
 	retval = PAM_AUTH_ERR;
 	if ((retval != PAM_SUCCESS) && (options->use_first_pass)) {
+		password = NULL;
 		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &password);
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
@@ -270,7 +271,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				debug("error obtaining v4 creds: %d (%s)",
 				      i, v5_error_message(i));
 			}
-			if (stash->v4present && (options->tokens == 1)) {
+			if (stash->v4present &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
 				v5_save(ctx, stash, userinfo, options, NULL);
 				v4_save(ctx, stash, userinfo, options,
 					-1, -1, NULL);
@@ -295,6 +298,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	/* Clean up. */
+	if (options->debug) {
+		debug("pam_authenticate returning %d (%s)", retval,
+		      pam_strerror(pamh, retval));
+	}
 	_pam_krb5_options_free(pamh, ctx, options);
 	_pam_krb5_user_info_free(ctx, userinfo);
 	krb5_free_context(ctx);

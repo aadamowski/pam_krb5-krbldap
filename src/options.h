@@ -38,6 +38,7 @@ struct _pam_krb5_options {
 
 	int addressless;
 	int forwardable;
+	int ignore_afs;
 	int proxiable;
 	int renewable;
 	int tokens;

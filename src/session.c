@@ -170,7 +170,9 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 #endif
 
 	/* Obtain tokens, if necessary. */
-	if ((i == PAM_SUCCESS) && tokens_useful()) {
+	if ((i == PAM_SUCCESS) &&
+	    (options->ignore_afs == 0) &&
+	    tokens_useful()) {
 		uid_t uid;
 		gid_t gid;
 
@@ -336,7 +338,9 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		return PAM_SUCCESS;
 	}
 
-	tokens_release(stash, options);
+	if (options->ignore_afs == 0) {
+		tokens_release(stash, options);
+	}
 
 	v5_destroy(ctx, stash, options);
 	if (options->debug) {
