@@ -1,7 +1,7 @@
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
-Release: 12
+Release: 14
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -24,7 +24,7 @@ make
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+%{makeinstall}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
@@ -33,11 +33,14 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %defattr(-,root,root)
 /lib/security/pam_krb5.so
 /lib/security/pam_krb5afs.so
-/usr/man/man5/*
-/usr/man/man8/*
+%{_mandir}/man5/*
+%{_mandir}/man8/*
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Mon Jun  5 2000 Nalin Dahyabhai <nalin@redhat.com>
+- move man pages to %{_mandir}
+
 * Wed May 17 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Make errors chown()ing ccache files non-fatal if (getuid() != 0), suggested
   by Steve Langasek.
