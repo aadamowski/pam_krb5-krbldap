@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.41
+Version: 1.42
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,10 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Tue Jul 17 2001 Nalin Dahyabhai <nalin@redhat.com>
+- return PAM_NEW_AUTHTOK_REQD when attempts to get initial credentials
+  fail with KRB5KDC_ERR_KEY_EXP (noted by Onime Clement)
+
 * Thu Jul 12 2001 Nalin Dahyabhai <nalin@redhat.com>
 - add info about accessing the CVS repository to the README
 - parser cleanups (thanks to Dane Skow for a more complicated sample)

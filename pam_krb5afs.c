@@ -331,6 +331,15 @@ convert_kerror(int error)
 		}
 		case KRB5KRB_AP_ERR_BAD_INTEGRITY: {
 			prc = PAM_PERM_DENIED;
+			break;
+		}
+		case KRB5KDC_ERR_KEY_EXP: {
+			prc = PAM_NEW_AUTHTOK_REQD;
+			break;
+		}
+		case KRB5KDC_ERR_NAME_EXP: {
+			prc = PAM_AUTHTOK_EXPIRED; /* is this right? */
+			break;
 		}
 		default: {
 			prc = PAM_AUTH_ERR;
@@ -1242,8 +1251,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 		/* Figure out where to go from here. */
 		if(krc != KRB5_SUCCESS) {
-			CRIT("authenticate error: %s", error_message(krc));
-			prc = PAM_AUTH_ERR;
+			CRIT("authenticate error: %s (%d)", error_message(krc), krc);
 		}
 	}
 
