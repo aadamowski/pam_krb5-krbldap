@@ -1,0 +1,101 @@
+.TH pam_krb5 5 2002/02/15 "Red Hat Linux" "System Administrator's Manual"
+
+.SH NAME
+pam_krb5 \- Kerberos 5 authentication
+
+.SH DESCRIPTION
+pam_krb5.so reads its configuration information from the \fBappdefaults\fP
+section of \fBkrb5.conf\fR(5).  You should read the \fBkrb5.conf(5)\fR man page
+before continuing here.  The module expects its configuration information to be
+in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fP section.
+
+.SH DIRECTIVES
+.IP debug=[\fItrue\fP|\fIfalse\fP]
+turns on debugging via \fBsyslog(3)\fR.  Debug messages are logged with
+priority \fILOG_DEBUG\fP.
+
+.IP addressless=[\fItrue\fP|\fIfalse\fP]
+if set, requests a TGT with no address information.  This can be necessary
+if you are using Kerberos through a NAT, or on systems whose IP addresses change
+regularly.  This directive is deprecated in favor of the \fBlibdefaults\fP
+\fBnoaddresses\fP directive.
+
+.IP banner=\fIKerberos 5\fP
+specifies what sort of password the module claims to be changing whenever it is
+called upon to change passwords.  The default is \fBKerberos 5\fP.
+
+.IP ccache_dir=\fI@default_ccache_dir@\fP
+specifies the directory to place credential cache files in.
+
+.IP forwardable=[\fItrue\fP|\fIfalse\fP]
+controls whether or not credentials are forwardable.  
+This directive is deprecated in favor of the \fBlibdefaults\fP
+\fBforwardable\fP directive.
+
+.IP hosts=\fIhostnames\fP
+specifies which other hosts credentials obtained by pam_krb5 will be good on.
+If your host is behind a firewall, you should add the IP address or name that
+the \fIKDC\fR sees it as to this list.
+This directive is deprecated in favor of the \fBlibdefaults\fP
+\fBextra_addresses\fP directive.
+
+.IP keytab=\fI/etc/krb5.keytab\fP
+specifies the name of a keytab file to search for a service key
+for use in validating TGTs.
+
+.IP krb4_convert=[\fItrue\fP|\fIfalse\fP]
+controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
+KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
+them.  Unless you've converted \fIeverything\fR on your network over to use
+Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
+may require valid Kerberos IV configuration data to be present in
+\fB/etc/krb.conf\fP and \fB/etc/krb.realms\fP.
+
+.IP minimum_uid=\fI0\fP
+specifies the minimum UID of users being authenticated.  If a user with a UID
+less than this value attempts authentication, the request will be ignored.
+
+.IP proxiable=[\fItrue\fP|\fIfalse\fP]
+controls whether or not credentials are proxiable.  If not specified, they
+are.
+This directive is deprecated in favor of the \fBlibdefaults\fP
+\fBproxiable\fP directive.
+
+.IP renew_lifetime=\fI36000\fP
+default renewable lifetime.  This specifies how much time you have after
+getting credentials to renew them.
+This directive is deprecated in favor of the \fBlibdefaults\fP
+\fBrenew_lifetime\fP directive.
+
+.IP ticket_lifetime=\fI36000\fP
+default credential lifetime.
+
+.IP validate=[\fItrue\fP|\fIfalse\fP]
+specifies whether or not to attempt validation of the TGT.  The default is
+\fBfalse\fP.
+
+.SH EXAMPLE
+
+[appdefaults]
+  pam = {
+    ticket_lifetime = 36000
+    renew_lifetime = 36000
+    forwardable = true
+    krb4_convert = true
+    validate = true
+    ccache_dir = /var/tmp
+    TEST.EXAMPLE.COM = {
+      debug = true
+    }
+  }
+
+.SH FILES
+\fI/etc/krb5.conf\fP
+.br
+.SH "SEE ALSO"
+.BR pam_krb5 (8)
+.br
+.SH BUGS
+Probably, but let's hope not.  If you find any, please email the author.
+.SH AUTHOR
+Nalin Dahyabhai <nalin@redhat.com>

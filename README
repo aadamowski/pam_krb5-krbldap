@@ -1,141 +1,55 @@
-This module for Linux-PAM implements Kerberos 5 password-checking with
-optional Kerberos 4 compatible ticket files and and aklog-style AFS
-token-grabbing.  The pam_krb5 module is always built, and when compiled
-on a system with libkrbafs installed, pam_krb5afs.so will also be built.
+This is a major rewrite of pam_krb5afs.  Call it 2.0, for lack of a better term.
 
-It implements authentication, account management, session management,
-and password-changing functions.  Sample configuration files for many
-services are included.
+o Compared to the earlier releases, this tree builds a single module which
+  "knows" how to do everything which is knowable at compile-time.
+o Configuration options which can now be set as library defaults in the
+  system-wide krb5.conf are now ignored by the module.
 
-The pam_sm_authenticate() function checks the user name and password in
-the user's realm.  It takes the standard parameters required by the PAM
-documentation, as well as a few others listed below.
+Standard options:
+o debug
+  Log debugging messages at LOG_DEBUG priority.
+o no_warn
+  When authenticating, don't warn the user about an expired password.
+o use_authtok
+  When changing passwords, never prompt for password data.  Instead, use
+  data stored by a previously-called module.
+o use_first_pass
+  When authenticating, never prompt for password data.  Instead, use a
+  password which was stored by a previously-called module.
+o try_first_pass
+  When authenticating, first try to authenticate using the password which
+  was stored by a previously-called module.  If it fails, then prompt for
+  the correct password and try again.
 
-With no arguments, the pam_sm_authenticate() function defaults to
-"try_first_pass" mode.  The TGT obtained and is saved for later use by
-the pam_sm_setcred() function, but the TGT is NOT stored on disk.  The
-new TGT is validated using a copy of the key for the local workstation's
-host service if it is found in the local keytab file.
+Recognized options (krb5.conf's appdefaults/pam section, and command-line):
+o banner=Kerberos
+  When changing passwords, tell users that they are changing their Kerberos
+  passwords (unset to avoid using any term other than "password").
+o ccache_dir=/tmp
+  Directory in which to store ccache and ticket files.
+o keytab=/etc/krb5.keytab
+  Default keytab to use when validating initial credentials.
+o krb4_convert
+  Obtain Kerberos IV ticket files, even if not required for the sake of AFS.
+o minimum_uid=NUMBER
+  Default keytab to use when validating initial credentials.
+o no_user_check
+  Go ahead and authenticate users for whom getpwnam() returns no information.
+  Credential cache and ticket files will be created and owned by the current
+  user and group ID instead of the user's.
+o realm=REALM
+  Override the default realm.
+o tokens
+  Obtain AFS tokens during the authentication phase.
+o validate
+  Validate initial credentials.  By default, credentials are validated if
+  the specified keytab file can be read.
 
-The pam_sm_setcred() function creates a Kerberos 5 ticket file and, if
-libkrb524 was found at compile-time, can obtain and create a Kerberos 4
-ticket file using the krb524 service running on the KDC.  If libkrbafs
-was found at compile-time, the krb5afs module will also create a PAG
-and get tokens for AFS cells specified in the configuration file.
+Configuration file only:
+o afs_cells = cell1 cell2 cell3
 
-The account management function (pam_sm_acct_mgmt()) checks the principal
-which was authenticated against the PAM_USER's .k5login file, and checks
-that the principal's key has not expired.  If the key has expired, it
-returns a proper error code to libpam which should allow an application to
-then call pam_chauthtok() to change the user's password.
+This module's CVS repository is hosted on elvis.redhat.com.  To check the
+current sources out of CVS, use the anoncvs access.
+    cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS login
+    cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS co pam_krb5
 
-The session management functions (pam_sm_open_session() and
-pam_sm_close_session()) merely wrap calls to pam_setcred with the
-PAM_ESTABLISH_CREDS and PAM_DELETE_CREDS flags, respectively, which is
-handy because on my test box some things just don't work right.
-
-Because session-specific ticket files require that the KRBTKFILE and
-KRB5CCNAME environment variables are set correctly, certain programs that
-create their own environments but don't incorporate the results of
-pam_getenvlist() will work, but a user running 'klist' will think that
-she has no tickets.  The number of cases where this happens should
-decrease with time.
-
-Certain settings for the module are now stored in the krb5.conf file, which
-is usually stored in /etc.  The section name is "appdefaults", and the
-subsection name is "pam":
-
-[appdefaults]
-  pam = {
-    debug = true
-    ticket_lifetime = 36000
-    renew_lifetime = 36000
-    forwardable = true
-    krb4_convert = true
-    afs_cells = eos.example.edu unity.example.edu bp.example.edu
-    hosts = thermo.stat.example.edu alf.physics.example.edu
-    max_timeout = 30
-    timeout_shift = 2
-    initial_timeout = 1
-  }
-
-Note that previous versions of pam_krb5 used the "pam" section instead of
-a subsection of the "appdefaults" section.  This is still supported, but
-not encouraged.  Mixing the two is sure to be confusing.
-
-Descriptions of the configuration file directives read by both modules:
-   debug		Gratuitous debugging info via syslog.
-   ticket_lifetime	How long tickets are good, in seconds.  The default
-  			is 36000 (= 10 hours).
-   renew_lifetime	How long tickets are renewable, in seconds.  The
-   			default is also 36000 (10 hours).
-   forwardable		Whether or not tickets are forwardable.  Default = true.
-   krb4_convert		Get krb4 tickets by talking to krb524d on the KDC.
-   afs_cells		Cells to get tokens in.  Requires that krb4_convert be
-			set.  Default as distributed is "eos unity bp".  Note
-			that this is only supported by the pam_krb5afs module.
-   hosts		Hosts this ticket will also be good for, in addition to
-			this one.  Primarily for use behind firewalls.
-   ccache_dir		The directory to store ccache files in.  The default is
-			to use /tmp, but some people prefer /var/tmp.
-   banner		What the module should announce itself as when changing
-			passwords.  Defaults to "Kerberos 5".
-   keytab		The name of a keytab file to use for TGT validation.
-			The default is "/etc/krb5.keytab".
-   required_tgs		The name of a service principal (with its key in the
-			given keytab file) which is to be used to validate TGTs.
-			The default is "host/<hostname>".
-   max_timeout		The maximum amount of time to wait for a response
-                        from the KDCs, in seconds
-   timeout_shift        The amount to increase the timeout (by left
-                        shifting) by after each failed request
-   initial_timeout      The time to wait for the first KDC to respond, in
-                        seconds
-   addressless          Whether tickets can be used from any address -
-                        useful from behind NATs, or on dialups where IP
-                        address changes regularly.  Conflicts with the
-			hosts option (above).
-
-Descriptions of configuration directives for use in /etc/pam.d:
-   use_first_pass	Use password obtained by a previous module.
-   try_first_pass	Same as above, but prompt for another one to try the
-			one used by the other module fails.
-   skip_first_pass	Skip trying previously-entered password altogether.
-   no_user_check	Don't check if the user has a local account, and let
-			the current process's UID own any ccache files that get
-			created.
-   debug		Switch on debugging via syslog.
-   tokens		Get tokens during authentication.  Needed for wu-ftpd,
-			Samba, and some other programs that don't use sessions
-			and don't call pam_setcred, but need tokens.  Note
-                        that this is only supported by the pam_krb5afs module.
-   use_authtok		Rely on tokens input by a previous module in the stack
-			when changing passwords.  Primarily used if you're using
-			pam_cracklib to screen out weak passwords.
-   no_user_check	Don't bother checking if the login account corresponding
-			to the principal exists or not, and use UID the service
-			is executing under as the owner for any ccache files
-			which get created.
-   no_warn		Ignored.
-
-This module was built and tested against MIT Kerberos 5 v1.2.3, but it should
-only require v1.1.x.  Because some configuration options touch variables which
-are internal to the Kerberos libraries themselves, it may require adjustments
-to build correctly with other implementations.
-
-Updates: updated source and binary packages will always appear (however
-infrequently) in Raw Hide (ftp://ftp.redhat.com/pub/redhat/linux/rawhide/).
-The source tree can also be pulled directly from CVS off sources.redhat.com.
-To check out a copy of the tree:
-   cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS login
-   cvs -d :pserver:anoncvs@elvis.redhat.com:/usr/local/CVS co pam_krb5
-The anoncvs password is "anoncvs".
-
-Caveat: pam_pwdb will cause things to fail if your user information isn't stored
-in one of the databases it knows about (i.e., hesiod or LDAP).  Switch to
-pam_unix if that happens.
-
-Let me know if you have problems,
-
-Nalin Dahyabhai <nalin@redhat.com>
-23 July 2002

@@ -1,0 +1,16 @@
+[kdcdefaults]
+ acl_file = @TESTDIR@/config/kadm5.acl
+ admin_keytab = @TESTDIR@/kdc/kadm5.keytab
+ v4_mode = nopreauth
+ kdc_ports = 8800
+ dict_file = /usr/share/dict/words
+
+[realms]
+ EXAMPLE.COM = {
+  database_name = @TESTDIR@/kdc/principal
+  key_stash_file = @TESTDIR@/kdc/stash_file
+  master_key_type = des-cbc-crc
+  supported_enctypes = des3-cbc-sha1:normal des-cbc-crc:normal
+  kadmind_port = 8801
+  kpasswd_port = 8802
+ }

@@ -1,4 +1,9 @@
-set -x
-autoheader &&\
-autoconf &&\
-env CFLAGS="-g3 -Wunused -Wuninitialized -Wimplicit -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wcast-align" ./configure --with-krb5 --with-krbafs --with-moduledir=/lib/security
+#!/bin/sh
+if test -x /lib64 ; then
+	libdir=/lib64
+else
+	libdir=/lib
+fi
+set -x -e
+autoreconf -i -f
+./configure --libdir=$libdir --sysconfdir=/etc --mandir=${TMPDIR:-/var/tmp}/autogen-man-tmp --enable-Werror

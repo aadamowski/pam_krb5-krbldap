@@ -1,6 +1,0 @@
-#%PAM-1.0
-auth       sufficient	/lib/security/pam_rootok.so
-auth       sufficient	/lib/security/pam_unix.so shadow md5 nullok likeauth
-auth       required	/lib/security/pam_krb5afs.so use_first_pass
-session    optional	/lib/security/pam_xauth.so
-account    required	/lib/security/pam_permit.so

@@ -1,7 +1,0 @@
-#%PAM-1.0
-auth	sufficient	/lib/security/pam_unix.so shadow md5 nullok likeauth
-# useless unless "encrypt passwords" is turned OFF!
-auth	required	/lib/security/pam_krb5afs.so use_first_pass tokens
-auth	required	/lib/security/pam_listfile.so item=user sense=allow file=/etc/users.local
-
-account	required	/lib/security/pam_unix.so

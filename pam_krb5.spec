@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.61
-Release: 1
+Version: 2.0
+Release: 0
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -20,17 +20,14 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %build
 CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
-%configure \
-	--with-moduledir=/%{_lib}/security \
-	--with-krb5=/usr/kerberos \
-	--with-krb5-libs=/usr/kerberos/%{_lib} \
-	--with-krbafs=/usr/kerberos \
-	--with-krbafs-libs=/usr/kerberos/%{_lib}
+%configure --libdir=/%{_lib}
 make
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
+make install DESTDIR=$RPM_BUILD_ROOT
+ln -s pam_krb5.so $RPM_BUILD_ROOT/%{_lib}/security/pam_krb5afs.so
+rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
@@ -41,7 +38,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 /%{_lib}/security/pam_krb5afs.so
 %{_mandir}/man5/*
 %{_mandir}/man8/*
-%doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
+%doc README COPYING* ChangeLog
 
 # $Id$
 %changelog

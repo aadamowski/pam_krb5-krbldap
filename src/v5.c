@@ -1,0 +1,633 @@
+#include "../config.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#ifdef HAVE_SECURITY_PAM_MODULES_H
+#include <security/pam_modules.h>
+#endif
+
+#include <krb5.h>
+#ifdef USE_KRB4
+#include KRB4_DES_H
+#include KRB4_KRB_H
+#ifdef KRB4_KRB_ERR_H
+#include KRB4_KRB_ERR_H
+#endif
+#endif
+
+#ifndef HAVE_ERROR_MESSAGE_DECL
+#ifdef HAVE_COM_ERR_H
+#include <com_err.h>
+#elif defined(HAVE_ET_COM_ERR_H)
+#include <et/com_err.h>
+#endif
+#endif
+
+#include "conv.h"
+#include "log.h"
+#include "prompter.h"
+#include "stash.h"
+#include "userinfo.h"
+#include "v5.h"
+#include "xstr.h"
+
+#ident "$Id$"
+
+const char *
+v5_error_message(int error)
+{
+	return error_message(error);
+}
+
+#ifdef HAVE_KRB5_FREE_UNPARSED_NAME
+void
+v5_free_unparsed_name(krb5_context ctx, char *name)
+{
+	krb5_free_unparsed_name(ctx, name);
+}
+#else
+void
+v5_free_unparsed_name(krb5_context ctx, char *name)
+{
+	free(name);
+}
+#endif
+
+#ifdef HAVE_KRB5_FREE_DEFAULT_REALM
+void
+v5_free_default_realm(krb5_context ctx, char *realm)
+{
+	krb5_free_default_realm(ctx, realm);
+}
+#else
+void
+v5_free_default_realm(krb5_context ctx, char *realm)
+{
+	free(realm);
+}
+#endif
+
+#ifdef HAVE_KRB5_SET_PRINCIPAL_REALM
+int
+v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
+		       const char *realm)
+{
+	return krb5_set_principal_realm(ctx, *principal, realm);
+}
+#else
+int
+v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
+		       const char *realm)
+{
+	char *unparsed, *tmp;
+	int i;
+	if (krb5_unparse_name(ctx, *principal, &unparsed) == 0) {
+		tmp = malloc(strlen(unparsed) + 1 + strlen(realm) + 1);
+		if (tmp != NULL) {
+			strcpy(tmp, unparsed);
+			if (strchr(tmp, '@') != NULL) {
+				strcpy(strchr(tmp, '@') + 1, realm);
+			} else {
+				strcat(tmp, "@");
+				strcat(tmp, realm);
+			}
+			i = krb5_parse_name(ctx, tmp, principal);
+			v5_free_unparsed_name(ctx, unparsed);
+			free(tmp);
+			return i;
+		}
+	}
+	return KRB5KRB_ERR_GENERIC;
+}
+#endif
+
+#if defined(HAVE_KRB5_CREDS_KEYBLOCK) && defined(HAVE_KRB5_KEYBLOCK_ENCTYPE)
+int
+v5_creds_get_etype(krb5_context ctx, krb5_creds *creds)
+{
+	return creds->keyblock.enctype;
+}
+void
+v5_creds_set_etype(krb5_context ctx, krb5_creds *creds, int etype)
+{
+	creds->keyblock.enctype = etype;
+}
+int
+v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
+{
+	return (creds->keyblock.length > 0) ? 0 : 1;
+}
+#elif defined(HAVE_KRB5_CREDS_SESSION) && defined(HAVE_KRB5_KEYBLOCK_KEYTYPE)
+int
+v5_creds_get_etype(krb5_context ctx, krb5_creds *creds)
+{
+	return creds->session.keytype;
+}
+void
+v5_creds_set_etype(krb5_context ctx, krb5_creds *creds, int etype)
+{
+	creds->session.keytype = etype;
+}
+int
+v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
+{
+	return (creds->session.keyvalue.length > 0) ? 0 : 1;
+}
+#else
+#error "Don't know how to read/write key types for your Kerberos implementation!"
+#endif
+
+#ifdef HAVE_KRB5_CONST_REALM
+void
+v5_appdefault_string(krb5_context ctx,
+		     const char *realm, const char *option,
+		     const char *default_value, char **ret_value)
+{
+	char *tmp;
+
+	*ret_value = tmp = xstrdup(default_value);
+	krb5_appdefault_string(ctx, PAM_KRB5_APPNAME, realm, option,
+			       default_value, ret_value);
+	if (*ret_value != tmp) {
+		free(tmp);
+	}
+}
+void
+v5_appdefault_boolean(krb5_context ctx,
+		      const char *realm, const char *option,
+		      krb5_boolean default_value, krb5_boolean *ret_value)
+{
+	*ret_value = default_value;
+	krb5_appdefault_boolean(ctx, PAM_KRB5_APPNAME, realm, option,
+			        default_value, ret_value);
+}
+#else
+static krb5_data *
+data_from_string(const char *s)
+{
+	krb5_data *ret;
+	ret = malloc(sizeof(krb5_data));
+	if (ret == NULL) {
+		return ret;
+	}
+	memset(ret, 0, sizeof(krb5_data));
+	ret->length = xstrlen(s);
+	ret->data = xstrdup(s);
+	return ret;
+}
+static void
+data_free(krb5_data *data)
+{
+	free(data->data);
+	free(data);
+}
+void
+v5_appdefault_string(krb5_context ctx,
+		     const char *realm, const char *option,
+		     const char *default_value, char **ret_value)
+{
+	krb5_data *realm_data;
+	char *tmp;
+
+	realm_data = data_from_string(realm);
+	*ret_value = tmp = xstrdup(default_value);
+	if (realm_data != NULL) {
+		krb5_appdefault_string(ctx, PAM_KRB5_APPNAME, realm_data,
+				       option, default_value, ret_value);
+		data_free(realm_data);
+	} else {
+		*ret_value = xstrdup(default_value);
+	}
+	if (*ret_value != tmp) {
+		free(tmp);
+	}
+}
+void
+v5_appdefault_boolean(krb5_context ctx,
+		      const char *realm, const char *option,
+		      int default_value, int *ret_value)
+{
+	krb5_data *realm_data;
+
+	*ret_value = default_value;
+
+	realm_data = data_from_string(realm);
+	if (realm_data != NULL) {
+		krb5_appdefault_boolean(ctx, PAM_KRB5_APPNAME, realm_data,
+					option, default_value, ret_value);
+		data_free(realm_data);
+	}
+}
+#endif
+
+static int
+v5_validate(krb5_context ctx, krb5_creds *creds,
+	    struct _pam_krb5_options *options)
+{
+	int i;
+	char *principal;
+	krb5_keytab keytab;
+	krb5_kt_cursor cursor;
+	krb5_keytab_entry entry;
+	krb5_verify_init_creds_opt opt;
+
+	/* Open the keytab. */
+	memset(&keytab, 0, sizeof(keytab));
+	i = krb5_kt_resolve(ctx, options->keytab, &keytab);
+	if (i != 0) {
+		warn("error resolving keytab '%s', not verifying TGT",
+		     options->keytab);
+		return PAM_SERVICE_ERR;
+	}
+
+	/* Read the first key from the file. */
+	memset(&cursor, 0, sizeof(cursor));
+	i = krb5_kt_start_seq_get(ctx, keytab, &cursor);
+	if (i != 0) {
+		warn("error reading keytab, not verifying TGT");
+		return PAM_IGNORE;
+	}
+
+	memset(&entry, 0, sizeof(entry));
+	i = krb5_kt_next_entry(ctx, keytab, &entry, &cursor);
+	if (i != 0) {
+		warn("error reading keytab, not verifying TGT");
+		krb5_kt_end_seq_get(ctx, keytab, &cursor);
+		krb5_kt_close(ctx, keytab);
+		return PAM_IGNORE;
+	}
+
+	/* Get the principal to which the key belongs, for logging purposes. */
+	principal = NULL;
+	i = krb5_unparse_name(ctx, entry.principal, &principal);
+	if (i != 0) {
+		warn("internal error parsing principal name, "
+		     "not verifying TGT");
+		krb5_kt_end_seq_get(ctx, keytab, &cursor);
+		krb5_kt_close(ctx, keytab);
+		return PAM_SERVICE_ERR;
+	}
+
+	/* Perform the verification checks using the service key. */
+	krb5_verify_init_creds_opt_init(&opt);
+	i = krb5_verify_init_creds(ctx, creds,
+				   entry.principal, keytab,
+				   NULL, &opt);
+
+	krb5_kt_end_seq_get(ctx, keytab, &cursor);
+	krb5_kt_close(ctx, keytab);
+
+	/* Log success or failure. */
+	if (i == 0) {
+		notice("TGT verified using key for '%s'", principal);
+		v5_free_unparsed_name(ctx, principal);
+		return PAM_SUCCESS;
+	} else {
+		crit("TGT failed verification using key for '%s'",
+		     principal);
+		v5_free_unparsed_name(ctx, principal);
+		return PAM_AUTH_ERR;
+	}
+}
+
+int
+v5_get_creds(krb5_context ctx,
+	     pam_handle_t *pamh,
+	     krb5_creds *creds,
+	     struct _pam_krb5_user_info *userinfo,
+	     struct _pam_krb5_options *options,
+	     char *service,
+	     char *password,
+	     krb5_get_init_creds_opt *gic_options,
+	     int *result)
+{
+	int i;
+	char realm_service[LINE_MAX];
+	struct pam_message message;
+	krb5_creds tmpcreds;
+
+	/* In case we already have creds, get rid of them. */
+	krb5_free_cred_contents(ctx, creds);
+	memset(creds, 0, sizeof(*creds));
+	memset(&tmpcreds, 0, sizeof(tmpcreds));
+
+	/* Check some string lengths. */
+	if (strlen(service) + 1 +
+	    strlen(options->realm) + 1 +
+	    strlen(options->realm) + 1 >= sizeof(realm_service)) {
+		return PAM_SERVICE_ERR;
+	}
+
+	/* Cheap hack.  Appends the realm name to a service to generate a
+	 * more full service name. */
+	if (strchr(service, '/') != NULL) {
+		strcpy(realm_service, service);
+	} else {
+		strcpy(realm_service, service);
+		strcat(realm_service, "/");
+		strcat(realm_service, options->realm);
+	}
+	if (strchr(realm_service, '@') != NULL) {
+		strcpy(strchr(realm_service, '@') + 1, options->realm);
+	} else {
+		strcat(realm_service, "@");
+		strcat(realm_service, options->realm);
+	}
+	if (options->debug) {
+		debug("authenticating '%s' to '%s'",
+		      userinfo->unparsed_name, realm_service);
+	}
+	/* Get creds.  We could pass the address of our prompter function
+	 * here, but there's still some problem lurking if we do that, so... */
+	i = krb5_get_init_creds_password(ctx,
+					 creds,
+					 userinfo->principal_name,
+					 password,
+					 NULL,
+					 pamh,
+					 0,
+					 realm_service,
+					 gic_options);
+	/* Let the caller see the krb5 result code. */
+	if (options->debug) {
+		debug("krb5_get_init_creds_password(%s) returned %d (%s)",
+		      realm_service, i, error_message(i));
+	}
+	if (result != NULL) {
+		*result = i;
+	}
+	/* Interpret the return code. */
+	switch (i) {
+	case 0:
+		/* Flat-out success.  Validate the TGT if we can. */
+		if (options->validate == 1) {
+			if (options->debug) {
+				debug("validating credentials");
+			}
+			switch (v5_validate(ctx, creds, options)) {
+			case PAM_AUTH_ERR:
+				return PAM_AUTH_ERR;
+				break;
+			default:
+				break;
+			}
+		}
+		return PAM_SUCCESS;
+		break;
+	case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
+	case KRB5KDC_ERR_NAME_EXP:
+		/* The user is unknown or a principal has expired. */
+		return PAM_USER_UNKNOWN;
+		break;
+	case KRB5KDC_ERR_KEY_EXP:
+		/* The user's key (password) is expired.  We get this error
+		 * even if the supplied password is incorrect, so we try to
+		 * get a password-changing ticket, which we should be able
+		 * to get with an expired password. */
+		snprintf(realm_service, sizeof(realm_service),
+			 PASSWORD_CHANGE_PRINCIPAL "@%s", options->realm);
+		if (options->debug) {
+			debug("key is expired. attempting to verify password "
+			      "by obtaining credentials for %s", realm_service);
+		}
+		i = krb5_get_init_creds_password(ctx,
+						 &tmpcreds,
+						 userinfo->principal_name,
+						 password,
+						 NULL,
+						 pamh,
+						 0,
+						 realm_service,
+						 NULL);
+		krb5_free_cred_contents(ctx, &tmpcreds);
+		switch (i) {
+		case 0:
+			/* Got password-changing creds, so warn about the
+			 * expired password and continue. */
+			if (options->warn == 1) {
+				message.msg = "Warning: password has expired.";
+				message.msg_style = PAM_TEXT_INFO;
+				_pam_krb5_conv_call(pamh, &message, 1, NULL);
+			}
+			return PAM_SUCCESS;
+			break;
+		}
+		return PAM_AUTH_ERR;
+		break;
+	default:
+		return PAM_AUTH_ERR;
+	}
+}
+
+int
+v5_save(krb5_context ctx,
+	struct _pam_krb5_stash *stash,
+	struct _pam_krb5_user_info *userinfo,
+	struct _pam_krb5_options *options,
+	const char **ccname)
+{
+	char tktfile[PATH_MAX + 6];
+	krb5_ccache ccache;
+	int fd;
+
+	if (ccname != NULL) {
+		*ccname = NULL;
+	}
+
+	/* Ensure that we have credentials for saving. */
+	if (v5_creds_check_initialized(ctx, &stash->v5creds) != 0) {
+		if (options->debug) {
+			debug("credentials not initialized");
+		}
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+	/* Use mkstemp() to create a unique filename. */
+	snprintf(tktfile, sizeof(tktfile), "FILE:%s/krb5cc_%lu_XXXXXX",
+		 options->ccache_dir, (unsigned long) userinfo->uid);
+	fd = mkstemp(tktfile + 5);
+	if (fd == -1) {
+		warn("error creating unique Kerberos 5 ccache "
+		     "(shouldn't happen)");
+		return PAM_SERVICE_ERR;
+	}
+	if (options->debug) {
+		debug("saving v5 credentials to '%s'", tktfile);
+	}
+	/* Create an in-memory structure and then open the file.  One of two
+	 * things will happen here.  Either libkrb5 will just use the file, and
+	 * we're safer because it wouldn't have used O_EXCL to do so, or it
+	 * will nuke the file and reopen it with O_EXCL.  In the latter case,
+	 * the descriptor we have will become useless, so we don't actually use
+	 * it for anything. */
+	if (krb5_cc_resolve(ctx, tktfile, &ccache) != 0) {
+		warn("error resolving ccache '%s'", tktfile);
+		unlink(tktfile + 5);
+		close(fd);
+		return PAM_SERVICE_ERR;
+	}
+	if (krb5_cc_initialize(ctx, ccache, userinfo->principal_name) != 0) {
+		warn("error initializing ccache '%s'", tktfile);
+		krb5_cc_close(ctx, ccache);
+		unlink(tktfile + 5);
+		close(fd);
+		return PAM_SERVICE_ERR;
+	}
+	if (krb5_cc_store_cred(ctx, ccache, &stash->v5creds) != 0) {
+		warn("error storing credentials in ccache '%s'", tktfile);
+		krb5_cc_close(ctx, ccache);
+		unlink(tktfile + 5);
+		close(fd);
+		return PAM_SERVICE_ERR;
+	}
+	/* If we got to here, we succeeded. */
+	krb5_cc_close(ctx, ccache);
+	close(fd);
+	/* Destroy any existing ccache file.  One per customer. */
+	v5_destroy(ctx, stash, options);
+	/* Save the new file's name in the stash, and optionally return it to
+	 * the caller. */
+	stash->v5file = xstrdup(tktfile + 5);
+	chown(stash->v5file, userinfo->uid, userinfo->gid);
+	if (ccname != NULL) {
+		*ccname = stash->v5file;
+	}
+	return PAM_SUCCESS;
+}
+
+int
+v5_get_creds_etype(krb5_context ctx,
+		   struct _pam_krb5_user_info *userinfo,
+		   struct _pam_krb5_options *options,
+		   krb5_creds *current_creds, int wanted_etype,
+		   krb5_creds **target_creds)
+{
+	krb5_ccache ccache;
+	char ccache_path[PATH_MAX + 6];
+	krb5_creds *new_creds, *tmp_creds;
+	int fd, i;
+
+	/* First, nuke anything that's already in the target creds struct. */
+	if (*target_creds != NULL) {
+		krb5_free_cred_contents(ctx, *target_creds);
+		memset(*target_creds, 0, sizeof(krb5_creds));
+	}
+
+	/* Ensure that we have credentials. */
+	if (v5_creds_check_initialized(ctx, current_creds) != 0) {
+		if (options->debug) {
+			debug("credentials not initialized");
+		}
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+	/* Check for the simple case -- do we already have such creds? */
+	if (v5_creds_get_etype(ctx, current_creds) == wanted_etype) {
+		return krb5_copy_creds(ctx, current_creds, target_creds);
+	}
+
+	/* Crap.  We have to do things the long way. */
+	snprintf(ccache_path, sizeof(ccache_path), "FILE:%s/krb5cc_%lu_XXXXXX",
+		 options->ccache_dir, (unsigned long) userinfo->uid);
+	fd = mkstemp(ccache_path + 5);
+	if (fd == -1) {
+		if (options->debug) {
+			debug("error creating temporary ccache: %s",
+			      strerror(errno));
+		}
+		return errno;
+	}
+
+	ccache = NULL;
+	i = krb5_cc_resolve(ctx, ccache_path, &ccache);
+	if (i != 0) {
+		if (options->debug) {
+			debug("error resolving temporary ccache: %s",
+			      v5_error_message(i));
+		}
+		unlink(ccache_path + 5);
+		close(fd);
+		return i;
+	}
+
+	i = krb5_cc_initialize(ctx, ccache, userinfo->principal_name);
+	if (i != 0) {
+		if (options->debug) {
+			debug("error initializing temporary ccache: %s",
+			      v5_error_message(i));
+		}
+		unlink(ccache_path + 5);
+		close(fd);
+		return i;
+	}
+
+	i = krb5_cc_store_cred(ctx, ccache, current_creds);
+	if (i != 0) {
+		if (options->debug) {
+			debug("error storing credentials in temporary ccache: "
+			      "%s", v5_error_message(i));
+		}
+		krb5_cc_destroy(ctx, ccache);
+		unlink(ccache_path + 5);
+		close(fd);
+		return i;
+	}
+
+	/* Make a copy of the existing credentials and set the desired etype. */
+	tmp_creds = NULL;
+	i = krb5_copy_creds(ctx, current_creds, &tmp_creds);
+	if (i != 0) {
+		if (options->debug) {
+			debug("error copying credentials (shouldn't happen)");
+		}
+		krb5_cc_destroy(ctx, ccache);
+		unlink(ccache_path + 5);
+		close(fd);
+		return i;
+	}
+	v5_creds_set_etype(ctx, tmp_creds, wanted_etype);
+
+	/* Go for it. */
+	new_creds = NULL;
+	i = krb5_get_credentials(ctx, 0, ccache, tmp_creds, &new_creds);
+
+	if (i != 0) {
+		if (options->debug) {
+			debug("error obtaining credentials with etype %d using "
+			      "existing credentials: %d (%s)",
+			      wanted_etype, i, v5_error_message(i));
+		}
+		krb5_free_creds(ctx, tmp_creds);
+		krb5_cc_destroy(ctx, ccache);
+		unlink(ccache_path + 5);
+		close(fd);
+		return i;
+	}
+
+	krb5_free_creds(ctx, tmp_creds);
+	krb5_cc_destroy(ctx, ccache);
+	unlink(ccache_path + 5);
+	close(fd);
+	*target_creds = new_creds;
+	return i;
+}
+
+void
+v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
+	   struct _pam_krb5_options *options)
+{
+	if (stash->v5file != NULL) {
+		if (options->debug) {
+			debug("removing ccache file '%s'",
+			      stash->v5file);
+		}
+		unlink(stash->v5file);
+		free(stash->v5file);
+		stash->v5file = NULL;
+	}
+}

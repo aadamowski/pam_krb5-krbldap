@@ -1,3 +1,6 @@
+Thu Aug  7 2003 nalin
+- Major overhaul and refactoring of everything.
+
 Thu Jan 30 2003 Nalin Dahyabhai <nalin@redhat.com>
 - Fix uninitialized pointer crash when we fail to retrieve cached return values.
 
