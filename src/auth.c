@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -145,7 +145,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	/* Check the minimum UID argument. */
-	if ((options->minimum_uid != -1) &&
+	if ((options->minimum_uid != (uid_t) -1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum = %lu", user,
@@ -210,6 +210,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if ((i != 0) && (options->debug)) {
 				debug("error obtaining v4 creds: %d (%s)",
 				      i, v5_error_message(i));
+			}
+			if (stash->v4present &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
+				v5_save(ctx, stash, userinfo, options, NULL);
+				v4_save(ctx, stash, userinfo, options,
+					-1, -1, NULL);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
+				v4_destroy(ctx, stash, options);
+				v5_destroy(ctx, stash, options);
 			}
 		}
 	}
@@ -285,6 +295,42 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 		if (password != NULL) {
 			xstrfree(password);
+		}
+	}
+
+	/* If we didn't have a password, try here. */
+	if ((retval != PAM_SUCCESS) &&
+	    (!options->use_first_pass) && (!options->use_second_pass)) {
+		password = NULL;
+		retval = v5_get_creds(ctx, pamh,
+				      &stash->v5creds, userinfo,
+				      options,
+				      KRB5_TGS_NAME,
+				      NULL, &gic_options,
+				      &stash->v5result);
+		stash->v5attempted = 1;
+		if (options->debug) {
+			debug("got result %d (%s)", stash->v5result,
+			      v5_error_message(stash->v5result));
+		}
+		if ((retval == PAM_SUCCESS) &&
+		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
+			v4_get_creds(ctx, pamh, stash, userinfo, options,
+				     password, &i);
+			if ((i != 0) && (options->debug)) {
+				debug("error obtaining v4 creds: %d (%s)",
+				      i, v5_error_message(i));
+			}
+			if (stash->v4present &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
+				v5_save(ctx, stash, userinfo, options, NULL);
+				v4_save(ctx, stash, userinfo, options,
+					-1, -1, NULL);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
+				v4_destroy(ctx, stash, options);
+				v5_destroy(ctx, stash, options);
+			}
 		}
 	}
 

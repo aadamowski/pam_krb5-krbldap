@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -363,6 +363,7 @@ v5_get_creds(krb5_context ctx,
 	char realm_service[LINE_MAX];
 	const char *realm;
 	struct pam_message message;
+	struct _pam_krb5_prompter_data prompter_data;
 	krb5_creds tmpcreds;
 
 	/* In case we already have creds, get rid of them. */
@@ -401,14 +402,15 @@ v5_get_creds(krb5_context ctx,
 		debug("authenticating '%s' to '%s'",
 		      userinfo->unparsed_name, realm_service);
 	}
-	/* Get creds.  We could pass the address of our prompter function
-	 * here, but there's still some problem lurking if we do that, so... */
+	/* Get creds. */
+	prompter_data.pamh = pamh;
+	prompter_data.previous_password = password;
 	i = krb5_get_init_creds_password(ctx,
 					 creds,
 					 userinfo->principal_name,
 					 password,
-					 NULL,
-					 pamh,
+					 _pam_krb5_prompter,
+					 &prompter_data,
 					 0,
 					 realm_service,
 					 gic_options);
@@ -454,12 +456,14 @@ v5_get_creds(krb5_context ctx,
 			debug("key is expired. attempting to verify password "
 			      "by obtaining credentials for %s", realm_service);
 		}
+		prompter_data.pamh = pamh;
+		prompter_data.previous_password = password;
 		i = krb5_get_init_creds_password(ctx,
 						 &tmpcreds,
 						 userinfo->principal_name,
 						 password,
-						 NULL,
-						 pamh,
+						 _pam_krb5_prompter,
+						 &prompter_data,
 						 0,
 						 realm_service,
 						 NULL);

@@ -1,3 +1,18 @@
+2005-02-24 nalin
+	* configure.ac: add a --enable-default-keytab-location flag.
+	* src/options.c,src/pam_krb5.5.in,src/pam_krb5.8.in: obey it.
+	* README: document that it can be overridden.  (Don't want to change
+	this to README.in to actually reflect that override value.)
+	* src/v4.c(v4_get_creds): error out if password is NULL or zero-length.
+	* src/v5.c(v5_get_creds): provide the prompter callback to libkrb5.
+	* src/options.c: add an "initial_prompt"/"no_initial_prompt" option
+	which suppresses the initial password prompt.  It's useless for
+	providing a PAM_AUTHTOK to subsequent modules, but is useful now that
+	we're providing a prompter callback to libkrb5.
+	* src/auth.c: handle no_initial_prompt cases.  Get AFS tokens if the
+	saved password turned out to be correct.
+	* src/log.c: fix a few memory leaks.
+	* src/harness.c: add, to make debugging easier.
 2005-02-23 nalin
 	* src/init.c: don't call initialize_krb5_error_table; this currently
 	leads to a crash due to libkrb5 from MIT's 1.4 release making an

@@ -5,7 +5,7 @@ security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = pam_krb5.5  pam_krb5.8
-noinst_PROGRAMS = afs5log pagsh
+noinst_PROGRAMS = afs5log pagsh harness
 noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8
 
@@ -70,5 +70,7 @@ pagsh_SOURCES = \
 	logstdio.c \
 	logstdio.h \
 	log.h
-	log.h
 pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+
+harness_SOURCES = harness.c
+harness_LDADD = @PAM_LIBS@ $(pam_krb5_la_OBJECTS) libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@

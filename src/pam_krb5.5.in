@@ -50,7 +50,12 @@ the \fIKDC\fP sees it as to this list.
 This directive is deprecated in favor of the \fBlibdefaults\fP
 \fBextra_addresses\fP directive.
 
-.IP keytab=\fI/etc/krb5.keytab\fP
+.IP initial_prompt=[\fItrue\fP|\fIfalse\fP]
+tells pam_krb5.so whether or not to ask for a password before attempting
+authentication.  If one is needed and pam_krb5.so has not prompted for it,
+the Kerberos library should trigger a request for a password.
+
+.IP keytab=\fI@DEFAULT_KEYTAB@\fP
 specifies the name of a keytab file to search for a service key
 for use in validating TGTs.
 

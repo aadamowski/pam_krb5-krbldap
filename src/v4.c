@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -485,21 +485,23 @@ v4_get_creds(krb5_context ctx,
 		krb5_free_creds(ctx, in_creds);
 	}
 #endif
-	if (options->debug) {
-		debug("obtaining initial v4 creds");
-	}
-	i = _pam_krb5_v4_init(ctx, stash, userinfo, options,
-			      KRB5_TGS_NAME, NULL, password, result);
-	if (i == PAM_SUCCESS) {
+	if (password != NULL) {
 		if (options->debug) {
-			debug("initial v4 creds obtained");
+			debug("obtaining initial v4 creds");
 		}
-		stash->v4present = 1;
-		return PAM_SUCCESS;
-	}
-	if (options->debug) {
-		debug("could not obtain initial v4 creds: %d (%s)",
-		      i, v5_error_message(i));
+		i = _pam_krb5_v4_init(ctx, stash, userinfo, options,
+				      KRB5_TGS_NAME, NULL, password, result);
+		if (i == PAM_SUCCESS) {
+			if (options->debug) {
+				debug("initial v4 creds obtained");
+			}
+			stash->v4present = 1;
+			return PAM_SUCCESS;
+		}
+		if (options->debug) {
+			debug("could not obtain initial v4 creds: %d (%s)",
+			      i, v5_error_message(i));
+		}
 	}
 	return PAM_AUTH_ERR;
 }

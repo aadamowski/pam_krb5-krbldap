@@ -66,6 +66,7 @@ debug(const char *fmt, ...)
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
 		vsyslog(LOG_DEBUG, fmt2, args);
+		free(fmt2);
 	} else {
 		vsyslog(LOG_DEBUG, fmt, args);
 	}
@@ -86,6 +87,7 @@ warn(const char *fmt, ...)
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
 		vsyslog(LOG_WARNING, fmt2, args);
+		free(fmt2);
 	} else {
 		vsyslog(LOG_WARNING, fmt, args);
 	}
@@ -106,6 +108,7 @@ notice(const char *fmt, ...)
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
 		vsyslog(LOG_NOTICE, fmt2, args);
+		free(fmt2);
 	} else {
 		vsyslog(LOG_NOTICE, fmt, args);
 	}
@@ -126,6 +129,7 @@ crit(const char *fmt, ...)
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
 		vsyslog(LOG_CRIT, fmt2, args);
+		free(fmt2);
 	} else {
 		vsyslog(LOG_CRIT, fmt, args);
 	}

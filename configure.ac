@@ -56,6 +56,7 @@ fi
 
 AC_CHECK_HEADERS(security/pam_appl.h)
 AC_CHECK_HEADERS(security/pam_modules.h)
+AC_CHECK_HEADERS(security/pam_misc.h)
 AC_CHECK_FUNCS(getpwnam_r __posix_getpwnam_r)
 AC_CHECK_FUNC(crypt,,[AC_CHECK_LIB(crypt,crypt)])
 
@@ -168,7 +169,14 @@ fi
 LIBS="$LIBSsave"
 
 LIBSsave="$LIBS"
+AC_CHECK_FUNC(dlopen,,[AC_CHECK_LIB(dl,dlopen)])
 AC_CHECK_FUNC(pam_get_item,,[AC_CHECK_LIB(pam,pam_get_item)])
+have_misc_conv=no
+AC_CHECK_FUNC(misc_conv,have_misc_conv=yes,
+	      [AC_CHECK_LIB(pam_misc,misc_conv,have_misc_conv=yes)])
+if test x$have_misc_conv = xyes ; then
+	AC_DEFINE(HAVE_MISC_CONV,1,[Define if you have the misc_conv function.])
+fi
 PAM_LIBS="$LIBS"
 LIBS="$LIBSsave"
 AC_SUBST(PAM_LIBS)
@@ -179,6 +187,11 @@ AC_MSG_RESULT([Using "$default_realm" as the default realm])
 AC_ARG_ENABLE(default-ccache-dir,AC_HELP_STRING([--enable-default-ccache-dir=DIRECTORY],[default directory in which ccache files will be stored (default is /tmp)]),default_ccache_dir=$enableval,default_ccache_dir=/tmp)
 AC_DEFINE_UNQUOTED(DEFAULT_CCACHE_DIR,"$default_ccache_dir",[Define to the name of the directory in which ccache files will be stored by default.])
 AC_MSG_RESULT([Using "$default_ccache_dir" to store ccache files])
+AC_ARG_ENABLE(default-keytab-location,AC_HELP_STRING([--enable-default-keytab-location=/etc/krb5.keytab],[default location for local keys used for verifying TGTs (default is /etc/krb5.keytab)]),default_keytab=$enableval,default_keytab=/etc/krb5.keytab)
+AC_DEFINE_UNQUOTED(DEFAULT_KEYTAB_LOCATION,"$default_keytab",[Define to the default location for your keytab file, which will be used for verifying TGTs.])
+DEFAULT_KEYTAB="$default_keytab"
+AC_SUBST(DEFAULT_KEYTAB)
+AC_MSG_RESULT([Using "$default_realm" as the default keytab])
 
 PAM_KRB5_APPNAME=pam
 AC_DEFINE_UNQUOTED(PAM_KRB5_APPNAME,"$PAM_KRB5_APPNAME",[Define to the application name, which defines which appdefaults section will be expected to hold this module's configuration in krb5.conf.])

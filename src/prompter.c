@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@
 #endif
 
 #include <krb5.h>
+#include <stdio.h>
 #include "conv.h"
 #include "log.h"
 #include "prompter.h"
@@ -71,8 +72,9 @@ _pam_krb5_prompter(krb5_context context, void *data,
 {
 	struct pam_message *messages;
 	struct pam_response *responses;
-	int offset;
-	int i;
+	int offset, i, ret;
+	char *tmp;
+	struct _pam_krb5_prompter_data *pdata = data;
 
 	/* If we have a name or banner, we need to make space for it in the
 	 * messages structure, so keep track of the offset to the first actual
@@ -110,7 +112,11 @@ _pam_krb5_prompter(krb5_context context, void *data,
 	}
 	/* Copy the prompt strings over. */
 	for (i = 0; i < num_prompts; i++) {
-		messages[i + offset].msg = prompts[i].prompt;
+		tmp = malloc(strlen(prompts[i].prompt) + 3);
+		if (tmp != NULL) {
+			sprintf(tmp, "%s: ", prompts[i].prompt);
+		}
+		messages[i + offset].msg = tmp;
 		messages[i + offset].msg_style = prompts[i].hidden ?
 						 PAM_PROMPT_ECHO_OFF :
 						 PAM_PROMPT_ECHO_ON;
@@ -118,16 +124,19 @@ _pam_krb5_prompter(krb5_context context, void *data,
 
 	/* Get some responses. */
 	responses = NULL;
-	i = _pam_krb5_conv_call((pam_handle_t*) data,
-				messages, num_prompts + offset,
-				&responses);
+	ret = _pam_krb5_conv_call(pdata->pamh,
+				  messages, num_prompts + offset,
+				  &responses);
 
 	/* We can discard the messages now. */
+	for (i = 0; i < num_prompts; i++) {
+		free((char*) messages[i + offset].msg);
+	}
 	free(messages);
 	messages = NULL;
 
 	/* If we failed, and we asked questions, bail now. */
-	if ((i != PAM_SUCCESS) ||
+	if ((ret != PAM_SUCCESS) ||
 	    ((num_prompts > 0) && (responses == NULL))) {
 		return KRB5_LIBOS_CANTREADPWD;
 	}

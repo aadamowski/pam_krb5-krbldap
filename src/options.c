@@ -390,6 +390,11 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->use_first_pass = 1;
 		options->use_second_pass = 1;
 	}
+	if (option_b(pamh, argc, argv,
+		     ctx, options->realm, "initial_prompt") == 0) {
+		options->use_first_pass = 0;
+		options->use_second_pass = 0;
+	}
 
 	/* private option */
 	options->use_shmem = option_b(pamh, argc, argv,
@@ -507,10 +512,10 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 
 	options->keytab = option_s(pamh, argc, argv,
 				   ctx, options->realm, "keytab",
-				   "/etc/krb5.keytab");
+				   DEFAULT_KEYTAB_LOCATION);
 	if (strlen(options->keytab) == 0) {
 		xstrfree(options->keytab);
-		options->keytab = xstrdup("/etc/krb5.keytab");
+		options->keytab = xstrdup(DEFAULT_KEYTAB_LOCATION);
 	}
 	if (options->debug && options->keytab) {
 		debug("keytab: %s", options->keytab);

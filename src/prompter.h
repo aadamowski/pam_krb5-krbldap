@@ -33,6 +33,11 @@
 #ifndef pam_krb5_prompter_h
 #define pam_krb5_prompter_h
 
+struct _pam_krb5_prompter_data {
+	pam_handle_t *pamh;
+	const char *previous_password;
+};
+
 krb5_error_code
 _pam_krb5_prompter(krb5_context context, void *data,
 		   const char *name, const char *banner,
