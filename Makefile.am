@@ -1,4 +1,4 @@
-EXTRA_DIST = pam_krb5.spec
+EXTRA_DIST = pam_krb5.spec TODO
 
 SUBDIRS = src pam.d tests
 
