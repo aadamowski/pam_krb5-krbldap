@@ -146,6 +146,10 @@
 #define TRUE !FALSE
 #endif
 
+#ifdef HAVE_LIBKRB524
+extern int krb524_convert_creds_kdc(krb5_context, krb5_creds *, CREDENTIALS *);
+#endif
+
 /******************************************************************************/
 
 /* Authentication. */
@@ -178,6 +182,10 @@ struct stash {
 	char v5_path[PATH_MAX];
 	char v4_path[PATH_MAX];
 	krb5_creds v5_creds;
+#ifdef HAVE_LIBKRB4
+	int have_v4_creds;
+	CREDENTIALS v4_creds;
+#endif
 };
 
 /* Module-specific configuration data. */
@@ -270,7 +278,19 @@ static char *word_copy(const char *s)
 	return ret;
 }
 
-struct config *get_config(krb5_context context, int argc, const char **argv)
+static int xstrnlen(const char *str, int max_len)
+{
+	int i;
+	for(i = 0; i < max_len; i++) {
+		if(str[i] == '\0') {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static struct config *get_config(krb5_context context,
+				 int argc, const char **argv)
 {
 	int i, j;
 	struct config *ret = NULL;
@@ -514,6 +534,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	struct config *config;
 	const char *user = NULL;
 	const char *password = NULL;
+	char *realm;
 	int ret = KRB5_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
 	struct passwd *pwd;
@@ -529,7 +550,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 	/* Initialize Kerberos and grab some memory for the creds structures. */
 	if(ret == KRB5_SUCCESS) {
-		char *realm;
 		stash = malloc(sizeof(struct stash));
 		if((ret == KRB5_SUCCESS) && (stash != NULL)) {
 			memset(stash, 0, sizeof(struct stash));
@@ -703,6 +723,160 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		DEBUG("credentials saved for %s", user);
 	}
 
+#ifdef HAVE_LIBKRB4
+	/* Get Kerberos IV credentials if we are supposed to. */
+	if((ret == KRB5_SUCCESS) && (config->krb4_convert)) {
+		const void *goodpass = NULL;
+		char v4name[ANAME_SZ], v4inst[INST_SZ], v4realm[REALM_SZ];
+		char sname[ANAME_SZ], sinst[INST_SZ];
+		extern int swap_bytes;
+
+		pam_get_item(pamh, PAM_AUTHTOK, &goodpass);
+
+		memset(v4name, '\0', sizeof(v4name));
+		memset(v4inst, '\0', sizeof(v4inst));
+		memset(v4realm, '\0', sizeof(v4realm));
+		memset(sname, '\0', sizeof(sname));
+		memset(sinst, '\0', sizeof(sinst));
+
+		if(krb5_524_conv_principal(context, principal,
+					   v4name, v4inst, v4realm) == KSUCCESS) {
+			KTEXT_ST ciphertext_st;
+			KTEXT ciphertext = &ciphertext_st;
+			des_cblock key;
+			des_key_schedule key_schedule;
+			int rc;
+
+			strncpy(sname, "krbtgt", sizeof(sname) - 1);
+			strncpy(sinst, realm, sizeof(sinst) - 1);
+			/* Get an encrypted TGT. */
+			rc = krb_mk_in_tkt_preauth(v4name, v4inst, v4realm,
+						   sname, sinst,
+						   config->lifetime / 60 / 5,
+						   NULL, 0, ciphertext);
+			if(rc != KSUCCESS) {
+				INFO("Couldn't get v4 TGT for %s%s@%s (%s), "
+				     "continuing.", v4name,
+				     strlen(v4inst) ? ".": "", v4inst, v4realm,
+				     krb_get_err_text(rc));
+			}
+			if(rc == KSUCCESS) {
+				unsigned char *p = ciphertext->dat;
+				int l;
+
+				/* Convert the password to a v4 key. */
+				des_string_to_key((char*)goodpass, key);
+				des_key_sched(key, key_schedule);
+
+				/* Decrypt the TGT. */
+				des_pcbc_encrypt(ciphertext->dat,
+						 ciphertext->dat,
+						 ciphertext->length,
+						 key_schedule,
+						 key,
+						 0);
+				memset(key, 0, sizeof(key));
+				memset(key_schedule, 0, sizeof(key_schedule));
+
+				/* Decompose the resturned data.  Now I know
+				 * why Kerberos 5 uses ASN.1 encoding.... */
+				memset(&stash->v4_creds, 0,
+				       sizeof(stash->v4_creds));
+
+				/* Initial values. */
+				strncpy(&stash->v4_creds.pname, v4name,
+					sizeof(stash->v4_creds.pname) - 1);
+				strncpy(&stash->v4_creds.pinst, v4inst,
+					sizeof(stash->v4_creds.pinst) - 1);
+
+				/* Session key. */
+				memcpy(&stash->v4_creds.session, p, 8);
+				l = ciphertext->length;
+
+				p += 8;
+				l -= 8;
+
+				/* Service name. */
+				if(xstrnlen(p, l) > 0) {
+					strncpy(stash->v4_creds.service, p,
+						sizeof(stash->v4_creds.service)
+						- 1);
+				}
+				p += (strlen(stash->v4_creds.service) + 1);
+				l -= (strlen(stash->v4_creds.service) + 1);
+
+				/* Service instance. */
+				if(xstrnlen(p, l) > 0) {
+					strncpy(stash->v4_creds.instance, p,
+						sizeof(stash->v4_creds.instance)
+						- 1);
+				}
+				p += (strlen(stash->v4_creds.instance) + 1);
+				l -= (strlen(stash->v4_creds.instance) + 1);
+
+				/* Service realm. */
+				if(xstrnlen(p, l) > 0) {
+					strncpy(stash->v4_creds.realm, p,
+						sizeof(stash->v4_creds.realm)
+						- 1);
+				}
+				p += (strlen(stash->v4_creds.realm) + 1);
+				l -= (strlen(stash->v4_creds.realm) + 1);
+
+				/* Lifetime, kvno, length. */
+				if(l >= 3) {
+					stash->v4_creds.lifetime = p[0];
+					stash->v4_creds.kvno = p[1];
+					stash->v4_creds.ticket_st.length = p[2];
+				}
+				p += 3;
+				l -= 3;
+
+				/* Ticket data. */
+				if(l >= stash->v4_creds.ticket_st.length) {
+					memcpy(stash->v4_creds.ticket_st.dat,
+					      p,
+					      stash->v4_creds.ticket_st.length);
+				}
+				p += stash->v4_creds.ticket_st.length;
+				l -= stash->v4_creds.ticket_st.length;
+
+				/* Timestamp. */
+				if(l >= 4) {
+					memcpy(&stash->v4_creds.issue_date,
+					       p, 4);
+				}
+				p += 4;
+				l -= 4;
+
+				if(swap_bytes) {
+					krb4_swab32(stash->v4_creds.issue_date);
+				}
+
+				/* Sanity checks. */
+				if(l == 0) {
+					DEBUG("Got v4 TGT for \"%s%s%s@%s\"",
+					      stash->v4_creds.service,
+					      strlen(stash->v4_creds.instance) ?
+					      "." : "",
+					      stash->v4_creds.instance,
+					      stash->v4_creds.realm);
+					stash->have_v4_creds = TRUE;
+				} else {
+					INFO("Got bad v4 TGT for \"%s%s%s@%s\"",
+					     stash->v4_creds.service,
+					     strlen(stash->v4_creds.instance) ?
+					     "." : "",
+					     stash->v4_creds.instance,
+					     stash->v4_creds.realm);
+					INFO("Got %d extra bytes in v4 TGT",
+					     ciphertext->length - l);
+				}
+			}
+		}
+	}
+#endif
+
 #ifdef AFS
 	/* Get tokens. */
 	if(config->setcred) {
@@ -761,9 +935,6 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_context context;
 	struct stash *stash;
 	krb5_ccache ccache;
-#ifdef HAVE_LIBKRB4
-	CREDENTIALS v4_creds;
-#endif
 	char v4_path[PATH_MAX];
 	char v5_path[PATH_MAX];
 	const char *user = NULL;
@@ -869,29 +1040,35 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 
 #ifdef HAVE_LIBKRB524
-		/* Get Kerberos 4 credentials. */
+		/* Get Kerberos 4 credentials if we haven't already. */
 		if((ret == KRB5_SUCCESS) && (config->krb4_convert)) {
-			DEBUG("converting credentials for %s", user);
+			if(!stash->have_v4_creds) {
+				DEBUG("converting credentials for %s", user);
 
-			ret = krb524_convert_creds_kdc(context,
-						       &stash->v5_creds,
-						       &v4_creds);
+				ret = krb524_convert_creds_kdc(context,
+							       &stash->v5_creds,
+							       &stash->v4_creds);
 
-			DEBUG("krb524_convert_creds returned \"%s\" for %s",
-			      ret ? error_message(ret) : "Success", user);
+				DEBUG("krb524_convert_creds returned \"%s\" for %s",
+				      ret ? error_message(ret) : "Success", user);
 
-			if(ret == KRB5_SUCCESS) {
-				INFO("v4 ticket conversion succeeded for %s",
-				     user);
-			} else {
-				/* This shouldn't happen.  Either krb524d isn't
-				   running on the KDC or the module is
-				   misconfigured. */
-				CRIT("v4 ticket conversion failed for %s: %s "
-				     "(shouldn't happen)", user,
-				     error_message(ret));
+				if(ret == KRB5_SUCCESS) {
+					INFO("v4 ticket conversion succeeded for %s",
+					     user);
+					stash->have_v4_creds = TRUE;
+				} else {
+					/* This shouldn't happen.  Either krb524d isn't
+					   running on the KDC or the module is
+					   misconfigured. */
+					CRIT("v4 ticket conversion failed for %s: %s "
+					     "(shouldn't happen)", user,
+					     error_message(ret));
+				}
 			}
-
+		}
+#endif
+#ifdef HAVE_LIBKRB4
+		if((ret == KRB5_SUCCESS) && (stash->have_v4_creds)) {
 			/* Set up the environment variable for Kerberos 4. */
 			if(strlen(stash->v4_path) == 0) {
 				snprintf(v4_path, sizeof(v4_path),
@@ -939,7 +1116,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Create the v4 ticket cache. */
 			DEBUG("opening ticket file \"%s\"", stash->v4_path);
 			krb_set_tkt_string(stash->v4_path);
-			ret = in_tkt(v4_creds.pname, v4_creds.pinst);
+			ret = in_tkt(stash->v4_creds.pname,
+				     stash->v4_creds.pinst);
 			if(ret != KRB5_SUCCESS) {
 				CRIT("error initializing %s for %s, punting",
 				     stash->v4_path, user);
@@ -949,14 +1127,14 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Store credentials in the ticket file. */
 			if(ret == KSUCCESS) {
 				DEBUG("save v4 creds");
-				krb_save_credentials(v4_creds.service,
-						     v4_creds.instance,
-						     v4_creds.realm,
-						     v4_creds.session,
-						     v4_creds.lifetime,
-						     v4_creds.kvno,
-						     &v4_creds.ticket_st,
-						     v4_creds.issue_date);
+				krb_save_credentials(stash->v4_creds.service,
+						     stash->v4_creds.instance,
+						     stash->v4_creds.realm,
+						     stash->v4_creds.session,
+						     stash->v4_creds.lifetime,
+						     stash->v4_creds.kvno,
+						     &stash->v4_creds.ticket_st,
+						     stash->v4_creds.issue_date);
 				if(chown(stash->v4_path, stash->uid,
 					 stash->gid) == -1) {
 					CRIT("%s getting setting owner of "
@@ -1003,7 +1181,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				     stash->v5_path, strerror(errno));
 			}
 		}
-#ifdef HAVE_LIBKRB524
+#ifdef HAVE_LIBKRB4
 		if((ret == PAM_SUCCESS) && (strlen(stash->v4_path) > 0)) {
 			/* Delete the v4 ticket cache. */
 			INFO("removing %s", stash->v4_path);

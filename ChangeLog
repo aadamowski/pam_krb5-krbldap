@@ -1,3 +1,12 @@
+Mon May 15 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Attempt to get initial Kerberos IV credentials when we get Kerberos 5 creds
+
+Thu Apr 20 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Chris Chiappa's modifications for customizing the ccache directory
+
+Wed Apr 19 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Mark Dawson's fix for krb4_convert not being forced on when afs_cells defined
+
 Thu March 23 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix problem with leftover ticket files after multiple setcred() calls
 
@@ -55,10 +64,10 @@ Mon October 4 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
 - Update for krb5 1.1 release
 
 Mon July 26 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
-- Configure should die if krb5.h or krbafs.h isn't found (bfdimmic)
+- Configure should die if krb5.h or krbafs.h isn't found (bfdimmic@eos.ncsu.edu)
 
 Thu July 15 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
-- Added reason to authentication failure messages (wjlyerly)
+- Added reason to authentication failure messages (wjlyerly@eos.ncsu.edu)
 - Only prompt for second password if first password fails
 
 Fri June 18 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
