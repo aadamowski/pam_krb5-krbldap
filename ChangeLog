@@ -1,4 +1,20 @@
 2003-09-05 nalin
+	* src/stash.h: add a v5attempted field to track whether or not we've
+	attempted to get v5 creds for this user. add an afspag field to track
+	whether or not we've created an afs PAG.
+	* src/stash.c: initialize v5attempted and other fields, even if it's
+	redundant after using memset to clear the whole structure.
+	* src/auth.c: set v5attempted in the user's stash immediately after
+	all calls to v5_get_creds.
+	* src/acct.c: if v5attempted is not set in the user's stash, just
+	return PAM_IGNORE.
+	* src/tokens.c: only delete tokens on session close if we created a
+	pag, lest we lose tokens when reverting back in su.  Only warn about
+	errors getting tokens if v5attempted was set (else these become debug
+	messages).
+	* src/pam_krb5.8.in: note the behavior of the module in acct stacks.
+
+2003-09-05 nalin
 	* configure.ac: check for krb_time_to_life.
 	* src/v4.c: use krb_time_to_life to convert lifetimes from seconds to
 	bytes, not krb_life_to_time, which does the opposite.

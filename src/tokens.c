@@ -56,6 +56,7 @@
 
 #include "log.h"
 #include "options.h"
+#include "stash.h"
 #include "tokens.h"
 #include "xstr.h"
 
@@ -63,7 +64,7 @@
 
 #ifdef USE_AFS
 int
-tokens_obtain(struct _pam_krb5_options *options)
+tokens_obtain(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 {
 	int i, ret;
 	char cell[LINE_MAX];
@@ -88,6 +89,7 @@ tokens_obtain(struct _pam_krb5_options *options)
 
 	/* Create a PAG. */
 	k_setpag();
+	stash->afspag = 1;
 
 	/* Get the name of the local cell.  The root.afs volume which is
 	 * mounted in /afs is mounted from the local cell, so we'll use that
@@ -99,8 +101,15 @@ tokens_obtain(struct _pam_krb5_options *options)
 		}
 		ret = krb_afslog(cell, options->realm);
 		if (ret != 0) {
-			warn("got error %d (%s) while obtaining tokens for "
-			     "%s", ret, error_message(ret), cell);
+			if (stash->v5attempted != 0) {
+				warn("got error %d (%s) while obtaining "
+				     "tokens for %s",
+				     ret, error_message(ret), cell);
+			} else {
+				debug("got error %d (%s) while obtaining "
+				      "tokens for %s",
+				      ret, error_message(ret), cell);
+			}
 		}
 	}
 
@@ -126,8 +135,15 @@ tokens_obtain(struct _pam_krb5_options *options)
 		}
 		ret = krb_afslog(options->afs_cells[i], options->realm);
 		if (ret != 0) {
-			warn("got error %d (%s) while obtaining tokens for "
-			     "%s", ret, error_message(ret), cell);
+			if (stash->v5attempted != 0) {
+				warn("got error %d (%s) while obtaining "
+				     "tokens for %s",
+				     ret, error_message(ret), cell);
+			} else {
+				debug("got error %d (%s) while obtaining "
+				      "tokens for %s",
+				      ret, error_message(ret), cell);
+			}
 		}
 	}
 
@@ -136,7 +152,7 @@ tokens_obtain(struct _pam_krb5_options *options)
 }
 
 int
-tokens_release(struct _pam_krb5_options *options)
+tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 {
 	struct stat st;
 
@@ -154,17 +170,20 @@ tokens_release(struct _pam_krb5_options *options)
 	}
 
 	/* Destroy all tokens. */
-	if (options->debug) {
-		debug("releasing afs tokens");
+	if (stash->afspag != 0) {
+		if (options->debug) {
+			debug("releasing afs tokens");
+		}
+		k_unlog();
+		stash->afspag = 0;
 	}
-	k_unlog();
 
 	/* Suppress all errors. */
 	return PAM_SUCCESS;
 }
 #else
 int
-tokens_obtain(struct _pam_krb5_options *options)
+tokens_obtain(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 {
 	if (options->debug) {
 		debug("afs support not compiled");
@@ -172,7 +191,7 @@ tokens_obtain(struct _pam_krb5_options *options)
 	return PAM_SUCCESS;
 }
 int
-tokens_release(struct _pam_krb5_options *options)
+tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 {
 	if (options->debug) {
 		debug("afs support not compiled");

@@ -169,7 +169,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 #endif
 
-	tokens_obtain(options);
+	tokens_obtain(stash, options);
 
 #ifdef USE_KRB4
 	chown(ccname, userinfo->uid, userinfo->gid);
@@ -258,7 +258,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
-	tokens_release(options);
+	tokens_release(stash, options);
 
 	v5_destroy(ctx, stash, options);
 

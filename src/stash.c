@@ -116,7 +116,19 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info)
 	memset(stash, 0, sizeof(struct _pam_krb5_stash));
 
 	stash->key = key;
+	stash->v5ctx = NULL;
+	stash->v5attempted = 0;
 	stash->v5result = KRB5KRB_ERR_GENERIC;
+	stash->v5file = NULL;
+	memset(&stash->v5creds, 0, sizeof(stash->v5creds));
+#ifdef USE_KRB4
+	stash->v4present = 0;
+	memset(&stash->v4creds, 0, sizeof(stash->v4creds));
+	stash->v4file = NULL;
+#endif
+#ifdef USE_AFS
+	stash->afspag = 0;
+#endif
 	pam_set_data(pamh, key, stash, _pam_krb5_stash_cleanup);
 
 	return stash;

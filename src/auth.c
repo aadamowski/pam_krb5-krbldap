@@ -188,6 +188,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      KRB5_TGS_NAME,
 					      password, &gic_options,
 					      &stash->v5result);
+			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
 				      v5_error_message(stash->v5result));
@@ -236,6 +237,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      KRB5_TGS_NAME,
 					      password, &gic_options,
 					      &stash->v5result);
+			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
 				      v5_error_message(stash->v5result));
@@ -263,7 +265,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				v5_save(ctx, stash, userinfo, options, NULL);
 				v4_save(ctx, stash, userinfo, options,
 					-1, -1, NULL);
-				tokens_obtain(options);
+				tokens_obtain(stash, options);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
 			}

@@ -201,7 +201,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				    (st.st_uid == userinfo->uid) &&
 				    (st.st_gid == userinfo->gid)) {
 					sly_v4(ctx, v4tktfile, userinfo, stash);
-					tokens_obtain(options);
+					tokens_obtain(stash, options);
 				} else {
 					if (options->debug) {
 						debug("not updating '%s'",

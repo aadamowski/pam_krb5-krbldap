@@ -69,6 +69,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
 	int i, retval;
+	char *wrong_password = "pam_krb5 validity check";
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
@@ -124,31 +125,44 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
-	/* Now check what happened when we asked for initial credentials. */
-	switch (stash->v5result) {
-	case 0:
-		if (options->debug) {
-			debug("account management succeeds for '%s'", user);
+	/* If we haven't previously attempted to authenticate this user, just
+	 * tell libpam to ignore us. */
+	if (stash->v5attempted == 0) {
+		/* Attempt to get credentials using an obviously-wrong password
+		 * to check for an expired key. */
+		i = v5_get_creds(ctx, pamh, &stash->v5creds, userinfo, options,
+				 KRB5_TGS_NAME, wrong_password, NULL,
+				 &stash->v5result);
+		/* Return whichever error we got from Kerberos. */
+		retval = i;
+	} else {
+		/* Check what happened when we asked for initial credentials. */
+		switch (stash->v5result) {
+		case 0:
+			if (options->debug) {
+				debug("account management succeeds for '%s'",
+				      user);
+			}
+			retval = PAM_SUCCESS;
+			break;
+		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
+		case KRB5KDC_ERR_NAME_EXP:
+			notice("account checks fail for '%s': "
+			       "user is unknown", user);
+			retval = PAM_USER_UNKNOWN;
+			break;
+		case KRB5KDC_ERR_KEY_EXP:
+			notice("account checks fail for '%s': "
+			       "password has expired", user);
+			retval = PAM_NEW_AUTHTOK_REQD;
+			break;
+		default:
+			notice("account checks fail for '%s': "
+			       "unknown reason %d (%s)", user, stash->v5result,
+			       v5_error_message(stash->v5result));
+			retval = PAM_SERVICE_ERR;
+			break;
 		}
-		retval = PAM_SUCCESS;
-		break;
-	case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
-	case KRB5KDC_ERR_NAME_EXP:
-		notice("account checks fail for '%s': user is unknown",
-		       user);
-		retval = PAM_USER_UNKNOWN;
-		break;
-	case KRB5KDC_ERR_KEY_EXP:
-		notice("account checks fail for '%s': password has expired",
-		       user);
-		retval = PAM_NEW_AUTHTOK_REQD;
-		break;
-	default:
-		notice("account checks fail for '%s': unknown reason %d (%s)",
-		       user, stash->v5result,
-		       v5_error_message(stash->v5result));
-		retval = PAM_SERVICE_ERR;
-		break;
 	}
 
 	/* If we got this far, check the target user's .k5login file. */

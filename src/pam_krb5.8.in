@@ -23,7 +23,12 @@ password check and, if possible, obtains Kerberos 5 and Kerberos IV
 credentials, caching them for later use.  When the application requests
 initialization of credentials (or opens a session), the usual ticket files are
 created.  When the application subsequently requests deletion of credentials or
-closing of the session, the module deletes the ticket files.
+closing of the session, the module deletes the ticket files.  When the
+application requests account management, if the module did not participate in
+authenticating the user, it will signal libpam to ignore the module.  If the
+module did participate in authenticating the user, it will check for an expired
+user password and verify the user's authorization using the .k5login file of the
+user being authenticated, which is expected to be accessible to the module.
 
 .SH ARGUMENTS
 

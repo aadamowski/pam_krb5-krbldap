@@ -38,13 +38,16 @@
 struct _pam_krb5_stash {
 	char *key;
 	krb5_context v5ctx;
-	int v5result;
+	int v5attempted, v5result;
 	char *v5file;
 	krb5_creds v5creds;
 #ifdef USE_KRB4
 	int v4present;
 	CREDENTIALS v4creds;
 	char *v4file;
+#endif
+#ifdef USE_AFS
+	int afspag;
 #endif
 };
 
