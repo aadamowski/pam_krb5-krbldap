@@ -55,6 +55,7 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 	AC_CHECK_HEADER(krbafs.h,
 			AC_DEFINE(HAVE_KRBAFS_H)
 			AC_CHECK_LIB(krbafs,krb_afslog,
+				LIBS="-lkrbafs $LIBS"
 				SHTARGETS="$SHTARGETS pam_krb5afs.so"
 				MAN5TARGETS="$MAN5TARGETS pam_krb5afs.5"
 				MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8",

@@ -1,7 +1,7 @@
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
-Release: 3
+Release: 4
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -39,6 +39,9 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %doc README ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Wed Feb  2 2000 Nalin Dahyabhai <nalin@redhat.com>
+- autoconf and putenv() fixes for broken apps
+
 * Fri Jan 14 2000 Nalin Dahyabhai <nalin@redhat.com>
 - tweak passwd, su, and vlock configuration files
 

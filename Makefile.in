@@ -55,7 +55,8 @@ clean:
 
 distclean: clean
 	$(RM) Makefile config.cache config.log config.status config.h
-	$(RM) ltconfig ltmain.sh pam.d
+	$(RM) ltconfig ltmain.sh
+	$(RM) -r pam.d
 
 all: modules check
 

@@ -1,3 +1,6 @@
+Wed February 2 2000 Nalin Dahyabhai <nalin@redhat.com>
+- integrate autoconf fix and putenv() workaround from jlkatz@unity.ncsu.edu
+
 Fri January 14 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix stupid bug in password-changing
 - add check that user exists in Kerberos before prompting to make password-
