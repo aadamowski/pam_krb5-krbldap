@@ -38,7 +38,9 @@
 #include "stash.h"
 #include "userinfo.h"
 
-#ifdef USE_KRB4
+#ifndef USE_KRB4
+typedef struct ktext_st *KTEXT;
+#endif
 
 int v4_get_creds(krb5_context ctx,
 		 pam_handle_t *pamh,
@@ -65,7 +67,5 @@ int v4_save_credentials(const char *sname,
 			int kvno,
 			KTEXT ticket,
 			int32_t issue_date);
-
-#endif
 
 #endif

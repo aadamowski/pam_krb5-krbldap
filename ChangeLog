@@ -1,4 +1,8 @@
 2005-03-04:
+	* src/v4.h: restore the prototypes to avoid warnings, typedef the one
+	krb4 struct we pass around to avoid an error.
+
+2005-03-04:
 	* configure.ac: remove -Wno-unused-parameters from the set of extra
 	warning flags.  Add a newline after inclusion of <krb5.h> when we're
 	testing for structures defined in the krb5 API.
