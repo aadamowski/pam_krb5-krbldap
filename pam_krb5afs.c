@@ -1028,7 +1028,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	struct passwd *pwd = NULL;
 
 	/* First parse the arguments; if there are problems, bail. */
+#ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
 	initialize_krb5_error_table();
+#endif
 	krc = krb5_init_secure_context(&context);
 	if(krc == KRB5_SUCCESS) {
 		krb5_init_ets(context);
@@ -1469,7 +1471,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	struct config *config = NULL;
 
 	/* First parse the arguments; if there are problems, bail. */
+#ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
 	initialize_krb5_error_table();
+#endif
 	krc = krb5_init_secure_context(&context);
 	if(krc == KRB5_SUCCESS) {
 		krb5_init_ets(context);
@@ -1848,8 +1852,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	char v5_path[PATH_MAX];
 
 	/* Initialize Kerberos. */
+#ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
 	initialize_krb5_error_table();
+#endif
+#ifdef HAVE_INITIALIZE_OVK_ERROR_TABLE
 	initialize_ovk_error_table();
+#endif
 	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
 		prc = PAM_SYSTEM_ERR;
 	}
@@ -1981,8 +1989,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS;
 
 	/* Initialize Kerberos. */
+#ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
 	initialize_krb5_error_table();
+#endif
+#ifdef HAVE_INITIALIZE_OVK_ERROR_TABLE
 	initialize_ovk_error_table();
+#endif
 	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
 		prc = PAM_SYSTEM_ERR;
 	}

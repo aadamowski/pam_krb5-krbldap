@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.35
+Version: 1.36
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,10 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu Jun  7 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't call initialize_krb5_error_table() or initialize_ovk_error_table()
+  if they're not found at compile-time (reported for RHL 6.x by Chris Riley)
+
 * Thu May 31 2001 Nalin Dahyabhai <nalin@redhat.com>
 - note that [pam] is still checked in addition to [appdefaults]
 - note that AFS and Kerberos IV support requires working Kerberos IV
