@@ -43,6 +43,7 @@ kdcstart() {
 		unset KDCPID
 	fi
 
+	test -d $testdir/kdc || mkdir -p $testdir/kdc
 	(echo .; echo .) | kdb5_util create -s 2> /dev/null > /dev/null
 
 	kadmin.local -q 'ank -pw foo '$principal 2> /dev/null > /dev/null
