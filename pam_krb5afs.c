@@ -1021,7 +1021,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_principal principal;
 	struct config *config = NULL;
 	char *user = NULL;
-	const char *password = NULL;
+	char *password = NULL;
 	char *realm, *tmp;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;

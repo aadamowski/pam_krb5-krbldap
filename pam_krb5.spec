@@ -1,9 +1,9 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.34
+Version: 1.35
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
-Copyright: LGPL
+License: LGPL
 Group: System Environment/Base
 BuildPrereq: byacc, flex, krb5-devel, /usr/include/security/pam_modules.h
 BuildRoot: %{_tmppath}/%{name}-root
@@ -39,6 +39,12 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu May 31 2001 Nalin Dahyabhai <nalin@redhat.com>
+- note that [pam] is still checked in addition to [appdefaults]
+- note that AFS and Kerberos IV support requires working Kerberos IV
+  configuration files (i.e., kinit -4 needs to work) (doc changes
+  suggested by Martin Schulz)
+
 * Tue May 29 2001 Nalin Dahyabhai <nalin@redhat.com>
 - add max_timeout, timeout_shift, initial_timeout, and addressless options
   (patches from Simon Wilkinson)

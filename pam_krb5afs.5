@@ -6,7 +6,8 @@ pam_krb5afs.so uses a portion of \fBkrb5.conf\fR to get its configuration
 information.  You should read the \fBkrb5.conf(5)\fR man page before continuing
 here.  The module expects its configuration information to be in the \fBpam\fR
 subsection of the \fBappdefaults\fP section of the \fBkrb5.conf\fR
-configuration file.
+configuration file (for backward compatibility, the \fBpam\fP section is
+also checked for the same directives).
 
 .SH DIRECTIVES
 .IP debug
@@ -24,9 +25,11 @@ controls whether or not credentials are forwardable.  If not specified, they
 are.
 .IP krb4_convert
 controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
-KC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
+KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
 them.  Unless you've converted \fIeverything\fR on your network over to use
-Kerberos 5, you'll want to leave this set to \fBtrue\fR.
+Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
+requires valid Kerberos IV configuration data to be present in
+\fB/etc/krb.conf\fP and \fB/etc/krb.realms\fP.
 .IP afs_cells
 specifies which cells you want to get tokens for.  Set this to the list of all
 of your local cells.
