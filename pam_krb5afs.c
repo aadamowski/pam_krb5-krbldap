@@ -1125,7 +1125,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0){
 				pwd = &rec;
 			} else {
-				pwd = NULL;
+				pwd = getpwnam(user);
 			}
 #else
 			struct passwd *pwd = NULL;
