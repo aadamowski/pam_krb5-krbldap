@@ -1025,7 +1025,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	char *realm, *tmp;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
-	struct passwd *pwd = NULL;
 
 	/* First parse the arguments; if there are problems, bail. */
 #ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
@@ -1104,7 +1103,19 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG("using current uid %d, gid %d",
 			      stash->uid, stash->gid);
 		} else {
+#ifdef HAVE_GETPWNAM_R
+			struct passwd rec, *pwd = NULL;
+			char buf[LINE_MAX];
+			memset(&rec, 0, sizeof(rec));
+			if(getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0){
+				pwd = &rec;
+			} else {
+				pwd = NULL;
+			}
+#else
+			struct passwd *pwd = NULL;
 			pwd = getpwnam(user);
+#endif
 			if(pwd != NULL) {
 				stash->uid = pwd->pw_uid;
 				stash->gid = pwd->pw_gid;
