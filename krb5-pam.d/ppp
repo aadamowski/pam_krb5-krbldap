@@ -1,8 +1,0 @@
-#%PAM-1.0
-auth       required	pam_nologin.so
-auth       sufficient	pam_unix.so shadow md5 nullok likeauth
-auth       required	pam_krb5.so use_first_pass
-
-account    required	pam_unix.so
-
-session    required	pam_unix.so
