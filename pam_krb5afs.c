@@ -294,7 +294,7 @@ static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
 	};
 
 	/* Get the conversation structure passed in by the app. */
-	ret = pam_get_item(pamh, PAM_CONV, converse);
+	ret = pam_get_item(pamh, PAM_CONV, &converse);
 	if(ret != PAM_SUCCESS) {
 	if(globals.debug)
 		syslog(LOG_DEBUG, MODULE_NAME
