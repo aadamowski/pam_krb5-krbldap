@@ -639,12 +639,16 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	if(ret == KRB5_SUCCESS) {
 		int done = 0;
 
-		INFO("attempting to authenticate %s", user);
+		DEBUG("attempting to authenticate %s", user);
 		/* Set up the creds structure. */
 		memset(&stash->v5_creds, 0, sizeof(stash->v5_creds));
 		/* Who we're representing. */
 		stash->v5_creds.client = principal;
-		/* Try the password. */
+		/* Try the password, if we have one. */
+		if(password == NULL) {
+			done = 1;
+			ret = KRB5_LIBOS_CANTREADPWD;
+		}
 		if(config->try_first_pass && password && !done) {
 			ret = krb5_get_init_creds_password(context,
 							   &stash->v5_creds,
@@ -663,7 +667,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		}
 
 		/* Try to converse if the password failed. */
-		if(config->try_second_pass && !done) {
+		if(config->try_second_pass && password && !done) {
 			ret = krb5_get_init_creds_password(context,
 							   &stash->v5_creds,
 							   principal,
@@ -682,13 +686,12 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 		/* Figure out where to go from here. */
 		if(ret != KRB5_SUCCESS) {
-			INFO("authenticate error: %s", error_message(ret));
+			CRIT("authenticate error: %s", error_message(ret));
 			ret = PAM_AUTH_ERR;
 		}
 	}
 
 	if(ret == KRB5_SUCCESS) {
-		/* If everything worked, then we're outta here. */
 		INFO("authentication succeeds for %s", user);
 	} else {
 		INFO("authentication fails for %s", user);

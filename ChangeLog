@@ -1,3 +1,6 @@
+Thu Aug 10 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Fix handing of null passwords.
+
 Wed Jul  5 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Integrate some fixes for Solaris 7 from Trevor Schroeder (flock.c is
   entirely his).
