@@ -218,6 +218,12 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	if (options->realm == NULL) {
 		options->realm = xstrdup(DEFAULT_REALM);
 	}
+	if (strlen(options->realm) > 0) {
+		krb5_set_default_realm(ctx, options->realm);
+		if (options->debug) {
+			debug("configured realm '%s'", options->realm);
+		}
+	}
 
 	/* parsing debugging */
 	for (i = 0; i < argc; i++) {
@@ -260,12 +266,6 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	/* private option */
 	options->debug = option_b(pamh, argc, argv,
 				  ctx, options->realm, "debug");
-	if (krb5_get_default_realm(ctx, &default_realm) == 0) {
-		if (options->debug) {
-			debug("default/local realm '%s'", default_realm);
-		}
-		v5_free_default_realm(ctx, default_realm);
-	}
 	if (options->debug) {
 		debug("configured realm '%s'", options->realm);
 	}
@@ -301,7 +301,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		debug("flag: ignore_afs");
 	}
 	if (options->debug && (options->ignore_afs == 0)) {
-		debug("flag: no krb4_convert");
+		debug("flag: no ignore_afs");
 	}
 
 	/* private option */
