@@ -8,6 +8,9 @@ KRBAFS=@KRBAFS@
 DEFS=@DEFS@
 OS=@OS@
 
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
 CC=@CC@
 FLEX=@FLEX@
 YACC=@YACC@
@@ -18,6 +21,7 @@ KRB5LIBS=@KRB5LIBS@
 KRB5AFSLIBS=@KRB5AFSLIBS@
 CCSHLIBFLAGS=$(LDFLAGS)
 LDSHLIBFLAGS=$(LDFLAGS)
+MODULEDIR=@moduledir@
 MODULES = pam_krb5.so pam_krb5afs.so
 MAN5TARGETS = @MAN5TARGETS@
 MAN8TARGETS = @MAN8TARGETS@
@@ -52,8 +56,8 @@ endif
 install: $(SHLIBDEP) install-modules install-man
 
 install-modules:
-	test -d $(DESTDIR)/lib/security || mkdir -p $(DESTDIR)/lib/security
-	@INSTALL@ -m 755 $(MODULES) $(DESTDIR)/lib/security
+	test -d $(DESTDIR)/$(MODULEDIR) || mkdir -p $(DESTDIR)/$(MODULEDIR)
+	@INSTALL@ -m 755 $(MODULES) $(DESTDIR)/$(MODULEDIR)
 
 install-man:
 	test -d $(DESTDIR)$(mandir)/man5 || mkdir -p $(DESTDIR)$(mandir)/man5

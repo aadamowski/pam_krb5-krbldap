@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.56
+Version: 1.57
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -19,7 +19,12 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 %setup -q -n pam_krb5-%{version}-%{release}
 
 %build
-%configure --with-krb5=/usr/kerberos --with-krbafs=/usr/kerberos
+%configure \
+	--with-moduledir=/%{_lib}/security \
+	--with-krb5=/usr/kerberos \
+	--with-krb5-libs=/usr/kerberos/%{_lib} \
+	--with-krbafs=/usr/kerberos \
+	--with-krbafs-libs=/usr/kerberos/%{_lib}
 make
 
 %install
@@ -39,6 +44,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Mon Jan 27 2003 Nalin Dahyabhai <nalin@redhat.com> 1.57-1
+- add --with-moduledir, --with-krb5-libs, --with-krbafs-libs to configure
+
 * Tue May 28 2002 Nalin Dahyabhai <nalin@redhat.com> 1.56-1
 - guess a default cell name
 - fix what's hopefully the last parser bug
