@@ -1,4 +1,8 @@
 2005-03-14:
+	* src/options.c: accept "," as a separator for list parameters, so that
+	we can pass parameters with list values in via argv
+
+2005-03-14:
 	* src/noafs.c: add.
 	* configure.ac: fix the keytab result message.  Add a --without-afs
 	flag.

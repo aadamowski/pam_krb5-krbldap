@@ -63,6 +63,8 @@
 
 #ident "$Id$"
 
+#define LIST_SEPARATORS " \t,"
+
 static int
 option_b(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	 krb5_context ctx, const char *realm, const char *s)
@@ -175,17 +177,11 @@ option_l(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	i = 0;
 	p = q = o;
 	do {
-		while ((*p != '\0') && isspace(*p)) {
-			p++;
-		}
-		q = p;
-		while ((*q != '\0') && !isspace(*q)) {
-			q++;
-		}
+		q = p + strcspn(p, LIST_SEPARATORS);
 		if (p != q) {
 			list[i++] = xstrndup(p, q - p);
 		}
-		p = q;
+		p = q + strspn(q, LIST_SEPARATORS);
 	} while (*p != '\0');
 
 	free_s(o);
