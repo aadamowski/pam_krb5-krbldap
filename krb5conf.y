@@ -22,8 +22,9 @@ extern FILE *xkrb5_conf_in;
 }
 
 %token <sval> STRING
+%token <sval> KEY
 %type  <sval> strings
-%token EQUALS
+%token <sval> EQUALS
 %token NEWLINE
 %token <sval> SECTION
 %token CURLYLEFT
@@ -54,7 +55,7 @@ subsection:
 	subsectionstart lines subsectionstop;
 
 subsectionstart:
-	STRING EQUALS CURLYLEFT NEWLINE
+	KEY EQUALS CURLYLEFT NEWLINE
 	{
 		char *tmp;
 		if(xkrb5_conf_section) {
@@ -84,7 +85,7 @@ assignments:
 
 assignment:
 	NEWLINE |
-	STRING EQUALS strings NEWLINE
+	KEY EQUALS strings NEWLINE
 	{
 		struct xkrb5_conf_entry *entry = NULL;
 		size_t l;
@@ -101,8 +102,11 @@ assignment:
 	};
 
 strings:
-	STRING |
-	strings STRING
+	KEY
+	{
+		$$ = strdup($1);
+	}
+	| strings KEY
 	{
 		char *tmp;
 		tmp = malloc(strlen($$) + strlen($2 ?: "") + 2);
@@ -110,8 +114,16 @@ strings:
 		strcat(tmp, " ");
 		strcat(tmp, $2 ?: "");
 		$$ = tmp;
+	}
+	| strings EQUALS KEY
+	{
+		char *tmp;
+		tmp = malloc(strlen($$) + strlen($3 ?: "") + 2);
+		strcpy(tmp, $$);
+		strcat(tmp, "=");
+		strcat(tmp, $3 ?: "");
+		$$ = tmp;
 	};
-
 %%
 
 #ifdef KRB5CONF_APP
@@ -198,7 +210,13 @@ xkrb5_conf_parse_file()
 int
 main()
 {
+	struct xkrb5_conf_entry *entry;
 	xkrb5_conf_parse_file();
+	for (entry = xkrb5_conf_entries;
+	     entry != NULL;
+	     entry = entry->next) {
+		printf("`%s' = `%s'\n", entry->key, entry->value);
+	}
 	return 0;
 }
 #endif

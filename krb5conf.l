@@ -13,9 +13,9 @@
 \#.*							{};
 \;.*							{};
 [[:blank:]]+						{};
-[^[:blank:]#;\[\]{}=\n][^[:blank:]#;\n]*		{ yylval.sval = strdup(yytext); return STRING; };
+[^[:blank:]#;\[\]{}=\n]+				{ yylval.sval = strdup(yytext); return KEY; };
 =							{ return EQUALS; };
-\[[^[:blank:]]+\]					{ char *p;
+\[[^[:blank:]]+\]\*?					{ char *p;
 							  yylval.sval = strdup(yytext + 1);
 							  p = strrchr(yylval.sval, ']');
 							  if(p) {
