@@ -1,3 +1,10 @@
+2005-03-04:
+	* configure.ac: remove -Wno-unused-parameters from the set of extra
+	warning flags.  Add a newline after inclusion of <krb5.h> when we're
+	testing for structures defined in the krb5 API.
+	* src/sly.c: compile in a dummy sly_v4() if USE_KRB4 isn't defined
+	* src/v4.h: don't provide prototypes if USE_KRB4 isn't defined.
+
 2005-02-28:
 	* configure.in: demote -Wextra and friends --enable-extra-warnings
 	status.

@@ -129,7 +129,8 @@ headers='
 #if HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <krb5.h>'
+#include <krb5.h>
+'
 AC_CHECK_DECL(error_message,
 	      [AC_DEFINE(HAVE_ERROR_MESSAGE_DECL,1,[Define if your krb5.h declares the error_message() function.])],,[$headers])
 AC_CHECK_HEADERS(com_err.h et/com_err.h)
@@ -201,7 +202,7 @@ AC_DEFINE(PAM_KRB5_MAYBE_CONST,[const],[Define to the proper qualifier (either c
 AC_DEFINE(PASSWORD_CHANGE_PRINCIPAL,["kadmin/changepw"],[Define to the principal name of the password-changing service for any given realm.])
 
 if test x$GCC = xyes ; then
-	AC_ARG_ENABLE(extra-warnings,AC_HELP_STRING([--enable-extra-warnings],[enable additional GCC-specific warnings (default is no)]),[CFLAGS="$CFLAGS -Wall -Wextra -Wimplicit -Wunused -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wcast-align -Wno-unused-parameters"])
+	AC_ARG_ENABLE(extra-warnings,AC_HELP_STRING([--enable-extra-warnings],[enable additional GCC-specific warnings (default is no)]),[CFLAGS="$CFLAGS -Wall -Wextra -Wimplicit -Wunused -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wcast-align"])
 	AC_ARG_ENABLE(Werror,AC_HELP_STRING([--enable-Werror],[enable -Werror as a compile flag (default is no)]),[CFLAGS="$CFLAGS -Werror"])
 fi
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +38,8 @@
 #include "stash.h"
 #include "userinfo.h"
 
+#ifdef USE_KRB4
+
 int v4_get_creds(krb5_context ctx,
 		 pam_handle_t *pamh,
 		 struct _pam_krb5_stash *stash,
@@ -63,4 +65,7 @@ int v4_save_credentials(const char *sname,
 			int kvno,
 			KTEXT ticket,
 			int32_t issue_date);
+
+#endif
+
 #endif

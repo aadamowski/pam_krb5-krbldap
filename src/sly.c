@@ -63,6 +63,7 @@
 
 #ident "$Id$"
 
+#ifdef USE_KRB4
 /* Store the v4 TGT in $KRBTKFILE. */
 static void
 sly_v4(krb5_context ctx, const char *v4tktfile,
@@ -87,6 +88,14 @@ sly_v4(krb5_context ctx, const char *v4tktfile,
 			    stash->v4creds.issue_date);
 	tf_close();
 }
+#else
+static void
+sly_v4(krb5_context ctx, const char *v4tktfile,
+       struct _pam_krb5_user_info *userinfo, struct _pam_krb5_stash *stash)
+{
+}
+#endif
+
 /* Store the v5 TGT in $KRB5CCNAME. */
 static int
 sly_v5(krb5_context ctx, const char *v5ccname,
