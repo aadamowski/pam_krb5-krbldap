@@ -141,6 +141,8 @@ AC_CHECK_FUNC(krb5_appdefault_boolean)
 AC_CHECK_FUNC(krb5_change_password,,AC_MSG_WARN([password-changing disabled]))
 AC_CHECK_FUNC(initialize_krb5_error_table)
 AC_CHECK_FUNC(krb5_verify_init_creds)
+AC_CHECK_FUNCS(krb_mk_in_tkt)
+AC_CHECK_FUNCS(krb_mk_in_tkt_preauth)
 
 LIBS="$libsave"
 

@@ -1684,11 +1684,31 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			strncpy(sinst, realm, sizeof(sinst) - 1);
 
 			/* Note: the lifetime is measured in multiples of 5m. */
-			k4rc = krb_mk_in_tkt_preauth(v4name, v4inst, v4realm,
+			k4rc = INTK_ERR;
+#ifdef HAVE_KRB_MK_IN_TKT_PREAUTH
+			if (k4rc != KSUCCESS) {
+				k4rc = krb_mk_in_tkt_preauth(v4name, 
+							     v4inst,
+							     v4realm,
+							     sname, sinst,
+							     config->ticket_lifetime
+							     / 60 / 5,
+							     NULL, 0,
+							     ciphertext);
+			}
+#endif
+#ifdef HAVE_KRB_MK_IN_TKT
+			if (k4rc != KSUCCESS) {
+				k4rc = krb_mk_in_tkt(v4name, 
+						     v4inst,
+						     v4realm,
 						     sname, sinst,
 						     config->ticket_lifetime
 						     / 60 / 5,
-						     NULL, 0, ciphertext);
+						     NULL, 0,
+						     ciphertext);
+			}
+#endif
 			if (k4rc != KSUCCESS) {
 				INFO("couldn't get v4 TGT for %s%s%s@%s (%s), "
 				     "continuing", v4name,
