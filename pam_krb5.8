@@ -1,30 +1,30 @@
-.TH pam_krb5 8 2001/08/21 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 8 2002/02/15 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
 .SH SYNOPSIS
 .B auth required /lib/security/pam_krb5.so
 .br
 .B session optional /lib/security/pam_krb5.so
+.br
+.B account sufficient /lib/security/pam_krb5.so
+.br
+.B password sufficient /lib/security/pam_krb5.so
 .SH DESCRIPTION
 pam_krb5.so is designed to allow smooth integration of Kerberos 5 password-
 checking with applications built using PAM.  It also supports session-specific
-ticket files (which are neater) and Kerberos IV ticket file grabbing.
+ticket files (which are neater), and Kerberos IV ticket file grabbing.
 Its main use is as an authentication module, but it also
 supplies the same functions as a session-management module to better support
-poorly-written applications, and a couple of other workarounds as well.
+poorly-written applications, and a couple of other workarounds as well.  It
+also supports account management and password-changing.
 
 When a user logs in, the module's authentication function performs a simple
 password check and, if possible, obtains Kerberos 5 and Kerberos IV credentials,
 caching them for later use.  When the application requests initialization of
 credentials (or opens a session), the usual ticket files are created.
 When the application subsequently requests deletion of
-credentials or closing of the session, the module 
+credentials or closing of the session, the module
 deletes the ticket files.
-
-Some applications (notably, wu-ftpd, wu-imapd, and Samba) neither create
-credentials nor open sessions.  For these applications, it's best to use the
-\fBtokens\fR option to force token-grabbing during the password check, which is
-usually the right thing to do for these server apps.
 
 .SH ARGUMENTS
 .IP debug

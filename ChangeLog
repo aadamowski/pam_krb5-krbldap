@@ -1,3 +1,6 @@
+Fri Feb 15 2002 Nalin Dahyabhai <nalin@redhat.com>
+- Update docs to give info about the account management function.
+
 Mon Feb 11 2002 Nalin Dahyabhai <nalin@redhat.com>
 - Add account management, which checks for key expiration and .k5login files.
 

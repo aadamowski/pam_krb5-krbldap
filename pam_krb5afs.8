@@ -1,17 +1,22 @@
-.TH pam_krb5afs 8 2001/08/21 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5afs 8 2002/02/15 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5afs \- Kerberos 5 authentication with AFS support
 .SH SYNOPSIS
 .B auth required /lib/security/pam_krb5afs.so
 .br
 .B session optional /lib/security/pam_krb5afs.so
+.br
+.B account sufficient /lib/security/pam_krb5afs.so
+.br
+.B password sufficient /lib/security/pam_krb5afs.so
 .SH DESCRIPTION
 pam_krb5afs.so is designed to allow smooth integration of Kerberos 5 password-
 checking with applications built using PAM.  It also supports session-specific
 ticket files (which are neater), Kerberos IV ticket file grabbing, and AFS
 token-grabbing.  Its main use is as an authentication module, but it also
 supplies the same functions as a session-management module to better support
-poorly-written applications, and a couple of other workarounds as well.
+poorly-written applications, and a couple of other workarounds as well.  It
+also supports account management and password-changing.
 
 When a user logs in, the module's authentication function performs a simple
 password check and, if possible, obtains Kerberos 5 and Kerberos IV credentials,

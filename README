@@ -3,8 +3,9 @@ optional Kerberos 4 compatible ticket files and and aklog-style AFS
 token-grabbing.  The pam_krb5 module is always built, and when compiled
 on a system with libkrbafs installed, pam_krb5afs.so will also be built.
 
-It implements authentication, session management, and password-changing
-functions.  Sample configuration files for many services are included.
+It implements authentication, account management, session management,
+and password-changing functions.  Sample configuration files for many
+services are included.
 
 The pam_sm_authenticate() function checks the user name and password in
 the user's realm.  It takes the standard parameters required by the PAM
@@ -21,6 +22,12 @@ libkrb524 was found at compile-time, can obtain and create a Kerberos 4
 ticket file using the krb524 service running on the KDC.  If libkrbafs
 was found at compile-time, the krb5afs module will also create a PAG
 and get tokens for AFS cells specified in the configuration file.
+
+The account management function (pam_sm_acct_mgmt()) checks the principal
+which was authenticated against the PAM_USER's .k5login file, and checks
+that the principal's key has not expired.  If the key has expired, it
+returns a proper error code to libpam which should allow an application to
+then call pam_chauthtok() to change the user's password.
 
 The session management functions (pam_sm_open_session() and
 pam_sm_close_session()) merely wrap calls to pam_setcred with the
@@ -111,7 +118,7 @@ Descriptions of configuration directives for use in /etc/pam.d:
 			which get created.
    no_warn		Ignored.
 
-This module was built and tested against MIT Kerberos 5 v1.2.1, but it should
+This module was built and tested against MIT Kerberos 5 v1.2.3, but it should
 only require v1.1.x.  Because some configuration options touch variables which
 are internal to the Kerberos libraries themselves, it may require adjustments
 to build correctly with other implementations.
@@ -131,4 +138,4 @@ pam_unix if that happens.
 Let me know if you have problems,
 
 Nalin Dahyabhai <nalin@redhat.com>
-21 July 2001
+15 February 2002
