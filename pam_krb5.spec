@@ -1,9 +1,8 @@
-%define modulever 20000101
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
 Release: 1
-Source0: http://www.pobox.com/~nalin.dahyabhai/sources/pam_krb5afs-%{modulever}.tar.gz
+Source0: http://www.pobox.com/~nalin.dahyabhai/sources/pam_krb5afs-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
 BuildPrereq: krb5-devel

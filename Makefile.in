@@ -5,8 +5,8 @@ SHLIBDEP=@SHLIBDEP@
 TARGET=@TARGET@
 
 # shamelessly stolen from the usermode makefile
-VERSION=$(shell awk '/^Version:/ { print $$2 }' < usermode.spec)
-REVISION=$(shell awk '/^Revision:/ { print $$2 }' < usermode.spec)
+VERSION=$(shell awk '/^Version:/ { print $$2 }' < pam_krb5.spec)
+REVISION=$(shell awk '/^Revision:/ { print $$2 }' < pam_krb5.spec)
 CVSTAG = pk$(subst .,-,$(VERSION))$(subst .,-,$(REVISION))
 
 CC=@CC@
@@ -65,7 +65,7 @@ archive:
 	cvs tag -F $(CVSTAG) .
 	@rm -rf /tmp/$(TARGET)-$(VERSION) /tmp/$(TARGET)
 	@cd /tmp; cvs export -r$(CVSTAG) pam_krb5
-	@( cd pam_krb5 ; autoheader ; automake )
+	@( cd /tmp/pam_krb5 ; autoheader ; autoconf )
 	@mv /tmp/pam_krb5 /tmp/$(TARGET)-$(VERSION)
 	@dir=$$PWD; cd /tmp; tar cvzf $$dir/$(TARGET)-$(VERSION).tar.gz $(TARGET)-$(VERSION)
 	@rm -rf /tmp/$(TARGET)-$(VERSION)
