@@ -1,6 +1,7 @@
 %{
 
 #include <stdio.h>
+#define KRB5_CONFIG "/etc/krb5.conf"
 
 int xkrb5_conf_lineno = 1;
 char *xkrb5_conf_section = NULL;
@@ -72,7 +73,7 @@ subsectionstop:
 	{
 		if(xkrb5_conf_section) {
 			char *p;
-			p = strchr(xkrb5_conf_section, '\177');
+			p = strrchr(xkrb5_conf_section, '\177');
 			if(p) {
 				*p = '\0';
 			}
@@ -147,7 +148,7 @@ strings:
 int
 yyerror(const char *error)
 {
-	CRIT("error parsing /etc/krb5.conf at line %d at `%s': %s\n",
+	CRIT("error parsing " KRB5_CONFIG " at line %d at `%s': %s\n",
 	     xkrb5_conf_lineno, xkrb5_conf_text, error);
 	return 0;
 }
@@ -195,7 +196,7 @@ xkrb5_conf_parse_file()
 	xkrb5_conf_debug = TRUE;
 #endif
 	if(!parsed) {
-		xkrb5_conf_in = fopen("/etc/krb5.conf", "r");
+		xkrb5_conf_in = fopen(KRB5_CONFIG, "r");
 		if(xkrb5_conf_in) {
 			do {
 				xkrb5_conf_parse();
