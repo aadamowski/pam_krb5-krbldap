@@ -120,7 +120,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the stash for this user. */
-	stash = _pam_krb5_stash_get(pamh, userinfo);
+	stash = _pam_krb5_stash_get(pamh, userinfo, options);
 	if (stash == NULL) {
 		_pam_krb5_user_info_free(ctx, userinfo);
 		_pam_krb5_options_free(pamh, ctx, options);

@@ -48,7 +48,7 @@
 
 #ident "$Id$"
 
-static ssize_t
+ssize_t
 _pam_krb5_write_with_retry(int fd, const unsigned char *buffer, size_t len)
 {
 	ssize_t length, ret;
@@ -67,6 +67,9 @@ _pam_krb5_write_with_retry(int fd, const unsigned char *buffer, size_t len)
 				FD_ZERO(&fds);
 				FD_SET(fd, &fds);
 				select(fd + 1, NULL, &fds, &fds, NULL);
+				if (FD_ISSET(fd, &fds)) {
+					continue;
+				}
 				break;
 			}
 			return length;
@@ -79,7 +82,7 @@ _pam_krb5_write_with_retry(int fd, const unsigned char *buffer, size_t len)
 	return length;
 }
 
-static ssize_t
+ssize_t
 _pam_krb5_read_with_retry(int fd, unsigned char *buffer, size_t len)
 {
 	ssize_t length, ret;
@@ -98,6 +101,9 @@ _pam_krb5_read_with_retry(int fd, unsigned char *buffer, size_t len)
 				FD_ZERO(&fds);
 				FD_SET(fd, &fds);
 				select(fd + 1, &fds, NULL, &fds, NULL);
+				if (FD_ISSET(fd, &fds)) {
+					continue;
+				}
 				break;
 			}
 			return length;
@@ -212,6 +218,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 
 int
 _pam_krb5_storetmp_file(const char *infile, const char *pattern,
+			void **copy, size_t *copy_len,
 			uid_t uid, gid_t gid, char *outfile, size_t outfile_len)
 {
 	struct stat st;
@@ -243,6 +250,13 @@ _pam_krb5_storetmp_file(const char *infile, const char *pattern,
 		return -1;
 	}
 	close(fd);
+	if (copy != NULL) {
+		*copy = malloc(st.st_size);
+		memcpy(*copy, buf, st.st_size);
+		if (copy_len != NULL) {
+			*copy_len = st.st_size;
+		}
+	}
 	ret = _pam_krb5_storetmp_data(buf, st.st_size, pattern, uid, gid,
 				      outfile, outfile_len);
 	free(buf);

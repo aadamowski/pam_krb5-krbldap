@@ -54,6 +54,7 @@
 #endif
 #endif
 
+#include "items.h"
 #include "log.h"
 #include "options.h"
 #include "userinfo.h"
@@ -190,6 +191,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	struct _pam_krb5_options *options;
 	int try_first_pass, use_first_pass, i;
 	char *default_realm, **list;
+	char *service;
 	struct stat stroot, stafs;
 
 	options = malloc(sizeof(struct _pam_krb5_options));
@@ -197,6 +199,9 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		return NULL;
 	}
 	memset(options, 0, sizeof(struct _pam_krb5_options));
+
+	service = NULL;
+	_pam_krb5_get_item_text(pamh, PAM_SERVICE, &service);
 
 	for (i = 0; i < argc; i++) {
 		if (strncmp(argv[i], "realm=", 6) == 0) {
@@ -362,6 +367,30 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	if (try_first_pass == 1) {
 		options->use_first_pass = 1;
 		options->use_second_pass = 1;
+	}
+
+	/* private option */
+	options->use_shmem = option_b(pamh, argc, argv,
+				      ctx, options->realm, "use_shmem");
+	if (options->use_shmem != 1) {
+		options->use_shmem = 0;
+		if (service != NULL) {
+			list = option_l(pamh, argc, argv, ctx, options->realm,
+					"use_shmem");
+			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
+				if (strcmp(list[i], service) == 0) {
+					options->use_shmem = 1;
+					break;
+				}
+			}
+			free_l(list);
+		}
+	}
+	if (options->debug && (options->use_shmem == 1)) {
+		debug("flag: use_shmem");
+	}
+	if (options->debug && (options->use_shmem == 0)) {
+		debug("flag: no use_shmem");
 	}
 
 	/* private option */

@@ -141,7 +141,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the stash for this user. */
-	stash = _pam_krb5_stash_get(pamh, userinfo);
+	stash = _pam_krb5_stash_get(pamh, userinfo, options);
 	if (stash == NULL) {
 		warn("error retrieving stash for '%s' (shouldn't happen)",
 		     user);

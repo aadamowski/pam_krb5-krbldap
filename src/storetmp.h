@@ -34,8 +34,13 @@
 #define pam_krb5_storetmp_h
 
 int _pam_krb5_storetmp_file(const char *infile, const char *pattern,
+			    void **copy, size_t *copy_len,
 			    uid_t uid, gid_t gid,
 			    char *outfile, size_t outfile_len);
 int _pam_krb5_storetmp_delete(const char *file);
+ssize_t _pam_krb5_read_with_retry(int fd,
+				  unsigned char *buffer, size_t len);
+ssize_t _pam_krb5_write_with_retry(int fd,
+				   const unsigned char *buffer, size_t len);
 
 #endif

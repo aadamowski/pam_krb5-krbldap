@@ -79,6 +79,11 @@ signals that pam_krb5.so should obtain tokens during authentication in addition
 to session setup.  This is primarily useful in server applications which need
 to access a user's files but which do not open PAM sessions before doing so.
 
+.IP use_shmem=\fIsshd ftp\fP
+tells pam_krb5.so to pass credentials from the authentication service function
+to the session management service function using shared memory for specific
+services.
+
 .IP validate=[\fItrue\fP|\fIfalse\fP]
 specifies whether or not to attempt validation of the TGT.  The default is
 \fBfalse\fP.

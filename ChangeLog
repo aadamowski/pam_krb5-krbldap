@@ -1,11 +1,22 @@
 2004-08-31 nalin
+	* src/shmem.c,src/shmem.h: add, several functions for handling shared
+	memory.
+	* src/auth.c:(pam_sm_authenticate): log the realm as well. store
+	credentials to shared memory on success if the "use_shmem" flag was
+	given, or if "use_shmem=" lists the current service, or is true.
+	* src/stash.c:(_pam_krb5_stash_shm_read,_pam_krb5_stash_shm_write): add.
+	* src/storetmp.c(_pam_krb5_read_with_retry): make non-static.
+	* src/storetmp.c(_pam_krb5_storetmp_file): add a hook for storing a copy
+	of the file contents in a blob of memory.
+
+2004-08-31 nalin
 	* src/password.c(pam_sm_chauthtok): during the preliminary check phase,
 	read the current password as the PAM_OLDAUTHTOK item, not PAM_AUTHTOK
 	(Ludek Finstrle, #131246)
 
 2004-08-27 nalin
 	* src/userinfo.c(_pam_krb5_user_info_init): override the realm name to
-	be the one which was passed in (#116198).
+	be the one which was passed in (Carlos A. Villegas, #116198).
 
 2004-08-27 nalin
 	* src/minikafs.c: handle cases where the length of the realm name >

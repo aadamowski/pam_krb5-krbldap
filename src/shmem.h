@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,41 +30,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef pam_krb5_stash_h
-#define pam_krb5_stash_h
+#ifndef pam_krb5_shmem_h
+#define pam_krb5_shmem_h
 
-#include "userinfo.h"
-
-struct _pam_krb5_stash {
-	char *key;
-	krb5_context v5ctx;
-	int v5attempted, v5result;
-	char *v5file;
-	krb5_creds v5creds;
-	int v4present;
-#ifdef USE_KRB4
-	CREDENTIALS v4creds;
-	char *v4file;
-#endif
-	int afspag;
-};
-
-struct _pam_krb5_stash *_pam_krb5_stash_get(pam_handle_t *pamh,
-					    struct _pam_krb5_user_info *info,
-					    struct _pam_krb5_options *options);
-void _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash,
-			      uid_t uid, gid_t gid);
-void _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash,
-			      uid_t uid, gid_t gid);
-int _pam_krb5_stash_clean_v5(struct _pam_krb5_stash *stash);
-int _pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash);
-void _pam_krb5_stash_shm_read(pam_handle_t *pamh,
-			      const char *partial_key,
-			      struct _pam_krb5_stash *stash,
-			      struct _pam_krb5_options *options);
-void _pam_krb5_stash_shm_write(pam_handle_t *pamh,
-			       struct _pam_krb5_stash *stash,
-			       struct _pam_krb5_options *options,
-			       struct _pam_krb5_user_info *userinfo);
+int _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address);
+void *_pam_krb5_shm_attach(int key, size_t *size);
+void *_pam_krb5_shm_detach(void *address);
+int _pam_krb5_shm_new_from_file(pam_handle_t *pamh, size_t lead,
+				const char *file, size_t *file_size,
+				void **address);
+int _pam_krb5_shm_new_from_blob(pam_handle_t *pamh, size_t lead,
+				void *source, size_t size, void **address);
+void _pam_krb5_blob_from_shm(int key, void **block, size_t *block_size);
 
 #endif

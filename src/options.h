@@ -46,6 +46,7 @@ struct _pam_krb5_options {
 	int use_authtok;
 	int use_first_pass;
 	int use_second_pass;
+	int use_shmem;
 	int validate;
 	int v4;
 	int v4_for_afs;

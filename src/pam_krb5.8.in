@@ -126,6 +126,12 @@ tells pam_krb5.so to never prompt for new passwords when changing passwords.
 This is useful if you are using pam_cracklib.so to try to enforce use of
 less-easy-to-guess passwords.
 
+.IP use_shmem
+.IP use_shmem=\fIsshd\fP
+tells pam_krb5.so to pass credentials from the authentication service function
+to the session management service function using shared memory, or to do so for
+specific services.
+
 .IP validate
 tells pam_krb5.so to verify that the TGT obtained from the realm's servers has
 not been spoofed.  Note that the process which is performing authentication

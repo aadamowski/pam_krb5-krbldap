@@ -101,7 +101,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 	if (options->debug) {
-		debug("called to authenticate '%s'", user);
+		debug("called to authenticate '%s', realm '%s'", user,
+		      options->realm);
 	}
 	krb5_get_init_creds_opt_init(&gic_options);
 	_pam_krb5_set_init_opts(ctx, &gic_options, options);
@@ -157,7 +158,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the stash for this user. */
-	stash = _pam_krb5_stash_get(pamh, userinfo);
+	stash = _pam_krb5_stash_get(pamh, userinfo, options);
 	if (stash == NULL) {
 		warn("error retrieving stash for '%s' (shouldn't happen)",
 		     user);
@@ -288,6 +289,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	if (retval == PAM_SUCCESS) {
+		if (options->use_shmem) {
+			_pam_krb5_stash_shm_write(pamh, stash, options,
+						  userinfo);
+		}
 		notice("authentication succeeds for '%s' (%s)", user,
 		       userinfo->unparsed_name);
 	} else {

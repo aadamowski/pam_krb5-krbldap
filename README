@@ -43,8 +43,18 @@ o renew_lifetime
   Override the default renewable lifetime (set in libdefaults, else 0).
 o ticket_lifetime
   Override the default ticket lifetime (24 hours with krb5 1.3, else 10 hours).
+  The actual lifetime of your tickets will most likely be the lowest of 1) this
+  value, 2) the configured maximum lifetime of your ticket-granting principal,
+  3) the configured maximum ticket life for your user principal, and 4) the
+  maximum allowable lifetime configured in your KDC's configuration.
 o tokens
-  Obtain AFS tokens during the authentication phase.
+  Obtain AFS tokens during the authentication phase.  By default, tokens are
+  obtained for the local cell.
+o use_shmem
+  Pass credentials from authentication to session management using shared
+  memory instead of PAM data items.  This allows authentication and session-
+  managment to be performed in different processes, so long as the PAM
+  environment is correctly propagated from one to the other.
 o validate
   Validate initial credentials.  By default, credentials are validated if
   the specified keytab file can be read.
@@ -53,7 +63,6 @@ Configuration file only:
 o afs_cells = cell1 cell2 cell3
 
 This module's CVS repository is hosted on rhlinux.redhat.com.  To check the
-current sources out of CVS, use the anoncvs access.
+current sources out of CVS, use the anoncvs access method.
     cvs -d :pserver:anoncvs@rhlinux.redhat.com:/usr/local/CVS login
     cvs -d :pserver:anoncvs@rhlinux.redhat.com:/usr/local/CVS co pam_krb5
-
