@@ -56,6 +56,9 @@ check succeeds.  This is necessary for some programs that never open sessions or
 attempt to initialize credentials (PAM's credentials, not Kerberos's).  If you
 have a server app that requires access to the user's file space, you might need
 this.
+.IP validate
+tells pam_krb5afs.so to verify that the TGT obtained from the realm's servers
+has not been spoofed.
 
 .SH FILES
 \fI/etc/krb5.conf\fP

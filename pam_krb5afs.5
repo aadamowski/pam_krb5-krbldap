@@ -42,7 +42,7 @@ specifies a principal for which a user must be able to get a session key for for
 the purpose of verifying that the TGT has not been forged.  The key is
 decrypted using a copy of the service's key stored in a local keytab file.
 This is the only certain way to be absolutely sure the TGT hasn't been forged.
-The default is \fBhost@\fIhostname\fP.
+The default is \fBhost\fP@\fIhostname\fP.
 .IP keytab
 specifies the name of a keytab file to find a key for the \fBrequired_tgs\fP in,
 for use in verifying TGTs.  The default is \fB/etc/krb5.keytab\fP.

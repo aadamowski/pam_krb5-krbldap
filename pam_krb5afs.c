@@ -106,6 +106,14 @@
 #define KRB5_SUCCESS 0
 #endif
 
+#ifndef ADMIN_SERVICE
+#ifdef  KADM5_ADMIN_SERVICE
+#define ADMIN_SERVICE KADM5_ADMIN_SERVICE
+#else
+#define ADMIN_SERVICE "kadmin/admin"
+#endif
+#endif
+
 #ifndef PASSWORD_CHANGE_SERVICE
 #ifdef  KADM5_CHANGEPW_SERVICE
 #define PASSWORD_CHANGE_SERVICE KADM5_CHANGEPW_SERVICE
@@ -118,6 +126,7 @@
 #define MODULE_RET_NAME MODULE_NAME "_ret_stash"
 
 #define PAM_SM_AUTH
+#define PAM_SM_ACCT_MGMT
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
@@ -208,6 +217,7 @@ struct config {
 	krb5_get_init_creds_opt creds_opt;
 	long ticket_lifetime;
 	long renew_lifetime;
+	time_t warn_period;
 	char *banner;
 	char **cell_list;
 	char *realm;
@@ -307,6 +317,37 @@ xstrnlen(const char *str, int max_len)
 		}
 	}
 	return -1;
+}
+
+/* Convert a few Kerberos error codes and convert to PAM equivalents. */
+static int
+convert_kerror(int error)
+{
+	int prc;
+	switch(error) {
+		case KRB5_SUCCESS:
+		case KRB5KDC_ERR_NONE: {
+			prc = PAM_SUCCESS;
+			break;
+		}
+		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN: {
+			prc = PAM_USER_UNKNOWN;
+			break;
+		}
+		case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN:
+		case KRB5_REALM_UNKNOWN:
+		case KRB5_SERVICE_UNKNOWN: {
+			prc = PAM_SYSTEM_ERR;
+			break;
+		}
+		case KRB5KRB_AP_ERR_BAD_INTEGRITY: {
+			prc = PAM_PERM_DENIED;
+		}
+		default: {
+			prc = PAM_AUTH_ERR;
+		}
+	}
+	return prc;
 }
 
 /* Attempt to open a possibly-pre-existing file in such a way that we can
@@ -610,6 +651,11 @@ get_config(krb5_context context, int argc, const char **argv)
 	appdefault_boolean(context, "validate", FALSE, &ret->validate);
 	DEBUG("validate %s", ret->validate ? "true" : "false");
 
+	/* Warning period before the user's password expires. */
+	appdefault_string(context, "warn", "604800", &foo);
+	ret->warn_period = atol(foo);
+	DEBUG("warn %d", ret->warn_period);
+
 #ifdef AFS
 	/* Cells to get tokens for. */
 	appdefault_string(context, "afs_cells", "", &cells);
@@ -675,8 +721,20 @@ get_config(krb5_context context, int argc, const char **argv)
 			ret->use_authtok = 1;
 			continue;
 		}
+		/* Don't check that the user exists, and don't do ccache
+		   permission munging. */
 		if(strcmp(argv[i], "no_user_check") == 0) {
 			ret->no_user_check = 1;
+			continue;
+		}
+		/* Validate the TGT we get against a local key. */
+		if(strcmp(argv[i], "validate") == 0) {
+			ret->validate = 1;
+			continue;
+		}
+		/* Period of time before expiration when we'll warn the user. */
+		if(strcmp(argv[i], "warn") == 0) {
+			ret->warn_period = atol(argv[i] + 4);
 			continue;
 		}
 #ifdef AFS
@@ -788,8 +846,8 @@ pam_prompter(krb5_context context, void *data, const char *name,
  * set in config.  Return zero only if validation fails, required_tgs is
  * set, and we can read the keytab file. */
 static int
-verify_tgt(const char *user, krb5_context context,
-	   struct config *config, struct stash *stash)
+validate_tgt(const char *user, krb5_context context,
+	     struct config *config, struct stash *stash)
 {
 	krb5_keytab keytab;
 	krb5_keytab_entry entry;
@@ -812,7 +870,7 @@ verify_tgt(const char *user, krb5_context context,
 	}
 
 	/* Parse out the service name into a principal. */
-	DEBUG("verifying TGT");
+	DEBUG("validating TGT");
 	ret = krb5_parse_name(context, config->required_tgs, &server);
 	if(ret) {
 		CRIT("error building service principal for %s: %s",
@@ -894,7 +952,7 @@ verify_tgt(const char *user, krb5_context context,
 }
 #else
 static int
-verify_tgt(const char *user, krb5_context context,
+validate_tgt(const char *user, krb5_context context,
 	   struct config *config, struct stash *stash)
 {
 	CRIT("verification error: verification not available because "
@@ -919,7 +977,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* First parse the arguments; if there are problems, bail. */
 	initialize_krb5_error_table();
-	krc = krb5_init_context(&context);
+	krc = krb5_init_secure_context(&context);
 	if(krc == KRB5_SUCCESS) {
 		krb5_init_ets(context);
 	} else {
@@ -1105,7 +1163,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	/* Verify that the TGT is good (i.e., that the reply wasn't spoofed). */
 	if(RC_OK) {
 		if(config->validate) {
-			if(verify_tgt(user, context, config, stash) == 0) {
+			if(validate_tgt(user, context, config, stash) == 0) {
 				prc = PAM_AUTH_ERR;
 			}
 		}
@@ -1295,28 +1353,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 #endif
 
-	/* Catch any Kerberos error codes that fall through cracks and
-	   convert them to appropriate PAM error codes. */
-	switch(krc) {
-		case KRB5_SUCCESS:
-		case KRB5KDC_ERR_NONE: {
-			/* Leave the PAM error unchanged. */
-			break;
-		}
-		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
-		case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN: {
-			prc = PAM_USER_UNKNOWN;
-			break;
-		}
-		case KRB5_REALM_UNKNOWN:
-		case KRB5_SERVICE_UNKNOWN: {
-			prc = PAM_SYSTEM_ERR;
-			break;
-		}
-		default: {
-			prc = PAM_AUTH_ERR;
-		}
-	}
+	prc = convert_kerror(krc);
 
 	/* Done with Kerberos. */
 	krb5_free_context(context);
@@ -1355,7 +1392,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* First parse the arguments; if there are problems, bail. */
 	initialize_krb5_error_table();
-	krc = krb5_init_context(&context);
+	krc = krb5_init_secure_context(&context);
 	if(krc == KRB5_SUCCESS) {
 		krb5_init_ets(context);
 	} else {
@@ -1370,7 +1407,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Retrieve information about the user. */
 	if(RC_OK) {
-		prc = pam_get_item(pamh, PAM_USER, &user);
+		prc = pam_get_item(pamh, PAM_USER, (const void**)&user);
 	}
 
 	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED))) {
@@ -1438,7 +1475,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, prc));
 			}
-			prc = putenv(v5_path);
 			if(prc != PAM_SUCCESS) {
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, prc));
@@ -1557,7 +1593,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, prc));
 			}
-			prc = putenv(v4_path);
 			if(prc != PAM_SUCCESS) {
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, prc));
@@ -1663,7 +1698,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	krb5_context context = NULL;
 	int ret = PAM_SUCCESS;
 
-	if(krb5_init_context(&context) != KRB5_SUCCESS) {
+	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
 	}
 	if(ret == PAM_SUCCESS) {
@@ -1677,14 +1712,14 @@ pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	return pam_sm_setcred(pamh, flags | PAM_ESTABLISH_CRED, argc, argv);
 }
 
-int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
-			 const char **argv)
+int
+pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	struct config *config = NULL;
 	krb5_context context = NULL;
 	int ret = PAM_SUCCESS;
 
-	if(krb5_init_context(&context) != KRB5_SUCCESS) {
+	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
 		ret = PAM_SYSTEM_ERR;
 	}
 	if(ret == PAM_SUCCESS) {
@@ -1699,25 +1734,143 @@ int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 }
 
 int
-pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context = NULL;
-	krb5_principal principal;
+	krb5_principal principal = NULL;
+	kadm5_principal_ent_rec principal_ent;
 	void *kadm5_handle = NULL;
-	const char *user = NULL, *authtok = NULL, *old_authtok = NULL;
-	char current_pass[LINE_MAX], new_pass[LINE_MAX], retype_pass[LINE_MAX];
+	const char *user = NULL;
+	const char *authtok = NULL;
 	struct config *config = NULL;
-	int ret = PAM_SUCCESS;
+	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS;
+	int tmpfd;
+	char v5_path[PATH_MAX];
 
 	/* Initialize Kerberos. */
 	initialize_krb5_error_table();
 	initialize_ovk_error_table();
-	if(krb5_init_context(&context) != KRB5_SUCCESS) {
-		ret = PAM_SYSTEM_ERR;
+	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
+		prc = PAM_SYSTEM_ERR;
 	}
-	if(ret == KRB5_SUCCESS) {
+	if(RC_OK) {
 		if(!(config = get_config(context, argc, argv))) {
-			ret = PAM_SYSTEM_ERR;
+			prc = PAM_SYSTEM_ERR;
+		}
+	}
+
+	/* Figure out who the user is. */
+	if(RC_OK) {
+		prc = pam_get_user(pamh, &user, "login: ");
+		if(prc != PAM_SUCCESS) {
+			INFO("couldn't determine user");
+			prc = PAM_USER_UNKNOWN;
+		}
+	}
+
+	/* Build a principal structure out of the user's login. */
+	if(RC_OK) {
+		krc = krb5_parse_name(context, user, &principal);
+		if(krc != KRB5_SUCCESS) {
+			CRIT("%s", error_message(krc));
+		}
+	}
+
+	/* Retrieve the user's password. */
+	if(RC_OK) {
+		prc = pam_get_item(pamh, PAM_AUTHTOK, &authtok);
+		if(authtok == NULL) {
+			INFO("couldn't determine user's password");
+			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+					     "Password: ", &authtok);
+		}
+	}
+
+	/* Now create a connection. */
+	if(RC_OK) {
+		kadm5_handle = NULL;
+		krc = kadm5_init_with_password(user,
+					       authtok,
+					       ADMIN_SERVICE,
+					       NULL,
+					       KADM5_STRUCT_VERSION,
+					       KADM5_API_VERSION_2,
+					       &kadm5_handle);
+		if(krc != 0) {
+			INFO("can't connect to kadmin server for %s: %d (%s)",
+			     user, krc, error_message(krc));
+		}
+	}
+
+	/* Get status information about the user's principal. */
+	if(RC_OK) {
+		memset(&principal_ent, 1, sizeof(principal_ent));
+		krc = kadm5_get_principal(kadm5_handle,
+					  principal,
+					  &principal_ent,
+					  KADM5_PRINC_EXPIRE_TIME |
+					  KADM5_PW_EXPIRATION);
+		if(krc != 0) {
+			INFO("can't get password expiration for %s: %d (%s)",
+			     user, krc, error_message(krc));
+		}
+		kadm5_destroy(kadm5_handle);
+	}
+
+	/* Check if the user's principal is about to expire, or already has. */
+	if(RC_OK) {
+		if(principal_ent.princ_expire_time == 0) {
+			DEBUG("principal never expires");
+		} else {
+			if(principal_ent.princ_expire_time > time(NULL)) {
+				CRIT("principal for %s has expired", user);
+				prc = PAM_ACCT_EXPIRED;
+			}
+		}
+	}
+	if(RC_OK) {
+		if(principal_ent.pw_expiration == 0) {
+			DEBUG("password never expires");
+		} else {
+			time_t time_left;
+			DEBUG("current time is %ld, password expires at %ld",
+			      time(NULL), principal_ent.pw_expiration);
+			time_left = principal_ent.pw_expiration - time(NULL);
+			if(time_left < config->warn_period) {
+				DEBUG("forcing password change");
+				prc = PAM_NEW_AUTHTOK_REQD;
+			}
+		}
+	}
+
+	if(prc == PAM_SUCCESS) {
+		prc = convert_kerror(krc);
+	}
+
+	dEBUG("acct_mgmt returning %d: `%s'", prc, pam_strerror(pamh, prc));
+	return prc;
+}
+
+int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
+{
+	krb5_context context = NULL;
+	krb5_principal principal;
+	const void *kadm5_handle = NULL;
+	const char *user = NULL, *authtok = NULL, *old_authtok = NULL;
+	char current_pass[LINE_MAX], new_pass[LINE_MAX], retype_pass[LINE_MAX];
+	struct config *config = NULL;
+	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS;
+
+	/* Initialize Kerberos. */
+	initialize_krb5_error_table();
+	initialize_ovk_error_table();
+	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
+		prc = PAM_SYSTEM_ERR;
+	}
+	if(RC_OK) {
+		if(!(config = get_config(context, argc, argv))) {
+			prc = PAM_SYSTEM_ERR;
 		}
 	}
 	DEBUG("pam_sm_chauthtok() called");
@@ -1731,134 +1884,134 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		 (config && config->banner) ? config->banner : "");
 
 	/* Figure out who the user is. */
-	if(ret == KRB5_SUCCESS) {
-		ret = pam_get_user(pamh, &user, "login: ");
-		if(ret != PAM_SUCCESS) {
+	if(RC_OK) {
+		prc = pam_get_user(pamh, &user, "login: ");
+		if(prc != PAM_SUCCESS) {
 			INFO("couldn't determine user");
-			ret = PAM_USER_UNKNOWN;
+			prc = PAM_USER_UNKNOWN;
 		}
 	}
 
 	/* Build a principal structure out of the user's login. */
-	if(ret == KRB5_SUCCESS) {
-		ret = krb5_parse_name(context, user, &principal);
-		if(ret != KRB5_SUCCESS) {
-			CRIT("%s", error_message(ret));
+	if(RC_OK) {
+		krc = krb5_parse_name(context, user, &principal);
+		if(krc != KRB5_SUCCESS) {
+			CRIT("%s", error_message(krc));
 		}
 	}
 
 	/* Read the old password.  It's okay if this fails. */
-	if(ret == KRB5_SUCCESS) {
+	if(RC_OK) {
 		pam_get_item(pamh, PAM_OLDAUTHTOK, (const void**) &old_authtok);
 		pam_get_item(pamh, PAM_AUTHTOK, (const void**) &authtok);
 	}
 
 	/* flush out the case where the user has no Kerberos principal, and
 	   avoid a spurious, potentially confusing password prompt */
-	if(ret == KRB5_SUCCESS) {
+	if(RC_OK) {
 		kadm5_handle = NULL;
-		ret = kadm5_init_with_password(user,
+		krc = kadm5_init_with_password(user,
 					       user,
 					       PASSWORD_CHANGE_SERVICE,
 					       NULL,
 					       KADM5_STRUCT_VERSION,
 					       KADM5_API_VERSION_2,
 					       &kadm5_handle);
-		if(ret == KRB5_SUCCESS) {
+		if(krc == KRB5_SUCCESS) {
 			DEBUG("connected to kadmin server with user's name as "
 			      "password -- should have a stronger password");
 			kadm5_destroy(kadm5_handle);
 		} else {
-			if(ret == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN) {
+			if(krc == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN) {
 				DEBUG("user does not have a Kerberos "
 				      "principal");
-				ret = PAM_USER_UNKNOWN;
+				prc = PAM_USER_UNKNOWN;
 			} else
-			if(ret == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN) {
+			if(krc == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN) {
 				DEBUG("password-changing service does "
 				      "not exist?!?!?");
-				ret = PAM_SYSTEM_ERR;
+				prc = PAM_SYSTEM_ERR;
 			} else {
-				ret = PAM_SUCCESS;
+				krc = PAM_SUCCESS;
 			}
 		}
 	}
 
 	/* We have two cases we have to deal with.  The first: check auth. */
-	if((ret == KRB5_SUCCESS) && (flags & PAM_PRELIM_CHECK)) {
+	if(RC_OK && (flags & PAM_PRELIM_CHECK)) {
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
 			DEBUG("prompting for current password");
-			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     current_pass,
 					     &old_authtok);
-			if(ret == KRB5_SUCCESS) {
+			if(RC_OK) {
 				pam_set_item(pamh, PAM_OLDAUTHTOK,
 					     (const void*)old_authtok);
 			} else {
-				ret = PAM_AUTHTOK_RECOVERY_ERR;
+				prc = PAM_AUTHTOK_RECOVERY_ERR;
 				INFO("can't read current password for %s: %d (%s)",
-				     user, ret, pam_strerror(pamh, ret));
+				     user, prc, pam_strerror(pamh, prc));
 			}
 		}
-		if(ret == KRB5_SUCCESS) {
+		if(RC_OK) {
 			kadm5_handle = NULL;
-			ret = kadm5_init_with_password(user,
+			krc = kadm5_init_with_password(user,
 						       old_authtok,
 						       PASSWORD_CHANGE_SERVICE,
 						       NULL,
 						       KADM5_STRUCT_VERSION,
 						       KADM5_API_VERSION_2,
 						       &kadm5_handle);
-			if(ret == KRB5_SUCCESS) {
+			if(krc == KRB5_SUCCESS) {
 				DEBUG("%s cleared for password change", user);
 				kadm5_destroy(kadm5_handle);
 			} else {
 				INFO("can't change password for %s: %d (%s)",
-				     user, ret, error_message(ret));
+				     user, krc, error_message(krc));
 			}
 		}
 	}
 
 	/* The second one is a bit messier. */
-	if((ret == KRB5_SUCCESS) && (flags & PAM_UPDATE_AUTHTOK)) {
+	if(RC_OK && (flags & PAM_UPDATE_AUTHTOK)) {
 		DEBUG("attempting to change password for %s", user);
 
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
 			DEBUG("prompting for current password");
-			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     current_pass,
 					     &old_authtok);
-			if(ret != PAM_SUCCESS) {
+			if(prc != PAM_SUCCESS) {
 				INFO("error in conversation: %s",
-				     error_message(ret));
-				ret = PAM_AUTHTOK_RECOVERY_ERR;
+				     pam_strerror(pamh, prc));
+				prc = PAM_AUTHTOK_RECOVERY_ERR;
 			}
 		}
 		/* DEBUG("old_authtok = `%s'", old_authtok); */
 
-		if(((authtok == NULL) || (strlen(authtok) == 0)) &&
+		if(RC_OK && ((authtok == NULL) || (strlen(authtok) == 0)) &&
 		   !config->use_authtok) {
 			const char *authtok2 = NULL;
 
 			DEBUG("prompting for new password (1)");
-			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+			prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     new_pass, &authtok);
-			if(ret == KRB5_SUCCESS) {
+			if(RC_OK) {
 				DEBUG("prompting for new password (2)");
-				ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+				prc = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 						   retype_pass, &authtok2);
-				if(ret != PAM_SUCCESS) {
+				if(prc != PAM_SUCCESS) {
 					INFO("error in conversation: %s",
-					     error_message(ret));
-					ret = PAM_AUTHTOK_ERR;
+					     pam_strerror(pamh, prc));
+					prc = PAM_AUTHTOK_ERR;
 				}
 			}
-			if(ret == KRB5_SUCCESS) {
+			if(RC_OK) {
 				if(strcmp(authtok, authtok2) != 0) {
 					pam_prompt_for(pamh, PAM_ERROR_MSG,
 						     "passwords do not match",
 						     NULL);
-					ret = PAM_TRY_AGAIN;
+					prc = PAM_TRY_AGAIN;
 				} else {
 					pam_set_item(pamh, PAM_AUTHTOK,
 						     (const void*) authtok);
@@ -1867,28 +2020,28 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 		/* DEBUG("authtok = `%s'", authtok); */
 
-		if(ret == KRB5_SUCCESS) {
+		if(RC_OK) {
 			kadm5_handle = NULL;
-			ret = kadm5_init_with_password(user,
+			krc = kadm5_init_with_password(user,
 						       old_authtok,
 						       PASSWORD_CHANGE_SERVICE,
 						       NULL,
 						       KADM5_STRUCT_VERSION,
 						       KADM5_API_VERSION_2,
 						       &kadm5_handle);
-			if(ret == KRB5_SUCCESS) {
+			if(RC_OK) {
 				DEBUG("connected to kadmin server");
 			} else {
-				INFO("error in kadm5_init: %d (%s)", ret,
-				     error_message(ret));
+				INFO("error in kadm5_init: %d (%s)", krc,
+				     error_message(krc));
 			}
 		}
 
-		if(ret == KRB5_SUCCESS) {
-			ret = kadm5_chpass_principal(kadm5_handle,
+		if(RC_OK) {
+			krc = kadm5_chpass_principal(kadm5_handle,
 						     principal,
 						     authtok);
-			if(ret == KRB5_SUCCESS) {
+			if(krc == KRB5_SUCCESS) {
 				INFO("%s's %s password has been changed", user,
 				     config->banner);
 			} else {
@@ -1899,37 +2052,13 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 
-	/* Catch a few Kerberos error codes and convert to PAM equivalents. */
-	switch(ret) {
-		case KRB5_SUCCESS:
-		case KRB5KDC_ERR_NONE: {
-			break;
-		}
-		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
-		case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN: {
-			ret = PAM_USER_UNKNOWN;
-			break;
-		}
-		case KRB5_REALM_UNKNOWN:
-		case KRB5_SERVICE_UNKNOWN: {
-			ret = PAM_SYSTEM_ERR;
-			break;
-		}
-		case KRB5KRB_AP_ERR_BAD_INTEGRITY: {
-			ret = PAM_PERM_DENIED;
-		}
-		case PAM_TRY_AGAIN:
-		case PAM_USER_UNKNOWN: {
-			break;
-		}
-		default: {
-			ret = PAM_AUTH_ERR;
-		}
+	if(prc == PAM_SUCCESS) {
+		prc = convert_kerror(krc);
 	}
 
 	/* Clean up and return. */
 	if(context) krb5_free_context(context);
-	return ret;
+	return prc;
 }
 
 #ifdef MAIN
@@ -1941,6 +2070,7 @@ main(int argc, char **argv)
 {
 	pam_sm_authenticate(NULL, 0, 0, NULL);
 	pam_sm_setcred(NULL, 0, 0, NULL);
+	pam_sm_acct_mgmt(NULL, 0, 0, NULL);
 	pam_sm_open_session(NULL, 0, 0, NULL);
 	pam_sm_chauthtok(NULL, 0, 0, NULL);
 	pam_sm_close_session(NULL, 0, 0, NULL);

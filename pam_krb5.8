@@ -44,6 +44,9 @@ tells pam_krb5.so to not check if a user exists on the local system, and
 to create ccache files owned by the current process's UID.  This is useful
 for situations where a non-privileged server process needs to use Kerberized
 services on behalf of remote users who may not have local access.
+.IP validate
+tells pam_krb5.so to verify that the TGT obtained from the realm's servers
+has not been spoofed.
 
 .SH FILES
 \fI/etc/krb5.conf\fP

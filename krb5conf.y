@@ -32,11 +32,11 @@ lines:
 	lines line;
 line:
 	NEWLINE |
-	section |
+	sectionstart |
 	assignment |
 	subsection;
 
-section:
+sectionstart:
 	SQUARELEFT STRING SQUARERIGHT NEWLINE
 	{
 		if(xkrb5_conf_section) {
@@ -99,15 +99,15 @@ strings:
 %%
 
 int
-xkrb5_conf_error(const char *error)
+yyerror(const char *error)
 {
-	CRIT("error parsing /etc/krb5.conf at line %d: %s\n",
-	     xkrb5_conf_lineno, error);
+	CRIT("error parsing /etc/krb5.conf at line %d at `%s': %s\n",
+	     xkrb5_conf_lineno, yytext, error);
 	return 0;
 }
 
 int
-xkrb5_conf_wrap()
+yywrap()
 {
 	return 1;
 }

@@ -11,7 +11,8 @@ OS=@OS@
 CC=@CC@
 FLEX=@FLEX@
 YACC=@YACC@
-CFLAGS=-Wall -Wshadow -Wcast-align @CFLAGS@ $(DEFS)
+#CFLAGS=-Wall -Wshadow -Wcast-align @CFLAGS@ $(DEFS)
+CFLAGS=-Wcast-align @CFLAGS@ $(DEFS)
 LDFLAGS=@LDFLAGS@ @LIBS@
 CCSHLIBFLAGS=-Wl,-rpath=$(KRB5)/lib -Wl,-rpath=$(KRBAFS) $(LDFLAGS)
 LDSHLIBFLAGS=-R$(KRB5)/lib -R$(KRBAFS) $(LDFLAGS)

@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.31
+Version: 1.32
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -39,6 +39,16 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu Apr 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- treat semicolons as a comment character, like hash marks (bug reported by
+  Greg Francis at Gonzaga University)
+- use the [:blank:] equivalence class to simplify the configuration file parser
+- don't mess with the real environment
+- implement mostly-complete aging support
+
+* Sat Apr  7 2001 Nalin Dahyabhai <nalin@redhat.com>
+- tweak the man page (can't use italics and bold simultaneously)
+
 * Fri Apr  6 2001 Nalin Dahyabhai <nalin@redhat.com>
 - restore the default TGS value (#35015)
 

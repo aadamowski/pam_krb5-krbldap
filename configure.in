@@ -71,7 +71,7 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 			AC_WARN(omitting token-grabbing functions)
 	,,$LIBS)
 fi
-AC_CHECK_HEADER(kadm5/admin.h)
+AC_CHECK_HEADERS(kadm5/admin.h)
 AC_CHECK_LIB(gssrpc,svc_auth_any)
 AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context)
 AC_CHECK_LIB(kdb5,krb5_db_init)
