@@ -3,7 +3,7 @@
  Kerberos 5 ticket to a Kerberos 4 ticket, and use it to grab AFS
  tokens for specified cells if possible.
 
- Copyright 2000 Red Hat, Inc.
+ Copyright 2000,2001 Red Hat, Inc.
  Portions Copyright 1999 Nalin Dahyabhai.
  
  This is free software; you can redistribute it and/or modify it
@@ -175,7 +175,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 /******************************************************************************/
 
-#define DEBUG if(config->debug) dEBUG
+#define DEBUG if((config == NULL) || (config->debug)) dEBUG
 
 /* User credentials. */
 struct stash {
@@ -211,7 +211,8 @@ struct config {
 	char *keytab;
 };
 
-static void dEBUG(const char *x,...) {
+static void
+dEBUG(const char *x,...) {
 	char buf[LINE_MAX];
 	va_list a;
 	va_start(a,x);
@@ -220,7 +221,8 @@ static void dEBUG(const char *x,...) {
 	syslog(LOG_DEBUG, MODULE_NAME ": %s", buf);
 }
 #if 0
-static void NOTICE(const char *x,...) {
+static void
+NOTICE(const char *x,...) {
 	char buf[LINE_MAX];
 	va_list a;
 	va_start(a,x);
@@ -229,7 +231,8 @@ static void NOTICE(const char *x,...) {
 	syslog(LOG_NOTICE, MODULE_NAME ": %s", buf);
 }
 #endif
-static void INFO(const char *x,...) {
+static void
+INFO(const char *x,...) {
 	char buf[LINE_MAX];
 	va_list a;
 	va_start(a,x);
@@ -237,7 +240,8 @@ static void INFO(const char *x,...) {
 	va_end(a);
 	syslog(LOG_INFO, MODULE_NAME ": %s", buf);
 }
-static void CRIT(const char *x,...) {
+static void
+CRIT(const char *x,...) {
 	char buf[LINE_MAX];
 	va_list a;
 	va_start(a,x);
@@ -246,16 +250,18 @@ static void CRIT(const char *x,...) {
 	syslog(LOG_CRIT, MODULE_NAME ": %s", buf);
 }
 
-static int num_words(const char *s)
+static int
+num_words(const char *s)
 {
 	int i, ret = 0;
-	for(i = 0; s[i] != '\0'; i++) {
+	for(i = 0; s && (s[i] != '\0'); i++) {
 		if(!isspace(s[i]) && (isspace(s[i+1]) || (s[i+1]=='\0'))) ret++;
 	}
 	return ret;
 }
 
-static const char *nth_word(const char *s, int w)
+static const char *
+nth_word(const char *s, int w)
 {
 	int i = 0, l = FALSE;
 	for(i = 0; (s[i] != '\0') && (w > 0); i++) {
@@ -270,7 +276,8 @@ static const char *nth_word(const char *s, int w)
 	}
 }
 
-static char *word_copy(const char *s)
+static char *
+word_copy(const char *s)
 {
 	int i = 0, j = 0;
 	char *ret = NULL;
@@ -278,12 +285,15 @@ static char *word_copy(const char *s)
 	j = i;
 	while((s[j] != '\0') && !isspace(s[j])) j++;
 	ret = malloc(j - i + 1);
-	memcpy(ret, &s[i], j - i);
-	ret[j - i] = '\0';
+	if(ret != NULL) {
+		memcpy(ret, &s[i], j - i);
+		ret[j - i] = '\0';
+	}
 	return ret;
 }
 
-static int xstrnlen(const char *str, int max_len)
+static int
+xstrnlen(const char *str, int max_len)
 {
 	int i;
 	for(i = 0; i < max_len; i++) {
@@ -294,8 +304,8 @@ static int xstrnlen(const char *str, int max_len)
 	return -1;
 }
 
-static struct config *get_config(krb5_context context,
-				 int argc, const char **argv)
+static struct config *
+get_config(krb5_context context, int argc, const char **argv)
 {
 	int i, j;
 	struct config *ret = NULL, *config;
@@ -361,12 +371,21 @@ static struct config *get_config(krb5_context context,
 	krb5_os_localaddr(context, &hostlist);
 	for(j = 0; hostlist[j] != NULL; j++) ;
 	addresses = malloc(sizeof(krb5_address) * (num_words(hosts) + 1 + j));
+	if(addresses == NULL) {
+		free(ret);
+		return NULL;
+	}
+
 	memset(addresses, 0, sizeof(krb5_address) * (num_words(hosts) + 1 + j));
 	for(j = 0; hostlist[j] != NULL; j++) {
 		addresses[j] = hostlist[j];
 	}
 	for(i = 0; i < num_words(hosts); i++) {
 		foo = word_copy(nth_word(hosts, i));
+		if(foo == NULL) {
+			free(ret);
+			return NULL;
+		}
 		krb5_os_hostaddr(context, foo, &hostlist);
 		DEBUG("also getting ticket for host %s", foo);
 		addresses[i + j] = hostlist[0];
@@ -399,9 +418,17 @@ static struct config *get_config(krb5_context context,
 	profile_get_string(profile, PROFILE_NAME, "afs_cells", NULL,
 			   DEFAULT_CELLS, &cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
+	if(ret->cell_list == NULL) {
+		free(ret);
+		return NULL;
+	}
 	memset(ret->cell_list, 0, sizeof(char*) * (num_words(cells) + 1));
 	for(i = 0; i < num_words(cells); i++) {
 		ret->cell_list[i] = word_copy(nth_word(cells, i));
+		if(ret->cell_list[i] == NULL) {
+			free(ret);
+			return NULL;
+		}
 		DEBUG("will afslog to cell %s", ret->cell_list[i]);
 		if(ret->krb4_convert != TRUE) {
 			ret->krb4_convert = TRUE;
@@ -471,7 +498,8 @@ static struct config *get_config(krb5_context context,
 }
 
 /* Free some memory. */
-static void cleanup(pam_handle_t *pamh, void *data, int error_status)
+static void
+cleanup(pam_handle_t *pamh, void *data, int error_status)
 {
 	free(data);
 }
@@ -479,8 +507,9 @@ static void cleanup(pam_handle_t *pamh, void *data, int error_status)
 /******************************************************************************/
 
 /* Prompt the user for some info. */
-static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
-			  const char *msg, const char **out)
+static int
+pam_prompt_for(pam_handle_t *pamh, int msg_style,
+	       const char *msg, const char **out)
 {
 	const struct pam_message prompt_message = {msg_style, msg};
 	struct pam_response *responses;
@@ -507,6 +536,9 @@ static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
 			}
 			if(responses && responses[0].resp) {
 				*out = strdup(responses[0].resp);
+				if(*out == NULL) {
+					ret = PAM_SYSTEM_ERR;
+				}
 			}
 		} else {
 			INFO("%s in conversation function getting "
@@ -517,16 +549,19 @@ static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
 	return ret;
 }
 
-static int pam_prompter(krb5_context context, void *data, const char *name,
-		        const char *banner, int num_prompts,
-			krb5_prompt prompts[])
+static int
+pam_prompter(krb5_context context, void *data, const char *name,
+	     const char *banner, int num_prompts, krb5_prompt prompts[])
 {
 	int i = 0, ret = PAM_SUCCESS;
 	const char *p = NULL;
+	char *q = NULL, *tmp = NULL;
 	for(i = 0; i < num_prompts; i++) {
-		char *q = NULL;
 		int l = strlen(prompts[i].prompt) + strlen(": ") + 1;
 		q = malloc(l);
+		if(q == NULL) {
+			return PAM_SYSTEM_ERR;
+		}
 		snprintf(q, l, "%s: ", prompts[i].prompt);
 		ret = pam_prompt_for(data,
 				     prompts[i].hidden ?
@@ -534,10 +569,16 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 				     PAM_PROMPT_ECHO_ON,
 				     q, &p);
 		if(ret == PAM_SUCCESS) {
-			prompts[i].reply->length = strlen(p);
-			prompts[i].reply->data = strdup(p);
-			if(prompts[i].hidden)
-				pam_set_item(data, PAM_AUTHTOK, strdup(p));
+			tmp = strdup(p);
+			if(tmp == NULL) {
+				ret = PAM_SYSTEM_ERR;
+			} else {
+				prompts[i].reply->length = strlen(tmp);
+				prompts[i].reply->data = tmp;
+				if(prompts[i].hidden) {
+					pam_set_item(data, PAM_AUTHTOK, tmp);
+				}
+			}
 		} else {
 			ret = KRB5_LIBOS_CANTREADPWD;
 			break;
@@ -550,8 +591,9 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 /* Validate the TGT in stash->v5_creds using the keytab and required_tgs
  * set in config.  Return zero only if validation fails, required_tgs is
  * set, and we can read the keytab file. */
-static int verify_tgt(const char *user, krb5_context context,
-		      struct config *config, struct stash *stash)
+static int
+verify_tgt(const char *user, krb5_context context,
+	   struct config *config, struct stash *stash)
 {
 	krb5_keytab keytab;
 	krb5_keytab_entry entry;
@@ -655,8 +697,9 @@ static int verify_tgt(const char *user, krb5_context context,
 	return !ret;
 }
 #else
-static int verify_tgt(const char *user, krb5_context context,
-		      struct config *config, struct stash *stash)
+static int
+verify_tgt(const char *user, krb5_context context,
+	   struct config *config, struct stash *stash)
 {
 	CRIT("verification error: verification not available because "
 	     "krb5_decode_ticket() not defined");
@@ -665,15 +708,15 @@ static int verify_tgt(const char *user, krb5_context context,
 #endif
 
 /* Big authentication module. */
-int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
-			const char **argv)
+int
+pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context;
 	krb5_principal principal;
 	struct config *config;
 	const char *user = NULL;
 	const char *password = NULL;
-	char *realm;
+	char *realm, *tmp;
 	int ret = KRB5_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
 	struct passwd *pwd = NULL;
@@ -682,7 +725,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	initialize_krb5_error_table();
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
-		ret = PAM_BUF_ERR;
+		ret = PAM_SYSTEM_ERR;
 	}
 	krb5_init_ets(context);
 	DEBUG("pam_sm_authenticate() called");
@@ -704,7 +747,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		if(pret != NULL) {
 			*pret = PAM_SUCCESS;
 		} else {
-			ret = PAM_BUF_ERR;
+			ret = PAM_SYSTEM_ERR;
 			CRIT("Kerberos 5 initialize problem/malloc error");
 		}
 	}
@@ -817,8 +860,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     "Password: ", &password);
 			if(password) {
-				pam_set_item(pamh, PAM_AUTHTOK,
-					     strdup(password));
+				tmp = strdup(password);
+				if(tmp) {
+					pam_set_item(pamh, PAM_AUTHTOK, tmp);
+				}
 			}
 			ret = krb5_get_init_creds_password(context,
 							   &stash->v5_creds,
@@ -1024,7 +1069,14 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	   convert them to appropriate PAM error codes. */
 	switch(ret) {
 		case KRB5_SUCCESS:
-		case KRB5KDC_ERR_NONE: {
+		case KRB5KDC_ERR_NONE:
+		case PAM_AUTH_ERR:
+		case PAM_AUTHINFO_UNAVAIL:
+		case PAM_CONV_ERR:
+		case PAM_CRED_INSUFFICIENT:
+		case PAM_PERM_DENIED:
+		case PAM_SYSTEM_ERR: {
+			/* Leave this error unchanged. */
 			break;
 		}
 		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
@@ -1065,7 +1117,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 /******************************************************************************/
 
 /* Create and delete visible credentials as needed. */
-int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
+int
+pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context;
 	struct stash *stash;
@@ -1080,7 +1133,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	initialize_krb5_error_table();
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
-		ret = PAM_BUF_ERR;
+		ret = PAM_SYSTEM_ERR;
 	}
 	krb5_init_ets(context);
 	DEBUG("pam_sm_setcred() called");
@@ -1290,10 +1343,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef AFS
 	/* Use the new tickets to create tokens. */
-	if((flags & PAM_ESTABLISH_CRED) &&
-	   (ret == KRB5_SUCCESS) &&
-	   config->get_tokens &&
-	   config->cell_list) {
+	if((flags & PAM_ESTABLISH_CRED) && (ret == KRB5_SUCCESS) &&
+	   config->get_tokens && config->cell_list) {
 		if(!k_hasafs()) {
 			CRIT("cells specified but AFS not running");
 			ret = PAM_SYSTEM_ERR;
@@ -1362,8 +1413,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 /******************************************************************************/
 
-int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
-			const char **argv)
+int
+pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	struct config *config;
 	krb5_context context = NULL;
@@ -1371,7 +1422,7 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
 
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
-		ret = PAM_BUF_ERR;
+		ret = PAM_SYSTEM_ERR;
 	}
 	DEBUG("pam_sm_open_session() called");
 	if(context) krb5_free_context(context);
@@ -1388,7 +1439,7 @@ int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
-		ret = PAM_BUF_ERR;
+		ret = PAM_SYSTEM_ERR;
 	}
 	DEBUG("pam_sm_close_session() called");
 	if(context) krb5_free_context(context);
@@ -1396,7 +1447,8 @@ int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
 	return pam_sm_setcred(pamh, flags | PAM_DELETE_CRED, argc, argv);
 }
 
-int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
+int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context = NULL;
 	krb5_principal principal;
@@ -1411,17 +1463,17 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	initialize_ovk_error_table();
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
-		ret = PAM_BUF_ERR;
+		ret = PAM_SYSTEM_ERR;
 	}
 	DEBUG("pam_sm_chauthtok() called");
 
 	/* Initialize prompt strings. */
 	snprintf(current_pass, sizeof(current_pass), "Current %s password: ",
-		 config->banner ? config->banner : "");
+		 (config && config->banner) ? config->banner : "");
 	snprintf(new_pass, sizeof(new_pass), "New %s password: ",
-		 config->banner ? config->banner : "");
+		 (config && config->banner) ? config->banner : "");
 	snprintf(retype_pass, sizeof(retype_pass), "Retype new %s password: ",
-		 config->banner ? config->banner : "");
+		 (config && config->banner) ? config->banner : "");
 
 	/* Figure out who the user is. */
 	if(ret == KRB5_SUCCESS) {
@@ -1629,7 +1681,8 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 /* Don't actually run this.  This function is only here for helping to ensure
    that all necessary libraries are included at link-time, and will probably
    segfault all over the place if you actually try to run it. */
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	pam_sm_authenticate(NULL, 0, 0, NULL);
 	pam_sm_setcred(NULL, 0, 0, NULL);
