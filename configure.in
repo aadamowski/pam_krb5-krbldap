@@ -38,10 +38,8 @@ SHTARGETS=pam_krb5.so
 MAN5TARGETS=pam_krb5.5
 MAN8TARGETS=pam_krb5.8
 
-AC_CHECK_HEADERS(sys/stat.h sys/types.h stdio.h stdlib.h string.h unistd.h\
-		 fcntl.h limits.h pwd.h dlfcn.h com_err.h syslog.h sys/syslog.h\
-		 errno.h ctype.h security/pam_appl.h security/pam_modules.h\
-		 time.h)
+AC_CHECK_HEADERS(dlfcn.h com_err.h syslog.h sys/syslog.h errno.h)
+AC_CHECK_HEADERS(security/pam_appl.h security/pam_modules.h)
 AC_CHECK_HEADER(krb5.h,AC_DEFINE(HAVE_KRB5_H),
 	AC_ERROR(install Kerberos 5 or re-run configure with --with-krb5))
 

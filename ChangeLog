@@ -1,3 +1,28 @@
+Mon Feb 11 2002 Nalin Dahyabhai <nalin@redhat.com>
+- Add account management, which checks for key expiration and .k5login files.
+
+Tue Sep 25 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Fix parsing of options which have multiple whitespace-separated values,
+  like afs_cells.
+
+Wed Sep  5 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Link with libresolv to get res_search, tip from Justin McNutt, who
+  built it statically.
+- Explicitly link with libdes425.
+- Handle cases where getpwnam_r fails but still sets the result pointer.
+- If use_authtok is given and there is no authtok, error out.
+
+Mon Aug 27 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Set the default realm when a default realm is specified.
+
+Thu Aug 23 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Only use Kerberos error codes when there is no PAM error yet.
+
+Wed Aug 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Add minimum UID support. (#52358)
+- Don't link pam_krb5 with libkrbafs; that dependency should only exist for
+  pam_krb5afs.
+
 Wed Aug 22 2001 Nalin Dahyabhai <nalin@redhat.com>
 - Add minimum UID support (suggested by Matthew Miller).
 - Don't link pam_krb5 with libkrbafs.
