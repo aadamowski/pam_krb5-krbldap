@@ -1,0 +1,9 @@
+#%PAM-1.0
+auth       required	pam_nologin.so
+auth       sufficient	pam_unix.so shadow md5 nullok likeauth
+auth       required	pam_krb5afs.so use_first_pass
+auth       required     pam_listfile.so sense=allow item=user file=/etc/users.local
+
+account    required	pam_unix.so
+
+session    required	pam_unix.so

@@ -1,0 +1,7 @@
+#%PAM-1.0
+auth       sufficient   /lib/security/pam_rootok.so
+auth       required	/lib/security/pam_unix.so shadow md5 nullok likeauth
+account    required	/lib/security/pam_unix.so shadow md5
+password   required	/lib/security/pam_cracklib.so
+password   required	/lib/security/pam_unix.so shadow md5 nullok use_authtok
+session    required	/lib/security/pam_unix.so shadow md5
