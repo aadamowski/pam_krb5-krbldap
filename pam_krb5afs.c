@@ -142,7 +142,8 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 struct stash {
 	uid_t uid;
 	gid_t gid;
-	pid_t pid;
+	char v5_path[PATH_MAX];
+	char v4_path[PATH_MAX];
 	krb5_creds v5_creds;
 };
 
@@ -525,7 +526,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	if(pwd != NULL) {
 		stash->uid = pwd->pw_uid;
 		stash->gid = pwd->pw_gid;
-		stash->pid = getpid();
 		DEBUG("%s has uid %d, gid %d", user, stash->uid, stash->gid);
 	} else {
 		CRIT("getpwnam(\"%s\") failed", user);
@@ -731,6 +731,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 
 	if((flags & PAM_ESTABLISH_CRED) && (ret == KRB5_SUCCESS)) {
+		int tmpfd;
 		/* Retrieve and create Kerberos tickets. */
 		ret = pam_get_data(pamh, MODULE_STASH_NAME, (void*)&stash);
 		if(ret == PAM_SUCCESS) {
@@ -738,18 +739,32 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 			/* Set up the environment variable for Kerberos 5. */
 			snprintf(v5_path, sizeof(v5_path),
-				 "KRB5CCNAME=/tmp/krb5cc_%d_%d",
-				 stash->uid, stash->pid);
-			ret = pam_putenv(pamh, v5_path);
-			if(ret != PAM_SUCCESS) {
-				CRIT("%s setting environment",
-				     pam_strerror(pamh, ret));
+				 "/tmp/krb5cc_%d_XXXXXX", stash->uid);
+			tmpfd = mkstemp(v5_path);
+			if(tmpfd == -1) {
+				CRIT("%s getting pathname for ticket file",
+				     strerror(errno));
+				ret = PAM_SYSTEM_ERR;
 			}
-			DEBUG("%s", v5_path);
-
+			if(fchown(tmpfd, stash->uid, stash->gid) == -1) {
+				CRIT("%s getting setting owner of ticket file",
+				     strerror(errno));
+				close(tmpfd);
+				ret = PAM_SYSTEM_ERR;
+			}
+			if(fchmod(tmpfd, S_IRUSR | S_IWUSR) == -1) {
+				CRIT("%s getting setting mode of ticket file",
+				     strerror(errno));
+				close(tmpfd);
+				ret = PAM_SYSTEM_ERR;
+			}
+			strncpy(stash->v5_path,v5_path, sizeof(stash->v5_path));
+			close(tmpfd);
+		}
+		if(ret == PAM_SUCCESS) {
 			/* Create the v5 ticket cache. */
-			snprintf(v5_path, sizeof(v5_path), "/tmp/krb5cc_%d_%d",
-				 stash->uid, stash->pid);
+			snprintf(v5_path, sizeof(v5_path), "FILE:%s",
+				 stash->v5_path);
 			ret = krb5_cc_resolve(context, v5_path, &ccache);
 			if(ret == KRB5_SUCCESS) {
 				ret = krb5_cc_initialize(context, ccache,
@@ -765,8 +780,19 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				krb5_cc_store_cred(context, ccache,
 						   &stash->v5_creds);
 				ret = krb5_cc_close(context, ccache);
-				chown(v5_path, stash->uid, stash->gid);
+				chown(stash->v5_path, stash->uid, stash->gid);
+				chmod(stash->v5_path, S_IRUSR | S_IWUSR);
 			}
+
+			/* Set the environment variable to point to the cache.*/
+			snprintf(v5_path, sizeof(v5_path),
+				 "KRB5CCNAME=FILE:%s", stash->v5_path);
+			ret = pam_putenv(pamh, v5_path);
+			if(ret != PAM_SUCCESS) {
+				CRIT("%s setting environment",
+				     pam_strerror(pamh, ret));
+			}
+			DEBUG("%s", v5_path);
 		} else {
 			DEBUG("Kerberos 5 credential retrieval failed for "
 			      "%s, user is probably local", user);
@@ -800,8 +826,32 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 			/* Set up the environment variable for Kerberos 4. */
 			snprintf(v4_path, sizeof(v4_path),
-				 "KRBTKFILE=/tmp/tkt%d_%d",
-				 stash->uid, stash->pid);
+				 "/tmp/tkt%d_XXXXXX", stash->uid);
+			tmpfd = mkstemp(v4_path);
+			if(tmpfd == -1) {
+				CRIT("%s getting pathname for ticket file",
+				     strerror(errno));
+				ret = PAM_SYSTEM_ERR;
+			}
+			if(fchown(tmpfd, stash->uid, stash->gid) == -1) {
+				CRIT("%s getting setting owner of ticket file",
+				     strerror(errno));
+				close(tmpfd);
+				ret = PAM_SYSTEM_ERR;
+			}
+			if(fchmod(tmpfd, S_IRUSR | S_IWUSR) == -1) {
+				CRIT("%s getting setting mode of ticket file",
+				     strerror(errno));
+				close(tmpfd);
+				ret = PAM_SYSTEM_ERR;
+			}
+			strncpy(stash->v4_path, v4_path,
+				sizeof(stash->v4_path));
+			close(tmpfd);
+		}
+		if((ret == KRB5_SUCCESS) && (config->krb4_convert)) {
+			snprintf(v4_path, sizeof(v4_path),
+				 "KRBTKFILE=%s", stash->v4_path);
 			ret = pam_putenv(pamh, v4_path);
 			if(ret != PAM_SUCCESS) {
 				CRIT("%s setting environment",
@@ -810,15 +860,12 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG(v4_path);
 
 			/* Create the v4 ticket cache. */
-			snprintf(v4_path, sizeof(v4_path),
-				 "/tmp/tkt%d_%d", stash->uid, stash->pid);
-			DEBUG("opening ticket file \"%s\"", v4_path);
-			krb_set_tkt_string(strdup(v4_path));
-			ret = in_tkt(v4_creds.pname,
-				     v4_creds.pinst);
+			DEBUG("opening ticket file \"%s\"", stash->v4_path);
+			krb_set_tkt_string(stash->v4_path);
+			ret = in_tkt(v4_creds.pname, v4_creds.pinst);
 			if(ret != KRB5_SUCCESS) {
 				CRIT("error initializing tf %s for %s, punting",
-				     v4_path, user);
+				     stash->v4_path, user);
 				ret = KRB5_SUCCESS;
 			}
 
@@ -833,8 +880,9 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						     v4_creds.kvno,
 						     &v4_creds.ticket_st,
 						     v4_creds.issue_date);
+				chown(stash->v4_path, stash->uid, stash->gid);
+				chmod(stash->v4_path, S_IRUSR | S_IWUSR);
 			}
-			chown(v4_path, stash->uid, stash->gid);
 		}
 #endif
 	}
@@ -860,28 +908,32 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	if((flags & PAM_DELETE_CRED) && (ret == KRB5_SUCCESS)) {
 		ret = pam_get_data(pamh,MODULE_STASH_NAME,(const void**)&stash);
-		if(ret == PAM_SUCCESS) {
+		if(strlen(stash->v5_path) > 0) {
 			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
-			snprintf(v5_path, sizeof(v5_path),
-				 "/tmp/krb5cc_%d_%d", stash->uid, stash->pid);
-			INFO("removing %s", v5_path);
-			remove(v5_path);
+			INFO("removing %s", stash->v5_path);
+			if(remove(stash->v5_path) == -1) {
+				CRIT("error removing file %s: %s",
+				     stash->v5_path, strerror(errno));
+			}
+		}
 #ifdef HAVE_LIBKRB524
+		if(strlen(stash->v4_path) > 0) {
 			/* Delete the v4 ticket cache. */
-			snprintf(v4_path, sizeof(v4_path),
-				 "/tmp/tkt%d_%d", stash->uid, stash->pid);
-			INFO("removing %s", v4_path);
-			remove(v4_path);
+			INFO("removing %s", stash->v4_path);
+			if(remove(stash->v4_path) == -1) {
+				CRIT("error removing file %s: %s",
+				     stash->v4_path, strerror(errno));
+			}
+		}
 #endif
 #ifdef HAVE_KRBAFS_H
-			/* Clear tokens unless we need them. */
-			if(!config->setcred && k_hasafs()) {
-				INFO("destroying tokens");
-				k_unlog();
-			}
-#endif
+		/* Clear tokens unless we need them. */
+		if(!config->setcred && k_hasafs()) {
+			INFO("destroying tokens");
+			k_unlog();
 		}
+#endif
 	}
 
 	/* Done with Kerberos. */
