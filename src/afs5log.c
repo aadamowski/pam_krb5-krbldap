@@ -54,12 +54,13 @@
 #include "options.h"
 #include "stash.h"
 #include "minikafs.h"
+#include "xstr.h"
 
 int
 main(int argc, char **argv)
 {
 	char local[PATH_MAX], home[PATH_MAX];
-	const char *homedir;
+	char *homedir;
 	int i, j, try_v5_2b, cells;
 	krb5_context ctx;
 	krb5_ccache ccache;
@@ -126,26 +127,39 @@ main(int argc, char **argv)
 	 * the local cell, if we can determine what its name is. */
 	if (cells == 0) {
 		j = minikafs_cell_of_file("/afs", local, sizeof(local));
-		if (j == 0) {
+		if ((j == 0) && (strcmp(local, "dynroot") != 0)) {
 			j = minikafs_log(NULL, ccache, &log_options,
 					 local, uid, try_v5_2b);
 			if (j != 0) {
 				fprintf(stderr, "%s: %d\n", local, j);
 			}
 		}
-		homedir = getenv("HOME");
+		if (getenv("HOME") != NULL) {
+			homedir = xstrdup(getenv("HOME"));
+		} else {
+			homedir = xstrdup("/afs");
+		}
 		if (homedir != NULL) {
-			if (strlen(homedir) > 1) {
+			do {
 				j = minikafs_cell_of_file(homedir,
 							  home, sizeof(home));
-				if ((j == 0) && (strcmp(local, home) != 0)) {
-					j = minikafs_log(NULL, ccache,
-							 &log_options,
-							 home, uid, try_v5_2b);
-					if (j != 0) {
-						fprintf(stderr, "%s: %d\n",
-							home, j);
-					}
+				if (j == 0) {
+					break;
+				}
+				if (strchr(homedir, '/') != NULL) {
+					*(strrchr(homedir, '/')) = '\0';
+				} else {
+					strcpy(homedir, "");
+				}
+			} while ((j != 0) && (strlen(homedir) > 0));
+			if ((j == 0) &&
+			    (strcmp(home, "dynroot") != 0) &&
+			    (strcmp(home, local) != 0)) {
+				j = minikafs_log(NULL, ccache,
+						 &log_options,
+						 home, uid, try_v5_2b);
+				if (j != 0) {
+					fprintf(stderr, "%s: %d\n", home, j);
 				}
 			}
 		}
