@@ -428,7 +428,7 @@ safe_fixup(struct config *config, const char *filename, struct stash *stash)
 		return PAM_SYSTEM_ERR;
 	}
 
-	DEBUG("setting permissions on `%s' to %d/%d", filename,
+	DEBUG("setting permissions on `%s' to %04o", filename,
 	      S_IRUSR | S_IWUSR);
 	rc = fchmod(fd, S_IRUSR | S_IWUSR);
 	if(rc == -1) {

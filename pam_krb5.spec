@@ -39,6 +39,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed Mar 28 2001 Nalin Dahyabhai <nalin@redhat.com>
+- fix a debug message
+
 * Mon Mar 26 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't fail to fixup the krb5 ccache if something goes wrong obtaining
   v4 credentials or creating a krb4 ticket file (#33262)
