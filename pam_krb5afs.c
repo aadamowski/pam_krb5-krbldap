@@ -726,7 +726,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		}
 
 		/* If we got a login from either method, use it. */
-		ret = pam_get_user(pamh, &user, "login:");
+		ret = pam_get_user(pamh, &user, "login: ");
 		if(ret != PAM_SUCCESS) {
 			CRIT("cannot determine user's login");
 			ret = PAM_USER_UNKNOWN;
@@ -740,20 +740,23 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	DEBUG("user is \"%s\"", user);
 
 	/* Try to get and save the user's UID. */
-	if(config->no_user_check) {
-		stash->uid = getuid();
-		stash->gid = getgid();
-		DEBUG("using current uid %d, gid %d", stash->uid, stash->gid);
-	} else {
-		pwd = getpwnam(user);
-		if(pwd != NULL) {
-			stash->uid = pwd->pw_uid;
-			stash->gid = pwd->pw_gid;
-			DEBUG("%s has uid %d, gid %d", user,
+	if(ret == PAM_SUCCESS) {
+		if(config->no_user_check) {
+			stash->uid = getuid();
+			stash->gid = getgid();
+			DEBUG("using current uid %d, gid %d",
 			      stash->uid, stash->gid);
 		} else {
-			CRIT("getpwnam(\"%s\") failed", user);
-			ret = PAM_USER_UNKNOWN;
+			pwd = getpwnam(user);
+			if(pwd != NULL) {
+				stash->uid = pwd->pw_uid;
+				stash->gid = pwd->pw_gid;
+				DEBUG("%s has uid %d, gid %d", user,
+				      stash->uid, stash->gid);
+			} else {
+				CRIT("getpwnam(\"%s\") failed", user);
+				ret = PAM_USER_UNKNOWN;
+			}
 		}
 	}
 
@@ -1011,7 +1014,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 #ifdef AFS
 	/* Get tokens. */
-	if(config->setcred) {
+	if((ret == PAM_SUCCESS) && config->setcred) {
 		pam_sm_setcred(pamh, PAM_ESTABLISH_CRED, argc, argv);
 		pam_sm_setcred(pamh, PAM_DELETE_CRED, argc, argv);
 	}
