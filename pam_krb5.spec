@@ -7,7 +7,7 @@ Copyright: LGPL
 Group: System Environment/Base
 BuildPrereq: krb5-devel, pam-devel
 BuildRoot: %{_tmppath}/%{name}-root
-Requires: krbafs >= 1.0
+Requires: krbafs >= 1.0, krb5-libs >= 1.2.2
 
 %description 
 This is pam_krb5, a pluggable authentication module that can be used with
@@ -39,7 +39,8 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 %changelog
 * Fri Feb 16 2001 Nalin Dahyabhai <nalin@redhat.com>
-- don't create the v4 ticket file calling in_tkt()
+- don't create the v4 ticket file calling in_tkt(); require 1.2.2, which
+  changed this behavior
 
 * Tue Feb 13 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't log unknown user names to syslog -- they might be sensitive information
