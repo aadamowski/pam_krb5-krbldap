@@ -780,11 +780,18 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG("credentials retrieved");
 
 			/* Set up the environment variable for Kerberos 5. */
-			snprintf(v5_path, sizeof(v5_path),
-				 "/tmp/krb5cc_%d_XXXXXX", stash->uid);
-			tmpfd = mkstemp(v5_path);
+			if(strlen(stash->v5_path) == 0) {
+				snprintf(v5_path, sizeof(v5_path),
+					 "/tmp/krb5cc_%d_XXXXXX", stash->uid);
+				tmpfd = mkstemp(v5_path);
+			} else {
+				strncpy(v5_path,stash->v5_path,sizeof(v5_path));
+				tmpfd = open(v5_path,
+					     O_CREAT | O_TRUNC | O_RDWR,
+					     S_IRUSR | S_IWUSR);
+			}
 			if(tmpfd == -1) {
-				CRIT("%s getting pathname for ticket file",
+				CRIT("%s getting a pathname for ticket file",
 				     strerror(errno));
 				ret = PAM_SYSTEM_ERR;
 			}
@@ -873,9 +880,16 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 
 			/* Set up the environment variable for Kerberos 4. */
-			snprintf(v4_path, sizeof(v4_path),
-				 "/tmp/tkt%d_XXXXXX", stash->uid);
-			tmpfd = mkstemp(v4_path);
+			if(strlen(stash->v4_path) == 0) {
+				snprintf(v4_path, sizeof(v4_path),
+					 "/tmp/tkt%d_XXXXXX", stash->uid);
+				tmpfd = mkstemp(v4_path);
+			} else {
+				strncpy(v4_path,stash->v4_path,sizeof(v4_path));
+				tmpfd = open(v4_path,
+					     O_CREAT | O_TRUNC | O_RDWR,
+					     S_IRUSR | S_IWUSR);
+			}
 			if(tmpfd == -1) {
 				CRIT("%s getting pathname for ticket file",
 				     strerror(errno));
