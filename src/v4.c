@@ -181,13 +181,12 @@ _pam_krb5_v4_init(krb5_context ctx,
 		      name, instance, realm);
 	}
 
-#ifdef HAVE_KRB_LIFE_TO_TIME
+#ifdef HAVE_KRB_TIME_TO_LIFE
 	/* Convert the ticket lifetime of the v5 credentials into a v4
 	 * lifetime, which is the X coordinate along a curve where Y is the
 	 * actual length.  Again, this is magic. */
-	life = krb_life_to_time(stash->v5creds.times.starttime,
-				stash->v5creds.times.endtime - 
-				stash->v5creds.times.starttime);
+	life = krb_time_to_life(stash->v5creds.times.starttime,
+				stash->v5creds.times.endtime); 
 #else
 	/* No life_to_time() function means that we have to estimate the
 	 * intended lifetime, in 5-minute increments.  We also have a maximum

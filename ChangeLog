@@ -1,3 +1,8 @@
+2003-09-05 nalin
+	* configure.ac: check for krb_time_to_life.
+	* src/v4.c: use krb_time_to_life to convert lifetimes from seconds to
+	bytes, not krb_life_to_time, which does the opposite.
+
 2003-08-14 nalin
 	* configure.ac: check for __posix_getpwnam_r.
 	* src/userinfo.c(get_pw): use __posix_getpwnam_r if it is available and
