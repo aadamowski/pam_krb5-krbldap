@@ -535,6 +535,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_in_tkt failed (\"%s\"), failing auth",
 			       error_message(ret));
+			syslog(LOG_NOTICE, MODULE_NAME
+			       ": authenticate error: %s", error_message(ret));
 			ret = PAM_AUTH_ERR;
 		}
 	}
@@ -548,8 +550,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	} else {
 		D(("Authentication failed."));
 		syslog(LOG_NOTICE, MODULE_NAME
-		       ": authentication fails for %s: %s", user,
-		       error_message(ret));
+		       ": authentication fails for %s", user);
 	}
 	D(("reached"));
 
