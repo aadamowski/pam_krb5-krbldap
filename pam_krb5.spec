@@ -1,11 +1,11 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 1.40
-Release: 1
+Release: 2
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
-BuildPrereq: byacc, flex, krb5-devel, /usr/include/security/pam_modules.h
+BuildPrereq: byacc, flex, krb5-devel, krbafs-devel, pam-devel
 BuildRoot: %{_tmppath}/%{name}-root
 Requires: krbafs >= 1.0
 
@@ -39,6 +39,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed Jul 11 2001 Nalin Dahyabhai <nalin@redhat.com>
+- buildprereq the krbafs-devel package
+
 * Fri Jul  6 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't set forwardable and assorted other flags when getting password-
   changing service ticket (noted, and fix supplied, by Onime Clement)
