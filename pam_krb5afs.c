@@ -885,6 +885,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 					 "/tmp/tkt%d_XXXXXX", stash->uid);
 				tmpfd = mkstemp(v4_path);
 			} else {
+				dest_tkt();
 				strncpy(v4_path,stash->v4_path,sizeof(v4_path));
 				tmpfd = open(v4_path,
 					     O_CREAT | O_TRUNC | O_RDWR,
@@ -926,7 +927,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			krb_set_tkt_string(stash->v4_path);
 			ret = in_tkt(v4_creds.pname, v4_creds.pinst);
 			if(ret != KRB5_SUCCESS) {
-				CRIT("error initializing tf %s for %s, punting",
+				CRIT("error initializing %s for %s, punting",
 				     stash->v4_path, user);
 				ret = KRB5_SUCCESS;
 			}
