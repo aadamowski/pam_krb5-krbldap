@@ -453,15 +453,18 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 	int i = 0, ret = PAM_SUCCESS;
 	const char *p = NULL;
 	for(i = 0; i < num_prompts; i++) {
+		char *q = NULL;
+		int l = strlen(prompts[i].prompt) + strlen(": ") + 1;
+		q = malloc(l);
+		snprintf(q, l, "%s: ", prompts[i].prompt);
 		ret = pam_prompt_for(data,
 				     prompts[i].hidden ?
-				     PAM_PROMPT_ECHO_ON :
-				     PAM_PROMPT_ECHO_OFF,
-				     prompts[i].prompt,
-				     &p);
+				     PAM_PROMPT_ECHO_OFF :
+				     PAM_PROMPT_ECHO_ON,
+				     q, &p);
 		if(ret == PAM_SUCCESS) {
-			strncpy(prompts[i].reply->data, p,
-				prompts[i].reply->length);
+			prompts[i].reply->length = strlen(p);
+			prompts[i].reply->data = strdup(p);
 		} else {
 			ret = KRB5_LIBOS_CANTREADPWD;
 			break;

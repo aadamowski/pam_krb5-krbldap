@@ -1,7 +1,7 @@
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
-Release: 6
+Release: 7
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -19,7 +19,7 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 %setup -q
 
 %build
-%configure --with-krb5=/usr/kerberos
+%configure --with-krb5=/usr/kerberos --with-krbafs=/usr/kerberos
 make
 
 %install
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %doc README ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Fri Mar 03 2000 Nalin Dahyabhai <nalin@redhat.com>
+- clean up prompter
+
 * Thu Mar 02 2000 Nalin Dahyabhai <nalin@redhat.com>
 - add krbafs as a requirement
 
