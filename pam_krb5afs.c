@@ -1269,8 +1269,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #endif
 #ifdef HAVE_LIBKRB4
 		if((ret == KRB5_SUCCESS) && (stash->have_v4_creds)) {
-			/* FIXME: replace with autoconf check */
-#if 1
+			/* FIXME: add an autoconf check */
+#define IN_TKT_USES_EXCL
+#ifdef IN_TKT_USES_EXCL
 			/* Kerberos 5 1.2.2's libkrb4 won't initialize a ticket
 			 * file that already exists.  That's *good*.  But that
 			 * means we have to use mktemp().  That's bad. */
@@ -1314,6 +1315,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #endif
 		}
 		if((ret == KRB5_SUCCESS) && (config->krb4_convert)) {
+			int save = TRUE;
+
 			snprintf(v4_path, sizeof(v4_path),
 				 "KRBTKFILE=%s", stash->v4_path);
 			ret = pam_putenv(pamh, v4_path);
@@ -1334,14 +1337,25 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			krb_set_tkt_string(stash->v4_path);
 			ret = in_tkt(stash->v4_creds.pname,
 				     stash->v4_creds.pinst);
+#ifdef IN_TKT_USES_EXCL
+			if(ret != KRB5_SUCCESS) {
+				INFO("error initializing %s for %s (code = %d),"
+				     " already initialized?",
+				     stash->v4_path, user, ret);
+				save = FALSE;
+				ret = KRB5_SUCCESS;
+			}
+#else
 			if(ret != KRB5_SUCCESS) {
 				CRIT("error initializing %s for %s (code = %d),"
 				     " punting", stash->v4_path, user, ret);
+				save = TRUE;
 				ret = KRB5_SUCCESS;
 			}
+#endif
 
 			/* Store credentials in the ticket file. */
-			if(ret == KSUCCESS) {
+			if(save) {
 				DEBUG("save v4 creds (%s%s%s@%s:%d)",
 				      stash->v4_creds.service,
 				      strlen(stash->v4_creds.instance) ? "." : "",
