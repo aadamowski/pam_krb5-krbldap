@@ -37,6 +37,7 @@
 #include <security/pam_modules.h>
 #endif
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <krb5.h>
@@ -162,6 +163,17 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 			notice("account checks fail for '%s': "
 			       "password has expired", user);
 			retval = PAM_NEW_AUTHTOK_REQD;
+			break;
+		case EAGAIN:
+		case KRB5_REALM_CANT_RESOLVE:
+			notice("account checks fail for '%s': "
+			       "can't resolve KDC addresses", user);
+			return PAM_AUTHINFO_UNAVAIL;
+			break;
+		case KRB5_KDC_UNREACH:
+			notice("account checks fail for '%s': "
+			       "KDCs are unreachable", user);
+			return PAM_AUTHINFO_UNAVAIL;
 			break;
 		default:
 			notice("account checks fail for '%s': "

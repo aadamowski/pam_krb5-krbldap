@@ -1,4 +1,9 @@
 2004-06-14 nalin
+	* src/acct.c(pam_sm_acct_mgmt): likewise, catch and log specific error
+	information for EAGAIN, KRB5_REALM_CANT_RESOLVE, and KRB5_KDC_UNREACH
+	errors.
+
+2004-06-14 nalin
 	* src/v5.c(v5_get_creds): return PAM_AUTHINFO_UNAVAIL if we got EAGAIN,
 	which is triggered by a transient hostname resolution error (John
 	Dennis).  Also do this for KRB5_REALM_CANT_RESOLVE and KRB5_KDC_UNREACH
