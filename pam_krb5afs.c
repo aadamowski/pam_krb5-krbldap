@@ -284,6 +284,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	}
 
 	/* Cells to get tokens for. */
+#ifdef HAVE_KRBAFS_H
 	profile_get_string(profile, PROFILE_NAME, "afs_cells", NULL,
 			   DEFAULT_CELLS, &cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
@@ -293,6 +294,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 		dEBUG("will afslog to cell %s", ret->cell_list[i]);
 	}
 	ret->get_tokens = TRUE;
+#endif
 
 	/* Hosts to get tickets for. */
 	profile_get_string(profile, PROFILE_NAME, "hosts", NULL,
