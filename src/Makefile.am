@@ -25,6 +25,7 @@ pam_krb5_la_SOURCES = \
 	stash.c \
 	stash.h \
 	storetmp.c \
+	storetmp.h \
 	tokens.c \
 	tokens.h \
 	userinfo.c \
