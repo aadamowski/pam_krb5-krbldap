@@ -1,4 +1,8 @@
 2005-02-28:
+	* configure.in: demote -Wextra and friends --enable-extra-warnings
+	status.
+
+2005-02-28:
 	* src/minikafs.c: fix compilation against releases which didn't define
 	KRB_TICKET_GRANTING_TICKET.
 	* src/pagsh.c: add missing <stdio.h> inclusion.
