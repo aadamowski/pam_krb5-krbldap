@@ -20,8 +20,6 @@ libpam_krb5_la_SOURCES = \
 	minikafs.h \
 	prompter.c \
 	prompter.h \
-	shmem.c \
-	shmem.h \
 	stash.c \
 	stash.h \
 	storetmp.c \
