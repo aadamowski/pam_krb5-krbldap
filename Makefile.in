@@ -34,7 +34,7 @@ pam_krb5afs.so.Linux: pam_krb5afs.o
 	$(CC) -shared -o pam_krb5afs.so $^ $(CCSHLIBFLAGS)
 
 pam_krb5.so.SunOS: pam_krb5.o
-	/usr/ccs/bin/ld -G -o pam_krb5.so $^ $(LDSHLIBFLAGS)
+	/usr/ccs/bin/ld -G -o pam_krb5.so $^ $(LDSHLIBFLAGS) flock.o
 
 pam_krb5afs.so.SunOS: pam_krb5afs.o
 	/usr/ccs/bin/ld -G -o pam_krb5afs.so $^ $(LDSHLIBFLAGS)
