@@ -6,44 +6,51 @@ CVSTAG = pk$(subst .,-,$(VERSION))-$(subst .,-,$(REVISION))
 KRB5=@KRB5@
 KRBAFS=@KRBAFS@
 DEFS=@DEFS@
-OSDEP=@OS@
+OS=@OS@
 
 CC=@CC@
+FLEX=@FLEX@
+YACC=@YACC@
 CFLAGS=-Wall -Wshadow -Wcast-align @CFLAGS@ $(DEFS)
 LDFLAGS=@LDFLAGS@ @LIBS@
 CCSHLIBFLAGS=-Wl,-rpath=$(KRB5)/lib -Wl,-rpath=$(KRBAFS) $(LDFLAGS)
 LDSHLIBFLAGS=-R$(KRB5)/lib -R$(KRBAFS) $(LDFLAGS)
-OSTARGETS = @OSTARGETS@
-SHTARGETS = @SHTARGETS@
+MODULES = pam_krb5.so pam_krb5afs.so
 MAN5TARGETS = @MAN5TARGETS@
 MAN8TARGETS = @MAN8TARGETS@
-mandir=/usr/man
+mandir=/usr/share/man
 
-modules: $(OSTARGETS)
+all: modules check
 
-pam_krb5.o: pam_krb5afs.c
-	$(CC) $(CFLAGS) -c -o $@ $^
+modules: $(MODULES)
 
-pam_krb5afs.o: pam_krb5afs.c
-	$(CC) $(CFLAGS) -DAFS -c -o $@ $^
+pam_krb5.o: pam_krb5afs.c krb5conf.l.c
+	$(CC) $(CFLAGS) -c -o $@ pam_krb5afs.c
 
-pam_krb5.so.Linux: pam_krb5.o
-	$(CC) -shared -o pam_krb5.so $^ $(CCSHLIBFLAGS)
+pam_krb5afs.o: pam_krb5afs.c krb5conf.l.c
+	$(CC) $(CFLAGS) -DAFS -c -o $@ pam_krb5afs.c
 
-pam_krb5afs.so.Linux: pam_krb5afs.o
-	$(CC) -shared -o pam_krb5afs.so $^ $(CCSHLIBFLAGS)
+ifeq ($(OS),Linux)
+pam_krb5.so: pam_krb5.o Versions
+	$(CC) -shared -o pam_krb5.so pam_krb5.o $(CCSHLIBFLAGS) -Wl,--version-script=Versions
 
-pam_krb5.so.SunOS: pam_krb5.o
+pam_krb5afs.so: pam_krb5afs.o Versions
+	$(CC) -shared -o pam_krb5afs.so pam_krb5afs.o $(CCSHLIBFLAGS) -Wl,--version-script=Versions
+endif
+
+ifeq ($(OS),SunOS)
+pam_krb5.so: pam_krb5.o
 	/usr/ccs/bin/ld -G -o pam_krb5.so $^ $(LDSHLIBFLAGS) flock.o -lpam -ldyn
 
-pam_krb5afs.so.SunOS: pam_krb5afs.o
+pam_krb5afs.so: pam_krb5afs.o
 	/usr/ccs/bin/ld -G -o pam_krb5afs.so $^ $(LDSHLIBFLAGS) flock.o -lpam -ldyn
+endif
 
 install: $(SHLIBDEP) install-modules install-man
 
 install-modules:
 	test -d $(DESTDIR)/lib/security || mkdir -p $(DESTDIR)/lib/security
-	@INSTALL@ -m 755 $(SHTARGETS) $(DESTDIR)/lib/security
+	@INSTALL@ -m 755 $(MODULES) $(DESTDIR)/lib/security
 
 install-man:
 	test -d $(DESTDIR)$(mandir)/man5 || mkdir -p $(DESTDIR)$(mandir)/man5
@@ -52,18 +59,20 @@ install-man:
 	@INSTALL@ -m 644 $(MAN8TARGETS) $(DESTDIR)$(mandir)/man8
 
 clean:
-	$(RM) *.so *.o main core krb5 kreset dlopen
+	$(RM) *.so *.o krb5conf.l.c krb5conf.y.c main core krb5 kreset dlopen
 
 distclean: clean
 	$(RM) Makefile config.cache config.log config.status config.h
 	$(RM) ltconfig ltmain.sh
 
-all: modules check
-
 check: dlopen
-	./dlopen $(SHTARGETS)
+	./dlopen $(MODULES)
 
-pam_krb5afs.c: config.h
+krb5conf.l.c: krb5conf.l krb5conf.y
+	$(FLEX) -Pxkrb5_conf_ -okrb5conf.l.c krb5conf.l
+	$(YACC) -pxkrb5_conf_ -okrb5conf.y.c krb5conf.y
+
+pam_krb5afs.c: config.h krb5conf.l.c
 
 kreset: kreset.c
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)

@@ -4,6 +4,8 @@ AC_CONFIG_HEADER(config.h)
 AC_PROG_CC()
 CFLAGS=-g
 AC_PROG_INSTALL()
+AC_PATH_PROG(FLEX,flex)
+AC_PATH_PROG(YACC,yacc)
 
 AC_ARG_WITH(krb5,
 [  --with-krb5=dir         use Kerberos 5 headers and libs under dir],
@@ -36,7 +38,7 @@ MAN8TARGETS=pam_krb5.8
 
 AC_CHECK_HEADERS(sys/stat.h sys/types.h stdio.h stdlib.h string.h unistd.h\
 		 fcntl.h limits.h pwd.h dlfcn.h com_err.h syslog.h sys/syslog.h\
-		 ctype.h security/pam_appl.h security/pam_modules.h)
+		 errno.h ctype.h security/pam_appl.h security/pam_modules.h)
 AC_CHECK_HEADER(krb5.h,AC_DEFINE(HAVE_KRB5_H),
 	AC_ERROR(install Kerberos 5 or re-run configure with --with-krb5))
 
@@ -74,12 +76,15 @@ AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context)
 AC_CHECK_LIB(kdb5,krb5_db_init)
 AC_CHECK_LIB(kadm5clnt,kadm5_init_with_password)
 AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
+AC_CHECK_FUNC(krb5_appdefault_string)
+AC_CHECK_FUNC(krb5_appdefault_boolean)
 	
 AC_SUBST(KRB5)
 AC_SUBST(KRBAFS)
 
 OSTARGETS=`echo $SHTARGETS | sed "s^\.so^\.so\.$OS^g"`
 
+AC_SUBST(OS)
 AC_SUBST(SHTARGETS)
 AC_SUBST(OSTARGETS)
 AC_SUBST(MAN5TARGETS)

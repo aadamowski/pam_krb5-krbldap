@@ -20,3 +20,6 @@
 
 /* Define if you want TGT validation. */
 #undef HAVE_VALIDATION
+
+/* Define if your in_tkt dies if the ticket file exists. */
+#undef IN_TKT_USES_EXCL
