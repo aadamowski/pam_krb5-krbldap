@@ -3,7 +3,7 @@ This is a major rewrite of pam_krb5afs.  Call it 2.0, for lack of a better term.
 o Compared to the earlier releases, this tree builds a single module which
   "knows" how to do everything which is knowable at compile-time.
 o Configuration options which can now be set as library defaults in the
-  system-wide krb5.conf are now ignored by the module.
+  system-wide krb5.conf are now largely ignored by the module.
 
 Standard options:
 o debug

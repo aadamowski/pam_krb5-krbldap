@@ -4,6 +4,13 @@ if test -x /lib64 ; then
 else
 	libdir=/lib
 fi
+if test `id -un` = "nalin" ; then
+	flags=--enable-Werror
+	mandir=${TMPDIR:-/var/tmp}/autogen-man-tmp
+else
+	flags=
+	mandir=/usr/share/man
+fi
 set -x -e
 autoreconf -i -f
-./configure --libdir=$libdir --sysconfdir=/etc --mandir=${TMPDIR:-/var/tmp}/autogen-man-tmp --enable-Werror
+./configure --libdir=$libdir --sysconfdir=/etc --mandir=$mandir $flags "$@"
