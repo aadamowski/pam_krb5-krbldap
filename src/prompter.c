@@ -55,7 +55,7 @@ _pam_krb5_maybe_free_responses(struct pam_response *responses, int n_responses)
 	if (responses != NULL) {
 		for (i = 0; i < n_responses; i++) {
 			if (responses[i].resp != NULL) {
-				free(responses[i].resp);
+				xstrfree(responses[i].resp);
 			}
 			responses[i].resp = NULL;
 		}

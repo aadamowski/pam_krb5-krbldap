@@ -77,13 +77,13 @@ v4_in_tkt(const char *name, const char *instance, const char *realm)
 	}
 	vinstance = xstrdup(instance);
 	if (vinstance == NULL) {
-		free(vname);
+		xstrfree(vname);
 		return KRB5KRB_ERR_GENERIC;
 	}
 	vrealm = xstrdup(realm);
 	if (vrealm == NULL) {
-		free(vinstance);
-		free(vname);
+		xstrfree(vinstance);
+		xstrfree(vname);
 		return KRB5KRB_ERR_GENERIC;
 	}
 
@@ -94,9 +94,9 @@ v4_in_tkt(const char *name, const char *instance, const char *realm)
 #else
 #error "Don't know how to initialize v4 TGT for your Kerberos IV implementation!"
 #endif
-	free(vrealm);
-	free(vinstance);
-	free(vname);
+	xstrfree(vrealm);
+	xstrfree(vinstance);
+	xstrfree(vname);
 
 	return i;
 }
@@ -120,13 +120,13 @@ v4_save_credentials(const char *sname,
 	}
 	vinstance = xstrdup(sinstance);
 	if (vinstance == NULL) {
-		free(vname);
+		xstrfree(vname);
 		return KRB5KRB_ERR_GENERIC;
 	}
 	vrealm = xstrdup(srealm);
 	if (vrealm == NULL) {
-		free(vinstance);
-		free(vname);
+		xstrfree(vinstance);
+		xstrfree(vname);
 		return KRB5KRB_ERR_GENERIC;
 	}
 
@@ -141,9 +141,9 @@ v4_save_credentials(const char *sname,
 #else
 #error "Don't know how to save v4 credentials for your Kerberos IV implementation!"
 #endif
-	free(vrealm);
-	free(vinstance);
-	free(vname);
+	xstrfree(vrealm);
+	xstrfree(vinstance);
+	xstrfree(vname);
 
 	return i;
 }
@@ -231,7 +231,7 @@ _pam_krb5_v4_init(krb5_context ctx,
 	}
 	/* Restore the original default ticket file name. */
 	krb_set_tkt_string(saved_tktstring);
-	free(saved_tktstring);
+	xstrfree(saved_tktstring);
 	saved_tktstring = NULL;
 	/* If we got credentials, read them from the file, and then remove the
 	 * file. */
@@ -321,7 +321,7 @@ v4_save(krb5_context ctx,
 		warn("error opening ticket file '%s': %s",
 		     tktfile, strerror(errno));
 		krb_set_tkt_string(saved_tktstring);
-		free(saved_tktstring);
+		xstrfree(saved_tktstring);
 		unlink(tktfile);
 		close(fd);
 		return PAM_SERVICE_ERR;
@@ -332,7 +332,7 @@ v4_save(krb5_context ctx,
 		warn("error initializing ticket file '%s'", tktfile);
 		tf_close();
 		krb_set_tkt_string(saved_tktstring);
-		free(saved_tktstring);
+		xstrfree(saved_tktstring);
 		unlink(tktfile);
 		close(fd);
 		return PAM_SERVICE_ERR;
@@ -348,7 +348,7 @@ v4_save(krb5_context ctx,
 		warn("error saving tickets to '%s'", tktfile);
 		tf_close();
 		krb_set_tkt_string(saved_tktstring);
-		free(saved_tktstring);
+		xstrfree(saved_tktstring);
 		unlink(tktfile);
 		close(fd);
 		return PAM_SERVICE_ERR;
@@ -357,7 +357,7 @@ v4_save(krb5_context ctx,
 	/* Close the new file. */
 	tf_close();
 	krb_set_tkt_string(xstrdup(tktfile));
-	free(saved_tktstring);
+	xstrfree(saved_tktstring);
 	close(fd);
 
 	/* Destroy any old ticket files we might have.  One per customer. */
@@ -378,7 +378,7 @@ v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 			debug("removing ticket file '%s'", stash->v4file);
 		}
 		unlink(stash->v4file);
-		free(stash->v4file);
+		xstrfree(stash->v4file);
 	}
 	stash->v4file = NULL;
 }

@@ -36,5 +36,6 @@
 int xstrlen(const char *s);
 char *xstrdup(const char *s);
 char *xstrndup(const char *s, int n);
+void xstrfree(char *s);
 
 #endif

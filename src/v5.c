@@ -86,7 +86,7 @@ v5_free_unparsed_name(krb5_context ctx, char *name)
 void
 v5_free_unparsed_name(krb5_context ctx, char *name)
 {
-	free(name);
+	xstrfree(name);
 }
 #endif
 
@@ -100,7 +100,7 @@ v5_free_default_realm(krb5_context ctx, char *realm)
 void
 v5_free_default_realm(krb5_context ctx, char *realm)
 {
-	free(realm);
+	xstrfree(realm);
 }
 #endif
 
@@ -130,7 +130,7 @@ v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 			}
 			i = krb5_parse_name(ctx, tmp, principal);
 			v5_free_unparsed_name(ctx, unparsed);
-			free(tmp);
+			xstrfree(tmp);
 			return i;
 		}
 	}
@@ -186,7 +186,7 @@ v5_appdefault_string(krb5_context ctx,
 	krb5_appdefault_string(ctx, PAM_KRB5_APPNAME, realm, option,
 			       default_value, ret_value);
 	if (*ret_value != tmp) {
-		free(tmp);
+		xstrfree(tmp);
 	}
 }
 void
@@ -215,6 +215,7 @@ data_from_string(const char *s)
 static void
 data_free(krb5_data *data)
 {
+	memset(data->data, 0, data->length);
 	free(data->data);
 	free(data);
 }
@@ -236,7 +237,7 @@ v5_appdefault_string(krb5_context ctx,
 		*ret_value = xstrdup(default_value);
 	}
 	if (*ret_value != tmp) {
-		free(tmp);
+		xstrfree(tmp);
 	}
 }
 void
@@ -659,7 +660,7 @@ v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 			      stash->v5file);
 		}
 		unlink(stash->v5file);
-		free(stash->v5file);
+		xstrfree(stash->v5file);
 		stash->v5file = NULL;
 	}
 }

@@ -55,6 +55,7 @@
 #include "log.h"
 #include "userinfo.h"
 #include "v5.h"
+#include "xstr.h"
 
 #ident "$Id$"
 
@@ -80,7 +81,7 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid)
 		/* Give it a shot. */
 		pwd = NULL;
 		i = getpwnam_r(name, &passwd, buffer, size, &pwd);
-		free(buffer);
+		xstrfree(buffer);
 
 		/* If we got 0 back, AND pwd now points to the passwd
 		 * structure, then we succeeded. */
@@ -144,7 +145,8 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		return NULL;
 	}
 
-	/* Override the realm part of the principal's name. */
+	/* Override the realm part of the principal's name with the configured
+	 * realm's name. */
 	if (v5_set_principal_realm(ctx, &ret->principal_name, realm) != 0) {
 		warn("internal error setting realm name");
 		krb5_free_principal(ctx, ret->principal_name);
@@ -153,7 +155,10 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 	}
 
 	if (check_user) {
-		/* Convert the principal name back into a local user's name. */
+		/* Convert the principal name back into a local user's name.
+		 * If the principal is not in the local realm, this may fail
+		 * due to an unconfigured aname-to-lname mapping in krb5.conf.
+		 * If we don't map to a local user, stop now. */
 		memset(local_name, '\0', sizeof(local_name));
 		i = krb5_aname_to_localname(ctx, ret->principal_name,
 					    sizeof(local_name) - 1,
@@ -197,5 +202,6 @@ _pam_krb5_user_info_free(krb5_context ctx, struct _pam_krb5_user_info *info)
 {
 	krb5_free_principal(ctx, info->principal_name);
 	v5_free_unparsed_name(ctx, info->unparsed_name);
+	memset(info, 0, sizeof(struct _pam_krb5_user_info));
 	free(info);
 }

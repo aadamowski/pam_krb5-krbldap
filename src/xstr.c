@@ -47,6 +47,15 @@ xstrlen(const char *s)
 	return 0;
 }
 
+void
+xstrfree(char *s)
+{
+	if (s != NULL) {
+		memset(s, '\0', strlen(s));
+		free(s);
+	}
+}
+
 char *
 xstrdup(const char *s)
 {

@@ -63,6 +63,8 @@ _pam_krb5_get_data_stash(pam_handle_t *pamh, const char *key,
 	return pam_get_data(pamh, key, (PAM_KRB5_MAYBE_CONST void**) stash);
 }
 
+/* Clean up a stash.  This includes freeing any dynamically-allocated bits and
+ * then freeing the stash itself. */
 static void
 _pam_krb5_stash_cleanup(pam_handle_t *pamh, void *data, int error)
 {
@@ -70,17 +72,23 @@ _pam_krb5_stash_cleanup(pam_handle_t *pamh, void *data, int error)
 	krb5_free_cred_contents(stash->v5ctx, &stash->v5creds);
 	free(stash->key);
 	if (stash->v5file != NULL) {
-		free(stash->v5file);
+		xstrfree(stash->v5file);
 	}
 #ifdef USE_KRB4
 	if (stash->v4file != NULL) {
-		free(stash->v4file);
+		xstrfree(stash->v4file);
 	}
 #endif
 	memset(stash, 0, sizeof(struct _pam_krb5_stash));
 	free(stash);
 }
 
+/* Get the stash of lookaside data we keep about this user.  If we don't
+ * already have one, we need to create it.  We use a data name which includes
+ * the principal name to allow checks within multiple realms to work, and we
+ * store the key in the stash because older versions of libpam stored the
+ * pointer instead of making their own copy of the key, which could lead to
+ * crashes if we then deallocated the string. */
 struct _pam_krb5_stash *
 _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info)
 {

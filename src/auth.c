@@ -62,6 +62,7 @@
 #include "userinfo.h"
 #include "v5.h"
 #include "v4.h"
+#include "xstr.h"
 
 #ident "$Id$"
 
@@ -249,8 +250,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			}
 		}
 		if (password != NULL) {
-			memset(password, '\0', strlen(password));
-			free(password);
+			xstrfree(password);
 		}
 	}
 

@@ -181,8 +181,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 		}
 		/* Free [the copy of] the password. */
-		memset(password, '\0', strlen(password));
-		free(password);
+		xstrfree(password);
 	}
 
 	/* If this is the second pass, get the new password, use the
@@ -225,8 +224,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				pam_set_item(pamh, PAM_AUTHTOK, &password);
 			}
 			/* Free the second password, we only need one copy. */
-			memset(password2, '\0', strlen(password2));
-			free(password2);
+			xstrfree(password2);
 		}
 
 		/* We have the new password, so attempt to change the user's
@@ -275,8 +273,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 
 		/* Free the new password. */
-		memset(password, '\0', strlen(password));
-		free(password);
+		xstrfree(password);
 	}
 
 	/* Clean up. */

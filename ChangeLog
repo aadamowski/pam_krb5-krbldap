@@ -1,3 +1,9 @@
+2003-08-13 nalin
+	* src/xstr.c, src/xstr.h: add xstrfree().
+	* src/auth.c, src/options.c, src/password.c, src/prompter.c,
+	  src/stash.c, src/userinfo.c, src/v4.c, src/v5.c: use xstrfree() to
+	  free strings.
+
 Thu Aug  7 2003 nalin
 - Major overhaul and refactoring of everything.
 

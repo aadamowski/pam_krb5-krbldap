@@ -116,10 +116,7 @@ option_s(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 static void
 free_s(char *s)
 {
-	if (s != NULL) {
-		memset(s, '\0', strlen(s));
-		free(s);
-	}
+	xstrfree(s);
 }
 static int
 option_i(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
@@ -134,7 +131,7 @@ option_i(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	if ((p == NULL) || (p == tmp) || (*p != '\0')) {
 		i = -1;
 	}
-	free(tmp);
+	free_s(tmp);
 
 	return i;
 }
@@ -168,7 +165,7 @@ option_l(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 		p = q;
 	} while (*p != '\0');
 
-	free(o);
+	free_s(o);
 
 	return list;
 }
@@ -178,7 +175,7 @@ free_l(char **l)
 	int i;
 	if (l != NULL) {
 		for (i = 0; l[i] != NULL; i++) {
-			free(l[i]);
+			free_s(l[i]);
 			l[i] = NULL;
 		}
 		free(l);
@@ -204,7 +201,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	for (i = 0; i < argc; i++) {
 		if (strncmp(argv[i], "realm=", 6) == 0) {
 			if (options->realm != NULL) {
-				free(options->realm);
+				xstrfree(options->realm);
 			}
 			options->realm = xstrdup(argv[i] + 6);
 		}
@@ -411,7 +408,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 				       ctx, options->realm, "ccache_dir",
 				       DEFAULT_CCACHE_DIR);
 	if (strlen(options->ccache_dir) == 0) {
-		free(options->ccache_dir);
+		xstrfree(options->ccache_dir);
 		options->ccache_dir = xstrdup(DEFAULT_CCACHE_DIR);
 	}
 	if (options->debug && options->ccache_dir) {
@@ -422,7 +419,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 				   ctx, options->realm, "keytab",
 				   "/etc/krb5.keytab");
 	if (strlen(options->keytab) == 0) {
-		free(options->keytab);
+		xstrfree(options->keytab);
 		options->keytab = xstrdup("/etc/krb5.keytab");
 	}
 	if (options->debug && options->keytab) {
