@@ -478,6 +478,10 @@ v5_get_creds(krb5_context ctx,
 		}
 		return PAM_AUTH_ERR;
 		break;
+	case EAGAIN:
+	case KRB5_REALM_CANT_RESOLVE:
+	case KRB5_KDC_UNREACH:
+		return PAM_AUTHINFO_UNAVAIL;
 	default:
 		return PAM_AUTH_ERR;
 	}

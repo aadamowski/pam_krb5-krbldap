@@ -1,3 +1,9 @@
+2004-06-14 nalin
+	* src/v5.c(v5_get_creds): return PAM_AUTHINFO_UNAVAIL if we got EAGAIN,
+	which is triggered by a transient hostname resolution error (John
+	Dennis).  Also do this for KRB5_REALM_CANT_RESOLVE and KRB5_KDC_UNREACH
+	error cases.
+
 2004-04-21 nalin
 	* Makefile.am: make configure depend on pam_krb5.spec.
 	* autogen: run with --enable-maintainer-mode so that the dependency
