@@ -1,6 +1,6 @@
 %{
 #include "string.h"
-#include "krb5conf.y.c"
+#include "y.tab.c"
 %}
 %%
 [\t ]+			{};

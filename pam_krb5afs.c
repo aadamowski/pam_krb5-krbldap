@@ -430,6 +430,8 @@ safe_fixup(const char *filename, struct stash *stash)
 		return PAM_SYSTEM_ERR;
 	}
 
+	close(fd);
+
 	return PAM_SUCCESS;
 }
 
@@ -1123,7 +1125,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		const void *goodpass = NULL;
 		char v4name[ANAME_SZ], v4inst[INST_SZ], v4realm[REALM_SZ];
 		char sname[ANAME_SZ], sinst[INST_SZ];
-		extern int swap_bytes;
 
 		/* Get the authtok that succeeded.  We may need it. */
 		pam_get_item(pamh, PAM_AUTHTOK, &goodpass);
@@ -1176,7 +1177,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				memset(key, 0, sizeof(key));
 				memset(key_schedule, 0, sizeof(key_schedule));
 
-				/* Decompose the resturned data.  Now I know
+				/* Decompose the returned data.  Now I know
 				 * why Kerberos 5 uses ASN.1 encoding.... */
 				memset(&stash->v4_creds, 0,
 				       sizeof(stash->v4_creds));
@@ -1188,10 +1189,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 					sizeof(stash->v4_creds.pinst) - 1);
 
 				/* Session key. */
-				memcpy(&stash->v4_creds.session, p, 8);
 				l = ciphertext->length;
 				DEBUG("ciphertext length in TGT = %d", l);
 
+				memcpy(&stash->v4_creds.session, p, 8);
 				p += 8;
 				l -= 8;
 
@@ -1235,8 +1236,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 				/* Ticket data. */
 				if(l >= stash->v4_creds.ticket_st.length) {
-					memcpy(stash->v4_creds.ticket_st.dat,
-					      p,
+					memcpy(stash->v4_creds.ticket_st.dat, p,
 					      stash->v4_creds.ticket_st.length);
 				}
 				p += stash->v4_creds.ticket_st.length;
@@ -1244,15 +1244,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 				/* Timestamp. */
 				if(l >= 4) {
-					memcpy(&stash->v4_creds.issue_date,
-					       p, 4);
+					/* We can't tell if we need to byte-swap
+					 * or not, so just make up an issue date
+					 * that looks reasonable. */
+					stash->v4_creds.issue_date = time(NULL);
 				}
 				p += 4;
 				l -= 4;
 
-				if(swap_bytes) {
-					krb4_swab32(stash->v4_creds.issue_date);
-				}
 
 				DEBUG("Got v4 TGT for \"%s%s%s@%s\"",
 				      stash->v4_creds.service,
@@ -1415,11 +1414,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			close(tmpfd);
 			tmpfd = -1;
 
-			/* Fixup permissions. */
-			if(krc == KRB5_SUCCESS) {
-				prc = safe_fixup(stash->v5_path, stash);
-			}
-		
 			/* Set the environment variable to point to the cache.*/
 			snprintf(v5_path, sizeof(v5_path),
 				 "KRB5CCNAME=FILE:%s", stash->v5_path);
@@ -1515,12 +1509,13 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 			/* Store credentials in the ticket file. */
 			if((krc == KRB5_SUCCESS) && save) {
-				DEBUG("save v4 creds (%s%s%s@%s:%d)",
+				DEBUG("save v4 creds (%s%s%s@%s:%d), %d",
 				      stash->v4_creds.service,
 				      strlen(stash->v4_creds.instance) ? "." : "",
 				      stash->v4_creds.instance ? stash->v4_creds.instance : "",
 				      stash->v4_creds.realm,
-				      stash->v4_creds.kvno);
+				      stash->v4_creds.kvno,
+				      stash->v4_creds.lifetime);
 				krb_save_credentials(stash->v4_creds.service,
 						     stash->v4_creds.instance,
 						     stash->v4_creds.realm,
@@ -1535,11 +1530,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			tf_close();
 			close(tmpfd);
 			tmpfd = -1;
-
-			/* Fixup permissions. */
-			if(krc == KRB5_SUCCESS) {
-				prc = safe_fixup(stash->v4_path, stash);
-			}
 
 			/* Set up the environment variable for Kerberos 4. */
 			snprintf(v4_path, sizeof(v4_path),
@@ -1568,14 +1558,29 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			prc = PAM_SYSTEM_ERR;
 		}
 		if(prc == PAM_SUCCESS) {
-			int i;
+			int i, rc;
 			/* Afslog to all of the specified cells. */
 			k_setpag();
 			for(i = 0; config->cell_list[i] != NULL; i++) {
-				DEBUG("afslog() to cell %s", config->cell_list[i]);
-				krb_afslog(config->cell_list[i], config->realm);
+				DEBUG("afslog() to cell %s",
+				      config->cell_list[i]);
+				rc = krb_afslog(config->cell_list[i],
+						config->realm);
+				DEBUG("afslog() returned %d", rc);
 			}
 		}
+	}
+#endif
+
+	/* Fix permissions on this file so that the user logging in will
+	 * be able to use it. */
+	if((flags & PAM_ESTABLISH_CRED) && RC_OK) {
+		prc = safe_fixup(stash->v5_path, stash);
+	}
+
+#ifdef HAVE_LIBKRB4
+	if((flags & PAM_ESTABLISH_CRED) && config->krb4_convert && RC_OK) {
+		prc = safe_fixup(stash->v4_path, stash);
 	}
 #endif
 

@@ -70,7 +70,7 @@ check: dlopen
 
 krb5conf.l.c: krb5conf.l krb5conf.y
 	$(FLEX) -Pxkrb5_conf_ -okrb5conf.l.c krb5conf.l
-	$(YACC) -pxkrb5_conf_ -okrb5conf.y.c krb5conf.y
+	$(YACC) -pxkrb5_conf_ krb5conf.y
 
 pam_krb5afs.c: config.h krb5conf.l.c
 
