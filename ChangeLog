@@ -1,3 +1,7 @@
+Wed Jul  5 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Integrate some fixes for Solaris 7 from Trevor Schroeder (flock.c is
+  entirely his).
+
 Tue Jun 27 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Integrate Seth Vidal's "no_user_check" argument, so that non-privileged
   users (i.e., secure web servers) can also do checks.

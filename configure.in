@@ -12,6 +12,8 @@ if test x$withval != xyes ; then
 	CPPFLAGS="-I$withval/include $CPPFLAGS"
 	CFLAGS="-I$withval/include $CFLAGS"
 	LDFLAGS="-L$withval/lib $LDFLAGS"
+else
+	KRBAFS=/tmp
 fi
 )
 
@@ -22,6 +24,8 @@ if test x$withval != xyes ; then
 	CPPFLAGS="-I$withval/include $CPPFLAGS"
 	CFLAGS="-I$withval/include $CFLAGS"
 	LDFLAGS="-L$withval/lib $LDFLAGS"
+else
+	KRBAFS=/tmp
 fi
 )
 

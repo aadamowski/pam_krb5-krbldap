@@ -1,7 +1,7 @@
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
-Release: 15
+Release: 16
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Wed Jul  5 2000 Nalin Dahyabhai <nalin@redhat.com>
+- fixes for Solaris 7 from Trevor Schroeder
+
 * Tue Jun 27 2000 Nalin Dahyabhai <nalin@redhat.com>
 - add Seth Vidal's no_user_check flag
 - document no_user_check and skip_first_pass options in the man pages
