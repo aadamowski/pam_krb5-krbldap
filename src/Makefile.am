@@ -3,40 +3,44 @@ security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = pam_krb5.5  pam_krb5.8
-EXTRA_PROGRAMS = afs5log
+noinst_PROGRAMS = afs5log
+noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8
-pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*'
-pam_krb5_la_SOURCES = \
+libpam_krb5_la_SOURCES = \
 	conv.c \
 	conv.h \
-	init.c \
-	init.h \
-	initopts.c \
-	initopts.h \
 	items.c \
 	items.h \
-	log.c \
-	log.h \
-	map.c \
-	map.h \
 	minikafs.c \
 	minikafs.h \
-	options.c \
-	options.h \
 	prompter.c \
 	prompter.h \
 	stash.c \
 	stash.h \
 	storetmp.c \
 	storetmp.h \
+	xstr.c \
+	xstr.h \
+	v5.c \
+	v5.h
+	
+pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*'
+pam_krb5_la_LIBADD = libpam_krb5.la
+pam_krb5_la_SOURCES = \
+	init.c \
+	init.h \
+	initopts.c \
+	initopts.h \
+	log.c \
+	log.h \
+	map.c \
+	map.h \
+	options.c \
+	options.h \
 	tokens.c \
 	tokens.h \
 	userinfo.c \
 	userinfo.h \
-	xstr.c \
-	xstr.h \
-	v5.c \
-	v5.h \
 	v4.c \
 	v4.h \
 	auth.c \
@@ -51,4 +55,5 @@ pam_krb5_storetmp_LIBS =
 
 afs5log_SOURCES = \
 	afs5log.c \
-	minikafs.h
+	log.h
+afs5log_LDADD = @PAM_LIBS@ libpam_krb5.la

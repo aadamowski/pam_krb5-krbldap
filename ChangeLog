@@ -1,3 +1,9 @@
+2004-04-21 nalin
+	* configure.ac: search for PAM libraries separately
+	* src/Makefile.am: use a convenience library to compile code only once
+	* src/afs5log.c: supply a non-bogus ccache and options argument to
+	minikafs, provide local logging functions which use stdio.
+
 2004-04-15 nalin
 	* configure.ac: default krb5-config and krb4-config to ':', add non
 	library arguments output by --libs to LIBS

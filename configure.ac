@@ -144,6 +144,12 @@ else
 	fi
 fi
 
+LIBSsave="$LIBS"
+AC_CHECK_FUNC(pam_get_item,,[AC_CHECK_LIB(pam,pam_get_item)])
+PAM_LIBS="$LIBS"
+LIBS="$LIBSsave"
+AC_SUBST(PAM_LIBS)
+
 AC_ARG_ENABLE(default-realm,AC_HELP_STRING([--enable-default-realm=REALM],[last-ditch fallback realm (default is EXAMPLE.COM)]),default_realm=$enableval,default_realm=EXAMPLE.COM)
 AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name which will be used if no realm is given as a parameter and none is given in krb5.conf.])
 AC_MSG_RESULT([Using "$default_realm" as the default realm])
