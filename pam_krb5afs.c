@@ -70,6 +70,9 @@
 
 #ifdef HAVE_KRBAFS_H
 #include <krbafs.h>
+#define MODULE_NAME "pam_krb5afs"
+#else
+#define MODULE_NAME "pam_krb5"
 #endif
 
 #ifndef KRB5_SUCCESS
@@ -80,8 +83,8 @@
 #define PASSWORD_CHANGE_SERVICE "kadmin/changepw"
 #endif
 
-#define MODULE_NAME "pam_krb5afs"
-#define MODULE_DATA_NAME "pam_krb5afs_module_data"
+#define MODULE_DATA_NAME "pam_krb5afs_cred_stash"
+#define MODULE_DATA_NAME "pam_krb5afs_ret_stash"
 
 #define PAM_SM_AUTH
 #define PAM_SM_SESSION
@@ -170,7 +173,7 @@ static void dEBUG(const char *x,...) {
 	va_start(a,x);
 	vsnprintf(buf, sizeof(buf), x, a);
 	va_end(a);
-	syslog(LOG_DEBUG, "%s", buf);
+	syslog(LOG_DEBUG, MODULE_NAME ": %s", buf);
 }
 #if 0
 static void NOTICE(const char *x,...) {
@@ -179,7 +182,7 @@ static void NOTICE(const char *x,...) {
 	va_start(a,x);
 	vsnprintf(buf, sizeof(buf), x, a);
 	va_end(a);
-	syslog(LOG_NOTICE, "%s", buf);
+	syslog(LOG_NOTICE, MODULE_NAME ": %s", buf);
 }
 #endif
 static void INFO(const char *x,...) {
@@ -188,7 +191,7 @@ static void INFO(const char *x,...) {
 	va_start(a,x);
 	vsnprintf(buf, sizeof(buf), x, a);
 	va_end(a);
-	syslog(LOG_INFO, "%s", buf);
+	syslog(LOG_INFO, MODULE_NAME ": %s", buf);
 }
 static void CRIT(const char *x,...) {
 	char buf[LINE_MAX];
@@ -196,7 +199,7 @@ static void CRIT(const char *x,...) {
 	va_start(a,x);
 	vsnprintf(buf, sizeof(buf), x, a);
 	va_end(a);
-	syslog(LOG_CRIT, "%s", buf);
+	syslog(LOG_CRIT, MODULE_NAME ": %s", buf);
 }
 
 static int num_words(const char *s)
@@ -256,7 +259,6 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	ret->try_second_pass = 1;
 
 	/* Read configuration info from krb5.conf. */
-	dEBUG("get_config() called");
 	krb5_get_profile(context, &profile);
 
 	/* Whether or not to debug via syslog. */
@@ -268,6 +270,8 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 			ret->debug = 1;
 		}
 	}
+	if(ret->debug)
+	dEBUG("get_config() called");
 			    
 	/* The local realm. */
 	krb5_get_default_realm(context, &ret->realm);
@@ -276,14 +280,17 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	profile_get_integer(profile, PROFILE_NAME, "renew_lifetime", NULL,
 			    DEFAULT_LIFE, &ret->lifetime);
 	krb5_get_init_creds_opt_set_renew_life(&ret->creds_opt, ret->lifetime);
+	if(ret->debug)
 	dEBUG("setting renewable lifetime to %d", ret->lifetime);
 	profile_get_integer(profile, PROFILE_NAME, "ticket_lifetime", NULL,
 			    DEFAULT_LIFE, &ret->lifetime);
 	krb5_get_init_creds_opt_set_tkt_life(&ret->creds_opt, ret->lifetime);
+	if(ret->debug)
 	dEBUG("setting ticket lifetime to %d", ret->lifetime);
 	profile_get_string(profile, PROFILE_NAME, "forwardable", NULL,
 			   DEFAULT_CELLS, &foo);
 	if(!strcmp(foo, "true")) {
+		if(ret->debug)
 		dEBUG("making tickets forwardable");
 		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, TRUE);
 	}
@@ -296,6 +303,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	memset(ret->cell_list, 0, sizeof(char*) * (num_words(cells) + 1));
 	for(i = 0; i < num_words(cells); i++) {
 		ret->cell_list[i] = word_copy(nth_word(cells, i));
+		if(ret->debug)
 		dEBUG("will afslog to cell %s", ret->cell_list[i]);
 	}
 	ret->get_tokens = TRUE;
@@ -313,6 +321,7 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	for(i = 0; i < num_words(cells); i++) {
 		foo = word_copy(nth_word(cells, i));
 		krb5_os_hostaddr(context, foo, &hostlist);
+		if(ret->debug)
 		dEBUG("also getting ticket for host %s", foo);
 		addresses[i + j] = hostlist[0];
 	}
@@ -321,12 +330,14 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 	/* What to say we are when changing passwords. */
 	profile_get_string(profile, PROFILE_NAME, "banner", NULL,
 			   "Kerberos 5", &ret->banner);
+	if(ret->debug)
 	dEBUG("password-changing banner set to \"%s\"", ret->banner);
 
 	/* Whether to get krb4 tickets using krb524convertcreds(). */
 	profile_get_string(profile, PROFILE_NAME, "krb4_convert", NULL,
 			   "true", &foo);
 	if(!strcmp(foo, "true")) ret->krb4_convert = TRUE;
+	if(ret->debug)
 	dEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
 
 	/* Get the name of a service ticket the user must be able to obtain,
