@@ -785,8 +785,9 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			ret = in_tkt(v4_creds.pname,
 				     v4_creds.pinst);
 			if(ret != KRB5_SUCCESS) {
-				CRIT("error initializing tf %s for %s",
+				CRIT("error initializing tf %s for %s, punting",
 				     v4_path, user);
+				ret = KRB5_SUCCESS;
 			}
 
 			/* Store credentials in the ticket file. */
