@@ -189,7 +189,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 {
 	struct _pam_krb5_options *options;
 	int try_first_pass, use_first_pass, i;
-	char *default_realm;
+	char *default_realm, **list;
 	struct stat stroot, stafs;
 
 	options = malloc(sizeof(struct _pam_krb5_options));
@@ -376,6 +376,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		debug("flag: warn");
 	}
 
+	/* private option */
+	options->ticket_lifetime = option_i(pamh, argc, argv,
+					    ctx, options->realm,
+					    "ticket_lifetime");
+	if (options->ticket_lifetime < 0) {
+		options->ticket_lifetime = 0;
+	}
+	if (options->debug) {
+		debug("ticket lifetime: %d", options->ticket_lifetime);
+	}
+
 	/* library option */
 	options->renew_lifetime = option_i(pamh, argc, argv,
 					   ctx, options->realm,
@@ -453,6 +464,31 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 			debug("afs cell: %s", options->afs_cells[i]);
 		}
 	}
+
+	list = option_l(pamh, argc, argv, ctx, options->realm, "mappings");
+	for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
+		/* nothing */
+	}
+	if ((i == 0) || ((i % 2) != 0)) {
+		options->n_mappings = 0;
+		options->mappings = NULL;
+	} else {
+		options->n_mappings = i / 2;
+		options->mappings = malloc(sizeof(struct name_mapping) *
+					   options->n_mappings);
+		if (options->mappings == NULL) {
+			options->n_mappings = 0;
+		}
+		for (i = 0; i < options->n_mappings; i++) {
+			options->mappings[i].pattern = strdup(list[i * 2]);
+			options->mappings[i].replacement =
+				strdup(list[i * 2 + 1]);
+			debug("mapping: \"%s\" to \"%s\"",
+			      options->mappings[i].pattern,
+			      options->mappings[i].replacement);
+		}
+	}
+	free_l(list);
 
 	return options;
 }

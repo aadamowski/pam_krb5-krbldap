@@ -49,6 +49,7 @@ struct _pam_krb5_options {
 	int v4;
 	int warn;
 
+	int ticket_lifetime;
 	int renew_lifetime;
 
 	uid_t minimum_uid;
@@ -60,6 +61,11 @@ struct _pam_krb5_options {
 	char **hosts;
 
 	char **afs_cells;
+
+	struct name_mapping {
+		char *pattern, *replacement;
+	} *mappings;
+	int n_mappings;
 };
 
 struct _pam_krb5_options *_pam_krb5_options_init(pam_handle_t *pamh,

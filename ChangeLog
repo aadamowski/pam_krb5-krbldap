@@ -1,4 +1,9 @@
 2003-11-20 nalin
+	* src/options.c, src/options.h: add code for parsing a "mappings"
+	setting.  Reintroduce ticket_lifetime, which I mistakenly thought was
+	a libdefault setting now.
+
+2003-11-20 nalin
 	* src/map.c, src/map.h: add mapping functions which mimic OpenLDAP's
 	saslRegexp functionality for mapping local user names to principal
 	names.
