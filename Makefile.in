@@ -85,7 +85,7 @@ dist: archive
 archive:
 	cvs tag -cF $(CVSTAG) .
 	@rm -rf /tmp/pam_krb5-$(VERSION) /tmp/pam_krb5
-	@( cd /tmp; cvs export -r$(CVSTAG) pam_krb5 )
+	@( dir=`pwd`; cd /tmp; cvs -d `cat $$dir/CVS/Root` export -r$(CVSTAG) pam_krb5 )
 	@( cd /tmp/pam_krb5 ; autoheader ; autoconf )
 	@mv /tmp/pam_krb5 /tmp/pam_krb5-$(VERSION)-$(REVISION)
 	@dir=$$PWD; cd /tmp; tar cvzf $$dir/pam_krb5-$(VERSION)-$(REVISION).tar.gz pam_krb5-$(VERSION)-$(REVISION)
