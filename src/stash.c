@@ -128,9 +128,7 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info)
 	memset(&stash->v4creds, 0, sizeof(stash->v4creds));
 	stash->v4file = NULL;
 #endif
-#ifdef USE_AFS
 	stash->afspag = 0;
-#endif
 	pam_set_data(pamh, key, stash, _pam_krb5_stash_cleanup);
 
 	return stash;

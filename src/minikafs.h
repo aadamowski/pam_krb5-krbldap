@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,20 +30,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef pam_krb5_tokens_h
-#define pam_krb5_tokens_h
+#ifndef pam_krb5_minikafs_h
+#define pam_krb5_minikafs_h
 
-int tokens_useful(void);
-int tokens_obtain(krb5_context context,
-		  struct _pam_krb5_stash *stash,
-		  struct _pam_krb5_options *options,
-		  struct _pam_krb5_user_info *info, int newpag);
-int tokens_release(struct _pam_krb5_stash *stash,
-		   struct _pam_krb5_options *options);
-int tokens_getcells(struct _pam_krb5_stash *stash,
-		    struct _pam_krb5_options *options,
-		    char ***cells);
-void tokens_freelocalcells(struct _pam_krb5_stash *stash,
-			   struct _pam_krb5_options *options,
-			   char **cells);
+#include "options.h"
+#include "stash.h"
+
+/* Determine if AFS is running. */
+int minikafs_has_afs(void);
+
+/* Determine in which cell a given file resides.  Returns 0 on success. */
+int minikafs_cell_of_file(const char *file, char *cell, size_t length);
+
+/* Determine in which realm a cell exists.  We do this by obtaining the address
+ * of the fileserver which holds /afs/cellname (assuming that the root.cell
+ * volume from the cell is mounted there), converting the address to a host
+ * name, and then asking libkrb5 to tell us to which realm the host belongs. */
+int minikafs_realm_of_cell(const char *cell, char *realm, size_t length);
+
+/* Create a new PAG. */
+int minikafs_setpag(void);
+
+/* Clear our tokens. */
+int minikafs_unlog(void);
+
+/* Try to get tokens for the named cell using every available mechanism. */
+int minikafs_log(krb5_context ctx, krb5_ccache ccache,
+		 struct _pam_krb5_options *options,
+		 const char *cell, uid_t uid, int try_v5_2b);
+
 #endif

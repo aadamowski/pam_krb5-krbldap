@@ -47,6 +47,7 @@ struct _pam_krb5_options {
 	int use_second_pass;
 	int validate;
 	int v4;
+	int v4_for_afs;
 	int warn;
 
 	int ticket_lifetime;

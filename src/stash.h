@@ -46,9 +46,7 @@ struct _pam_krb5_stash {
 	CREDENTIALS v4creds;
 	char *v4file;
 #endif
-#ifdef USE_AFS
 	int afspag;
-#endif
 };
 
 struct _pam_krb5_stash *_pam_krb5_stash_get(pam_handle_t *pamh,

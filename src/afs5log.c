@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,20 +30,79 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef pam_krb5_tokens_h
-#define pam_krb5_tokens_h
+#include "../config.h"
 
-int tokens_useful(void);
-int tokens_obtain(krb5_context context,
-		  struct _pam_krb5_stash *stash,
-		  struct _pam_krb5_options *options,
-		  struct _pam_krb5_user_info *info, int newpag);
-int tokens_release(struct _pam_krb5_stash *stash,
-		   struct _pam_krb5_options *options);
-int tokens_getcells(struct _pam_krb5_stash *stash,
-		    struct _pam_krb5_options *options,
-		    char ***cells);
-void tokens_freelocalcells(struct _pam_krb5_stash *stash,
-			   struct _pam_krb5_options *options,
-			   char **cells);
-#endif
+#include <sys/types.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <krb5.h>
+
+#include "minikafs.h"
+#include "minikafs.c"
+
+int
+main(int argc, char **argv)
+{
+	char local[PATH_MAX], home[PATH_MAX];
+	const char *homedir;
+	int i, j, try_v5_2b, cells;
+	uid_t uid;
+
+	/* Iterate through every parameter, assuming they're names of cells. */
+	try_v5_2b = 0;
+	cells = 0;
+	uid = getuid();
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
+			case '5':
+				try_v5_2b = !try_v5_2b;
+				break;
+			default:
+				printf("%s: [ [-5] [cell] ] [...]\n", argv[0]);
+				exit(0);
+				break;
+			}
+		} else {
+			cells++;
+			j = minikafs_log(NULL, NULL,
+					 argv[i], uid, try_v5_2b);
+			if (j != 0) {
+				fprintf(stderr, "%s: %d\n", argv[i], j);
+			}
+		}
+	}
+
+	/* If no parameters were offered, go for the user's home directory and
+	 * the local cell, if we can determine what its name is. */
+	if (cells == 0) {
+		j = minikafs_cell_of_file("/afs", local, sizeof(local));
+		if (j == 0) {
+			j = minikafs_log(NULL, NULL,
+					 local, uid, try_v5_2b);
+			if (j != 0) {
+				fprintf(stderr, "%s: %d\n", local, j);
+			}
+		}
+		homedir = getenv("HOME");
+		if (homedir != NULL) {
+			if (strlen(homedir) > 1) {
+				j = minikafs_cell_of_file(homedir,
+							  home, sizeof(home));
+				if ((j == 0) && (strcmp(local, home) != 0)) {
+					j = minikafs_log(NULL, NULL,
+							 home, uid, try_v5_2b);
+					if (j != 0) {
+						fprintf(stderr, "%s: %d\n",
+							home, j);
+					}
+				}
+			}
+		}
+	}
+	return 0;
+}

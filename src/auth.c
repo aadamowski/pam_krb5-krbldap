@@ -201,7 +201,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      v5_error_message(stash->v5result));
 			}
 		}
-		if ((retval == PAM_SUCCESS) && (options->v4 == 1)) {
+		if ((retval == PAM_SUCCESS) &&
+		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 			v4_get_creds(ctx, pamh, stash, userinfo, options,
 				     password, &i);
 			if ((i != 0) && (options->debug)) {
@@ -261,7 +262,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		} else {
 			warn("error reading password for '%s'", user);
 		}
-		if ((retval == PAM_SUCCESS) && (options->v4 == 1)) {
+		if ((retval == PAM_SUCCESS) &&
+		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 			v4_get_creds(ctx, pamh, stash, userinfo, options,
 				     password, &i);
 			if ((i != 0) && (options->debug)) {
@@ -272,7 +274,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				v5_save(ctx, stash, userinfo, options, NULL);
 				v4_save(ctx, stash, userinfo, options,
 					-1, -1, NULL);
-				tokens_obtain(ctx, stash, options);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
 			}

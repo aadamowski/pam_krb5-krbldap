@@ -50,43 +50,44 @@
 #include KRB4_KRB_ERR_H
 #endif
 #endif
-#ifdef USE_AFS
-#include KRB4_AFS_H
-#endif
 
 #include "log.h"
+#include "minikafs.h"
 #include "options.h"
 #include "stash.h"
 #include "tokens.h"
+#include "userinfo.h"
 #include "xstr.h"
 
 #ident "$Id$"
 
-#ifdef USE_AFS
 int
 tokens_useful(void)
 {
-	if (k_hasafs()) {
+	if (minikafs_has_afs()) {
 		return 1;
 	}
 	return 0;
 }
 
 int
-tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
-	      struct _pam_krb5_options *options)
+tokens_obtain(krb5_context context,
+	      struct _pam_krb5_stash *stash,
+	      struct _pam_krb5_options *options,
+	      struct _pam_krb5_user_info *info, int newpag)
 {
 	int i, ret;
 	char cell[LINE_MAX];
 	struct stat st;
+	krb5_ccache ccache;
 
 	if (options->debug) {
 		debug("obtaining afs tokens");
 	}
 
-	/* Check if AFS is running.  If it isn't, no other calls to libkrbafs
+	/* Check if AFS is running.  If it isn't, no other calls to minikafs
 	 * will work, or even be safe to call. */
-	if (!k_hasafs()) {
+	if (!minikafs_has_afs()) {
 		if (stat("/afs", &st) == 0) {
 			warn("afs not running");
 		} else {
@@ -98,19 +99,29 @@ tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
 	}
 
 	/* Create a PAG. */
-	k_setpag();
-	stash->afspag = 1;
+	if (newpag) {
+		minikafs_setpag();
+		stash->afspag = 1;
+	}
+
+	/* Initialize the ccache. */
+	memset(&ccache, 0, sizeof(ccache));
+	if (stash && (stash->v5file != NULL) && (strlen(stash->v5file) > 0)) {
+		if (krb5_cc_resolve(context, stash->v5file, &ccache) != 0) {
+			memset(&ccache, 0, sizeof(ccache));
+		}
+	}
 
 	/* Get the name of the local cell.  The root.afs volume which is
 	 * mounted in /afs is mounted from the local cell, so we'll use that
 	 * to determine which cell is considered the local cell. */
 	memset(cell, '\0', sizeof(cell));
-	if (k_afs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) {
+	if (minikafs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) {
 		if (options->debug) {
 			debug("obtaining tokens for '%s'", cell);
 		}
-		krb_set_tkt_string(stash->v4file);
-		ret = krb_afslog(cell, options->realm);
+		ret = minikafs_log(context, ccache, options,
+				   cell, info->uid, 0);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -144,7 +155,8 @@ tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
 			debug("obtaining tokens for '%s'",
 			      options->afs_cells[i]);
 		}
-		ret = krb_afslog(options->afs_cells[i], options->realm);
+		ret = minikafs_log(context, ccache, options,
+				   options->afs_cells[i], info->uid, 0);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -158,6 +170,10 @@ tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
 		}
 	}
 
+	if (ccache != NULL) {
+		krb5_cc_close(context, ccache);
+	}
+
 	/* Suppress all errors. */
 	return PAM_SUCCESS;
 }
@@ -169,7 +185,7 @@ tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 
 	/* Check if AFS is running.  If it isn't, no other calls to libkrbafs
 	 * will work, or even be safe to call. */
-	if (!k_hasafs()) {
+	if (!minikafs_has_afs()) {
 		if (stat("/afs", &st) == 0) {
 			warn("afs not running");
 		} else {
@@ -185,34 +201,78 @@ tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 		if (options->debug) {
 			debug("releasing afs tokens");
 		}
-		k_unlog();
+		minikafs_unlog();
 		stash->afspag = 0;
 	}
 
 	/* Suppress all errors. */
 	return PAM_SUCCESS;
 }
-#else
+
 int
-tokens_obtain(krb5_context context, struct _pam_krb5_stash *stash,
-	      struct _pam_krb5_options *options)
+tokens_getcells(struct _pam_krb5_stash *stash,
+		struct _pam_krb5_options *options,
+		char ***cells)
 {
-	if (options->debug) {
-		debug("afs support not compiled");
+	int n_cells, i;
+	char cell[LINE_MAX], **list;
+
+	/* Check if AFS is running.  If it isn't, no other calls to libkrbafs
+	 * will work, or even be safe to call. */
+	if (!minikafs_has_afs()) {
+		*cells = NULL;
+		return 0;
 	}
-	return PAM_SUCCESS;
-}
-int
-tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
-{
-	if (options->debug) {
-		debug("afs support not compiled");
+
+	/* Get the name of the local cell.  The root.afs volume which is
+	 * mounted in /afs is mounted from the local cell, so we'll use that
+	 * to determine which cell is considered the local cell. */
+	memset(cell, '\0', sizeof(cell));
+	if (minikafs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) {
+		n_cells = 1;
+	} else {
+		n_cells = 0;
+		memset(cell, '\0', sizeof(cell));
 	}
-	return PAM_SUCCESS;
+
+	/* Count the number of cells which have been explicitly configured. */
+	if (options->afs_cells != NULL) {
+		for (i = 0; options->afs_cells[i] != NULL; i++) {
+			n_cells++;
+		}
+	}
+
+	/* Create the list. */
+	list = NULL;
+	if (n_cells > 0) {
+		list = malloc(sizeof(char*) * (n_cells + 1));
+		memset(list, 0, sizeof(char*) * (n_cells + 1));
+		for (i = 0; i < n_cells; i++) {
+			if ((options->afs_cells != NULL) &&
+			    (options->afs_cells[i] != NULL)) {
+				list[i] = strdup(options->afs_cells[i]);
+			} else {
+				list[i] = strdup(cell);
+			}
+		}
+	}
+
+	*cells = list;
+	return n_cells;
 }
-int
-tokens_useful(void)
+
+void
+tokens_freelocalcells(struct _pam_krb5_stash *stash,
+		      struct _pam_krb5_options *options,
+		      char **cells)
 {
-	return 0;
+	int i;
+	if (cells == NULL) {
+		return;
+	}
+	for (i = 0; (cells != NULL) && (cells[i] != NULL); i++) {
+		free(cells[i]);
+		cells[i] = NULL;
+	}
+	free(cells);
 }
-#endif

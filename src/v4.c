@@ -153,6 +153,7 @@ _pam_krb5_v4_init(krb5_context ctx,
 		  struct _pam_krb5_stash *stash,
 		  struct _pam_krb5_user_info *user,
 		  struct _pam_krb5_options *options,
+		  char *sname, char *sinstance,
 		  char *password,
 		  int *result) 
 {
@@ -223,7 +224,7 @@ _pam_krb5_v4_init(krb5_context ctx,
 	krb_set_tkt_string(tktfile);
 	/* Get the initial credentials. */
 	i = krb_get_pw_in_tkt(name, instance, realm,
-			      KRB5_TGS_NAME, realm,
+			      sname, sinstance ? sinstance : realm,
 			      life, password);
 	if (result) {
 		*result = i;
@@ -311,6 +312,10 @@ v4_save(krb5_context ctx,
 		warn("error creating unique Kerberos IV ticket file "
 		     "(shouldn't happen)");
 		return PAM_SERVICE_ERR;
+	}
+
+	if (options->debug) {
+		debug("saving v4 tickets to '%s'", tktfile);
 	}
 
 	/* Open the ticket file. */
@@ -483,7 +488,7 @@ v4_get_creds(krb5_context ctx,
 		debug("obtaining initial v4 creds");
 	}
 	i = _pam_krb5_v4_init(ctx, stash, userinfo, options,
-			      password, result);
+			      KRB5_TGS_NAME, NULL, password, result);
 	if (i == PAM_SUCCESS) {
 		if (options->debug) {
 			debug("initial v4 creds obtained");

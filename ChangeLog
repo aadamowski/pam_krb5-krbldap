@@ -1,3 +1,12 @@
+2004-03-23 nalin
+	* configure.ac: remove kafs/krbafs checks.
+	* src/Makefile.am: add EXTRA_PROGRAMS target for afs5log.
+	* src/afs5log.c: add a test program for exercising minikafs.
+	* src/minikafs.c, src/minikafs.h: add a less-portable but more-flexible
+	krbafs implementation.
+	* src/options.c(_pam_krb5_options_init): distinguish between v4 for
+	general use and v4 because we're using AFS.
+
 2004-03-16 nalin
 	* src/pam_krb5_storetmp.c: remove the file if it's not a valid mkstemp
 	pattern, even if we were passed a UID/GID.

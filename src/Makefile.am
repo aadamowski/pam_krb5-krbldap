@@ -3,6 +3,7 @@ security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = pam_krb5.5  pam_krb5.8
+EXTRA_PROGRAMS = afs5log
 man_MANS = pam_krb5.5 pam_krb5.8
 pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*'
 pam_krb5_la_SOURCES = \
@@ -18,6 +19,8 @@ pam_krb5_la_SOURCES = \
 	log.h \
 	map.c \
 	map.h \
+	minikafs.c \
+	minikafs.h \
 	options.c \
 	options.h \
 	prompter.c \
@@ -45,3 +48,7 @@ pam_krb5_la_SOURCES = \
 pam_krb5_storetmp_SOURCES = \
 	pam_krb5_storetmp.c
 pam_krb5_storetmp_LIBS =
+
+afs5log_SOURCES = \
+	afs5log.c \
+	minikafs.h

@@ -155,18 +155,22 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if ((i == PAM_SUCCESS) && tokens_useful()) {
 		uid_t uid;
 		gid_t gid;
+
 		uid = userinfo->uid;
 		gid = userinfo->gid;
 		userinfo->uid = getuid();
 		userinfo->gid = getgid();
+
 		v5_save(ctx, stash, userinfo, options, NULL);
-		v4_save(ctx, stash, userinfo, options,
-			-1, -1, NULL);
-		tokens_obtain(ctx, stash, options);
-		v4_destroy(ctx, stash, options);
-		v5_destroy(ctx, stash, options);
+		v4_save(ctx, stash, userinfo, options, -1, -1, NULL);
+		
 		userinfo->uid = uid;
 		userinfo->gid = gid;
+
+		tokens_obtain(ctx, stash, options, userinfo, 1);
+
+		v4_destroy(ctx, stash, options);
+		v5_destroy(ctx, stash, options);
 	}
 
 	/* Create credential files. */

@@ -262,7 +262,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 userinfo, options,
 					 KRB5_TGS_NAME, password,
 					 &gic_options, NULL);
-			if ((i == PAM_SUCCESS) && (options->v4 == 1)) {
+			if ((i == PAM_SUCCESS) &&
+			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 				v4_get_creds(ctx, pamh, stash, userinfo,
 					     options, password, &i);
 				if (i != 0) {

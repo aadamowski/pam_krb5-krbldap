@@ -54,25 +54,6 @@ if test x$ac_cv_header_krb5_h != xyes ; then
 	AC_MSG_ERROR(you must have Kerberos 5 development files to build $PACKAGE)
 fi
 AC_CHECK_HEADER(krb.h,,[AC_CHECK_HEADER(kerberosIV/krb.h)])
-AC_CHECK_HEADER(kafs.h,,[AC_CHECK_HEADER(krbafs.h)])
-if test x$ac_cv_header_kafs_h = xyes ; then
-	AC_CHECK_FUNC(k_hasafs,,[AC_CHECK_LIB(kafs,k_hasafs,,,$LIBS)])
-else
-	if test x$ac_cv_header_krbafs_h = xyes ; then
-		AC_CHECK_FUNC(k_hasafs,,[AC_CHECK_LIB(krbafs,k_hasafs,,,$LIBS)])
-	fi
-fi
-if test x$ac_cv_lib_krbafs_k_hasafs = xyes ; then
-	AC_DEFINE(KRB4_AFS_H,[<krbafs.h>],[Define to the name of your krbafs.h header.])
-	AC_DEFINE(USE_AFS,1,[Define to use afslog() and friends.])
-else
-	if test x$ac_cv_lib_kafs_k_hasafs = xyes ; then
-		AC_DEFINE(KRB4_AFS_H,[<kafs.h>],[Define to the name of your krbafs.h header.])
-		AC_DEFINE(USE_AFS,1,[Define to use afslog() and friends.])
-	else
-		AC_MSG_WARN([no AFS functionality available])
-	fi
-fi
 if test x$ac_cv_header_krb_h = xyes ; then
 	AC_DEFINE(USE_KRB4,1,[Define if you have Kerberos IV as well.])
 	AC_DEFINE(KRB4_DES_H,[<des.h>],[Define to the name of your Kerberos IV des.h header.])
