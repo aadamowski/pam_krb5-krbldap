@@ -1,3 +1,7 @@
+2004-09-02 nalin
+	* src/minikafs.c: add copyright statement because the ioctl patch is
+	too much like heimdal's implementation.
+
 2004-08-31 nalin
 	* src/shmem.c,src/shmem.h: add, several functions for handling shared
 	memory.
@@ -41,14 +45,14 @@
 	PAM_CONV_ERR if the application didn't define a conversation function.
 
 2004-08-26 nalin
-	* src/minikafs.c(minikafs_ioctlcall): add, from Alexander Bostrom
+	* src/minikafs.c(minikafs_ioctlcall): add, from Alexander Boström
 	(#127529).
 	* src/minikafs.c(minikafs_call): add, calling afs_ioctlcall or
-	afs_syscall as appropriate, from Alexander Bostrom (#127529).  The
+	afs_syscall as appropriate, from Alexander Boström (#127529).  The
 	setpag and pioctl functions now call this function instead of our
 	afs_syscall.
 	* src/minikafs.c(minikafs_has_afs): check for ioctl-based interface to
-	Arla or OpenAFS for Linux 2.6, from Alexander Bostrom (#127529).
+	Arla or OpenAFS for Linux 2.6, from Alexander Boström (#127529).
 
 2004-08-26 nalin
 	* src/password.c(pam_sm_chauthtok): prompt for the user's current
