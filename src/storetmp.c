@@ -38,6 +38,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,7 +168,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 			_exit(-1);
 		}
 		if (uid == 0) {
-			setgrouplist(0, NULL);
+			setgroups(0, NULL);
 		}
 		if (gid != getgid()) {
 			setregid(gid, gid);
