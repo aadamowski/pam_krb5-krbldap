@@ -482,6 +482,8 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 		if(ret == PAM_SUCCESS) {
 			prompts[i].reply->length = strlen(p);
 			prompts[i].reply->data = strdup(p);
+			if(prompts[i].hidden)
+				pam_set_item(data, PAM_AUTHTOK, strdup(p));
 		} else {
 			ret = KRB5_LIBOS_CANTREADPWD;
 			break;

@@ -40,6 +40,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %changelog
 * Mon Mar 20 2000 Nalin Dahyabhai <nalin@redhat.com>
 - add proper copyright statements
+- save password for modules later in the stack
 
 * Fri Mar 03 2000 Nalin Dahyabhai <nalin@redhat.com>
 - clean up prompter
