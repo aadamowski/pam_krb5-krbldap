@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 1.40
-Release: 2
+Release: 3
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -39,6 +39,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu Jul 12 2001 Nalin Dahyabhai <nalin@redhat.com>
+- add info about accessing the CVS repository to the README
+
 * Wed Jul 11 2001 Nalin Dahyabhai <nalin@redhat.com>
 - buildprereq the krbafs-devel package
 
