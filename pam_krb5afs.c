@@ -63,6 +63,9 @@
 #ifdef HAVE_CTYPE_H
 #include <ctype.h>
 #endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #ifdef HAVE_SYS_SYSLOG_H
 #include <sys/syslog.h>
 #endif
@@ -306,9 +309,10 @@ xstrnlen(const char *str, int max_len)
 	return -1;
 }
 
-/* Attempt to open a pre-existing file in such a way that we can write to it. */
+/* Attempt to open a possibly-pre-existing file in such a way that we can
+ * write to it safely. */
 static int
-safe_create(const char *filename)
+safe_create(struct config *config, const char *filename)
 {
 	struct stat ost, nst;
 	int fd = -1, rc = -1, preexisting;
@@ -323,14 +327,14 @@ safe_create(const char *filename)
 	}
 
 	if(fd == -1) {
-		NOTICE("error opening %s: %s",
+		NOTICE("error opening `%s': %s",
 		       filename, strerror(errno));
 		return -1;
 	}
 
 	rc = fstat(fd, &nst);
 	if(rc == -1) {
-		NOTICE("error getting information about %s: %s",
+		NOTICE("error getting information about `%s': %s",
 		       filename, strerror(errno));
 		close(fd);
 		return -1;
@@ -339,7 +343,7 @@ safe_create(const char *filename)
 	if(preexisting) {
 		if((ost.st_dev != nst.st_dev) ||
 		   (ost.st_ino != nst.st_ino)) {
-			NOTICE("sanity test failed for %s: %s",
+			NOTICE("sanity test failed for `%s': %s",
 			       filename, strerror(errno));
 			close(fd);
 			return -1;
@@ -347,13 +351,13 @@ safe_create(const char *filename)
 	}
 
 	if(!S_ISREG(nst.st_mode)) {
-		NOTICE("%s is not a regular file", filename);
+		NOTICE("`%s' is not a regular file", filename);
 		close(fd);
 		return -1;
 	}
 
 	if(nst.st_nlink > 1) {
-		NOTICE("%s has too many hard links", filename);
+		NOTICE("`%s' has too many hard links", filename);
 		close(fd);
 		return -1;
 	}
@@ -367,14 +371,14 @@ safe_create(const char *filename)
  * temporary file we supply and create a new one, so keeping a file
  * handle around and fchown()ing it won't work. */
 static int
-safe_fixup(const char *filename, struct stash *stash)
+safe_fixup(struct config *config, const char *filename, struct stash *stash)
 {
 	struct stat ost, nst;
 	int rc, fd;
 
 	rc = lstat(filename, &ost);
 	if(rc == -1) {
-		NOTICE("error getting information about %s: %s",
+		NOTICE("error getting information about `%s': %s",
 		       filename, strerror(errno));
 		return PAM_SYSTEM_ERR;
 	}
@@ -382,13 +386,13 @@ safe_fixup(const char *filename, struct stash *stash)
 	fd = open(filename, O_RDWR);
 
 	if(fd == -1) {
-		NOTICE("error opening %s: %s", filename, strerror(errno));
+		NOTICE("error opening `%s': %s", filename, strerror(errno));
 		return PAM_SYSTEM_ERR;
 	}
 
 	rc = fstat(fd, &nst);
 	if(rc == -1) {
-		NOTICE("error getting information about %s: %s",
+		NOTICE("error getting information about `%s': %s",
 		       filename, strerror(errno));
 		close(fd);
 		return PAM_SYSTEM_ERR;
@@ -396,35 +400,39 @@ safe_fixup(const char *filename, struct stash *stash)
 
 	if((ost.st_dev != nst.st_dev) ||
 	   (ost.st_ino != nst.st_ino)) {
-		NOTICE("sanity test failed for %s: %s",
+		NOTICE("sanity test failed for `%s': %s",
 		       filename, strerror(errno));
 		close(fd);
 		return PAM_SYSTEM_ERR;
 	}
 
 	if(!S_ISREG(nst.st_mode)) {
-		NOTICE("%s is not a regular file", filename);
+		NOTICE("`%s' is not a regular file", filename);
 		close(fd);
 		return PAM_SYSTEM_ERR;
 	}
 
 	if(nst.st_nlink > 1) {
-		NOTICE("%s has too many hard links", filename);
+		NOTICE("`%s' has too many hard links", filename);
 		close(fd);
 		return PAM_SYSTEM_ERR;
 	}
 
+	DEBUG("setting ownership on `%s' to %d/%d", filename,
+	      stash->uid, stash->gid);
 	rc = fchown(fd, stash->uid, stash->gid);
 	if((rc == -1) && (geteuid() == 0)) {
-		CRIT("%s setting owner of ccache",
+		CRIT("`%s' setting owner of ccache",
 		     strerror(errno));
 		close(fd);
 		return PAM_SYSTEM_ERR;
 	}
 
+	DEBUG("setting permissions on `%s' to %d/%d", filename,
+	      S_IRUSR | S_IWUSR);
 	rc = fchmod(fd, S_IRUSR | S_IWUSR);
 	if(rc == -1) {
-		CRIT("%s setting mode of ticket file",
+		CRIT("`%s' setting mode of ticket file",
 		     strerror(errno));
 		close(fd);
 		return PAM_SYSTEM_ERR;
@@ -580,7 +588,7 @@ get_config(krb5_context context, int argc, const char **argv)
 			return NULL;
 		}
 		krb5_os_hostaddr(context, foo, &hostlist);
-		DEBUG("also getting ticket for host %s", foo);
+		DEBUG("also getting ticket for host `%s'", foo);
 		addresses[i + j] = hostlist[0];
 	}
 	krb5_get_init_creds_opt_set_address_list(&ret->creds_opt, addresses);
@@ -617,7 +625,7 @@ get_config(krb5_context context, int argc, const char **argv)
 			free(ret);
 			return NULL;
 		}
-		DEBUG("will afslog to cell %s", ret->cell_list[i]);
+		DEBUG("will afslog to cell `%s'", ret->cell_list[i]);
 		if(ret->krb4_convert != TRUE) {
 			ret->krb4_convert = TRUE;
 			DEBUG("krb4_convert forced on");
@@ -1244,6 +1252,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 				/* Timestamp. */
 				if(l >= 4) {
+					memcpy(&stash->v4_creds.issue_date,
+					       p, 4);
 					/* We can't tell if we need to byte-swap
 					 * or not, so just make up an issue date
 					 * that looks reasonable. */
@@ -1265,6 +1275,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				if(l != 0) {
 					INFO("Got %d extra bytes in v4 TGT",
 					     ciphertext->length - l);
+					DEBUG("Extra data = %c%c%c%c%c%c%c%c",
+					      p[0], p[1], p[2], p[3],
+					      p[4], p[5], p[6], p[7]);
+					DEBUG("Extra data = %c%c%c%c%c%c%c%c",
+					      p[9], p[10], p[11], p[12],
+					      p[13], p[14], p[15], p[16]);
 				}
 			}
 		}
@@ -1377,7 +1393,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						sizeof(stash->v5_path) - 1);
 				}
 			} else {
-				tmpfd = safe_create(stash->v5_path);
+				tmpfd = safe_create(config, stash->v5_path);
 			}
 
 			if(tmpfd == -1) {
@@ -1460,7 +1476,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 					   misconfigured, or something weirder
 					   still happened: we succeeded. */
 					CRIT("v4 ticket conversion failed for "
-					     "%s", user);
+					     "%s: %d (%s)", user,
+					     krc, error_message(krc));
+					krc = KRB5_SUCCESS;
 				}
 			}
 		}
@@ -1480,7 +1498,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						sizeof(stash->v4_path) - 1);
 				}
 			} else {
-				tmpfd = safe_create(stash->v4_path);
+				tmpfd = safe_create(config, stash->v4_path);
 			}
 
 			if(tmpfd == -1) {
@@ -1492,7 +1510,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				fchown(tmpfd, getuid(), getgid());
 			}
 		}
-		if(RC_OK && config->krb4_convert) {
+		if(RC_OK && strlen(stash->v4_path)) {
 			int save = TRUE;
 
 			DEBUG("opening ticket file `%s'", stash->v4_path);
@@ -1574,14 +1592,15 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Fix permissions on this file so that the user logging in will
 	 * be able to use it. */
-	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) && RC_OK) {
-		prc = safe_fixup(stash->v5_path, stash);
+	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
+	   (strlen(stash->v5_path) > 0) && RC_OK) {
+		prc = safe_fixup(config, stash->v5_path, stash);
 	}
 
 #ifdef HAVE_LIBKRB4
 	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
-	   config->krb4_convert && RC_OK) {
-		prc = safe_fixup(stash->v4_path, stash);
+	   (strlen(stash->v4_path) > 0) && RC_OK) {
+		prc = safe_fixup(config, stash->v4_path, stash);
 	}
 #endif
 

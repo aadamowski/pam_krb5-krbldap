@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.28
+Version: 1.29
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -37,19 +37,24 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %{_mandir}/man8/*
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
+# $Id$
 %changelog
-* Thu Feb 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+* Mon Mar 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't fail to fixup the krb5 ccache if something goes wrong obtaining
+  v4 credentials or creating a krb4 ticket file (#33262)
+
+* Thu Mar 22 2001 Nalin Dahyabhai <nalin@redhat.com>
 - fixup the man page
 - log return code from k_setpag() when debugging
 - create credentials and get tokens when setcred is called for REINITIALIZE
 
-* Wed Feb 21 2001 Nalin Dahyabhai <nalin@redhat.com>
+* Wed Mar 21 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't twiddle ownerships until after we get AFS tokens
 - use the current time instead of the issue time when storing v4 creds, since
   we don't know the issuing host's byte order
 - depend on a PAM development header again instead of pam-devel
 
-* Tue Feb 20 2001 Nalin Dahyabhai <nalin@redhat.com>
+* Tue Mar 20 2001 Nalin Dahyabhai <nalin@redhat.com>
 - add a separate config file parser for compatibility with settings that
   predate the appdefault API
 - use a version script under Linux to avoid polluting the global namespace
@@ -57,7 +62,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 - need to close the file when we succeed in fixing permissions (noted by
   jlkatz@eos.ncsu.edu)
 
-* Mon Feb 19 2001 Nalin Dahyabhai <nalin@redhat.com>
+* Mon Mar 19 2001 Nalin Dahyabhai <nalin@redhat.com>
 - use the appdefault API to read krb5.conf if available
 - create v4 tickets in such a way as to allow 1.2.2 to not think there's
   something fishy going on
