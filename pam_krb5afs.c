@@ -638,7 +638,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	}
 
 	/* Now try to get a TGT using the password, prompting the user if it
-	   fails and we're allowed ot prompt. */
+	   fails and we're allowed to prompt. */
 	if(ret == KRB5_SUCCESS) {
 		int done = 0;
 

@@ -38,8 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
-* Tue Oct 10 2000 Nalin Dahyabhai <nalin@redhat.com>
+* Wed Oct 18 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix prompting when the module's first in the stack
+- fix a typo in a comment
 
 * Mon Oct  2 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix "use_authtok" logic when password was not set by previous module
