@@ -14,7 +14,7 @@ Linux-PAM and Kerberos 5. This module supports password checking, ticket
 creation, and optional TGT verification and conversion to Kerberos IV tickets.
 
 %prep
-%setup -q -n pam_krb5
+%setup -q
 
 %build
 %configure --with-krb5=/usr/kerberos
