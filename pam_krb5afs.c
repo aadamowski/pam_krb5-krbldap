@@ -794,6 +794,13 @@ get_config(krb5_context context, int argc, const char **argv)
 	}
 	krb5_get_init_creds_opt_set_address_list(&ret->creds_opt, addresses);
 
+	/* Whether to get krb4 tickets using either krb524_convert_creds() or
+	 * a v4 TGT request.  We have to do this here so that we can override
+	 * this option if we're using AFS. */
+	appdefault_boolean(context, "krb4_convert", argc, argv,
+			   FALSE, &ret->krb4_convert);
+	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
+
 #ifdef AFS
 	/* Cells to get tokens for. */
 	appdefault_string(context, "afs_cells", argc, argv, "", &cells);
@@ -851,12 +858,6 @@ get_config(krb5_context context, int argc, const char **argv)
 	appdefault_string(context, "keytab", argc, argv,
 			  DEFAULT_KEYTAB, &ret->keytab);
 	DEBUG("keytab file name set to `%s'", ret->keytab);
-
-	/* Whether to get krb4 tickets using either krb524_convert_creds() or
-	 * a v4 TGT request. */
-	appdefault_boolean(context, "krb4_convert", argc, argv,
-			   FALSE, &ret->krb4_convert);
-	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
 
 	/* Support for changing timeouts. This plays with some internal library
 	 * stuff which will apparently "go away soon".  When it does, it'll

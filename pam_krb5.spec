@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.53
+Version: 1.54
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,10 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed Mar 20 2002 Nalin Dahyabhai <nalin@redhat.com> 1.54-1
+- reorder configuration checks so that setting afs_cells will properly
+  force krb4_convert on
+
 * Wed Mar 20 2002 Nalin Dahyabhai <nalin@redhat.com> 1.53-1
 - fix what's hopefully the last parser bug
 
