@@ -55,12 +55,6 @@
 #include <krb5.h>
 #endif
 
-#ifdef  PAM_KRB5_KRBAFS_DYNAMIC
-#ifndef PAM_KRB5_KRBAFS
-#define PAM_KRB5_KRBAFS
-#endif
-#endif
-
 #ifdef  PAM_KRB5_KRBAFS
 #ifndef PAM_KRB5_KRB4
 #define PAM_KRB5_KRB4
@@ -74,21 +68,8 @@
 #endif
 
 #ifdef PAM_KRB5_KRBAFS
-#ifdef PAM_KRB5_KRBAFS_DYNAMIC
-
-/******************************************************************************/
-
-/* Prototypes grabbed from krbafs.h */
-void *libkrbafs_ptr = NULL;
-int dummy_k_hasafs(void) { return 0; }
-int(*k_hasafs)(void) = dummy_k_hasafs;
-int(*krb_afslog)(const char *cell, const char *realm) = NULL;
-int(*k_unlog)(void) = NULL;
-int(*k_setpag)(void) = NULL;
-#else
 /* Link with the krbafs library. */
 #include <krbafs.h>
-#endif
 #endif
 
 /******************************************************************************/
@@ -173,11 +154,13 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 /* Module-specific flags. */
 static struct {
-	unsigned char debug, pag, try_first_pass, try_second_pass, use_authtok;
+	unsigned char debug, pag,
+		 try_first_pass, try_second_pass,
+		 use_mapped_pass, use_authtok;
 	krb5_flags kdc_options;
 	char **cellnames;
 	int cells;
-} globals = {0, 0, 0, 0, 0, 0, NULL, 0};
+} globals = {0, 0, 0, 0, 0, 0, 0, NULL, 0};
 
 /******************************************************************************/
 
@@ -204,11 +187,16 @@ static int check_flags(int argc, const char **argv)
 	}
 	for(i = 0; i < argc; i++) {
 		D(("Processing flag \"%s\".", argv[i]));
+		/* The debug flag is not a cell name! */
+		if(strcmp(argv[i], "debug") == 0) {
+			continue;
+		}
 		/* Required arguments that we don't use but need to recognize.*/
 		if(strcmp(argv[i], "no_warn") == 0) {
 			continue;
 		}
 		if(strcmp(argv[i], "use_mapped_pass") == 0) {
+			globals.use_mapped_pass = 1;
 			continue;
 		}
 		if(strcmp(argv[i], "try_first_pass") == 0) {
@@ -252,7 +240,7 @@ static int check_flags(int argc, const char **argv)
 		globals.cells++;
 		globals.cellnames = realloc(globals.cellnames,
 					    globals.cells * sizeof(char*));
-		if(globals.cellnames) {
+		if((globals.cells > 0) && (globals.cellnames != NULL)) {
 			/* Save the cell name. */
 			D(("Processing cell \"%s\".", argv[i]));
 			if(globals.debug)
@@ -284,11 +272,11 @@ static void cleanup(pam_handle_t *pamh, void *data, int error_status)
 static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
 			  const char *msg, const char **out)
 {
-	struct pam_message prompt_message;
+	const struct pam_message prompt_message = {msg_style, msg};
 	struct pam_response *responses;
 	struct pam_conv *converse = NULL;
 	int ret = PAM_SUCCESS;
-	struct pam_message* promptlist[] = {
+	const struct pam_message* promptlist[] = {
 		&prompt_message,
 		NULL
 	};
@@ -304,8 +292,6 @@ static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
 
 	/* Now actually prompt the user for that information. */
 	if(ret == PAM_SUCCESS) {
-		prompt_message.msg_style = msg_style;
-		prompt_message.msg = msg;
 		ret = converse->conv(1, promptlist, &responses,
 				     converse->appdata_ptr);
 		if(ret == PAM_SUCCESS) {
@@ -363,18 +349,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		}
 	}
 
-	/* Get the conversation function, if the application supplied one. */
-	D(("Retrieving conversation function pointer."));
-	if(ret == KRB5_SUCCESS) {
-		pam_get_item(pamh, PAM_CONV, &converse);
-		if(ret != KRB5_SUCCESS) {
-			D(("Error retrieving conversation function ptr."));
-			if(globals.debug)
-			syslog(LOG_DEBUG, MODULE_NAME
-			       ": no conversation function supplied by app");
-		}
-	}
-
 	/* Get the user's name, by any means possible. */
 	D(("About to try to determine who the user is."));
 	if(ret == KRB5_SUCCESS) {
@@ -383,19 +357,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 		/* If there was an error, use the conversation function. */
 		if(((ret != PAM_SUCCESS) || (!user) || (strlen(user) == 0)) && converse) {
-			const struct pam_message prompt_message[] = {
-				{ PAM_PROMPT_ECHO_ON, "login: " },
-			};
-			const struct pam_message* promptlist[] = {
-				&prompt_message[0], NULL
-			};
-			struct pam_response *responses = NULL;
-			D(("About to ask the user who she is."));
-			ret = converse->conv(1, promptlist, &responses,
-					     converse->appdata_ptr);
+			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_ON,
+					     "login: ", &user);
 			if(ret == PAM_SUCCESS) {
-				ret = pam_set_item(pamh, PAM_USER,
-						   strdup(responses[0].resp));
+				ret = pam_set_item(pamh, PAM_USER, user);
 			}
 		}
 
@@ -502,6 +467,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 				done = 1;
 			}
 		}
+
 		/* Try the second password if the first one failed or was
 		   otherwise bad. */
 		if(globals.try_second_pass && second_pass && !done) {
@@ -598,7 +564,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 }
 #endif
 
-	/* Retrieve a password that may already have been entered. */
 #ifdef PAM_KRB5_KRB4
 	/* Get Kerberos 4 credentials via the krb524 service. */
 	if(ret == KRB5_SUCCESS) {
@@ -622,7 +587,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			       "succeeded for %s", user);
 		} else {
 			/* This shouldn't happen.  Either krb524d isn't running
-			   or either the KDC or the module is misconfigured. */
+			   on the KDC or the module is misconfigured. */
 			D(("v4 ticket conversion failed for %s: %s (shouldn't "
 			   "happen)", user, error_message(ret)));
 			syslog(LOG_CRIT, MODULE_NAME ": v4 ticket conversion "
@@ -689,7 +654,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	char v4_path[PATH_MAX];
 #endif
 	char v5_path[PATH_MAX];
-	char *user = NULL;
+	const char *user = NULL;
 	int ret = KRB5_SUCCESS;
 
 	D(("... called."));
@@ -755,7 +720,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": opening ticket file \"%s\"", v4_path);
-			krb_set_tkt_string(v4_path);
+			krb_set_tkt_string(strdup(v4_path));
 			ret = in_tkt(stash->v4_creds.pname,
 				     stash->v4_creds.pinst);
 			if(ret != KRB5_SUCCESS) {
@@ -825,51 +790,12 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			D(("Krb5 credential retrieval failed for %s.", user));
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
-			       ": credential retrieval failed for %s, "
-			       "user is probably local", user);
+			       ": Kerberos 5 credential retrieval failed for "
+			       "%s, user is probably local", user);
 			stash = NULL;
 			ret = PAM_CRED_UNAVAIL;
 		}
 #ifdef PAM_KRB5_KRBAFS
-#ifdef PAM_KRB5_KRBAFS_DYNAMIC
-		if(ret == KRB5_SUCCESS) {
-			/* Try the default name. */
-			libkrbafs_ptr = dlopen("libkrbafs.so", RTLD_NOW);
-			/* Try alternates. */
-			if(libkrbafs_ptr == NULL) {
-				libkrbafs_ptr = dlopen("libkafs.so", RTLD_NOW);
-			}
-			if(libkrbafs_ptr == NULL) {
-				libkrbafs_ptr = dlopen("libkrbafs.so.0.9.8", RTLD_NOW);
-			}
-			if(libkrbafs_ptr == NULL) {
-				libkrbafs_ptr = dlopen("libkafs.so.1.0.0", RTLD_NOW);
-			}
-			if(libkrbafs_ptr == NULL) {
-				libkrbafs_ptr = dlopen("libkafs.so.0.9.9", RTLD_NOW);
-			}
-			if(libkrbafs_ptr == NULL) {
-				libkrbafs_ptr = dlopen("libkafs.so.0.9.8", RTLD_NOW);
-			}
-			/* Get the symbol addresses we need. */
-			if(libkrbafs_ptr != NULL) {
-				k_hasafs = dlsym(libkrbafs_ptr, "k_hasafs");
-				krb_afslog = dlsym(libkrbafs_ptr, "krb_afslog");
-				k_unlog = dlsym(libkrbafs_ptr, "k_unlog");
-				k_setpag = dlsym(libkrbafs_ptr, "k_setpag");
-			}
-			/* All have to succeed for us to continue if we need
-			   to get AFS tokens. */
-			if((libkrbafs_ptr == NULL) && (globals.cells > 0)) {
-				D(("Cells configured but couldn't load "
-				   "shared library."));
-				syslog(LOG_CRIT, MODULE_NAME
-				       ": cells specified but couldn't load "
-				       "shared library");
-				ret = PAM_SYSTEM_ERR;
-			}
-		}
-#endif
 		/* Use the new tickets to create tokens. */
 		if((ret == KRB5_SUCCESS) && k_hasafs() && (stash != NULL)) {
 			if(globals.cells > 0) {
@@ -1050,19 +976,12 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Read the old password and save it. */
 	if(!globals.use_authtok&&(old_authtok == NULL)&&(ret == PAM_SUCCESS)) {
-		const struct pam_message prompt_message[] = {
-			{ PAM_PROMPT_ECHO_OFF, "Enter password: " },
-		};
-		const struct pam_message* promptlist[] = {
-			&prompt_message[0], NULL
-		};
-		struct pam_response *responses = NULL;
 		D(("About to ask the user for current password."));
-		ret = converse->conv(1, promptlist, &responses,
-				     converse->appdata_ptr);
+		ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+				     "Enter password: ", &second_pass);
 		if(ret == PAM_SUCCESS) {
 			ret = pam_set_item(pamh, PAM_OLDAUTHTOK,
-					   strdup(responses[0].resp));
+					   strdup(second_pass));
 		} else {
 			syslog(LOG_INFO, MODULE_NAME
 			       ": %s reading current password for %s",
