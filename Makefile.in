@@ -1,6 +1,6 @@
 # shamelessly stolen from the usermode makefile
 VERSION=$(shell awk '/^Version:/ { print $$2 }' < pam_krb5.spec)
-REVISION=$(shell awk '/^Revision:/ { print $$2 }' < pam_krb5.spec)
+REVISION=$(shell awk '/^Release:/ { print $$2 }' < pam_krb5.spec)
 CVSTAG = pk$(subst .,-,$(VERSION))$(subst .,-,$(REVISION))
 
 KRB5=@KRB5@
