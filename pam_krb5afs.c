@@ -245,6 +245,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	if(!check_flags(argc, argv)) {
 		ret = PAM_BUF_ERR;
 	}
+	if(globals.debug)
+	syslog(LOG_DEBUG,MODULE_NAME ": pam_sm_authenticate called");
 
 	/* Initialize Kerberos and grab some memory for the creds structures. */
 	if(ret == KRB5_SUCCESS) {
@@ -285,7 +287,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		ret = pam_get_user(pamh, &user, "login:");
 
 		/* If there was an error, use the conversation function. */
-		if(((ret != PAM_SUCCESS) || (!user)) && converse) {
+		if(((ret != PAM_SUCCESS) || (!user) || (strlen(user) == 0)) && converse) {
 			const struct pam_message prompt_message[] = {
 				{ PAM_PROMPT_ECHO_ON, "login: " },
 			};
@@ -312,12 +314,15 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		}
 	}
 	D(("User = \"%s\".", user));
+	if(globals.debug)
+	syslog(LOG_DEBUG, MODULE_NAME ": user is \"%s\"", user);
 
 	/* Try to get and save the user's UID. */
 	pwd = getpwnam(user);
-	if(pwd) {
+	if(pwd != NULL) {
 		stash->uid = pwd->pw_uid;
 		stash->gid = pwd->pw_gid;
+		if(globals.debug)
 		syslog(LOG_DEBUG, MODULE_NAME ": %s has uid %d, gid %d",
 		       user, stash->uid, stash->gid);
 	} else {
@@ -401,7 +406,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							    0,
 							    &stash->v5_creds,
 							    NULL);
-			D(("Get_in_tkt1 returned \"%s\".", error_message(ret)));
+			D(("get_in_tkt1 returned \"%s\".", error_message(ret)));
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_int_tkt returned %s", error_message(ret));
@@ -417,25 +422,22 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							    NULL,
 							    NULL,
 							    KRB5_PADATA_NONE,
-							    first_pass,
+							    second_pass,
 							    0,
 							    &stash->v5_creds,
 							    NULL);
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_int_tkt returned %s", error_message(ret));
-			D(("Get_in_tkt2 returned \"%s\".", error_message(ret)));
+			D(("get_in_tkt2 returned \"%s\".", error_message(ret)));
 			if(ret == KRB5_SUCCESS) {
 				/* Save the good authtok in case another module
 				   needs it. */
 				pam_set_item(pamh, PAM_AUTHTOK,
-					     strdup(first_pass));
+					     strdup(second_pass));
 				done = 1;
 			}
 		}
-		if(globals.debug)
-		syslog(LOG_DEBUG, MODULE_NAME
-		       ": get_int_tkt returned %s", error_message(ret));
 		if(ret != KRB5_SUCCESS) {
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_in_tkt failed (\"%s\"), failing auth",
@@ -443,6 +445,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			ret = PAM_AUTH_ERR;
 		}
 	}
+	D(("reached"));
 
 	if(ret == KRB5_SUCCESS) {
 		/* If everything worked, then we're outta here. */
@@ -452,8 +455,9 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	} else {
 		D(("Authentication failed."));
 		syslog(LOG_NOTICE, MODULE_NAME
-		       ": authentication(2) fails for %s", user);
+		       ": authentication fails for %s", user);
 	}
+	D(("reached"));
 
 #ifdef PAM_KRB5_KRB4
 	/* Get Kerberos 4 credentials via the krb524 service. */
@@ -484,6 +488,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			       "failed for %s (shouldn't happen)", user);
 		}
 	}
+	D(("reached"));
 #endif /* PAM_KRB5_KRB4 */
 
 	/* Save all of the Kerberos credentials as module-specific data. */
@@ -494,10 +499,12 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		       user);
 		D(("Creds saved."));
 	}
+	D(("reached"));
 
 	/* Catch any Kerberos error codes that fall through cracks and
 	   convert them to appropriate PAM error codes. */
 	switch(ret) {
+		case KRB5_SUCCESS:
 		case KRB5KDC_ERR_NONE: {
 			break;
 		}
@@ -515,11 +522,14 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			ret = PAM_AUTH_ERR;
 		}
 	}
+	D(("reached"));
 
 	/* Done with Kerberos. */
 	krb5_free_context(context);
 
 	D(("Returning %d.", ret));
+	if(globals.debug)
+	syslog(LOG_DEBUG,MODULE_NAME ": pam_sm_authenticate returning %d", ret);
 	return ret;
 }
 
@@ -546,7 +556,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Retrieve information about the user. */
 	if(ret == PAM_SUCCESS) {
-		ret = pam_get_user(pamh, "login:", &user);
+		ret = pam_get_user(pamh, &user, "login:");
 	}
 
 	/* Create a Kerberos context. */
@@ -971,6 +981,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Catch a few Kerberos error codes and convert to PAM equivalents. */
 	switch(ret) {
+		case KRB5_SUCCESS:
 		case KRB5KDC_ERR_NONE: {
 			break;
 		}
