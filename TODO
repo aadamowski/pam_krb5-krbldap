@@ -3,5 +3,6 @@
   RFC, but it's something.
 * Add support for account expiration.  (Isn't krb5_get_init_creds_password
   already taking care of this, though?)
-* Use krb5_verify_init_creds to validate credentials instead of our own
-  function, when krb5_verify_init_creds is available.
+* Make use of krb5_verify_init_creds() contingent on an autoconf check,
+  instead of hard-coding our preference of it over the internal validate_tgt()
+  function (for older versions of krb5).

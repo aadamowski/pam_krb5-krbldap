@@ -25,9 +25,11 @@ controls whether or not credentials are forwardable.  If not specified, they
 are.
 .IP krb4_convert
 controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
-KC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
+KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
 them.  Unless you've converted \fIeverything\fR on your network over to use
-Kerberos 5, you'll want to leave this set to \fBtrue\fR.
+Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
+requires valid Kerberos IV configuration data to be present in
+\fB/etc/krb.conf\fP and \fB/etc/krb.realms\fP.
 .IP hosts
 specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that

@@ -55,6 +55,21 @@ specifies the directory to place credential cache files in.  The default is
 .IP banner
 specifies what kind of password the module claims to be changing when called
 to change passwords.  The default is \fBKerberos 5\fP.
+.IP max_timeout
+specifies the maximum amount of time to spend in attempting to get a reply
+from the \fIKDC\fRs, in seconds. This in effect determines the amount of
+time before PAM tries the next authentication scheme, if the network is
+not available.
+.IP timeout_shift
+specifies the number of bits left to shift after each timeout, in
+implementing the incremental backoff in talking to the KDCs
+.IP initial_timemout
+specifies the number of seconds to wait for the first KDC to respond, before
+attempting incremental backoff.
+.IP addressless
+disables the checking of the address in the ticket. Allows the ticket to be
+used from behind NAT firewalls, or on machines whose IP address changes
+regularly.
 
 .SH EXAMPLE
 

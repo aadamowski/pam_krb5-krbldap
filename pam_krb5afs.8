@@ -49,7 +49,9 @@ less-easy-to-guess passwords.
 tells pam_krb5afs.so to not check if a user exists on the local system, and
 to create ccache files owned by the current process's UID.  This is useful
 for situations where a non-privileged server process needs to use Kerberized
-services on behalf of remote users who may not have local access.
+services on behalf of remote users who may not have local access.  Note that
+such a server should have an encrypted connection with its client in order
+to avoid allowing the user's password to be eavesdropped.
 .IP tokens
 tells pam_krb5afs.so to get AFS tokens for the user immediately if the password
 check succeeds.  This is necessary for some programs that never open sessions or
