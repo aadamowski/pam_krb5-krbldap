@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 1
-Release: 19
+Release: 20
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Mon Oct  2 2000 Nalin Dahyabhai <nalin@redhat.com>
+- fix "use_authtok" logic when password was not set by previous module
+
 * Sun Aug 27 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix errors with multiple addresses (#16847)
 

@@ -583,6 +583,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 		/* If there was an error, use the conversation function. */
 		if((user == NULL) || (strlen(user) == 0)) {
+			DEBUG("prompting for login");
 			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_ON,
 					     "login: ", &user);
 			if(ret == PAM_SUCCESS) {
@@ -1354,6 +1355,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	/* We have two cases we have to deal with.  The first: check auth. */
 	if((ret == KRB5_SUCCESS) && (flags & PAM_PRELIM_CHECK)) {
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
+			DEBUG("prompting for current password");
 			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     current_pass,
 					     &old_authtok);
@@ -1390,6 +1392,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		DEBUG("attempting to change password for %s", user);
 
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
+			DEBUG("prompting for current password");
 			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     current_pass,
 					     &old_authtok);
@@ -1401,13 +1404,15 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 		/* DEBUG("old_authtok = \"%s\"", old_authtok); */
 
-		if((authtok == NULL) || (strlen(authtok) == 0) ||
+		if(((authtok == NULL) || (strlen(authtok) == 0)) &&
 		   !config->use_authtok) {
 			const char *authtok2 = NULL;
 
+			DEBUG("prompting for new password (1)");
 			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					     new_pass, &authtok);
 			if(ret == KRB5_SUCCESS) {
+				DEBUG("prompting for new password (2)");
 				ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 						   retype_pass, &authtok2);
 				if(ret != PAM_SUCCESS) {
