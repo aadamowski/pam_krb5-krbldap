@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Thu Apr 20 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Chris Chiappa's modifications for customizing the ccache directory
+
 * Wed Apr 19 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Mark Dawson's fix for krb4_convert not being forced on when afs_cells defined
 

@@ -139,6 +139,7 @@
 #define PROFILE_NAME "pam"
 #define DEFAULT_CELLS "eos.ncsu.edu unity.ncsu.edu bp.ncsu.edu"
 #define DEFAULT_LIFE 36000
+#define DEFAULT_TKT_DIR "/tmp"
 
 #ifndef TRUE
 #define FALSE 0
@@ -194,6 +195,7 @@ struct config {
 	char **cell_list;
 	char *realm;
 	char *required_tgs;
+	char *ccache_dir;
 };
 
 static void dEBUG(const char *x,...) {
@@ -341,6 +343,12 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 		addresses[i + j] = hostlist[0];
 	}
 	krb5_get_init_creds_opt_set_address_list(&ret->creds_opt, addresses);
+
+	/* Which directory to put ticket files in. */
+	profile_get_string(profile, PROFILE_NAME, "ccache_dir", NULL,
+			   DEFAULT_TKT_DIR, &ret->ccache_dir);
+	if(ret->debug)
+	dEBUG("ticket directory is \"%s\"", ret->ccache_dir);
 
 	/* What to say we are when changing passwords. */
 	profile_get_string(profile, PROFILE_NAME, "banner", NULL,
@@ -786,7 +794,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Set up the environment variable for Kerberos 5. */
 			if(strlen(stash->v5_path) == 0) {
 				snprintf(v5_path, sizeof(v5_path),
-					 "/tmp/krb5cc_%d_XXXXXX", stash->uid);
+					 "%s/krb5cc_%d_XXXXXX",
+					 config->ccache_dir, stash->uid);
 				tmpfd = mkstemp(v5_path);
 			} else {
 				strncpy(v5_path,stash->v5_path,sizeof(v5_path));
@@ -886,7 +895,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Set up the environment variable for Kerberos 4. */
 			if(strlen(stash->v4_path) == 0) {
 				snprintf(v4_path, sizeof(v4_path),
-					 "/tmp/tkt%d_XXXXXX", stash->uid);
+					 "%s/tkt%d_XXXXXX",
+					 config->ccache_dir, stash->uid);
 				tmpfd = mkstemp(v4_path);
 			} else {
 				dest_tkt();

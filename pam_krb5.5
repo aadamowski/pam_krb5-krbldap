@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2000/01/14 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2000/04/20 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
 .SH DESCRIPTION
@@ -19,21 +19,25 @@ default renewable lifetime.  This specifies how much time you have after
 getting credentials to renew them.  If not specified, the default is 36000
 seconds (10 hours).
 .IP forwardable
-controls whether or not tickets are forwardable.  If not specified, they are.
+controls whether or not credentials are forwardable.  If not specified, they
+are.
 .IP krb4_convert
-controls whether or not pam_krb5 tries to get Kerberos IV tickets using the
-\fBkrb524d\fR service on the KDC and create ticket files with them.  Unless
+controls whether or not pam_krb5 tries to get Kerberos IV credentials using
+the \fBkrb524d\fR service on the KDC and create ticket files with them.  Unless
 you've converted \fIeverything\fR on your system over to use Kerberos 5, you'll
 want to leave this set to \fBtrue\fR.
 .IP hosts
-specifies which other hosts tickets obtained by pam_krb5 will be good on.  If
-your host is behind a firewall, you should add the IP address or name that the
-\fIKDC\fR sees it as to this list.
+specifies which other hosts credentials obtained by pam_krb5 will be good on.
+If your host is behind a firewall, you should add the IP address or name that
+the \fIKDC\fR sees it as to this list.
 .IP required_tgs
 specifies a principal for which a user must be able to get a TGS for in order
 to be allowed access.  This is the only certain way to be absolutely sure the
 TGT hasn't been forged, and should always be used.  This test is disabled by
 default because its value is site-specific.
+.IP ccache_dir
+specifies the directory to place credential cache files in.  The default is
+\fB/tmp\fR.
 
 .SH EXAMPLE
 
@@ -45,6 +49,7 @@ default because its value is site-specific.
     krb4_convert = true
     hosts = thermo.example.edu alf.example.edu
     required_tgs = zephyr/zephyr
+    ccache_dir = /var/tmp
 
 .SH FILES
 \fI/etc/krb5.conf\fP
@@ -53,6 +58,6 @@ default because its value is site-specific.
 .BR pam_krb5 (8)
 .br
 .SH BUGS
-Possibly, but let's hope not.  If you find any, please email the author.  
+Possibly, but let's hope not.  If you find any, please email the author.
 .SH AUTHOR
 Nalin Dahyabhai <nalin@redhat.com>
