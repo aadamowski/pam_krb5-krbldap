@@ -37,7 +37,7 @@ ln -s -f krb5-pam.d pam.d
 /usr/man/man5/pam_krb5afs.5
 /usr/man/man8/pam_krb5.8
 /usr/man/man8/pam_krb5afs.8
-%doc README ChangeLog TODO pam.d
+%doc README ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
 * Fri Jan  7 2000 Nalin Dahyabhai <nalin@redhat.com>
