@@ -1,6 +1,6 @@
-.TH pam_krb5 5 2000/05/20 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2000/10/18 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
-pam_krb5 \- Kerberos 5 authentication
+pam_krb5 \- Kerberos 5 authentication with AFS support
 .SH DESCRIPTION
 pam_krb5.so uses a portion of \fBkrb5.conf\fR to get its configuration
 information.  You should read the \fBkrb5.conf(5)\fR man page before continuing
@@ -31,13 +31,19 @@ specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that
 the \fIKDC\fR sees it as to this list.
 .IP required_tgs
-specifies a principal for which a user must be able to get a TGS for in order
-to be allowed access.  This is the only certain way to be absolutely sure the
-TGT hasn't been forged, and should always be used.  This test is disabled by
-default because its value is site-specific.
+specifies a principal for which a user must be able to get a session key for for
+the purpose of verifying that the TGT has not been forged.  The key is
+decrypted using a copy of the service's key stored in a local keytab file.
+This is the only certain way to be absolutely sure the TGT hasn't been forged.
+.IP keytab
+specifies the name of a keytab file to find a key for the \fBrequired_tgs\fP in,
+for use in verifying TGTs.  The default is \fB/etc/krb5.keytab\fP.
 .IP ccache_dir
 specifies the directory to place credential cache files in.  The default is
 \fB/tmp\fR.
+.IP banner
+specifies what kind of password the module claims to be changing when called
+to change passwords.  The default is \fBKerberos 5\fP.
 
 .SH EXAMPLE
 
@@ -48,7 +54,7 @@ specifies the directory to place credential cache files in.  The default is
     forwardable = true
     krb4_convert = true
     hosts = thermo.example.edu alf.example.edu
-    required_tgs = zephyr/zephyr
+    required_tgs = host/thermo.example.edu
     ccache_dir = /var/tmp
 
 .SH FILES

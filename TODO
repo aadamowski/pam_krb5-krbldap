@@ -1,0 +1,1 @@
+* Maybe use krb5_aname_to_localname to do principal/login mapping?

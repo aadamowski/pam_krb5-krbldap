@@ -39,8 +39,11 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 %changelog
 * Wed Oct 18 2000 Nalin Dahyabhai <nalin@redhat.com>
-- fix prompting when the module's first in the stack
-- fix a typo in a comment
+- fix prompting when the module's first in the stack and the user does not have
+  a corresponding principal in the local realm
+- properly implement TGT verification
+- change a few non-error status messages into debugging messages
+- sync the README and the various man pages up
 
 * Mon Oct  2 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix "use_authtok" logic when password was not set by previous module

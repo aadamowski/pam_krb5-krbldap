@@ -138,6 +138,8 @@
 
 #define PROFILE_NAME "pam"
 #define DEFAULT_CELLS "eos.ncsu.edu unity.ncsu.edu bp.ncsu.edu"
+#define DEFAULT_SERVICE "host"
+#define DEFAULT_KEYTAB "/etc/krb5.keytab"
 #define DEFAULT_LIFE 36000
 #define DEFAULT_TKT_DIR "/tmp"
 
@@ -205,6 +207,7 @@ struct config {
 	char *realm;
 	char *required_tgs;
 	char *ccache_dir;
+	char *keytab;
 };
 
 static void dEBUG(const char *x,...) {
@@ -294,17 +297,23 @@ static struct config *get_config(krb5_context context,
 				 int argc, const char **argv)
 {
 	int i, j;
-	struct config *ret = NULL;
-	char *foo, *cells;
+	struct config *ret = NULL, *config;
+	char *foo, *hosts;
+#ifdef AFS
+	char *cells;
+#endif
 	profile_t profile;
 	krb5_address **addresses = NULL;
 	krb5_address **hostlist;
+	char tgsname[LINE_MAX] = DEFAULT_SERVICE "/";
 
 	/* Defaults: try everything (try_first_pass, use a PAG, no debug). */
 	ret = malloc(sizeof(struct config));
 	if(ret == NULL) {
 		return NULL;
 	}
+	config = ret;
+
 	memset(ret, 0, sizeof(struct config));
 	krb5_get_init_creds_opt_init(&ret->creds_opt);
 	ret->try_first_pass = 1;
@@ -322,8 +331,7 @@ static struct config *get_config(krb5_context context,
 			ret->debug = 1;
 		}
 	}
-	if(ret->debug)
-	dEBUG("get_config() called");
+	DEBUG("get_config() called");
 			    
 	/* The local realm. */
 	krb5_get_default_realm(context, &ret->realm);
@@ -331,37 +339,35 @@ static struct config *get_config(krb5_context context,
 	/* Ticket lifetime and other flags. */
 	profile_get_integer(profile, PROFILE_NAME, "renew_lifetime", NULL,
 			    DEFAULT_LIFE, &ret->lifetime);
+	DEBUG("setting renewable lifetime to %d", ret->lifetime);
 	krb5_get_init_creds_opt_set_renew_life(&ret->creds_opt, ret->lifetime);
-	if(ret->debug)
-	dEBUG("setting renewable lifetime to %d", ret->lifetime);
+
 	profile_get_integer(profile, PROFILE_NAME, "ticket_lifetime", NULL,
 			    DEFAULT_LIFE, &ret->lifetime);
+	DEBUG("setting ticket lifetime to %d", ret->lifetime);
 	krb5_get_init_creds_opt_set_tkt_life(&ret->creds_opt, ret->lifetime);
-	if(ret->debug)
-	dEBUG("setting ticket lifetime to %d", ret->lifetime);
+
 	profile_get_string(profile, PROFILE_NAME, "forwardable", NULL,
 			   DEFAULT_CELLS, &foo);
 	if(!strcmp(foo, "true")) {
-		if(ret->debug)
-		dEBUG("making tickets forwardable");
+		DEBUG("making tickets forwardable");
 		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, TRUE);
 	}
 
 	/* Hosts to get tickets for. */
 	profile_get_string(profile, PROFILE_NAME, "hosts", NULL,
-			   "", &cells);
+			   "", &hosts);
 	krb5_os_localaddr(context, &hostlist);
 	for(j = 0; hostlist[j] != NULL; j++) ;
-	addresses = malloc(sizeof(krb5_address) * (num_words(cells) + 1 + j));
-	memset(addresses, 0, sizeof(krb5_address) * (num_words(cells) + 1 + j));
+	addresses = malloc(sizeof(krb5_address) * (num_words(hosts) + 1 + j));
+	memset(addresses, 0, sizeof(krb5_address) * (num_words(hosts) + 1 + j));
 	for(j = 0; hostlist[j] != NULL; j++) {
 		addresses[j] = hostlist[j];
 	}
-	for(i = 0; i < num_words(cells); i++) {
-		foo = word_copy(nth_word(cells, i));
+	for(i = 0; i < num_words(hosts); i++) {
+		foo = word_copy(nth_word(hosts, i));
 		krb5_os_hostaddr(context, foo, &hostlist);
-		if(ret->debug)
-		dEBUG("also getting ticket for host %s", foo);
+		DEBUG("also getting ticket for host %s", foo);
 		addresses[i + j] = hostlist[0];
 	}
 	krb5_get_init_creds_opt_set_address_list(&ret->creds_opt, addresses);
@@ -369,21 +375,18 @@ static struct config *get_config(krb5_context context,
 	/* Which directory to put ticket files in. */
 	profile_get_string(profile, PROFILE_NAME, "ccache_dir", NULL,
 			   DEFAULT_TKT_DIR, &ret->ccache_dir);
-	if(ret->debug)
-	dEBUG("ticket directory is \"%s\"", ret->ccache_dir);
+	DEBUG("ticket directory set to \"%s\"", ret->ccache_dir);
 
 	/* What to say we are when changing passwords. */
 	profile_get_string(profile, PROFILE_NAME, "banner", NULL,
 			   "Kerberos 5", &ret->banner);
-	if(ret->debug)
-	dEBUG("password-changing banner set to \"%s\"", ret->banner);
+	DEBUG("password-changing banner set to \"%s\"", ret->banner);
 
 	/* Whether to get krb4 tickets using krb524convertcreds(). */
 	profile_get_string(profile, PROFILE_NAME, "krb4_convert", NULL,
 			   "true", &foo);
 	if(!strcmp(foo, "true")) ret->krb4_convert = TRUE;
-	if(ret->debug)
-	dEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
+	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
 
 #ifdef AFS
 	/* Cells to get tokens for. */
@@ -393,23 +396,30 @@ static struct config *get_config(krb5_context context,
 	memset(ret->cell_list, 0, sizeof(char*) * (num_words(cells) + 1));
 	for(i = 0; i < num_words(cells); i++) {
 		ret->cell_list[i] = word_copy(nth_word(cells, i));
-		if(ret->debug) {
-			dEBUG("will afslog to cell %s", ret->cell_list[i]);
-		}
+		DEBUG("will afslog to cell %s", ret->cell_list[i]);
 		if(ret->krb4_convert != TRUE) {
 			ret->krb4_convert = TRUE;
-			if(ret->debug) {
-				dEBUG("krb4_convert forced on");
-			}
+			DEBUG("krb4_convert forced on");
 		}
 	}
 	ret->get_tokens = TRUE;
 #endif
 
-	/* Get the name of a service ticket the user must be able to obtain,
-	   as a double-check. */
+	/* Get the name of a service ticket the user must be able to obtain and
+	 * a keytab with the key for the service in it which we can use to
+	 * decrypt the credential to make sure the KDC's response wasn't
+	 * spoofed.  This is an undocumented way to do it, but it's what people
+	 * do if they need to verify the TGT. */
+	if(gethostname(tgsname + strlen(tgsname),
+		       sizeof(tgsname) - strlen(tgsname) - 1) == -1) {
+		memset(&tgsname, 0, sizeof(tgsname));
+	}
 	profile_get_string(profile, PROFILE_NAME, "required_tgs",
-			 NULL, "", &ret->required_tgs);
+			   NULL, tgsname, &ret->required_tgs);
+	DEBUG("required_tgs set to \"%s\"", ret->required_tgs);
+	profile_get_string(profile, PROFILE_NAME, "keytab",
+			   NULL, DEFAULT_KEYTAB, &ret->keytab);
+	DEBUG("keytab file name set to \"%s\"", ret->keytab);
 
 	for(i = 0; i < argc; i++) {
 		/* Required argument that we don't use but need to recognize.*/
@@ -507,7 +517,6 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 {
 	int i = 0, ret = PAM_SUCCESS;
 	const char *p = NULL;
-	dEBUG("pam_prompter() called for %d items", num_prompts);
 	for(i = 0; i < num_prompts; i++) {
 		char *q = NULL;
 		int l = strlen(prompts[i].prompt) + strlen(": ") + 1;
@@ -531,13 +540,114 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 	return ret;
 }
 
+/* Validate the TGT in stash->v5_creds using the keytab and required_tgs
+ * set in config.  Return zero only if validation fails, required_tgs is
+ * set, and we can read the keytab file. */
+static int verify_tgt(const char *user, krb5_context context,
+		      struct config *config, struct stash *stash)
+{
+	krb5_keytab keytab;
+	krb5_keytab_entry entry;
+	krb5_principal server;
+	krb5_creds st, *tgs;
+	krb5_ticket *ticket;
+	krb5_error_code ret;
+	struct stat buf;
+
+	/* The only non-fatal errors. */
+	if((config->required_tgs == NULL) ||
+	   (strlen(config->required_tgs) == 0)) {
+		DEBUG("TGT not verified because required_tgs was not set");
+		return 1;
+	}
+	if((stat(config->keytab, &buf) == -1) && (errno == ENOENT)) {
+		DEBUG("TGT not verified because keytab file %s doesn't exist",
+		      config->keytab);
+		return 1;
+	}
+
+	/* Parse out the service name into a principal. */
+	DEBUG("verifying TGT");
+	ret = krb5_parse_name(context, config->required_tgs, &server);
+	if(ret) {
+		CRIT("error building service principal for %s: %s",
+		     config->required_tgs, error_message(ret));
+		return 0;
+	}
+
+	/* Try to get a service ticket. */
+	memset(&st, 0, sizeof(st));
+	st.client = stash->v5_creds.client;
+	st.server = server;
+	ret = krb5_get_cred_via_tkt(context, &stash->v5_creds, 0, NULL,
+				    &st, &tgs);
+	if(ret) {
+		CRIT("error getting credential for %s: %s",
+		     config->required_tgs, error_message(ret));
+		krb5_free_principal(context, server);
+		return 0;
+	}
+
+	/* Decode the service information from the ticket. */
+	ret = krb5_decode_ticket(&tgs->ticket, &ticket);
+	if(ret) {
+		CRIT("error decoding key information for %s: %s",
+		     config->required_tgs, error_message(ret));
+		krb5_free_principal(context, server);
+		krb5_free_creds(context, tgs);
+		return 0;
+	}
+
+	/* Open the keytab. */
+	ret = krb5_kt_resolve(context, config->keytab, &keytab);
+	if(ret) {
+		DEBUG("error trying to open %s: %s",
+		      config->keytab, error_message(ret));
+		krb5_free_principal(context, server);
+		krb5_free_creds(context, tgs);
+		krb5_free_ticket(context, ticket);
+		return 0;
+	}
+
+	/* Read the key for the service. */
+	ret = krb5_kt_get_entry(context, keytab, server,
+				ticket->enc_part.kvno,
+				ticket->enc_part.enctype,
+				&entry);
+	if(ret) {
+		CRIT("error reading keys for %s from %s: %s",
+		     config->required_tgs, config->keytab, error_message(ret));
+		krb5_free_principal(context, server);
+		krb5_free_creds(context, tgs);
+		krb5_free_ticket(context, ticket);
+		krb5_kt_close(context, keytab);
+		return 0;
+	}
+
+	/* Try to decrypt the encrypted part with the key. */
+	ret = krb5_decrypt_tkt_part(context, &entry.key, ticket);
+	if(ret) {
+		CRIT("verification error: %s",
+		     error_message(ret));
+	} else {
+		INFO("TGT for %s successfully verified", user);
+	}
+
+	krb5_free_principal(context, server);
+	krb5_free_creds(context, tgs);
+	krb5_free_ticket(context, ticket);
+	krb5_kt_close(context, keytab);
+	krb5_kt_free_entry(context, &entry);
+
+	return !ret;
+}
+
 /* Big authentication module. */
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			const char **argv)
 {
 	krb5_context context;
 	krb5_principal principal;
-	krb5_principal tgs;
 	struct config *config;
 	const char *user = NULL;
 	const char *password = NULL;
@@ -638,7 +748,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	}
 
 	/* Now try to get a TGT using the password, prompting the user if it
-	   fails and we're allowed to prompt. */
+	   fails and we're allowed to prompt for one. */
 	if(ret == KRB5_SUCCESS) {
 		int done = 0;
 
@@ -673,10 +783,17 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 		/* Try to converse if the password failed. */
 		if(config->try_second_pass && !done) {
+			password = NULL;
+			ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
+					     "Password: ", &password);
+			if(password) {
+				pam_set_item(pamh, PAM_AUTHTOK,
+					     strdup(password));
+			}
 			ret = krb5_get_init_creds_password(context,
 							   &stash->v5_creds,
 							   principal,
-							   NULL,
+							   (char*)password,
 							   pam_prompter,
 							   pamh,
 							   0,
@@ -696,46 +813,16 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		}
 	}
 
+	/* Verify that the TGT is good (i.e., that the reply wasn't spoofed). */
+	if(verify_tgt(user, context, config, stash) == 0) {
+		ret = PAM_AUTH_ERR;
+	}
+
+	/* Log something. */
 	if(ret == KRB5_SUCCESS) {
 		INFO("authentication succeeds for %s", user);
 	} else {
 		INFO("authentication fails for %s", user);
-	}
-
-	/* Build a principal for the service credential we'll use for double-
-	   checking the validity of the TGT. */
-	if((ret == KRB5_SUCCESS) && (config->required_tgs != NULL) &&
-	   (strlen(config->required_tgs) > 0)) {
-		ret = krb5_parse_name(context, config->required_tgs, &tgs);
-		if(ret != KRB5_SUCCESS) {
-			CRIT("%s building principal for %s",
-			     error_message(ret), config->required_tgs);
-			ret = PAM_SYSTEM_ERR;
-		}
-
-		/* Attempt to use our new TGT to obtain a service ticket. */
-		if(ret == KRB5_SUCCESS) {
-			krb5_creds creds, *out_creds;
-			memset(&creds, 0, sizeof(creds));
-			creds.client = stash->v5_creds.client;
-			creds.server = tgs;
-			ret = krb5_get_cred_via_tkt(context,
-						    &stash->v5_creds,
-						    0,
-						    NULL,
-						    &creds,
-						    &out_creds);
-			if(ret == KRB5_SUCCESS) {
-				INFO("TGT for %s verifies", user);
-			} else {
-				CRIT("TGT for %s was useless (%s)",
-				     user, error_message(ret));
-				ret = PAM_SYSTEM_ERR;
-			}
-		}
-	} else {
-		INFO("TGT for %s not verified (no required_tgs "
-		     "defined)", user);
 	}
 
 	if(ret == PAM_SUCCESS) {
@@ -775,8 +862,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 						   config->lifetime / 60 / 5,
 						   NULL, 0, ciphertext);
 			if(rc != KSUCCESS) {
-				INFO("Couldn't get v4 TGT for %s%s@%s (%s), "
-				     "continuing.", v4name,
+				INFO("couldn't get v4 TGT for %s%s@%s (%s), "
+				     "continuing", v4name,
 				     strlen(v4inst) ? ".": "", v4inst, v4realm,
 				     krb_get_err_text(rc));
 			}
@@ -930,8 +1017,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Done with Kerberos. */
 	krb5_free_context(context);
 
+	/* Save the return code for later use by setcred(). */
 	*pret = ret;
-
 	ret = pam_set_data(pamh, MODULE_RET_NAME, pret, cleanup);
 	if(ret == PAM_SUCCESS) {
 		DEBUG("saved return code (%d) for later use", *pret);
@@ -1175,7 +1262,10 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef AFS
 	/* Use the new tickets to create tokens. */
-	if((ret == PAM_SUCCESS) && config->get_tokens && config->cell_list) {
+	if((flags & PAM_ESTABLISH_CRED) &&
+	   (ret == KRB5_SUCCESS) &&
+	   config->get_tokens &&
+	   config->cell_list) {
 		if(!k_hasafs()) {
 			CRIT("cells specified but AFS not running");
 			ret = PAM_SYSTEM_ERR;
@@ -1197,7 +1287,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		if((ret == PAM_SUCCESS) && (strlen(stash->v5_path) > 0)) {
 			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
-			INFO("removing %s", stash->v5_path);
+			DEBUG("removing %s", stash->v5_path);
 			if(remove(stash->v5_path) == -1) {
 				CRIT("error removing file %s: %s",
 				     stash->v5_path, strerror(errno));
@@ -1206,7 +1296,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #ifdef HAVE_LIBKRB4
 		if((ret == PAM_SUCCESS) && (strlen(stash->v4_path) > 0)) {
 			/* Delete the v4 ticket cache. */
-			INFO("removing %s", stash->v4_path);
+			DEBUG("removing %s", stash->v4_path);
 			if(remove(stash->v4_path) == -1) {
 				CRIT("error removing file %s: %s",
 				     stash->v4_path, strerror(errno));
@@ -1216,7 +1306,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #ifdef AFS
 		/* Clear tokens unless we need them. */
 		if(!config->setcred && k_hasafs()) {
-			INFO("destroying tokens");
+			DEBUG("destroying tokens");
 			k_unlog();
 		}
 #endif

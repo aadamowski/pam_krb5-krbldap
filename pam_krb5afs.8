@@ -41,6 +41,10 @@ is the default mode of operation.
 tells pam_krb5afs.so to not bother checking a password that has been set by a
 module listed earlier in the stack.  This option is included mainly for
 completeness.
+.IP use_authtok
+tells pam_krb5afs.so to never prompt for passwords when changing passwords.
+This is useful if you are using pam_cracklib.so to try to enforce use of
+less-easy-to-guess passwords.
 .IP no_user_check
 tells pam_krb5afs.so to not check if a user exists on the local system, and
 to create ccache files owned by the current process's UID.  This is useful

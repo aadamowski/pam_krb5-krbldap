@@ -7,16 +7,14 @@ It implements authentication, session management, and password-changing
 functions.  Sample configuration files for many services are included.
 
 The pam_sm_authenticate() function checks the user name and password in
-the user's realm.  It takes the standard parameters "debug", "try_first_pass",
-and "use_first_pass", as required by the PAM documentation, and
-"skip_first_pass" for completeness.
+the user's realm.  It takes the standard parameters required by the PAM
+documentation, as well as a few others listed below.
 
 With no arguments, the pam_sm_authenticate() function defaults to
 "try_first_pass" mode.  The TGT obtained and is saved for later use by
-the pam_sm_setcred() function, but the TGT is NOT stored on disk.  If
-the name of a critical TGS is give in the krb5.conf configuration file
-(described below), the new TGT is used to obtain a service key for it to
-verify that the TGT wasn't coming from a spoofed KDC.
+the pam_sm_setcred() function, but the TGT is NOT stored on disk.  The
+new TGT is verified using a copy of the key for the local workstation's
+host service if it is found in the local keytab file.
 
 The pam_sm_setcred() function creates a Kerberos 5 ticket file and, if
 libkrb524 was found at compile-time, can obtain and create a Kerberos 4
@@ -33,11 +31,11 @@ Because session-specific ticket files require that the KRBTKFILE and
 KRB5CCNAME environment variables are set correctly, certain programs that
 create their own environments but don't incorporate the results of
 pam_getenvlist() will work, but a user running 'klist' will think that
-she has no tickets.  Currently, this includes sshd and unpatched versions
-of every display manager known except gdm2.
+she has no tickets.  Currently, this includes ssh (openssh works) and
+unpatched versions of every display manager known except gdm2 and newer.
 
 Certain settings for the module are now stored in the krb5.conf file, which
-is usually stored under /etc.  The section name is "pam":
+is usually stored in /etc.  The section name is "pam":
 
 [pam]
    debug = true
@@ -61,6 +59,15 @@ Descriptions of the configuration file directives read by both modules:
 			that this is only supported by the pam_krb5afs module.
    hosts		Hosts this ticket will also be good for, in addition to
 			this one.  Primarily for use behind firewalls.
+   ccache_dir		The directory to store ccache files in.  The default is
+			to use /tmp, but some people prefer /var/tmp.
+   banner		What the module should announce itself as when changing
+			passwords.  Defaults to "Kerberos 5".
+   keytab		The name of a keytab file to use for TGT verification.
+			The default is "/etc/krb5.keytab".
+   required_tgs		The name of a service principal (with its key in the
+			given keytab file) which is to be used to verify TGTs.
+			The default is "host/<hostname>".
 
 Descriptions of configuration directives for use in /etc/pam.d:
    use_first_pass	Use password obtained by a previous module.
@@ -75,8 +82,16 @@ Descriptions of configuration directives for use in /etc/pam.d:
 			Samba, and some other programs that don't use sessions
 			and don't call pam_setcred, but need tokens.  Note
                         that this is only supported by the pam_krb5afs module.
+   use_authtok		Rely on tokens input by a previous module in the stack
+			when changing passwords.  Primarily used if you're using
+			pam_cracklib to screen out weak passwords.
+   no_user_check	Don't bother checking if the login account corresponding
+			to the principal exists or not, and use UID the service
+			is executing under as the owner for any ccache files
+			which get created.
+   no_warn		Ignored.
 
-This module was built and tested against MIT Kerberos 5 v1.2, but it should
+This module was built and tested against MIT Kerberos 5 v1.2.1, but it should
 only require v1.1.x.
 
 Caveat: pam_pwdb will cause things to fail if your user information isn't stored
@@ -86,4 +101,4 @@ that happens.
 Let me know if you have problems,
 
 Nalin Dahyabhai <nalin@redhat.com>
-27 June 2000
+18 October 2000
