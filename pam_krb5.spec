@@ -39,7 +39,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
-*            2002 Nalin Dahyabhai <nalin@redhat.com> 1.56-1
+* Tue May 28 2002 Nalin Dahyabhai <nalin@redhat.com> 1.56-1
 - guess a default cell name
 - fix what's hopefully the last parser bug
 
