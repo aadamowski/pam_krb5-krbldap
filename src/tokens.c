@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -99,6 +99,7 @@ tokens_obtain(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 		if (options->debug) {
 			debug("obtaining tokens for '%s'", cell);
 		}
+		krb_set_tkt_string(stash->v4file);
 		ret = krb_afslog(cell, options->realm);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {

@@ -1,3 +1,17 @@
+2004-02-27 nalin
+	* src/pam_krb5_storetmp.c: add this helper, which creates a file using
+	mkstemp, filling it with supplied data.
+	* src/storetmp.c: add routines for using pam_krb5_storetmp to create
+	copies of session-specific ticket files after crossing an exec(), so
+	that a new SELinux context can apply to the new file.
+	* everything: update copyright statements to include this year.
+	* src/stash.c(_pam_krb5_stash_clone_v5): add, to call
+	_pam_krb5_storetmp_file to copy the ccache.
+	* src/v5.c(v5_save): clone the ticket file after creating it.
+	* src/stash.c(_pam_krb5_stash_clone_v4): add, to call
+	_pam_krb5_storetmp_file to copy the ccache.
+	* src/v4.c(v4_save): clone the ticket file after creating it.
+
 2004-01-07 nalin
 	* src/stash.h: always have a v4present field in the structure.
 	* src/v4.h: don't try 524 conversion if we don't have krb4 -- we

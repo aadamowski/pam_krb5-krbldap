@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -533,6 +533,8 @@ v5_save(krb5_context ctx,
 	 * the caller. */
 	stash->v5file = xstrdup(tktfile + 5);
 	chown(stash->v5file, userinfo->uid, userinfo->gid);
+	/* Generate a *new* ticket file with the same contents as this one. */
+	_pam_krb5_stash_clone_v5(stash, userinfo->uid, userinfo->gid);
 	if (ccname != NULL) {
 		*ccname = stash->v5file;
 	}

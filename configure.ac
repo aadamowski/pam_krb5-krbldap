@@ -189,6 +189,10 @@ AH_VERBATIM([PAM_KRB5_GNUC_PRINTF_DEFINED],
  #endif
 ])
 
+
+pam_krb5_pkgsecuritydir=`eval echo $libdir/security/$PACKAGE | sed s,^NONE,$ac_default_prefix,`
+AC_DEFINE_UNQUOTED(PKGSECURITYDIR,"$pam_krb5_pkgsecuritydir",[The location of pam_krb5 helpers.])
+
 TESTDIR=`cd ${ac_top_builddir:-.}; /bin/pwd`/tests
 TESTHOST=`hostname`
 AC_SUBST(TESTDIR)

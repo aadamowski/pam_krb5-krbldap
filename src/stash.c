@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
@@ -51,6 +52,7 @@
 
 #include "log.h"
 #include "stash.h"
+#include "storetmp.h"
 #include "userinfo.h"
 #include "xstr.h"
 
@@ -132,4 +134,41 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info)
 	pam_set_data(pamh, key, stash, _pam_krb5_stash_cleanup);
 
 	return stash;
+}
+
+static void
+_pam_krb5_stash_clone(char **stored_file, uid_t uid, gid_t gid)
+{
+	char *filename;
+	size_t length;
+	if (*stored_file != NULL) {
+		filename = strdup(*stored_file);
+		length = strlen(filename);
+		if (length > 6) {
+			strcpy(filename + length - 6, "XXXXXX");
+			if (_pam_krb5_storetmp_file(*stored_file,
+						    filename, uid, gid,
+						    filename,
+						    length + 1) == 0) {
+				unlink(*stored_file);
+				xstrfree(*stored_file);
+				*stored_file = filename;
+			}
+		}
+		if (*stored_file != filename) {
+			free(filename);
+		}
+	}
+}
+
+void
+_pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
+{
+	_pam_krb5_stash_clone(&stash->v5file, uid, gid);
+}
+
+void
+_pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
+{
+	_pam_krb5_stash_clone(&stash->v4file, uid, gid);
 }

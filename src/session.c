@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2004 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -163,6 +163,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
 		pam_putenv(pamh, xstrdup(envstr));
 	}
+	chown(ccname, userinfo->uid, userinfo->gid);
 
 #ifdef USE_KRB4
 	if ((i == PAM_SUCCESS) && (stash->v4present)) {

@@ -53,5 +53,10 @@ struct _pam_krb5_stash {
 
 struct _pam_krb5_stash *_pam_krb5_stash_get(pam_handle_t *pamh,
 					    struct _pam_krb5_user_info *info);
+void _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash,
+			      uid_t uid, gid_t gid);
+void _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash,
+			      uid_t uid, gid_t gid);
+
 
 #endif

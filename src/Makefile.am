@@ -1,5 +1,7 @@
 securitydir = $(libdir)/security
 security_LTLIBRARIES = pam_krb5.la
+pkgsecuritydir = $(libdir)/security/$(PACKAGE)
+pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = pam_krb5.5  pam_krb5.8
 man_MANS = pam_krb5.5 pam_krb5.8
 pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*'
@@ -22,6 +24,7 @@ pam_krb5_la_SOURCES = \
 	prompter.h \
 	stash.c \
 	stash.h \
+	storetmp.c \
 	tokens.c \
 	tokens.h \
 	userinfo.c \
@@ -38,3 +41,6 @@ pam_krb5_la_SOURCES = \
 	session.c \
 	sly.c \
 	sly.h
+pam_krb5_storetmp_SOURCES = \
+	pam_krb5_storetmp.c
+pam_krb5_storetmp_LIBS =
