@@ -1,4 +1,8 @@
 2004-08-26 nalin
+	* src/conv.c(_pam_krb5_conv_call): return PAM_BAD_ITEM instead of
+	PAM_CONV_ERR if the application didn't define a conversation function.
+
+2004-08-26 nalin
 	* src/minikafs.c(minikafs_ioctlcall): add, from Alexander Bostrom
 	(#127529).
 	* src/minikafs.c(minikafs_call): add, calling afs_ioctlcall or
