@@ -63,7 +63,7 @@
 int
 tokens_obtain(struct _pam_krb5_options *options)
 {
-	int i;
+	int i, ret;
 	char cell[LINE_MAX];
 	struct stat st;
 
@@ -95,7 +95,11 @@ tokens_obtain(struct _pam_krb5_options *options)
 		if (options->debug) {
 			debug("obtaining tokens for '%s'", cell);
 		}
-		krb_afslog(cell, options->realm);
+		ret = krb_afslog(cell, options->realm);
+		if (ret != 0) {
+			warn("got error %d (%s) while obtaining tokens for "
+			     "%s", ret, error_message(ret), cell);
+		}
 	}
 
 	/* If there are no additional cells configured, stop here. */
@@ -118,7 +122,11 @@ tokens_obtain(struct _pam_krb5_options *options)
 			debug("obtaining tokens for '%s'",
 			      options->afs_cells[i]);
 		}
-		krb_afslog(options->afs_cells[i], options->realm);
+		ret = krb_afslog(options->afs_cells[i], options->realm);
+		if (ret != 0) {
+			warn("got error %d (%s) while obtaining tokens for "
+			     "%s", ret, error_message(ret), cell);
+		}
 	}
 
 	/* Suppress all errors. */
