@@ -81,12 +81,13 @@ tells pam_krb5.so to ignore authentication attempts by users with
 UIDs below the specified number.
 
 .IP no_user_check
-tells pam_krb5.so to not check if a user exists on the local system, and
-to create ccache files owned by the current process's UID.  This is useful
-for situations where a non-privileged server process needs to use Kerberized
-services on behalf of remote users who may not have local access.  Note that
-such a server should have an encrypted connection with its client in order
-to avoid allowing the user's password to be eavesdropped.
+tells pam_krb5.so to not check if a user exists on the local system, to skip
+authorization checks using the user's .k5login file, and to create ccache files
+owned by the current process's UID.  This is useful for situations where a
+non-privileged server process needs to use Kerberized services on behalf of
+remote users who may not have local access.  Note that such a server should
+have an encrypted connection with its client in order to avoid allowing the
+user's password to be eavesdropped.
 
 .IP proxiable
 tells pam_krb5.so that credentials it obtains should be proxiable.  This
@@ -121,8 +122,8 @@ module listed earlier in the stack, usually \fBpam_unix\fR or \fBpam_pwdb\fR,
 instead of prompting the user for it.
 
 .IP use_authtok
-tells pam_krb5.so to never prompt for passwords when changing passwords.  This
-is useful if you are using pam_cracklib.so to try to enforce use of
+tells pam_krb5.so to never prompt for new passwords when changing passwords.
+This is useful if you are using pam_cracklib.so to try to enforce use of
 less-easy-to-guess passwords.
 
 .IP validate
