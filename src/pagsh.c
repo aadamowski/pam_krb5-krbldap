@@ -58,6 +58,8 @@
 #include "minikafs.h"
 #include "xstr.h"
 
+#ident "$Id$"
+
 struct _pam_krb5_options;
 extern char *log_progname;
 

@@ -55,6 +55,8 @@
 #include "stash.h"
 #include "minikafs.h"
 
+#ident "$Id$"
+
 struct _pam_krb5_options log_options;
 char *log_progname = "pam_krb5";
 

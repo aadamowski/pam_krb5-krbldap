@@ -71,6 +71,8 @@
 #include "v5.h"
 #include "xstr.h"
 
+#ident "$Id$"
+
 #ifndef KRB_TICKET_GRANTING_TICKET
 #define KRB_TICKET_GRANTING_TICKET "krbtgt"
 #endif
