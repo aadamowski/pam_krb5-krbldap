@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.1.0
+Version: 2.1.1
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -42,6 +42,9 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 
 # $Id$
 %changelog
+* Mon Jun 21 2004 Nalin Dahyabhai <nalin@redhat.com> - 2.1.1-1
+- update to 2.1.1
+
 * Wed Apr 21 2004 Nalin Dahyabhai <nalin@redhat.com> - 2.1.0-1
 - update to 2.1.0
 
