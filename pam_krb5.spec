@@ -19,6 +19,7 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 %setup -q -n pam_krb5-%{version}-%{release}
 
 %build
+CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
 %configure \
 	--with-moduledir=/%{_lib}/security \
 	--with-krb5=/usr/kerberos \
@@ -45,6 +46,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 # $Id$
 %changelog
 * Mon Jan 27 2003 Nalin Dahyabhai <nalin@redhat.com> 1.57-1
+- force -fPIC
 - add --with-moduledir, --with-krb5-libs, --with-krbafs-libs to configure
 
 * Tue May 28 2002 Nalin Dahyabhai <nalin@redhat.com> 1.56-1
