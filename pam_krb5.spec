@@ -36,6 +36,7 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 %defattr(-,root,root)
 /%{_lib}/security/pam_krb5.so
 /%{_lib}/security/pam_krb5afs.so
+/%{_lib}/security/pam_krb5
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 %doc README COPYING* ChangeLog
