@@ -1,4 +1,4 @@
-.TH pam_krb5afs 5 2001/05/29 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5afs 5 2001/07/06 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5afs \- Kerberos 5 authentication with AFS support
 .SH DESCRIPTION
@@ -22,6 +22,9 @@ getting credentials to renew them.  If not specified, the default is 36000
 seconds (10 hours).
 .IP forwardable
 controls whether or not credentials are forwardable.  If not specified, they
+are.
+.IP proxiable
+controls whether or not credentials are proxiable.  If not specified, they
 are.
 .IP krb4_convert
 controls whether or not pam_krb5 tries to get Kerberos IV credentials from the

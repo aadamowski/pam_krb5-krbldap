@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.39
+Version: 1.40
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -39,6 +39,12 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Fri Jul  6 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't set forwardable and assorted other flags when getting password-
+  changing service ticket (noted, and fix supplied, by Onime Clement)
+- use krb5_aname_to_localname to convert the principal to a login name
+  and set PAM_USER to the result when authenticating
+
 * Wed Jun 26 2001 Nalin Dahyabhai <nalin@redhat.com>
 - use krb5_change_password() to change passwords
 

@@ -617,6 +617,16 @@ get_config(krb5_context context, int argc, const char **argv)
 		krb5_get_init_creds_opt_set_forwardable(&ret->creds_opt, FALSE);
 	}
 
+	/* Proxiable? */
+	appdefault_boolean(context, "proxiable", TRUE, &i);
+	if(i) {
+		DEBUG("making tickets proxiable");
+		krb5_get_init_creds_opt_set_proxiable(&ret->creds_opt, TRUE);
+	} else {
+		DEBUG("making tickets non-proxiable");
+		krb5_get_init_creds_opt_set_proxiable(&ret->creds_opt, FALSE);
+	}
+
 	/* Support for changing timeouts. This plays with some internal
 	 * library stuff which will apparently "go away soon". When it does,
 	 * they'll hopefully replace it with the right way to do this
@@ -1008,6 +1018,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	char *realm, *tmp;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
+	char localname[LINE_MAX];
 
 	/* First parse the arguments; if there are problems, bail. */
 #ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
@@ -1078,6 +1089,27 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 	DEBUG("user is `%s'", user);
 
+	/* Build the user's principal. */
+	if(RC_OK) {
+		krc = krb5_parse_name(context, user, &principal);
+		if(krc != KRB5_SUCCESS) {
+			CRIT("%s building user principal for `%s'",
+			     error_message(krc), user);
+			prc = PAM_SYSTEM_ERR;
+		}
+	}
+
+	/* Convert the principal name to a user name and store it as the PAM_USER. */
+	if(RC_OK) {
+		memset(&localname, '\0', sizeof(localname));
+		if(krb5_aname_to_localname(context, principal, sizeof(localname) - 1,
+					   localname) == KRB5_SUCCESS) {
+			if(strcmp(user, localname) != 0) {
+				user = strdup(localname);
+			}
+		}
+	}
+
 	/* Try to get and save the user's UID. */
 	if(RC_OK) {
 		if(config->no_user_check) {
@@ -1108,16 +1140,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("getpwnam() failed for the user");
 				prc = PAM_USER_UNKNOWN;
 			}
-		}
-	}
-
-	/* Build the user's principal. */
-	if(RC_OK) {
-		krc = krb5_parse_name(context, user, &principal);
-		if(krc != KRB5_SUCCESS) {
-			CRIT("%s building user principal for `%s'",
-			     error_message(krc), user);
-			prc = PAM_SYSTEM_ERR;
 		}
 	}
 
@@ -1427,11 +1449,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	prc = convert_kerror(krc);
 
-	/* Done with Kerberos. */
-	if(context != NULL) {
-		krb5_free_context(context);
-	}
-
 	/* Save the return code for later use by setcred(). */
 	if(RC_OK) {
 		*pret = prc;
@@ -1443,6 +1460,17 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				pam_strerror(pamh, prc), *pret);
 		}
 		prc = *pret;
+	}
+
+	/* Done with Kerberos. */
+	if(context != NULL) {
+		krb5_free_context(context);
+	}
+
+	/* Attempt to save the local name associated with the principal
+	 * as the PAM_USER item. */
+	if(RC_OK) {
+		pam_set_item(pamh, PAM_USER, user);
 	}
 
 	DEBUG("pam_sm_authenticate returning %d (%s)", prc,
@@ -2001,6 +2029,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 	DEBUG("pam_sm_chauthtok() called");
+	/* Reset the flags, since we're doing password changing. */
+	if(RC_OK) {
+		krb5_get_init_creds_opt_set_forwardable(&config->creds_opt, FALSE);
+		krb5_get_init_creds_opt_set_proxiable(&config->creds_opt, FALSE);
+		krb5_get_init_creds_opt_set_renew_life(&config->creds_opt, 0);
+	}
 
 	/* Initialize prompt strings. */
 	snprintf(current_pass, sizeof(current_pass), "Current %s password: ",
