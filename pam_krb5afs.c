@@ -643,7 +643,7 @@ get_config(krb5_context context, int argc, const char **argv)
 		       sizeof(tgsname) - strlen(tgsname) - 1) == -1) {
 		memset(&tgsname, 0, sizeof(tgsname));
 	}
-	appdefault_string(context, "required_tgs", "", &ret->required_tgs);
+	appdefault_string(context, "required_tgs", tgsname, &ret->required_tgs);
 	DEBUG("required_tgs set to `%s'", ret->required_tgs);
 
 	/* Path to the keytab file. */
