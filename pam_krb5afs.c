@@ -365,8 +365,12 @@ struct config *get_config(krb5_context context, int argc, const char **argv)
 		ret->cell_list[i] = word_copy(nth_word(cells, i));
 		if(ret->debug) {
 			dEBUG("will afslog to cell %s", ret->cell_list[i]);
-			dEBUG("krb4_convert forced on");
+		}
+		if(ret->krb4_convert != TRUE) {
 			ret->krb4_convert = TRUE;
+			if(ret->debug) {
+				dEBUG("krb4_convert forced on");
+			}
 		}
 	}
 	ret->get_tokens = TRUE;
