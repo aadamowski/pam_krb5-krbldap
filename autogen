@@ -1,0 +1,3 @@
+autoheader &&\
+autoconf &&\
+ ./configure --with-krb5=/usr/kerberos --with-krbafs=/usr/kerberos
