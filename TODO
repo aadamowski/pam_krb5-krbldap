@@ -1,4 +1,7 @@
 * Maybe use krb5_aname_to_localname to do principal/login mapping?
 * Ensure we're compliant with the PAM docs wrt return values.  It's not the
   RFC, but it's something.
-* Add support for account expiration.
+* Add support for account expiration.  (Isn't krb5_get_init_creds_password
+  already taking care of this, though?)
+* Use krb5_verify_init_creds to validate credentials instead of our own
+  function, when krb5_verify_init_creds is available.
