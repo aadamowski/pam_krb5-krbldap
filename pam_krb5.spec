@@ -44,6 +44,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
   built it statically
 - explicitly link with libdes425
 - handle cases where getpwnam_r fails but still sets the result pointer
+- if use_authtok is given and there is no authtok, error out
 
 * Mon Aug 27 2001 Nalin Dahyabhai <nalin@redhat.com> 1.45-1
 - set the default realm when a default realm is specified

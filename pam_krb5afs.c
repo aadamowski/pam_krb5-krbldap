@@ -2364,7 +2364,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				prc = PAM_AUTHTOK_RECOVERY_ERR;
 			}
 		}
-		/* DEBUG("old_authtok = `%s'", old_authtok); */
+		/* DEBUG("old_authtok = `%s'", old_authtok); FIXME */
 
 		if(RC_OK && ((authtok == NULL) || (strlen(authtok) == 0)) &&
 		   !config->use_authtok) {
@@ -2402,6 +2402,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 		}
 		/* DEBUG("authtok = `%s'", authtok); FIXME */
+		if(RC_OK && ((authtok == NULL) || (strlen(authtok) == 0))) {
+			prc = PAM_AUTHTOK_ERR;
+		}
 
 		if(RC_OK) {
 			memset(&creds, 0, sizeof(creds));
