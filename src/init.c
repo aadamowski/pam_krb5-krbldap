@@ -48,6 +48,18 @@
 
 #ident "$Id$"
 
+static int
+set_realm(krb5_context ctx, int argc, PAM_KRB5_MAYBE_CONST char **argv)
+{
+	int i;
+	for (i = argc - 1; i >= 0; i--) {
+		if (strncmp(argv[i], "realm=", 6) == 0) {
+			return krb5_set_default_realm(ctx, argv[i] + 6);
+		}
+	}
+	return 0;
+}
+
 int
 _pam_krb5_init_ctx(krb5_context *ctx,
 		   int argc, PAM_KRB5_MAYBE_CONST char **argv)
@@ -75,6 +87,13 @@ _pam_krb5_init_ctx(krb5_context *ctx,
 			warn("error initializing kerberos: %d (%s)", i,
 			     error_message(i));
 		}
+		if (i == 0) {
+			i = set_realm(*ctx, argc, argv);
+			if (i != 0) {
+				krb5_free_context(*ctx);
+				*ctx = NULL;
+			}
+		}
 		return i;
 	}
 #endif
@@ -82,6 +101,13 @@ _pam_krb5_init_ctx(krb5_context *ctx,
 	if (i != 0) {
 		warn("error initializing kerberos: %d (%s)", i,
 		     error_message(i));
+	}
+	if (i == 0) {
+		i = set_realm(*ctx, argc, argv);
+		if (i != 0) {
+			krb5_free_context(*ctx);
+			*ctx = NULL;
+		}
 	}
 	return i;
 }
