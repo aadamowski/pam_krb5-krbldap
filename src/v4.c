@@ -355,7 +355,7 @@ v4_save(krb5_context ctx,
 
 	/* Close the new file. */
 	tf_close();
-	krb_set_tkt_string(saved_tktstring);
+	krb_set_tkt_string(tktfile);
 	free(saved_tktstring);
 	close(fd);
 
