@@ -1,4 +1,9 @@
 2003-11-20 nalin
+	* src/map.c, src/map.h: add mapping functions which mimic OpenLDAP's
+	saslRegexp functionality for mapping local user names to principal
+	names.
+
+2003-11-20 nalin
 	* src/init.c: instead of forcing the realm when parsing principals,
 	make realm= set the default realm.
 

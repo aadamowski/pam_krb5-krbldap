@@ -14,6 +14,8 @@ pam_krb5_la_SOURCES = \
 	items.h \
 	log.c \
 	log.h \
+	map.c \
+	map.h \
 	options.c \
 	options.h \
 	prompter.c \
