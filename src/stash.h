@@ -41,10 +41,12 @@ struct _pam_krb5_stash {
 	int v5attempted, v5result;
 	char *v5file;
 	krb5_creds v5creds;
+	int v5setenv;
 	int v4present;
 #ifdef USE_KRB4
 	CREDENTIALS v4creds;
 	char *v4file;
+	int v4setenv;
 #endif
 	int afspag;
 };

@@ -49,7 +49,7 @@
 #ident "$Id$"
 
 ssize_t
-_pam_krb5_write_with_retry(int fd, const unsigned char *buffer, size_t len)
+_pam_krb5_write_with_retry(int fd, const unsigned char *buffer, ssize_t len)
 {
 	ssize_t length, ret;
 	fd_set fds;
@@ -83,7 +83,7 @@ _pam_krb5_write_with_retry(int fd, const unsigned char *buffer, size_t len)
 }
 
 ssize_t
-_pam_krb5_read_with_retry(int fd, unsigned char *buffer, size_t len)
+_pam_krb5_read_with_retry(int fd, unsigned char *buffer, ssize_t len)
 {
 	ssize_t length, ret;
 	fd_set fds;

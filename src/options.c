@@ -483,7 +483,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	/* private option */
 	options->minimum_uid = option_i(pamh, argc, argv,
 					ctx, options->realm, "minimum_uid");
-	if (options->debug && (options->minimum_uid != -1)) {
+	if (options->debug && (options->minimum_uid != (uid_t) -1)) {
 		debug("minimum uid: %d", options->minimum_uid);
 	}
 

@@ -188,7 +188,7 @@ AC_DEFINE(PAM_KRB5_MAYBE_CONST,[const],[Define to the proper qualifier (either c
 AC_DEFINE(PASSWORD_CHANGE_PRINCIPAL,["kadmin/changepw"],[Define to the principal name of the password-changing service for any given realm.])
 
 if test x$GCC = xyes ; then
-	CFLAGS="$CFLAGS -Wall -Wextra -Wimplicit -Wunused -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wcast-align"
+	CFLAGS="$CFLAGS -Wall -Wextra -Wimplicit -Wunused -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wcast-align -Wno-unused-parameters"
 	AC_ARG_ENABLE(Werror,AC_HELP_STRING([--enable-Werror],[enable -Werror as a compile flag (default is no)]),[CFLAGS="$CFLAGS -Werror"])
 fi
 

@@ -194,7 +194,7 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			     struct _pam_krb5_options *options,
 			     struct _pam_krb5_user_info *userinfo)
 {
-	char tktfile[PATH_MAX + 5];
+	char variable[PATH_MAX + 5];
 	void *blob;
 	int *intblob;
 	size_t blob_size;
@@ -208,12 +208,12 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 
 	/* Create a temporary ccache file. */
-	snprintf(tktfile, sizeof(tktfile),
+	snprintf(variable, sizeof(variable),
 		 "FILE:%s/pam_krb5_tmp_XXXXXX", options->ccache_dir);
-	fd = mkstemp(tktfile + 5);
+	fd = mkstemp(variable + 5);
 	if (fd == -1) {
 		warn("error creating temporary ccache file \"%s\"",
-		     tktfile + 5);
+		     variable + 5);
 		return;
 	}
 
@@ -223,47 +223,47 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	} else {
 		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != PAM_SUCCESS) {
 			warn("error initializing kerberos");
-			unlink(tktfile + 5);
+			unlink(variable + 5);
 			close(fd);
 			return;
 		}
 	}
-	if (krb5_cc_resolve(ctx, tktfile, &ccache) != 0) {
+	if (krb5_cc_resolve(ctx, variable, &ccache) != 0) {
 		warn("error opening credential cache file \"%s\" for writing",
-		     tktfile + 5);
+		     variable + 5);
 		if (ctx != stash->v5ctx) {
 			krb5_free_context(ctx);
 		}
-		unlink(tktfile + 5);
+		unlink(variable + 5);
 		close(fd);
 		return;
 	}
 	if (krb5_cc_initialize(ctx, ccache, userinfo->principal_name) != 0) {
 		warn("error initializing credential cache file \"%s\"",
-		     tktfile + 5);
+		     variable + 5);
 		krb5_cc_close(ctx, ccache);
 		if (ctx != stash->v5ctx) {
 			krb5_free_context(ctx);
 		}
-		unlink(tktfile + 5);
+		unlink(variable + 5);
 		close(fd);
 		return;
 	}
 	if (krb5_cc_store_cred(ctx, ccache, &stash->v5creds) != 0) {
 		warn("error writing to credential cache file \"%s\"",
-		     tktfile + 5);
+		     variable + 5);
 		krb5_cc_close(ctx, ccache);
 		if (ctx != stash->v5ctx) {
 			krb5_free_context(ctx);
 		}
-		unlink(tktfile + 5);
+		unlink(variable + 5);
 		close(fd);
 		return;
 	}
 
 	/* Read the entire file. */
 	key = _pam_krb5_shm_new_from_file(pamh, sizeof(int) * 3,
-					  tktfile + 5, &blob_size, &blob);
+					  variable + 5, &blob_size, &blob);
 	if ((key != -1) && (blob != NULL)) {
 		intblob = blob;
 		intblob[0] = blob_size;
@@ -279,12 +279,12 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	if (ctx != stash->v5ctx) {
 		krb5_free_context(ctx);
 	}
-	unlink(tktfile + 5);
+	unlink(variable + 5);
 	close(fd);
 
-	snprintf(tktfile, sizeof(tktfile), "_pam_krb5_stash_%s_shm5=%d",
+	snprintf(variable, sizeof(variable), "_pam_krb5_stash_%s_shm5=%d",
 		 userinfo->unparsed_name, key);
-	pam_putenv(pamh, tktfile);
+	pam_putenv(pamh, variable);
 }
 
 #ifdef USE_KRB4
@@ -442,7 +442,7 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	krb5_ccache ccache;
 	krb5_cc_cursor cursor;
 	int i;
-	const char *ccname, *tktname;
+	const char *ccname, *v4tktname;
 	char *unparsed;
 
 	/* Read a TGT from $KRB5CCNAME. */
@@ -509,8 +509,8 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 #if 0
 #ifdef USE_KRB4
 	/* Read a TGT from $KRBTKFILE. */
-	tktname = pam_getenv(pamh, "KRBTKFILE");
-	if ((tktname != NULL) && (strlen(tktname) > 0) &&
+	v4tktname = pam_getenv(pamh, "KRBTKFILE");
+	if ((v4tktname != NULL) && (strlen(v4tktname) > 0) &&
 	    (stash->v4present == 0)) {
 		char name[ANAME_SZ + 1], instance[INST_SZ + 1],
 		     realm[REALM_SZ + 1];

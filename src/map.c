@@ -67,7 +67,8 @@ map_single(const char *pattern, const char *replacement,
 	regmatch_t *matches;
 	const char *specifiers = "0123456789", *p;
 	size_t n_matches;
-	int i, j, k, match;
+	unsigned int i, j;
+	int k, match;
 
 	/* Limit the length of the match array. */
 	n_matches = strlen(input) * 2;

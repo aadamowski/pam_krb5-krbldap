@@ -1,4 +1,4 @@
-EXTRA_DIST = pam_krb5.spec TODO
+EXTRA_DIST = pam_krb5.spec TODO README README.winbind
 
 CONFIGURE_DEPENDENCIES = $(top_srcdir)/pam_krb5.spec
 

@@ -1,3 +1,10 @@
+2005-02-14 nalin
+	* src/stash.c,src/stash.h: add a field to the stash structure for
+	keeping of whether or not we set the KRB5CCNAME/KRBTKFILE environment
+	variables
+	* src/session.c: clear KRB5CCNAME/KRBTKFILE if we're removing the
+	files *and* we set the variables.  Treat zero-length values as we
+	treate NULL values for those variables.
 2005-02-08 nalin
 	* src/afs5log.c: properly screen out "dynroot" as a cell name, walk up
 	from the user's home directory if we can't determine in which cell it

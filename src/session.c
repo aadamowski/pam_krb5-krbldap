@@ -116,7 +116,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		krb5_free_context(ctx);
 		return PAM_USER_UNKNOWN;
 	}
-	if ((options->minimum_uid != -1) &&
+	if ((options->minimum_uid != (uid_t)-1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum = %lu", user,
@@ -162,10 +162,20 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Nuke any old credential files which we have lying around. */
-	v5_destroy(ctx, stash, options);
+	if (stash->v5file != NULL) {
+		v5_destroy(ctx, stash, options);
+		if (stash->v5setenv) {
+			pam_putenv(pamh, "KRB5CCNAME=");
+			stash->v5setenv = 0;
+		}
+	}
 #ifdef USE_KRB4
 	if (stash->v4file != NULL) {
 		v4_destroy(ctx, stash, options);
+		if (stash->v4setenv) {
+			pam_putenv(pamh, "KRBTKFILE=");
+			stash->v4setenv = 0;
+		}
 	}
 #endif
 
@@ -194,11 +204,13 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Create credential files. */
-	if (pam_getenv(pamh, "KRB5CCNAME") != NULL) {
+	if ((pam_getenv(pamh, "KRB5CCNAME") != NULL) &&
+	    (strlen(pam_getenv(pamh, "KRB5CCNAME")) > 0)) {
 		if (options->debug) {
 			debug("KRB5CCNAME is already set, not creating new v5 "
 			      "ccache for '%s'", user);
 		}
+		ccname = NULL;
 	} else {
 		if (options->debug) {
 			debug("creating v5 ccache for '%s'", user);
@@ -211,12 +223,15 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			}
 			sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
 			pam_putenv(pamh, xstrdup(envstr));
+			stash->v5setenv = 1;
 		}
 	}
 
 #ifdef USE_KRB4
-	if ((i == PAM_SUCCESS) && (stash->v4present) && (strlen(ccname) > 0)) {
-		if (pam_getenv(pamh, "KRBTKFILE") != NULL) {
+	if ((i == PAM_SUCCESS) && (stash->v4present) &&
+	    (ccname != NULL) && (strlen(ccname) > 0)) {
+		if ((pam_getenv(pamh, "KRBTKFILE") != NULL) &&
+		    (strlen(pam_getenv(pamh, "KRBTKFILE")) > 0)) {
 			if (options->debug) {
 				debug("KRBTKFILE is set, not creating new v4 "
 				      "ticket file for '%s'", user);
@@ -234,6 +249,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 				}
 				sprintf(envstr, "KRBTKFILE=%s", ccname);
 				pam_putenv(pamh, xstrdup(envstr));
+				stash->v4setenv = 1;
 			}
 		}
 	}
@@ -309,7 +325,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Check the minimum UID argument. */
-	if ((options->minimum_uid != -1) &&
+	if ((options->minimum_uid != (uid_t)-1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum", user);
@@ -358,14 +374,24 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		tokens_release(stash, options);
 	}
 
-	v5_destroy(ctx, stash, options);
-	if (options->debug) {
-		debug("destroyed v5 ticket file for '%s'", user);
+	if (stash->v5file != NULL) {
+		v5_destroy(ctx, stash, options);
+		if (stash->v5setenv) {
+			pam_putenv(pamh, "KRB5CCNAME=");
+			stash->v5setenv = 0;
+		}
+		if (options->debug) {
+			debug("destroyed v5 ticket file for '%s'", user);
+		}
 	}
 
 #ifdef USE_KRB4
 	if (stash->v4file != NULL) {
 		v4_destroy(ctx, stash, options);
+		if (stash->v4setenv) {
+			pam_putenv(pamh, "KRBTKFILE=");
+			stash->v4setenv = 0;
+		}
 		if (options->debug) {
 			debug("destroyed v4 ticket file for '%s'", user);
 		}
