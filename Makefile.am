@@ -15,15 +15,26 @@ force-tag:
 
 CVSROOT=$(shell test -d CVS && cat CVS/Root)
 REPOSITORY=$(shell test -d CVS && cat CVS/Repository)
+ARCHIVEOUTDIR=$(shell cd $(top_srcdir) && pwd)
 
 archive:
-	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX` \
+	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`;\
 	if test -d "$$tmpdir" ; then \
-		cd $$tmpdir \
-		cvs -d $(CVSROOT) co -d $(distdir) -r $(CVSTAG) $(REPOSITORY) \
-		cd $(distdir) \
-		./autogen \
-		make dist \
-		cp -v $(distdir).tar.gz $(top_srcdir)/ \
-		rm -fr $$tmpdir \
+		cd $$tmpdir;\
+		cvs -d $(CVSROOT) co -d $(distdir) -r $(CVSTAG) $(REPOSITORY);\
+		cd $(distdir);\
+		./autogen;\
+		make dist;\
+		mkdir -p $$tmpdir/rpm-build-top;\
+		rpmbuild \
+			--define "_topdir $$tmpdir/rpm-build-top" \
+			--define "_sourcedir $$tmpdir/rpm-build-top" \
+			--define "_specdir $$tmpdir/rpm-build-top" \
+			--define "_builddir $$tmpdir/rpm-build-top" \
+			--define "_srpmdir $$tmpdir/rpm-build-top" \
+			--define "_rpmdir $$tmpdir/rpm-build-top" \
+			--define "_rpmdir $$tmpdir/rpm-build-top" \
+			-tb $(distdir).tar.gz;\
+		cp -v $(distdir).tar.gz $(ARCHIVEOUTDIR)/;\
+		rm -fr $$tmpdir;\
 	fi
