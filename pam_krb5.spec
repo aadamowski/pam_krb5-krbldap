@@ -42,6 +42,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 - add a separate config file parser for compatibility with settings that
   predate the appdefault API
 - use a version script under Linux to avoid polluting the global namespace
+- don't have a default for afs_cells
 
 * Mon Feb 19 2001 Nalin Dahyabhai <nalin@redhat.com>
 - use the appdefault API to read krb5.conf if available

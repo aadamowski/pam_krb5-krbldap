@@ -137,7 +137,6 @@
 #endif
 
 #define APPDEFAULT_APP	"pam"
-#define DEFAULT_CELLS	"eos.ncsu.edu unity.ncsu.edu bp.ncsu.edu"
 #define DEFAULT_SERVICE	"host"
 #define DEFAULT_KEYTAB	"/etc/krb5.keytab"
 #define DEFAULT_LIFE	"36000"
@@ -603,7 +602,7 @@ get_config(krb5_context context, int argc, const char **argv)
 
 #ifdef AFS
 	/* Cells to get tokens for. */
-	appdefault_string(context, "afs_cells", DEFAULT_CELLS, &cells);
+	appdefault_string(context, "afs_cells", "", &cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
 	if(ret->cell_list == NULL) {
 		free(ret);
