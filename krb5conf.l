@@ -9,10 +9,10 @@
 
 %%
 
+\r{0,1}\n						{ xkrb5_conf_lineno++; return NEWLINE; };
 \#.*							{};
 \;.*							{};
 [[:blank:]]+						{};
-\r{0,1}\n						{ xkrb5_conf_lineno++; return NEWLINE; };
 [^[:blank:]#;\[\]{}=\n][^[:blank:]#;\n]*		{ yylval.sval = strdup(yytext); return STRING; };
 =							{ return EQUALS; };
 \[[^[:blank:]]+\]					{ char *p;

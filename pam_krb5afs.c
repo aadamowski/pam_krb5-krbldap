@@ -740,6 +740,7 @@ get_config(krb5_context context, int argc, const char **argv)
 #ifdef AFS
 	/* Cells to get tokens for. */
 	appdefault_string(context, "afs_cells", argc, argv, "", &cells);
+	DEBUG("will afslog to cells `%s'", cells);
 	ret->cell_list = malloc(sizeof(char*) * (num_words(cells) + 1));
 	if(ret->cell_list == NULL) {
 		free(ret);

@@ -95,14 +95,22 @@ assignment:
 		strcpy(entry->key, xkrb5_conf_section);
 		strcat(entry->key, "\177");
 		strcat(entry->key, $1);
-		entry->value = $3;
+		entry->value = strdup($3);
 		entry->next = xkrb5_conf_entries;
 		xkrb5_conf_entries = entry;
-	}
+	};
 
 strings:
 	STRING |
-	strings STRING;
+	strings STRING
+	{
+		char *tmp;
+		tmp = malloc(strlen($$) + strlen($2 ?: "") + 2);
+		strcpy(tmp, $$);
+		strcat(tmp, " ");
+		strcat(tmp, $2 ?: "");
+		$$ = tmp;
+	};
 
 %%
 
