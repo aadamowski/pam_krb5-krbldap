@@ -172,7 +172,9 @@ minikafs_has_afs(void)
  * volume from the cell is mounted there), converting the address to a host
  * name, and then asking libkrb5 to tell us to which realm the host belongs. */
 static int
-minikafs_realm_of_cell_with_ctx(krb5_context ctx, const char *cell,
+minikafs_realm_of_cell_with_ctx(krb5_context ctx,
+				struct _pam_krb5_options *options,
+				const char *cell,
 				char *realm, size_t length)
 {
 	struct minikafs_ioblock iob;
@@ -203,14 +205,25 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx, const char *cell,
 
 	i = minikafs_pioctl(path, minikafs_pioctl_whereis, &iob);
 
-	free(path);
-
 	if (i != 0) {
+		if (options->debug > 1) {
+			debug("got error %d (%s) determining file server for "
+			      "\"%s\"", i, error_message(i), path);
+		}
+		free(path);
 		return i;
 	}
+	free(path);
 
 	i = -1;
 	sin.sin_family = AF_INET;
+	if (options->debug > 1) {
+		debug("file server for \"/afs/%s\" is %u.%u.%u.%u", cell,
+		      (sin.sin_addr.s_addr >>  0) & 0xff,
+		      (sin.sin_addr.s_addr >>  8) & 0xff,
+		      (sin.sin_addr.s_addr >> 16) & 0xff,
+		      (sin.sin_addr.s_addr >> 24) & 0xff);
+	}
 
 	if (ctx == NULL) {
 		if (krb5_init_context(&use_ctx) != 0) {
@@ -227,6 +240,14 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx, const char *cell,
 			realm[length - 1] = '\0';
 			krb5_free_host_realm(use_ctx, realms);
 			i = 0;
+			if (options->debug > 1) {
+				debug("%s is in realm %s", host, realm);
+			}
+		}
+	} else {
+		if (options->debug > 1) {
+			debug("error %d(%s) determining realm for %s",
+			      i, error_message(i), host);
 		}
 	}
 
@@ -238,9 +259,11 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx, const char *cell,
 }
 
 int
-minikafs_realm_of_cell(const char *cell, char *realm, size_t length)
+minikafs_realm_of_cell(struct _pam_krb5_options *options,
+		       const char *cell, char *realm, size_t length)
 {
-	return minikafs_realm_of_cell_with_ctx(NULL, cell, realm, length);
+	return minikafs_realm_of_cell_with_ctx(NULL, options, cell,
+					       realm, length);
 }
 
 /* Create a new PAG. */
@@ -530,7 +553,10 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		defaultrealm = NULL;
 	}
 
-	if (minikafs_realm_of_cell_with_ctx(ctx, cell,
+	if (options->debug > 1) {
+		debug("attempting to determine realm for \"%s\"", cell);
+	}
+	if (minikafs_realm_of_cell_with_ctx(ctx, options, cell,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
@@ -666,7 +692,7 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 	if (krb_get_lrealm(localrealm, 1) != 0) {
 		return -1;
 	}
-	if (minikafs_realm_of_cell_with_ctx(context, cell,
+	if (minikafs_realm_of_cell_with_ctx(context, options, cell,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';

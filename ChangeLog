@@ -1,4 +1,7 @@
 2004-04-21 nalin
+	* src/minikafs.c: print debug messages when doing realmofcell stuff.
+
+2004-04-21 nalin
 	* configure.ac: perform all checks for Kerberos functions with all of
 	the libraries we've found.
 
