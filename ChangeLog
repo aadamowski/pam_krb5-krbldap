@@ -1,5 +1,22 @@
-Wed February 2 2000 Nalin Dahyabhai <nalin@redhat.com>
-- integrate autoconf fix and putenv() workaround from jlkatz@unity.ncsu.edu
+Thu March 23 2000 Nalin Dahyabhai <nalin@redhat.com>
+- fix problem with leftover ticket files after multiple setcred() calls
+
+Mon March 20 2000 Nalin Dahyabhai <nalin@redhat.com>
+- add proper copyright statements
+- save password for modules later in the stack
+
+Fri March 03 2000 Nalin Dahyabhai <nalin@redhat.com>
+- clean up prompter
+
+Thu March 02 2000 Nalin Dahyabhai <nalin@redhat.com>
+- add krbafs as a requirement
+
+Fri February 04 2000 Nalin Dahyabhai <nalin@redhat.com>
+- pick up non-afs PAM config files again
+
+Wed February 02 2000 Nalin Dahyabhai <nalin@redhat.com>
+- autoconf and putenv() fixes for broken apps
+- fix for compressed man pages
 
 Fri January 14 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix stupid bug in password-changing
