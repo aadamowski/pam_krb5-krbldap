@@ -94,8 +94,13 @@ dlopen: dlopen.c
 
 dist: archive
 
+force-tag:
+	cvs tag -cF $(CVSTAG) .
+
+tag:
+	cvs tag -cF $(CVSTAG) .
+
 archive:
-	cvs tag -cF $(CVSTAG) . || :
 	@rm -rf /tmp/pam_krb5-$(VERSION) /tmp/pam_krb5
 	@( dir=`pwd`; cd /tmp; cvs -d `cat $$dir/CVS/Root` export -r$(CVSTAG) pam_krb5 )
 	@( cd /tmp/pam_krb5 ; autoheader ; autoconf )
