@@ -12,3 +12,18 @@ tag:
 
 force-tag:
 	cvs tag -cF $(CVSTAG)
+
+CVSROOT=$(shell test -d CVS && cat CVS/Root)
+REPOSITORY=$(shell test -d CVS && cat CVS/Repository)
+
+archive:
+	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX` \
+	if test -d "$$tmpdir" ; then \
+		cd $$tmpdir \
+		cvs -d $(CVSROOT) co -d $(distdir) -r $(CVSTAG) $(REPOSITORY) \
+		cd $(distdir) \
+		./autogen \
+		make dist \
+		cp -v $(distdir).tar.gz $(top_srcdir)/ \
+		rm -fr $$tmpdir \
+	fi
