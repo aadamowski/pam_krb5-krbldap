@@ -467,7 +467,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	struct passwd *pwd;
 
 	/* First parse the arguments; if there are problems, bail. */
-	initialize_krb_error_table();
+	initialize_krb5_error_table();
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
 		ret = PAM_BUF_ERR;
@@ -719,7 +719,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	struct config *config;
 
 	/* First parse the arguments; if there are problems, bail. */
-	initialize_krb_error_table();
+	initialize_krb5_error_table();
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
 		ret = PAM_BUF_ERR;
@@ -1004,7 +1004,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	int ret = 0;
 
 	/* Initialize Kerberos. */
-	initialize_krb_error_table();
+	initialize_krb5_error_table();
 	ret = krb5_init_context(&context);
 	if(!(config = get_config(context, argc, argv))) {
 		ret = PAM_BUF_ERR;
