@@ -9,7 +9,7 @@
 
 2003-11-20 nalin
 	* src/initopts.c(_pam_krb5_set_init_opts): set the ticket lifetime,
-	if configured, as an initopt.
+	if configured, as an initopt.  This change lets us fix #109331.
 
 2003-11-20 nalin
 	* src/options.c, src/options.h: add code for parsing a "mappings"
