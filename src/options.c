@@ -483,9 +483,11 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 			options->mappings[i].pattern = strdup(list[i * 2]);
 			options->mappings[i].replacement =
 				strdup(list[i * 2 + 1]);
-			debug("mapping: \"%s\" to \"%s\"",
-			      options->mappings[i].pattern,
-			      options->mappings[i].replacement);
+			if (options->debug) {
+				debug("mapping: \"%s\" to \"%s\"",
+				      options->mappings[i].pattern,
+				      options->mappings[i].replacement);
+			}
 		}
 	}
 	free_l(list);
