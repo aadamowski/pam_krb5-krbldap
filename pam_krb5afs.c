@@ -1083,7 +1083,7 @@ pam_prompter(krb5_context context, void *data, const char *name,
 				     PAM_PROMPT_ECHO_ON,
 				     prompt,
 				     &result);
-		if (ret == PAM_SUCCESS) {
+		if ((ret == PAM_SUCCESS) && (result != NULL)) {
 			tmp = strdup(result);
 			if (tmp == NULL) {
 				ret = PAM_BUF_ERR;

@@ -51,7 +51,7 @@ sectionstart:
 
 subsection:
 	subsectionstart subsectionstop |
-	subsectionstart assignments subsectionstop;
+	subsectionstart lines subsectionstop;
 
 subsectionstart:
 	STRING EQUALS CURLYLEFT NEWLINE
