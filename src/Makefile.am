@@ -5,19 +5,23 @@ security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = pam_krb5.5  pam_krb5.8
-noinst_PROGRAMS = afs5log
+noinst_PROGRAMS = afs5log pagsh
 noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8
 
 libpam_krb5_la_SOURCES = \
 	conv.c \
 	conv.h \
+	init.c \
+	init.h \
 	items.c \
 	items.h \
 	minikafs.c \
 	minikafs.h \
 	prompter.c \
 	prompter.h \
+	shmem.c \
+	shmem.h \
 	stash.c \
 	stash.h \
 	storetmp.c \
@@ -30,8 +34,6 @@ libpam_krb5_la_SOURCES = \
 pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' 
 pam_krb5_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
 pam_krb5_la_SOURCES = \
-	init.c \
-	init.h \
 	initopts.c \
 	initopts.h \
 	log.c \
@@ -58,5 +60,12 @@ pam_krb5_storetmp_LIBS =
 
 afs5log_SOURCES = \
 	afs5log.c \
+	logstdio.c \
 	log.h
 afs5log_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+
+pagsh_SOURCES = \
+	pagsh.c \
+	logstdio.c \
+	log.h
+pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
