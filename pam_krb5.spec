@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.57
+Version: 1.58
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -45,6 +45,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Wed Jan 29 2003 Nalin Dahyabhai <nalin@redhat.com> 1.58-1
+- fix configure to not link with both libk5crypto and libcrypto
+
 * Mon Jan 27 2003 Nalin Dahyabhai <nalin@redhat.com> 1.57-1
 - force -fPIC
 - add --with-moduledir, --with-krb5-libs, --with-krbafs-libs to configure

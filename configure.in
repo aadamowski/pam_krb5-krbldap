@@ -82,10 +82,6 @@ AC_CHECK_FUNC(yp_bind,,AC_CHECK_LIB(nsl,yp_bind))
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
 AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
 AC_CHECK_FUNC(error_message,,AC_CHECK_LIB(com_err,error_message))
-AC_CHECK_FUNC(mit_des_key_sched,,
-	      AC_CHECK_LIB(crypto,mit_des_key_sched,,
-	      	AC_CHECK_LIB(k5crypto,mit_des_key_sched)))
-AC_CHECK_FUNC(krb5_init_context,,AC_CHECK_LIB(krb5,krb5_init_context))
 
 # Stolen from openssh patch from simon@sxw.org.uk: 
 # http://www.sxw.org.uk/computing/patches/
