@@ -5,7 +5,7 @@ Release: 20
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
-BuildPrereq: krb5-devel
+BuildPrereq: krb5-devel, pam-devel
 BuildRoot: %{_tmppath}/%{name}-root
 Requires: krbafs >= 1.0
 
@@ -40,6 +40,7 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %changelog
 * Mon Oct  2 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix "use_authtok" logic when password was not set by previous module
+- require pam-devel to build
 
 * Sun Aug 27 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix errors with multiple addresses (#16847)
