@@ -1,4 +1,4 @@
 set -x
 autoheader &&\
 autoconf &&\
- ./configure --with-krb5=/usr/kerberos --with-krbafs=/usr/kerberos
+env CFLAGS=-g3 ./configure --with-krb5=/usr/kerberos --with-krbafs=/usr/kerberos

@@ -67,21 +67,15 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 				SHTARGETS="$SHTARGETS pam_krb5afs.so"
 				MAN5TARGETS="$MAN5TARGETS pam_krb5afs.5"
 				MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8",
-				AC_WARN(omitting token-grabbing functions),
+				AC_WARN(AFS token-grabbing disabled),
 				$LIBS),
-			AC_WARN(omitting token-grabbing functions)
+			AC_WARN(AFS token-grabbing disabled)
 	,,$LIBS)
 fi
-AC_CHECK_HEADERS(kadm5/admin.h)
-AC_CHECK_FUNC(svc_auth_any,,AC_CHECK_LIB(gssrpc,svc_auth_any))
-AC_CHECK_FUNC(krb5_gss_init_sec_context,,
-	      AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context))
-AC_CHECK_FUNC(krb5_db_init,,AC_CHECK_LIB(kdb5,krb5_db_init))
-AC_CHECK_FUNC(kadm5_init_with_password,,
-	      AC_CHECK_LIB(kadm5clnt,kadm5_init_with_password))
 AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
-AC_CHECK_FUNCS(krb5_appdefault_string krb5_appdefault_boolean krb5_appdefault_boolean initialize_krb5_error_table initialize_ovk_error_table getpwnam_r)
-	
+AC_CHECK_FUNCS(krb5_appdefault_string krb5_appdefault_boolean krb5_appdefault_boolean initialize_krb5_error_table getpwnam_r)
+AC_CHECK_FUNC(krb5_change_password,,AC_WARN(password-changing disabled))
+
 AC_SUBST(KRB5)
 AC_SUBST(KRBAFS)
 

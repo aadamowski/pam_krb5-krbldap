@@ -95,38 +95,17 @@
 #define MODULE_NAME "pam_krb5"
 #endif /* AFS */
 
-#ifdef HAVE_KADM5_ADMIN_H
-#include <kadm5/admin.h>
-#else
-#define KADM5_STRUCT_VERSION	0x12345601
-#define KADM5_API_VERSION_2	0x12345702
-#endif
-
 #ifndef KRB5_SUCCESS
 #define KRB5_SUCCESS 0
-#endif
-
-#ifndef ADMIN_SERVICE
-#ifdef  KADM5_ADMIN_SERVICE
-#define ADMIN_SERVICE KADM5_ADMIN_SERVICE
-#else
-#define ADMIN_SERVICE "kadmin/admin"
-#endif
-#endif
-
-#ifndef PASSWORD_CHANGE_SERVICE
-#ifdef  KADM5_CHANGEPW_SERVICE
-#define PASSWORD_CHANGE_SERVICE KADM5_CHANGEPW_SERVICE
-#else
-#define PASSWORD_CHANGE_SERVICE "kadmin/changepw"
-#endif
 #endif
 
 #define MODULE_STASH_NAME MODULE_NAME "_cred_stash"
 #define MODULE_RET_NAME MODULE_NAME "_ret_stash"
 
 #define PAM_SM_AUTH
+#ifdef  PAM_KRB5_EXPERIMENTAL
 #define PAM_SM_ACCT_MGMT
+#endif
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
@@ -163,6 +142,10 @@
 
 #ifdef HAVE_LIBKRB524
 extern int krb524_convert_creds_kdc(krb5_context, krb5_creds *, CREDENTIALS *);
+#endif
+
+#ifndef PASSWORD_CHANGING_SERVICE
+#define PASSWORD_CHANGING_SERVICE "kadmin/changepw"
 #endif
 
 /* timeout stuff */
@@ -1236,6 +1219,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 
+#ifdef PAM_KRB5_EXPERIMENTAL
 	if(RC_OK) {
 		memset(&stash->admin_creds, 0, sizeof(stash->admin_creds));
 		stash->admin_creds.client = principal;
@@ -1255,6 +1239,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			krc = KRB5_SUCCESS;
 		}
 	}
+#endif
 
 	/* Log something. */
 	if(RC_OK) {
@@ -1848,6 +1833,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	return pam_sm_setcred(pamh, flags | PAM_DELETE_CRED, argc, argv);
 }
 
+#ifdef PAM_ACCT_MGMT
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
@@ -1987,24 +1973,24 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	dEBUG("acct_mgmt returning %d: `%s'", prc, pam_strerror(pamh, prc));
 	return prc;
 }
+#endif
 
 int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context = NULL;
-	krb5_principal principal;
-	void *kadm5_handle = NULL;
+	krb5_principal principal, server;
 	char *user = NULL, *authtok = NULL, *old_authtok = NULL;
 	char current_pass[LINE_MAX], new_pass[LINE_MAX], retype_pass[LINE_MAX];
 	struct config *config = NULL;
 	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS;
+	int result_code;
+	krb5_creds creds;
+	krb5_data result_code_string, result_string;
 
 	/* Initialize Kerberos. */
 #ifdef HAVE_INITIALIZE_KRB5_ERROR_TABLE
 	initialize_krb5_error_table();
-#endif
-#ifdef HAVE_INITIALIZE_OVK_ERROR_TABLE
-	initialize_ovk_error_table();
 #endif
 	if(krb5_init_secure_context(&context) != KRB5_SUCCESS) {
 		prc = PAM_SYSTEM_ERR;
@@ -2049,6 +2035,16 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 	}
 
+	/* Build a principal structure out of the password-changing
+	 * service's name. */
+	if(RC_OK) {
+		krc = krb5_parse_name(context, PASSWORD_CHANGING_SERVICE,
+				      &server);
+		if(krc != KRB5_SUCCESS) {
+			CRIT("%s", error_message(krc));
+		}
+	}
+
 	/* Read the old password.  It's okay if this fails. */
 	if(RC_OK) {
 		pam_get_item(pamh, PAM_OLDAUTHTOK, (const void**) &old_authtok);
@@ -2058,18 +2054,18 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	/* flush out the case where the user has no Kerberos principal, and
 	   avoid a spurious, potentially confusing password prompt */
 	if(RC_OK) {
-		kadm5_handle = NULL;
-		krc = kadm5_init_with_password(user,
-					       user,
-					       PASSWORD_CHANGE_SERVICE,
-					       NULL,
-					       KADM5_STRUCT_VERSION,
-					       KADM5_API_VERSION_2,
-					       &kadm5_handle);
+		krc = krb5_get_init_creds_password(context,
+						   &creds,
+						   principal,
+						   (char*)user,
+						   NULL,
+						   NULL,
+						   0,
+						   PASSWORD_CHANGING_SERVICE,
+						   &config->creds_opt);
 		if(krc == KRB5_SUCCESS) {
-			DEBUG("connected to kadmin server with user's name as "
-			      "password -- should have a stronger password");
-			kadm5_destroy(kadm5_handle);
+			DEBUG("user exists, but users's password is equal to "
+			      "user's name -- this should be changed");
 		} else {
 			if(krc == KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN) {
 				DEBUG("user does not have a Kerberos "
@@ -2103,17 +2099,17 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			}
 		}
 		if(RC_OK) {
-			kadm5_handle = NULL;
-			krc = kadm5_init_with_password(user,
-						       old_authtok,
-						       PASSWORD_CHANGE_SERVICE,
-						       NULL,
-						       KADM5_STRUCT_VERSION,
-						       KADM5_API_VERSION_2,
-						       &kadm5_handle);
+			krc = krb5_get_init_creds_password(context,
+							   &creds,
+							   principal,
+							   (char*)old_authtok,
+							   NULL,
+							   NULL,
+							   0,
+							   PASSWORD_CHANGING_SERVICE,
+							   &config->creds_opt);
 			if(krc == KRB5_SUCCESS) {
 				DEBUG("%s cleared for password change", user);
-				kadm5_destroy(kadm5_handle);
 			} else {
 				INFO("can't change password for %s: %d (%s)",
 				     user, krc, error_message(krc));
@@ -2167,37 +2163,50 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				}
 			}
 		}
-		/* DEBUG("authtok = `%s'", authtok); */
+		/* DEBUG("authtok = `%s'", authtok); FIXME */
 
 		if(RC_OK) {
-			kadm5_handle = NULL;
-			krc = kadm5_init_with_password(user,
-						       old_authtok,
-						       PASSWORD_CHANGE_SERVICE,
-						       NULL,
-						       KADM5_STRUCT_VERSION,
-						       KADM5_API_VERSION_2,
-						       &kadm5_handle);
-			if(RC_OK) {
-				DEBUG("connected to kadmin server");
+			memset(&creds, 0, sizeof(creds));
+			creds.client = principal;
+			creds.server = server;
+			krc = krb5_get_init_creds_password(context,
+							   &creds,
+							   principal,
+							   (char*)old_authtok,
+							   NULL,
+							   NULL,
+							   0,
+							   PASSWORD_CHANGING_SERVICE,
+							   &config->creds_opt);
+			if(krc == KRB5_SUCCESS) {
+				DEBUG("%s prepared for password change", user);
 			} else {
-				INFO("error in kadm5_init: %d (%s)", krc,
-				     error_message(krc));
+				INFO("can't change password for %s: %d (%s)",
+				     user, krc, error_message(krc));
 			}
 		}
-
 		if(RC_OK) {
-			krc = kadm5_chpass_principal(kadm5_handle,
-						     principal,
-						     authtok);
-			if(krc == KRB5_SUCCESS) {
-				INFO("%s's %s password has been changed", user,
+			krc = krb5_change_password(context,
+						   &creds,
+						   authtok,
+						   &result_code,
+						   &result_code_string,
+						   &result_string);
+			if((krc == KRB5_SUCCESS) &&
+			   (result_code == KRB5_KPASSWD_SUCCESS)) {
+				INFO("%s's %s password has been changed",
+				     user,
 				     config->banner);
 			} else {
-				INFO("changing %s's %s password failed",
-				     user, config->banner);
+				INFO("changing %s's %s password failed: %*s "
+				     "(%d: %*s)",
+				     user, config->banner,
+				     result_string.length,
+				     result_string.data,
+				     result_code,
+				     result_code_string.length,
+				     result_code_string.data);
 			}
-			kadm5_destroy(kadm5_handle);
 		}
 	}
 
