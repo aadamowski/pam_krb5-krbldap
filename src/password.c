@@ -142,9 +142,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		retval = PAM_AUTH_ERR;
 		password = NULL;
 		/* Obtain the current password. */
-		if (options->use_authtok) {
+		if (options->use_first_pass) {
 			/* Read the stored password.  This first time around,
 			 * it's the PAM_AUTHTOK item. */
+			password = NULL;
 			i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK,
 						    &password);
 			/* Duplicate the password so that we can free it later
@@ -152,7 +153,30 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			if (i == PAM_SUCCESS) {
 				password = xstrdup(password);
 			}
-		} else {
+		}
+		if ((password != NULL) && (i == PAM_SUCCESS)) {
+			/* We have a password, so try to obtain initial
+			 * credentials using the password. */
+			i = v5_get_creds(ctx, pamh,
+					 &stash->v5creds, userinfo, options,
+					 PASSWORD_CHANGE_PRINCIPAL,
+					 password, NULL,
+					 &tmp_result);
+			if (options->debug) {
+				debug("Got %d (%s) acquiring credentials for "
+				      "%s.",
+				      tmp_result, v5_error_message(tmp_result),
+				      PASSWORD_CHANGE_PRINCIPAL);
+			}
+			if (i == PAM_SUCCESS) {
+				retval = PAM_SUCCESS;
+			} else {
+				/* No joy. */
+				xstrfree(password);
+				password = NULL;
+			}
+		}
+		if ((password == NULL) && (options->use_second_pass)) {
 			/* Ask the user for a password. */
 			sprintf(prompt, "%s%sPassword: ",
 				options->banner,
@@ -166,7 +190,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 		/* We have a password, so try to obtain initial credentials
 		 * using the password. */
-		if (i == PAM_SUCCESS) {
+		if ((password != NULL) && (i == PAM_SUCCESS)) {
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
@@ -199,6 +223,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			/* The new password is stored as the PAM_AUTHTOK item.
 			 * The old one is stored as the PAM_OLDAUTHTOK item,
 			 * but we don't use it here. */
+			password = NULL;
 			i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK,
 						    &password);
 			/* Duplicate the password, as above. */
