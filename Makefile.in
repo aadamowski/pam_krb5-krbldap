@@ -98,7 +98,7 @@ force-tag:
 	cvs tag -cF $(CVSTAG) .
 
 tag:
-	cvs tag -cF $(CVSTAG) .
+	cvs tag -c $(CVSTAG) .
 
 archive:
 	@rm -rf /tmp/pam_krb5-$(VERSION) /tmp/pam_krb5
