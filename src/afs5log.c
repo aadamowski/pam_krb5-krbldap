@@ -118,7 +118,11 @@ main(int argc, char **argv)
 	uid_t uid;
 
 	/* Iterate through every parameter, assuming they're names of cells. */
+#ifdef USE_KRB4
 	try_v5_2b = 0;
+#else
+	try_v5_2b = 1;
+#endif
 	cells = 0;
 	uid = getuid();
 	memset(&options, 0, sizeof(options));

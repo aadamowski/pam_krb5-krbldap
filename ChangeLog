@@ -1,4 +1,12 @@
 2004-04-21 nalin
+	* configure.ac: escape sed expressions correctly so that LDFLAGS doesn't
+	include -l flags for Kerberos, skip all krb4 checks if --without-krb4
+	is passed in.
+	* src/Makefile.am: add KRB5_LIBS and KRB4_LIBS as needed.
+	* src/minikafs.c: use krb524_convert_creds_kdc if krb5_524_convert_creds
+	isn't available.  Force v5 mode on if USE_KRB4 is not defined.
+
+2004-04-21 nalin
 	* configure.ac: search for PAM libraries separately
 	* src/Makefile.am: use a convenience library to compile code only once
 	* src/afs5log.c: supply a non-bogus ccache and options argument to

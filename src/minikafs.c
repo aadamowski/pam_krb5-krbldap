@@ -377,7 +377,14 @@ minikafs_5convert_and_log(krb5_context ctx, struct _pam_krb5_options *options,
 	CREDENTIALS v4creds;
 	int i, ret;
 	memset(&v4creds, 0, sizeof(v4creds));
+	i = -1;
+#if defined(HAVE_KRB5_524_CONVERT_CREDS)
 	i = krb5_524_convert_creds(ctx, creds, &v4creds);
+#else
+#if defined(HAVE_KRB524_CONVERT_CREDS_KDC)
+	i = krb524_convert_creds_kdc(ctx, creds, &v4creds);
+#endif
+#endif
 	if (i != 0) {
 		if (options->debug) {
 			debug("got error %d (%s) converting v5 creds to v4 for"

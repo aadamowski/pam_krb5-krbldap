@@ -5,10 +5,18 @@ AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
 AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
-AC_PATH_PROG(KRB4_CONFIG,krb4-config,:,[$PATH:/usr/kerberos/bin:/usr/krb4/bin])
-if $KRB5_CONFIG --libs krb4 > /dev/null 2> /dev/null; then
-	AC_MSG_RESULT(Using krb4 provided with krb5.)
-	KRB4_CONFIG="$KRB5_CONFIG krb4"
+AC_ARG_WITH(krb4,
+AC_HELP_STRING(--without-krb4,[Disable Kerberos IV support.]),
+	    krb4=$withval,
+	    krb4=yes)
+if test x$krb4 != xno ; then
+	AC_PATH_PROG(KRB4_CONFIG,krb4-config,:,[$PATH:/usr/kerberos/bin:/usr/krb4/bin])
+	if $KRB5_CONFIG --libs krb4 > /dev/null 2> /dev/null; then
+		AC_MSG_RESULT(Using krb4 provided with krb5.)
+		KRB4_CONFIG="$KRB5_CONFIG krb4"
+	fi
+else
+	KRB4_CONFIG=:
 fi
 
 KRB5_BINDIR=`dirname $KRB5_CONFIG`
@@ -16,27 +24,35 @@ AC_SUBST(KRB5_BINDIR)
 
 AC_CHECK_LIB(resolv,main)
 KRB5_CFLAGS=`$KRB5_CONFIG --cflags krb5`
-KRB4_CFLAGS=`$KRB4_CONFIG --cflags krb4`
 KRB5_LIBS=`$KRB5_CONFIG --libs krb5`
-KRB4_LIBS=`$KRB4_CONFIG --libs krb4`
-LIBS="$LIBS `$KRB5_CONFIG --libs | sed s,'-l[^ 	]*',,g`"
-LIBS="$LIBS `$KRB4_CONFIG --libs | sed s,'-l[^ 	]*',,g`"
+KRB5_LDFLAGS="`$KRB5_CONFIG --libs | sed s,'-l[[^ 	]]*',,g`"
+LIBS="$LIBS `$KRB5_CONFIG --libs | sed s,'-l[[^ 	]]*',,g`"
+LDFLAGS="$LDFLAGS $KRB5_LDFLAGS"
+if test x$krb4 != xno ; then
+	KRB4_CFLAGS=`$KRB4_CONFIG --cflags krb4`
+	KRB4_LIBS=`$KRB4_CONFIG --libs krb4`
+	KRB4_LDFLAGS="`$KRB4_CONFIG --libs | sed s,'-l[[^ 	]]*',,g`"
+	LIBS="$LIBS `$KRB4_CONFIG --libs | sed s,'-l[[^ 	]]*',,g`"
+	LDFLAGS="$LDFLAGS $KRB4_LDFLAGS"
+fi
 
 AC_MSG_CHECKING(for KRB5_CFLAGS)
 AC_SUBST(KRB5_CFLAGS)
 AC_MSG_RESULT($KRB5_CFLAGS)
 
-AC_MSG_CHECKING(for KRB4_CFLAGS)
-AC_SUBST(KRB4_CFLAGS)
-AC_MSG_RESULT($KRB4_CFLAGS)
-
 AC_MSG_CHECKING(for KRB5_LIBS)
 AC_SUBST(KRB5_LIBS)
 AC_MSG_RESULT($KRB5_LIBS)
 
-AC_MSG_CHECKING(for KRB4_LIBS)
-AC_SUBST(KRB4_LIBS)
-AC_MSG_RESULT($KRB4_LIBS)
+if test x$krb4 != xno ; then
+	AC_MSG_CHECKING(for KRB4_LIBS)
+	AC_SUBST(KRB4_LIBS)
+	AC_MSG_RESULT($KRB4_LIBS)
+	AC_MSG_CHECKING(for KRB4_CFLAGS)
+	AC_SUBST(KRB4_CFLAGS)
+	AC_MSG_RESULT($KRB4_CFLAGS)
+fi
+
 
 AC_CHECK_HEADERS(security/pam_appl.h)
 AC_CHECK_HEADERS(security/pam_modules.h)
@@ -49,26 +65,27 @@ KRB4_CPPFLAGS=`echo $KRB4_CFLAGS | sed 's,-[^I][^[:space:]]*,,g'`
 
 CPPFLAGS="$CPPFLAGS $KRB5_CPPFLAGS $KRB4_CPPFLAGS"
 CFLAGS="$CFLAGS $KRB5_CFLAGS $KRB4_CFLAGS"
-LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
 
 AC_CHECK_HEADERS(krb5.h)
 if test x$ac_cv_header_krb5_h != xyes ; then
 	AC_MSG_ERROR(you must have Kerberos 5 development files to build $PACKAGE)
 fi
-AC_CHECK_HEADER(krb.h,,[AC_CHECK_HEADER(kerberosIV/krb.h)])
-if test x$ac_cv_header_krb_h = xyes ; then
-	AC_DEFINE(USE_KRB4,1,[Define if you have Kerberos IV as well.])
-	AC_DEFINE(KRB4_DES_H,[<des.h>],[Define to the name of your Kerberos IV des.h header.])
-	AC_DEFINE(KRB4_KRB_H,[<krb.h>],[Define to the name of your Kerberos IV krb.h header.])
-	AC_CHECK_HEADER(krb_err.h,[AC_DEFINE(KRB4_KRB_ERR_H,[<krb_err.h>],[Define to the name of your Kerberos IV krb_err.h header, if you have one.])])
-else
-	if test x$ac_cv_header_kerberosIV_krb_h = xyes ; then
+if test x$krb4 != xno ; then
+	AC_CHECK_HEADER(krb.h,,[AC_CHECK_HEADER(kerberosIV/krb.h)])
+	if test x$ac_cv_header_krb_h = xyes ; then
 		AC_DEFINE(USE_KRB4,1,[Define if you have Kerberos IV as well.])
-		AC_DEFINE(KRB4_DES_H,[<kerberosIV/des.h>],[Define to the name of your Kerberos IV des.h header.])
-		AC_DEFINE(KRB4_KRB_H,[<kerberosIV/krb.h>],[Define to the name of your Kerberos IV krb.h header.])
-		AC_CHECK_HEADER(kerberosIV/krb_err.h,[AC_DEFINE(KRB4_KRB_ERR_H,[<kerberosIV/krb_err.h>],[Define to the name of your Kerberos IV krb_err.h header, if you have one.])])
+		AC_DEFINE(KRB4_DES_H,[<des.h>],[Define to the name of your Kerberos IV des.h header.])
+		AC_DEFINE(KRB4_KRB_H,[<krb.h>],[Define to the name of your Kerberos IV krb.h header.])
+		AC_CHECK_HEADER(krb_err.h,[AC_DEFINE(KRB4_KRB_ERR_H,[<krb_err.h>],[Define to the name of your Kerberos IV krb_err.h header, if you have one.])])
 	else
-		AC_MSG_WARN([no Kerberos IV functionality available])
+		if test x$ac_cv_header_kerberosIV_krb_h = xyes ; then
+			AC_DEFINE(USE_KRB4,1,[Define if you have Kerberos IV as well.])
+			AC_DEFINE(KRB4_DES_H,[<kerberosIV/des.h>],[Define to the name of your Kerberos IV des.h header.])
+			AC_DEFINE(KRB4_KRB_H,[<kerberosIV/krb.h>],[Define to the name of your Kerberos IV krb.h header.])
+			AC_CHECK_HEADER(kerberosIV/krb_err.h,[AC_DEFINE(KRB4_KRB_ERR_H,[<kerberosIV/krb_err.h>],[Define to the name of your Kerberos IV krb_err.h header, if you have one.])])
+		else
+			AC_MSG_WARN([no Kerberos IV functionality available])
+		fi
 	fi
 fi
 
@@ -129,7 +146,7 @@ AC_CHECK_MEMBERS(krb5_keyblock.enctype,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.keytype,,,[$headers])
 
 AC_CHECK_FUNC(krb524_convert_creds_kdc,,[AC_CHECK_LIB(krb524,krb524_convert_creds_kdc,,[AC_CHECK_LIB(54,krb524_convert_creds_kdc)])])
-AC_CHECK_FUNCS(krb5_524_convert_creds)
+AC_CHECK_FUNCS(krb5_524_convert_creds krb524_convert_creds_kdc)
 if test x$ac_cv_function_krb5_524_convert_creds = xyes ; then
 	AC_DEFINE(HAVE_KRB5_524_CONVERT_CREDS,1,[Define if you have the krb5_524_convert_creds function.])
 else
