@@ -1006,6 +1006,40 @@ validate_tgt(const char *user, krb5_context context,
 }
 #endif
 
+#ifdef HAVE___POSIX_GETPWNAM_R
+static struct passwd *
+get_pw(const char *user)
+{
+	static struct passwd rec;
+	struct passwd *pwd = NULL;
+	char buf[LINE_MAX];
+	memset(&rec, 0, sizeof(rec));
+	if(__posix_getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0){
+		return &rec;
+	}
+	return NULL;
+}
+#elif HAVE_GETPWNAM_R
+static struct passwd *
+get_pw(const char *user)
+{
+	static struct passwd rec;
+	struct passwd *pwd = NULL;
+	char buf[LINE_MAX];
+	memset(&rec, 0, sizeof(rec));
+	if(getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0){
+		return &rec;
+	}
+	return NULL;
+}
+#else
+static struct passwd *
+get_pw(const char *user)
+{
+	return getpwnam(user);
+}
+#endif
+
 /* Big authentication module. */
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
@@ -1118,19 +1152,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			DEBUG("using current uid %d, gid %d",
 			      stash->uid, stash->gid);
 		} else {
-#ifdef HAVE_GETPWNAM_R
-			struct passwd rec, *pwd = NULL;
-			char buf[LINE_MAX];
-			memset(&rec, 0, sizeof(rec));
-			if(getpwnam_r(user, &rec, buf, sizeof(buf), &pwd) == 0){
-				pwd = &rec;
-			} else {
-				pwd = getpwnam(user);
-			}
-#else
 			struct passwd *pwd = NULL;
-			pwd = getpwnam(user);
-#endif
+			pwd = get_pw(user);
 			if(pwd != NULL) {
 				stash->uid = pwd->pw_uid;
 				stash->gid = pwd->pw_gid;

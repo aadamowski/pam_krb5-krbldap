@@ -42,8 +42,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 * Fri Jul  6 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't set forwardable and assorted other flags when getting password-
   changing service ticket (noted, and fix supplied, by Onime Clement)
-- try getpwnam() if getpwnam_r() fails instead of just giving up, appears
-  to be necessary on Solaris (noted, and fix supplied, by Onime Clement)
+- try __posix_getpwnam_r on Solaris before we try getpwnam_r, which may
+  or may not be expecting the same number/type of arguments (noted by
+  Onime Clement)
 - use krb5_aname_to_localname to convert the principal to a login name
   and set PAM_USER to the result when authenticating
 

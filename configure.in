@@ -74,6 +74,7 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 fi
 AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
 AC_CHECK_FUNCS(krb5_appdefault_string krb5_appdefault_boolean krb5_appdefault_boolean initialize_krb5_error_table getpwnam_r)
+AC_CHECK_FUNCS(__posix_getpwnam_r)
 AC_CHECK_FUNC(krb5_change_password,,AC_WARN(password-changing disabled))
 
 AC_SUBST(KRB5)
