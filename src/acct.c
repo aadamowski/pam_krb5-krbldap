@@ -185,7 +185,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	}
 
 	/* If we got this far, check the target user's .k5login file. */
-	if (retval == PAM_SUCCESS) {
+	if ((retval == PAM_SUCCESS) && options->user_check) {
 		if (krb5_kuserok(ctx, userinfo->principal_name, user) == 0) {
 			notice("account checks fail for '%s': user disallowed "
 			       "by .k5login file for '%s'",

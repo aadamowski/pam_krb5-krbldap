@@ -1,4 +1,9 @@
 2004-08-26 nalin
+	* src/acct.c(pam_sm_acct_mgmt): skip .k5login check of user_check was
+	disabled -- it's not as if we can expect an unknown user to have a home
+	directory.
+
+2004-08-26 nalin
 	* src/conv.c(_pam_krb5_conv_call): return PAM_BAD_ITEM instead of
 	PAM_CONV_ERR if the application didn't define a conversation function.
 
