@@ -1,7 +1,7 @@
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
-Release: 8
+Release: 9
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Thu Mar 23 2000 Nalin Dahyabhai <nalin@redhat.com>
+- fix problem with leftover ticket files after multiple setcred() calls
+
 * Mon Mar 20 2000 Nalin Dahyabhai <nalin@redhat.com>
 - add proper copyright statements
 - save password for modules later in the stack
