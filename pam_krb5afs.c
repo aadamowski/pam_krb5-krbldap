@@ -731,6 +731,11 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			CRIT("cannot determine user's login");
 			ret = PAM_USER_UNKNOWN;
 		}
+
+		if((user == NULL) || (strlen(user) == 0)) {
+			CRIT("cannot determine user's login");
+			ret = PAM_USER_UNKNOWN;
+		}
 	}
 	DEBUG("user is \"%s\"", user);
 
