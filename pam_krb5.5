@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2000/04/20 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2000/05/20 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
 .SH DESCRIPTION
@@ -22,10 +22,10 @@ seconds (10 hours).
 controls whether or not credentials are forwardable.  If not specified, they
 are.
 .IP krb4_convert
-controls whether or not pam_krb5 tries to get Kerberos IV credentials using
-the \fBkrb524d\fR service on the KDC and create ticket files with them.  Unless
-you've converted \fIeverything\fR on your system over to use Kerberos 5, you'll
-want to leave this set to \fBtrue\fR.
+controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
+KC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
+them.  Unless you've converted \fIeverything\fR on your network over to use
+Kerberos 5, you'll want to leave this set to \fBtrue\fR.
 .IP hosts
 specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that
