@@ -73,6 +73,8 @@ AC_CHECK_LIB(gssrpc,svc_auth_any)
 AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context)
 AC_CHECK_LIB(kdb5,krb5_db_init)
 AC_CHECK_LIB(kadm5clnt,kadm5_init_with_password)
+AC_CHECK_FUNC(krb5_decode_ticket,AC_DEFINE(HAVE_VALIDATION))
+	
 AC_SUBST(KRB5)
 AC_SUBST(KRBAFS)
 

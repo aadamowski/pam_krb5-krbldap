@@ -17,3 +17,6 @@
 #ifdef PAM_KRB5_KRB4
 #undef PAM_KRB5_KRBAFS
 #endif
+
+/* Define if you want TGT validation. */
+#undef HAVE_VALIDATION

@@ -200,6 +200,7 @@ struct config {
 	unsigned char krb4_convert;
 	unsigned char setcred;
 	unsigned char no_user_check;
+	unsigned char validate;
 	krb5_get_init_creds_opt creds_opt;
 	int lifetime;
 	char *banner;
@@ -388,6 +389,11 @@ static struct config *get_config(krb5_context context,
 	if(!strcmp(foo, "true")) ret->krb4_convert = TRUE;
 	DEBUG("krb4_convert %s", ret->krb4_convert ? "true" : "false");
 
+	/* Whether to validate TGTs or not. */
+	profile_get_string(profile, PROFILE_NAME, "validate", NULL,
+			   "true", &foo);
+	if(!strcmp(foo, "true")) ret->validate = TRUE;
+
 #ifdef AFS
 	/* Cells to get tokens for. */
 	profile_get_string(profile, PROFILE_NAME, "afs_cells", NULL,
@@ -409,7 +415,7 @@ static struct config *get_config(krb5_context context,
 	 * a keytab with the key for the service in it which we can use to
 	 * decrypt the credential to make sure the KDC's response wasn't
 	 * spoofed.  This is an undocumented way to do it, but it's what people
-	 * do if they need to verify the TGT. */
+	 * do if they need to validate the TGT. */
 	if(gethostname(tgsname + strlen(tgsname),
 		       sizeof(tgsname) - strlen(tgsname) - 1) == -1) {
 		memset(&tgsname, 0, sizeof(tgsname));
@@ -540,6 +546,7 @@ static int pam_prompter(krb5_context context, void *data, const char *name,
 	return ret;
 }
 
+#ifdef HAVE_VALIDATION
 /* Validate the TGT in stash->v5_creds using the keytab and required_tgs
  * set in config.  Return zero only if validation fails, required_tgs is
  * set, and we can read the keytab file. */
@@ -647,6 +654,15 @@ static int verify_tgt(const char *user, krb5_context context,
 
 	return !ret;
 }
+#else
+static int verify_tgt(const char *user, krb5_context context,
+		      struct config *config, struct stash *stash)
+{
+	CRIT("verification error: verification not available because "
+	     "krb5_decode_ticket() not defined");
+	return 0;
+}
+#endif
 
 /* Big authentication module. */
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
@@ -821,8 +837,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 	/* Verify that the TGT is good (i.e., that the reply wasn't spoofed). */
 	if(ret == KRB5_SUCCESS) {
-		if(verify_tgt(user, context, config, stash) == 0) {
-			ret = PAM_AUTH_ERR;
+		if(config->validate) {
+			if(verify_tgt(user, context, config, stash) == 0) {
+				ret = PAM_AUTH_ERR;
+			}
 		}
 	}
 
@@ -968,22 +986,16 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 					krb4_swab32(stash->v4_creds.issue_date);
 				}
 
+				DEBUG("Got v4 TGT for \"%s%s%s@%s\"",
+				      stash->v4_creds.service,
+				      strlen(stash->v4_creds.instance) ?
+				      "." : "",
+				      stash->v4_creds.instance,
+				      stash->v4_creds.realm);
+				stash->have_v4_creds = TRUE;
+
 				/* Sanity checks. */
-				if(l == 0) {
-					DEBUG("Got v4 TGT for \"%s%s%s@%s\"",
-					      stash->v4_creds.service,
-					      strlen(stash->v4_creds.instance) ?
-					      "." : "",
-					      stash->v4_creds.instance,
-					      stash->v4_creds.realm);
-					stash->have_v4_creds = TRUE;
-				} else {
-					INFO("Got bad v4 TGT for \"%s%s%s@%s\"",
-					     stash->v4_creds.service,
-					     strlen(stash->v4_creds.instance) ?
-					     "." : "",
-					     stash->v4_creds.instance,
-					     stash->v4_creds.realm);
+				if(l != 0) {
 					INFO("Got %d extra bytes in v4 TGT",
 					     ciphertext->length - l);
 				}
@@ -1299,6 +1311,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(remove(stash->v5_path) == -1) {
 				CRIT("error removing file %s: %s",
 				     stash->v5_path, strerror(errno));
+			} else {
+				strcpy(stash->v5_path, "");
 			}
 		}
 #ifdef HAVE_LIBKRB4
@@ -1308,6 +1322,8 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			if(remove(stash->v4_path) == -1) {
 				CRIT("error removing file %s: %s",
 				     stash->v4_path, strerror(errno));
+			} else {
+				strcpy(stash->v4_path, "");
 			}
 		}
 #endif

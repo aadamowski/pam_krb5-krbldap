@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2000/10/18 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2000/11/07 "Red Hat Linux" "System Administrator's Manual"
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication with AFS support
 .SH DESCRIPTION
@@ -30,11 +30,15 @@ Kerberos 5, you'll want to leave this set to \fBtrue\fR.
 specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that
 the \fIKDC\fR sees it as to this list.
+.IP validate
+specifies whether or not to attempt validation of the TGT.  The default is
+\fBfalse\fP.
 .IP required_tgs
 specifies a principal for which a user must be able to get a session key for for
 the purpose of verifying that the TGT has not been forged.  The key is
 decrypted using a copy of the service's key stored in a local keytab file.
 This is the only certain way to be absolutely sure the TGT hasn't been forged.
+The default is \fBhost@\fIhostname\fP.
 .IP keytab
 specifies the name of a keytab file to find a key for the \fBrequired_tgs\fP in,
 for use in verifying TGTs.  The default is \fB/etc/krb5.keytab\fP.
@@ -54,6 +58,7 @@ to change passwords.  The default is \fBKerberos 5\fP.
     forwardable = true
     krb4_convert = true
     hosts = thermo.example.edu alf.example.edu
+    validate = true
     required_tgs = host/thermo.example.edu
     ccache_dir = /var/tmp
 

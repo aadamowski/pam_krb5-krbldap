@@ -1,3 +1,8 @@
+Wed Nov  7 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Only try to delete ccache files once.
+- Ignore extra data in v4 TGTs, but do log it.
+- Require "validate" to be true to try validating, and fail if validation fails.
+
 Thu Aug 10 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Fix handing of null passwords.
 
