@@ -150,7 +150,7 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		/* Parse the user's derived principal name into a principal
 		 * structure. */
 		if (krb5_parse_name(ctx, mapped_name,
-		    &ret->principal_name) != 0) {
+				    &ret->principal_name) != 0) {
 			warn("error parsing principal name '%s' derived from "
 			     "user name %s", mapped_name, name);
 			free(ret);
