@@ -341,6 +341,7 @@ v5_get_creds(krb5_context ctx,
 {
 	int i;
 	char realm_service[LINE_MAX];
+	const char *realm;
 	struct pam_message message;
 	krb5_creds tmpcreds;
 
@@ -350,9 +351,14 @@ v5_get_creds(krb5_context ctx,
 	memset(&tmpcreds, 0, sizeof(tmpcreds));
 
 	/* Check some string lengths. */
+	if (strchr(userinfo->unparsed_name, '@') != NULL) {
+		realm = strchr(userinfo->unparsed_name, '@') + 1;
+	} else {
+		realm = options->realm;
+	}
 	if (strlen(service) + 1 +
-	    strlen(options->realm) + 1 +
-	    strlen(options->realm) + 1 >= sizeof(realm_service)) {
+	    strlen(realm) + 1 +
+	    strlen(realm) + 1 >= sizeof(realm_service)) {
 		return PAM_SERVICE_ERR;
 	}
 
@@ -363,13 +369,13 @@ v5_get_creds(krb5_context ctx,
 	} else {
 		strcpy(realm_service, service);
 		strcat(realm_service, "/");
-		strcat(realm_service, options->realm);
+		strcat(realm_service, realm);
 	}
 	if (strchr(realm_service, '@') != NULL) {
-		strcpy(strchr(realm_service, '@') + 1, options->realm);
+		strcpy(strchr(realm_service, '@') + 1, realm);
 	} else {
 		strcat(realm_service, "@");
-		strcat(realm_service, options->realm);
+		strcat(realm_service, realm);
 	}
 	if (options->debug) {
 		debug("authenticating '%s' to '%s'",
@@ -423,7 +429,7 @@ v5_get_creds(krb5_context ctx,
 		 * get a password-changing ticket, which we should be able
 		 * to get with an expired password. */
 		snprintf(realm_service, sizeof(realm_service),
-			 PASSWORD_CHANGE_PRINCIPAL "@%s", options->realm);
+			 PASSWORD_CHANGE_PRINCIPAL "@%s", realm);
 		if (options->debug) {
 			debug("key is expired. attempting to verify password "
 			      "by obtaining credentials for %s", realm_service);

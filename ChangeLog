@@ -1,3 +1,7 @@
+2003-11-19 nalin
+	* src/v5.c(v5_get_creds): use the realm from the unparsed version of
+	the principal name when constructing service principals.
+
 2003-09-22 nalin
 	* src/session.c: actually return where we were supposed to return.
 
