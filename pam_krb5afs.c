@@ -4,8 +4,8 @@
  tokens for specified cells.
 
  Copyright 1999 Nalin Dahyabhai <nalin.dahyabhai@pobox.com>
- Distribution allowed under the X consortium license, the LGPL, and/or the
- Artistic License.  Do me a favor and let me know if you're using it, though.
+ Distribution allowed under the X consortium license or the LGPL.
+ Do me a favor and let me know if you're using it.
  ******************************************************************************/
 
 #ident "$Id$"
@@ -306,6 +306,32 @@ static int pam_prompt_for(pam_handle_t *pamh, int msg_style,
 	return ret;
 }
 
+#ifdef HAVE_KRB5_POSIX_PROMPTER
+static int prompter(krb5_context context, void *data, const char *name,
+		    const char *banner, int num_prompts, krb5_prompt prompts[])
+{
+	int i = 0, ret = PAM_SUCCESS;
+	char *p = NULL;
+	for(i = 0; i < num_prompts; i++) {
+		ret = pam_prompt_for(data,
+				     prompt[i].hidden ?
+				     PAM_PROMPT_NOECHO :
+				     PAM_PROMPT_ECHO,
+				     prompts[i].prompt,
+				     &p);
+		if(ret == PAM_SUCCESS) {
+			strncpy(prompts[i].reply.data, p,
+				prompts[i].reply.length);
+			free(p);
+		} else {
+			ret = KRB5_LIBOS_CANTREADPWD;
+			break;
+		}
+	}
+	return ret;
+}
+#endif
+
 /* Big authentication module. */
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			const char **argv)
@@ -450,6 +476,24 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		stash->v5_creds.server = server;
 		/* Try the first password. */
 		if(globals.try_first_pass && first_pass && !done) {
+#ifdef HAVE_KRB5_POSIX_PROMPTER
+			krb5_get_init_creds_opt opt;
+			krb5_get_init_creds_opt_init(*opt);
+			if(globals.flags & KRB5_GET_INIT_CREDS_OPT_FORWARDABLE)
+				krb5_get_init_creds_opt_set_forwardable(&opt,1);
+			if(globals.flags & KRB5_GET_INIT_CREDS_OPT_PROXIABLE)
+				krb5_get_init_creds_opt_set_proxiable(&opt,1);
+			ret = krb5_get_init_creds_password(context,
+							   &stash->v5_creds,
+							   principal,
+							   first_pass,
+							   prompter,
+							   pamh,
+							   NULL,
+							   NULL);
+			D(("get_init_creds1 returned \"%s\".",
+			  error_message(ret)));
+#else
 			ret = krb5_get_in_tkt_with_password(context,
 							    globals.kdc_options,
 							    NULL,
@@ -460,6 +504,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							    &stash->v5_creds,
 							    NULL);
 			D(("get_in_tkt1 returned \"%s\".", error_message(ret)));
+#endif
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_int_tkt returned %s", error_message(ret));
@@ -471,10 +516,30 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		/* Try the second password if the first one failed or was
 		   otherwise bad. */
 		if(globals.try_second_pass && second_pass && !done) {
+#ifdef HAVE_KRB5_POSIX_PROMPTER
+			krb5_get_init_creds_opt opt;
+#endif
 			if(converse) {
 				pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 					       "Password: ", &second_pass);
 			}
+#ifdef HAVE_KRB5_POSIX_PROMPTER
+			krb5_get_init_creds_opt_init(&opt);
+			if(globals.flags & KRB5_GET_INIT_CREDS_OPT_FORWARDABLE)
+				krb5_get_init_creds_opt_set_forwardable(&opt,1);
+			if(globals.flags & KRB5_GET_INIT_CREDS_OPT_PROXIABLE)
+				krb5_get_init_creds_opt_set_proxiable(&opt,1);
+			ret = krb5_get_init_creds_password(context,
+							   &stash->v5_creds,
+							   principal,
+							   second_pass,
+							   prompter,
+							   pamh,
+							   NULL,
+							   NULL);
+			D(("get_init_creds2 returned \"%s\".",
+			  error_message(ret)));
+#else
 			ret = krb5_get_in_tkt_with_password(context,
 							    globals.kdc_options,
 							    NULL,
@@ -485,6 +550,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							    &stash->v5_creds,
 							    NULL);
 			D(("get_in_tkt2 returned \"%s\".", error_message(ret)));
+#endif
 			if(globals.debug)
 			syslog(LOG_DEBUG, MODULE_NAME
 			       ": get_int_tkt returned %s", error_message(ret));
