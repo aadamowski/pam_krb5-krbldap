@@ -59,11 +59,14 @@ pam_krb5_storetmp_LIBS =
 afs5log_SOURCES = \
 	afs5log.c \
 	logstdio.c \
+	logstdio.h \
 	log.h
 afs5log_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
 
 pagsh_SOURCES = \
 	pagsh.c \
 	logstdio.c \
+	logstdio.h \
+	log.h
 	log.h
 pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
