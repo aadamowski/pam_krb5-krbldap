@@ -1084,7 +1084,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Retrieve information about the user. */
 	if(ret == PAM_SUCCESS) {
-		ret = pam_get_user(pamh, &user, "login:");
+		ret = pam_get_user(pamh, &user, "login: ");
 	}
 
 	if((flags & PAM_ESTABLISH_CRED) && (ret == KRB5_SUCCESS)) {
@@ -1422,7 +1422,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Figure out who the user is. */
 	if(ret == KRB5_SUCCESS) {
-		ret = pam_get_user(pamh, &user, "login:");
+		ret = pam_get_user(pamh, &user, "login: ");
 		if(ret != PAM_SUCCESS) {
 			INFO("couldn't determine user");
 			ret = PAM_USER_UNKNOWN;
