@@ -833,12 +833,6 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				     strerror(errno));
 				ret = PAM_SYSTEM_ERR;
 			}
-			if(fchown(tmpfd, stash->uid, stash->gid) == -1) {
-				CRIT("%s getting setting owner of ticket file",
-				     strerror(errno));
-				close(tmpfd);
-				ret = PAM_SYSTEM_ERR;
-			}
 			if(fchmod(tmpfd, S_IRUSR | S_IWUSR) == -1) {
 				CRIT("%s getting setting mode of ticket file",
 				     strerror(errno));
@@ -880,8 +874,17 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						     v4_creds.kvno,
 						     &v4_creds.ticket_st,
 						     v4_creds.issue_date);
-				chown(stash->v4_path, stash->uid, stash->gid);
+				if(chown(stash->v4_path, stash->uid,
+					 stash->gid) == -1) {
+					CRIT("%s getting setting owner of "
+					     "ticket file", strerror(errno));
+				}
 				chmod(stash->v4_path, S_IRUSR | S_IWUSR);
+				if(chmod(stash->v4_path,
+					 S_IRUSR | S_IWUSR) == -1) {
+					CRIT("%s getting setting mode of "
+					     "ticket file", strerror(errno));
+				}
 			}
 		}
 #endif
