@@ -1,3 +1,11 @@
+2004-08-27 nalin
+	* src/minikafs.c: handle cases where the length of the realm name >
+	length of the cell name.
+
+2004-08-27 nalin
+	* src/options.c(_pam_krb5_options_init): set the default realm for
+	ctx (#116198).
+
 2004-08-26 nalin
 	* src/options.h,options.c: add an ignore_afs flag to the options
 	structure, heavily based on Matthew Miller's patch (#126345).

@@ -601,13 +601,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	krb5_ccache use_ccache;
 	int ret, i;
 	char *principal, *defaultrealm, realm[PATH_MAX];
+	size_t principal_size;
 	const char *base[] = {"afs", "afsx"};
-
-	principal = malloc(strlen("afsx/") + strlen(cell) + 1 +
-			   strlen(cell) + 1);
-	if (principal == NULL) {
-		return -1;
-	}
 
 	if (context == NULL) {
 		if (krb5_init_context(&ctx) != 0) {
@@ -631,6 +626,20 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		realm[sizeof(realm) - 1] = '\0';
 	}
 
+	principal_size = strlen("afsx/@") + 1;
+	principal_size += strlen(cell);
+	principal_size += strlen(realm);
+	if (defaultrealm != NULL) {
+		principal_size += strlen(defaultrealm);
+	}
+	principal = malloc(principal_size);
+	if (principal == NULL) {
+		if (defaultrealm != NULL) {
+			v5_free_default_realm(ctx, defaultrealm);
+		}
+		return -1;
+	}
+
 	memset(&use_ccache, 0, sizeof(use_ccache));
 	if (ccache != NULL) {
 		use_ccache = ccache;
@@ -647,7 +656,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 
 	for (i = 0; i < sizeof(base) / sizeof(base[0]); i++) {
 		/* Try the cell instance in the cell's realm. */
-		sprintf(principal, "%s/%s@%s", base[i], cell, realm);
+		snprintf(principal, principal_size, "%s/%s@%s",
+			 base[i], cell, realm);
 		if (options->debug) {
 			debug("attempting to obtain tokens for \"%s\" (\"%s\")",
 			      cell, principal);
@@ -661,7 +671,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		/* If the realm name and cell name are similar, try the NULL
 		   instance. */
 		if (strcasecmp(realm, cell) == 0) {
-			sprintf(principal, "%s@%s", base[i], realm);
+			snprintf(principal, principal_size, "%s@%s",
+				 base[i], realm);
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
 				      "(\"%s\")", cell, principal);
@@ -677,8 +688,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		/* Try the cell instance in the default realm. */
 		if ((defaultrealm != NULL) &&
 		    (strcmp(defaultrealm, realm) != 0)) {
-			sprintf(principal, "%s/%s@%s",
-				base[i], cell, defaultrealm);
+			snprintf(principal, principal_size, "%s/%s@%s",
+				 base[i], cell, defaultrealm);
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
 				      "(\"%s\")", cell, principal);
