@@ -41,8 +41,8 @@ struct _pam_krb5_stash {
 	int v5attempted, v5result;
 	char *v5file;
 	krb5_creds v5creds;
-#ifdef USE_KRB4
 	int v4present;
+#ifdef USE_KRB4
 	CREDENTIALS v4creds;
 	char *v4file;
 #endif

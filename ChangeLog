@@ -1,4 +1,10 @@
 2004-01-07 nalin
+	* src/stash.h: always have a v4present field in the structure.
+	* src/v4.h: don't try 524 conversion if we don't have krb4 -- we
+	wouldn't be able to do anything with the results.  Noted by Jörg
+	Albert.
+
+2004-01-07 nalin
 	* src/v4.c(v4_save): make the stub v4_save function match the
 	non-stub's prototype.  Noted by Jörg Albert.
 	* src/v4.c(v4_destroy): don't return a value from this function, which

@@ -368,6 +368,7 @@ v4_save(krb5_context ctx,
 	}
 	return PAM_SUCCESS;
 }
+
 void
 v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	   struct _pam_krb5_options *options)
@@ -381,39 +382,6 @@ v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	}
 	stash->v4file = NULL;
 }
-
-#else
-static int
-_pam_krb5_v4_init(krb5_context ctx,
-		  struct _pam_krb5_stash *stash,
-		  struct _pam_krb5_user_info *user,
-		  struct _pam_krb5_options *options,
-		  char *password,
-		  int *result) 
-{
-	return PAM_AUTH_ERR;
-}
-
-int
-v4_save(krb5_context ctx,
-	struct _pam_krb5_stash *stash,
-	struct _pam_krb5_user_info *userinfo,
-	struct _pam_krb5_options *options,
-	uid_t uid, gid_t gid,
-	const char **ccname)
-{
-	if (ccname != NULL) {
-		*ccname = NULL;
-	}
-	return PAM_SERVICE_ERR;
-}
-void
-v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
-	   struct _pam_krb5_options *options)
-{
-	return;
-}
-#endif
 
 int
 v4_get_creds(krb5_context ctx,
@@ -527,3 +495,28 @@ v4_get_creds(krb5_context ctx,
 	}
 	return PAM_AUTH_ERR;
 }
+
+#else
+
+int
+v4_save(krb5_context ctx,
+	struct _pam_krb5_stash *stash,
+	struct _pam_krb5_user_info *userinfo,
+	struct _pam_krb5_options *options,
+	uid_t uid, gid_t gid,
+	const char **ccname)
+{
+	if (ccname != NULL) {
+		*ccname = NULL;
+	}
+	return PAM_SERVICE_ERR;
+}
+
+void
+v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
+	   struct _pam_krb5_options *options)
+{
+	return;
+}
+
+#endif
