@@ -443,6 +443,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		ret = PAM_BUF_ERR;
 	}
 	krb5_init_ets(context);
+	if(config->debug)
 	DEBUG("pam_sm_authenticate called");
 
 	/* Initialize Kerberos and grab some memory for the creds structures. */
@@ -452,6 +453,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 		if((ret == KRB5_SUCCESS) && (stash != NULL)) {
 			memset(stash, 0, sizeof(struct stash));
 			krb5_get_default_realm(context, &realm);
+			if(config->debug)
 			DEBUG("default Kerberos realm is %s", realm);
 		} else {
 			ret = PAM_SYSTEM_ERR;
@@ -481,11 +483,13 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 			ret = PAM_USER_UNKNOWN;
 		}
 	}
+	if(config->debug)
 	DEBUG("user is \"%s\"", user);
 
 	/* Try to get and save the user's UID. */
 	pwd = getpwnam(user);
 	if(pwd != NULL) {
+		if(config->debug)
 		DEBUG("%s has uid %d, gid %d", user, stash->uid, stash->gid);
 		stash->uid = pwd->pw_uid;
 		stash->gid = pwd->pw_gid;
@@ -532,6 +536,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							   0,
 							   NULL,
 							   &config->creds_opt);
+			if(config->debug)
 			DEBUG("get_int_tkt returned %s", error_message(ret));
 			if(ret == KRB5_SUCCESS) {
 				done = 1;
@@ -549,6 +554,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 							   0,
 							   NULL,
 							   &config->creds_opt);
+			if(config->debug)
 			DEBUG("get_int_tkt returned %s", error_message(ret));
 			if(ret == KRB5_SUCCESS) {
 				done = 1;
@@ -608,6 +614,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 
 	if(ret == PAM_SUCCESS) {
 		ret = pam_set_data(pamh, MODULE_DATA_NAME, stash, cleanup);
+		if(config->debug)
 		DEBUG("credentials saved for %s", user);
 	}
 
@@ -642,6 +649,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	/* Done with Kerberos. */
 	krb5_free_context(context);
 
+	if(config->debug)
 	DEBUG("pam_sm_authenticate returning %d (%s)", ret,
 	      pam_strerror(pamh, ret));
 
@@ -681,6 +689,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		/* Retrieve and create Kerberos tickets. */
 		ret = pam_get_data(pamh, MODULE_DATA_NAME, (void*)&stash);
 		if(ret == PAM_SUCCESS) {
+			if(config->debug)
 			DEBUG("credentials retrieved");
 
 			/* Set up the environment variable for Kerberos 5. */
@@ -692,6 +701,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, ret));
 			}
+			if(config->debug)
 			DEBUG("%s", v5_path);
 
 			/* Create the v5 ticket cache. */
@@ -715,6 +725,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				chown(v5_path, stash->uid, stash->gid);
 			}
 		} else {
+			if(config->debug)
 			DEBUG("Kerberos 5 credential retrieval failed for "
 			      "%s, user is probably local", user);
 			stash = NULL;
@@ -724,12 +735,14 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #ifdef HAVE_LIBKRB524
 		/* Get Kerberos 4 credentials. */
 		if((ret == KRB5_SUCCESS) && (config->krb4_convert)) {
+			if(config->debug)
 			DEBUG("converting credentials for %s", user);
 
 			ret = krb524_convert_creds_kdc(context,
 						       &stash->v5_creds,
 						       &v4_creds);
 
+			if(config->debug)
 			DEBUG("krb524_convert_creds returned \"%s\" for %s",
 			      error_message(ret), user);
 
@@ -754,11 +767,13 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				CRIT("%s setting environment",
 				     pam_strerror(pamh, ret));
 			}
+			if(config->debug)
 			DEBUG(v4_path);
 
 			/* Create the v4 ticket cache. */
 			snprintf(v4_path, sizeof(v4_path),
 				 "/tmp/tkt%d_%d", stash->uid, getpid());
+			if(config->debug)
 			DEBUG("opening ticket file \"%s\"", v4_path);
 			krb_set_tkt_string(strdup(v4_path));
 			ret = in_tkt(v4_creds.pname,
@@ -770,6 +785,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 			/* Store credentials in the ticket file. */
 			if(ret == KSUCCESS) {
+				if(config->debug)
 				DEBUG("save v4 creds");
 				krb_save_credentials(v4_creds.service,
 						     v4_creds.instance,
@@ -797,6 +813,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* Afslog to all of the specified cells. */
 			k_setpag();
 			for(i = 0; config->cell_list[i] != NULL; i++) {
+				if(config->debug)
 				DEBUG("afslog() to cell %s", config->cell_list[i]);
 				krb_afslog(config->cell_list[i], config->realm);
 			}
@@ -807,6 +824,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if((flags & PAM_DELETE_CRED) && (ret == KRB5_SUCCESS)) {
 		ret = pam_get_data(pamh,MODULE_DATA_NAME,(const void**)&stash);
 		if(ret == PAM_SUCCESS) {
+			if(config->debug)
 			DEBUG("credentials retrieved");
 			/* Delete the v5 ticket cache. */
 			snprintf(v5_path, sizeof(v5_path),
@@ -937,6 +955,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			ret = PAM_SYSTEM_ERR;
 		}
 		if(ret == KRB5_SUCCESS) {
+			if(config->debug)
 			DEBUG("%s cleared for password change", user);
 		} else {
 			INFO("can't change password for %s: %s",
@@ -948,6 +967,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if((ret == KRB5_SUCCESS) && (flags & PAM_UPDATE_AUTHTOK)) {
 		const char *authtok2;
 
+		if(config->debug)
 		DEBUG("attempting to change password for %s", user);
 
 		if((old_authtok == NULL) || (strlen(old_authtok) == 0)) {
@@ -1022,6 +1042,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			krb5_change_password(context,&creds,(char*)authtok,&ret,
 					     &code_string,&result_string);
 			if(ret == KRB5_SUCCESS) {
+				if(config->debug)
 				DEBUG("attempt to change password for %s "
 				      "resulted in %s, %s", user, code_string,
 				      result_string);
