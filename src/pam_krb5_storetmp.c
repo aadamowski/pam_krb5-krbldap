@@ -78,7 +78,7 @@ main(int argc, const char **argv)
 	}
 
 	/* If the filename didn't end with XXXXXX, our job is to remove it. */
-	if ((argc == 2) && (strlen(filename) > 6)) {
+	if (strlen(filename) > 6) {
 		p = filename + strlen(filename) - 6;
 		if (strcmp(p, "XXXXXX") != 0) {
 			if (unlink(filename) == 0) {

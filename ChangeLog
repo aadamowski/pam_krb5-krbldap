@@ -1,4 +1,8 @@
 2004-03-16 nalin
+	* src/pam_krb5_storetmp.c: remove the file if it's not a valid mkstemp
+	pattern, even if we were passed a UID/GID.
+
+2004-03-16 nalin
 	* src/storetmp.c: drop privileges before we exec the helper.
 
 2004-03-16 nalin
