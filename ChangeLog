@@ -1,3 +1,7 @@
+Wed Jan 29 2003 Nalin Dahyabhai <nalin@redhat.com>
+- Fix accidental double-free because libpam doesn't appear to make copies of
+  the names for data items.
+
 Fri Aug 23 2002 Nalin Dahyabhai <nalin@redhat.com>
 - Update docs on the location of the anoncvs tree.
 - Add warnings to the list of options we invoke $(CC) with.

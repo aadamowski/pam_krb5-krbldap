@@ -3,7 +3,7 @@
  Kerberos 5 ticket to a Kerberos 4 ticket, and use it to grab AFS
  tokens for specified cells if possible.
 
- Copyright 2000-2002 Red Hat, Inc.
+ Copyright 2000-2003 Red Hat, Inc.
  Portions Copyright 1999 Nalin Dahyabhai.
  
  This is free software; you can redistribute it and/or modify it
@@ -1000,7 +1000,7 @@ get_config(krb5_context context, int argc, const char **argv)
 
 /* Free some memory. */
 static void
-cleanup(pam_handle_t *pamh, void *data, int error_status)
+free_string(pam_handle_t *pamh, void *data, int error_status)
 {
 	if (data != NULL) {
 		free(data);
@@ -1650,8 +1650,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		} else {
 			DEBUG("error saving credentials for `%s (%s)'",
 			      unparsedname, stash_name);
+			free(stash_name);
+			stash_name = NULL;
 		}
-		free(stash_name);
 	}
 
 #ifdef HAVE_LIBKRB4
@@ -1834,15 +1835,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	if (RC_OK) {
 		*pret = prc;
 		stash_name = module_ret_name(unparsedname);
-		prc = pam_set_data(pamh, stash_name, pret, cleanup);
+		prc = pam_set_data(pamh, stash_name, pret, free_string);
 		if (prc == PAM_SUCCESS) {
 			DEBUG("saved return code (%d) for later use (%s)",
 			      *pret, stash_name);
 		} else {
 			INFO("error %d (%s) saving return code (%d)", prc,
 			     pam_strerror(pamh, prc), *pret);
+			free(stash_name);
+			stash_name = NULL;
 		}
-		free(stash_name);
 		prc = *pret;
 	}
 
@@ -1946,6 +1948,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		stash_name = module_stash_name(unparsedname);
 		prc = pam_get_data(pamh, stash_name, (void*)&stash);
 		free(stash_name);
+		stash_name = NULL;
 		if (prc == PAM_SUCCESS) {
 			DEBUG("credentials retrieved");
 
@@ -2184,6 +2187,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		stash_name = module_stash_name(unparsedname);
 		prc = pam_get_data(pamh, stash_name, (void*)&stash);
 		free(stash_name);
+		stash_name = NULL;
 		if ((prc == PAM_SUCCESS) && (strlen(stash->v5_path) > 0)) {
 			/* Delete the v5 ticket cache. */
 			DEBUG("removing %s", stash->v5_path);
@@ -2219,6 +2223,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		stash_name = module_ret_name(unparsedname);
 		pam_get_data(pamh, stash_name, (const void**) &pret);
 		free(stash_name);
+		stash_name = NULL;
 		if (pret) {
 			DEBUG("recovered return code %d from prior call to "
 			      "pam_sm_authenticate()", *pret);
@@ -2355,6 +2360,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		stash_name = module_ret_name(unparsedname);
 		pam_get_data(pamh, stash_name, (const void**) &pret);
 		free(stash_name);
+		stash_name = NULL;
 		if (pret != NULL) {
 			switch (*pret) {
 				case PAM_IGNORE:
