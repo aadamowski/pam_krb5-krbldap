@@ -2,7 +2,7 @@ Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
 Release: 1
-Source0: http://www.pobox.com/~nalin.dahyabhai/sources/pam_krb5afs-%{version}.tar.gz
+Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
 BuildPrereq: krb5-devel
@@ -14,7 +14,7 @@ Linux-PAM and Kerberos 5. This module supports password checking, ticket
 creation, and optional TGT verification and conversion to Kerberos IV tickets.
 
 %prep
-%setup -q -n pam_krb5afs
+%setup -q -n pam_krb5
 
 %build
 %configure --with-krb5=/usr/kerberos
