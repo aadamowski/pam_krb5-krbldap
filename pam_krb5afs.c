@@ -945,7 +945,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 						   config->lifetime / 60 / 5,
 						   NULL, 0, ciphertext);
 			if(rc != KSUCCESS) {
-				INFO("couldn't get v4 TGT for %s%s@%s (%s), "
+				INFO("couldn't get v4 TGT for %s%s%s@%s (%s), "
 				     "continuing", v4name,
 				     strlen(v4inst) ? ".": "", v4inst, v4realm,
 				     krb_get_err_text(rc));
@@ -982,6 +982,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				/* Session key. */
 				memcpy(&stash->v4_creds.session, p, 8);
 				l = ciphertext->length;
+				DEBUG("ciphertext length in TGT = %d", l);
 
 				p += 8;
 				l -= 8;
@@ -991,6 +992,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 					strncpy(stash->v4_creds.service, p,
 						sizeof(stash->v4_creds.service)
 						- 1);
+				} else {
+					INFO("service name in v4 TGT too long: %.8s", p);
 				}
 				p += (strlen(stash->v4_creds.service) + 1);
 				l -= (strlen(stash->v4_creds.service) + 1);
@@ -1266,6 +1269,21 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #endif
 #ifdef HAVE_LIBKRB4
 		if((ret == KRB5_SUCCESS) && (stash->have_v4_creds)) {
+			/* FIXME: replace with autoconf check */
+#if 1
+			/* Kerberos 5 1.2.2's libkrb4 won't initialize a ticket
+			 * file that already exists.  That's *good*.  But that
+			 * means we have to use mktemp().  That's bad. */
+			if(strlen(stash->v4_path) == 0) {
+				snprintf(v4_path, sizeof(v4_path),
+					 "%s/tkt%d_XXXXXX",
+					 config->ccache_dir, stash->uid);
+				if(mktemp(v4_path)) {
+					strncpy(stash->v4_path, v4_path,
+						sizeof(stash->v4_path) - 1);
+				}
+			}
+#else
 			/* Set up the environment variable for Kerberos 4. */
 			if(strlen(stash->v4_path) == 0) {
 				snprintf(v4_path, sizeof(v4_path),
@@ -1291,8 +1309,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				ret = PAM_SYSTEM_ERR;
 			}
 			strncpy(stash->v4_path, v4_path,
-				sizeof(stash->v4_path));
+				sizeof(stash->v4_path) - 1);
 			close(tmpfd);
+#endif
 		}
 		if((ret == KRB5_SUCCESS) && (config->krb4_convert)) {
 			snprintf(v4_path, sizeof(v4_path),
@@ -1316,14 +1335,19 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			ret = in_tkt(stash->v4_creds.pname,
 				     stash->v4_creds.pinst);
 			if(ret != KRB5_SUCCESS) {
-				CRIT("error initializing %s for %s, punting",
-				     stash->v4_path, user);
+				CRIT("error initializing %s for %s (code = %d),"
+				     " punting", stash->v4_path, user, ret);
 				ret = KRB5_SUCCESS;
 			}
 
 			/* Store credentials in the ticket file. */
 			if(ret == KSUCCESS) {
-				DEBUG("save v4 creds");
+				DEBUG("save v4 creds (%s%s%s@%s:%d)",
+				      stash->v4_creds.service,
+				      strlen(stash->v4_creds.instance) ? "." : "",
+				      stash->v4_creds.instance ? stash->v4_creds.instance : "",
+				      stash->v4_creds.realm,
+				      stash->v4_creds.kvno);
 				krb_save_credentials(stash->v4_creds.service,
 						     stash->v4_creds.instance,
 						     stash->v4_creds.realm,

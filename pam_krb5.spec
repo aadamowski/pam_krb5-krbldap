@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.26
+Version: 1.27
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Fri Feb 16 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't create the v4 ticket file calling in_tkt()
+
 * Tue Feb 13 2001 Nalin Dahyabhai <nalin@redhat.com>
 - don't log unknown user names to syslog -- they might be sensitive information
 
