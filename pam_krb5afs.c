@@ -976,6 +976,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Read the old password and save it. */
 	if(!globals.use_authtok&&(old_authtok == NULL)&&(ret == PAM_SUCCESS)) {
+		char *second_pass;
 		D(("About to ask the user for current password."));
 		ret = pam_prompt_for(pamh, PAM_PROMPT_ECHO_OFF,
 				     "Enter password: ", &second_pass);
