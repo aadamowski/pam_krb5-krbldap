@@ -10,6 +10,9 @@
 /* Define if you want internal krb524 credential conversions. */
 #undef HAVE_LIBKRB524
 
+/* Define if you have kadm5/admin.h */
+#undef HAVE_KADM5_ADMIN_H
+
 /* Define if you want internal token grabbing. */
 #ifdef PAM_KRB5_KRB4
 #undef PAM_KRB5_KRBAFS

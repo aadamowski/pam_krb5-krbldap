@@ -1,2 +1,2 @@
-* Rewrite pam_sm_chauthtok() to just use the kadm5 library.  The current
-  implementation doesn't work.
+* Figure out why password-changing doesn't work without pam_cracklib running
+  before pam_krb5.

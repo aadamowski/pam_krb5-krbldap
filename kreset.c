@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 	kadm5_ret_t ret;
 
 	char buf[LINE_MAX];
-	char *user = "nsdahya1";
+	char *user = "example";
 	char *password = NULL;
 	void *server_handle = NULL;
 	krb5_principal client;
@@ -178,8 +178,13 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 
+	if(argc < 2) {
+		fprintf(stderr, "You must supply a principal name!\n");
+		exit(0);
+	}
+
 	if(ret == 0) {
-		ret = krb5_parse_name(context, user, &client);
+		ret = krb5_parse_name(context, user = argv[1], &client);
 	} else {
 		fprintf(stderr, "%s initializer errtab\n", error_message(ret));
 		exit(0);

@@ -1,36 +1,43 @@
-This module for Linux-PAM implements Kerberos 5 password-checking with optional
-Kerberos 4 compatible ticket files and and aklog-style AFS token-grabbing.
+This module for Linux-PAM implements Kerberos 5 password-checking with
+optional Kerberos 4 compatible ticket files and and aklog-style AFS
+token-grabbing.  The pam_krb5 module is always built, and when compiled
+on a system with libkrbafs installed, pam_krb5afs.so will also be built.
 
-It implements authentication, session management, and (imperfect) password-
-changing functions.  Sample configuration files for ssh and login are included.
+It implements authentication, session management, and password-changing
+functions.  Sample configuration files for many services are included.
 
-The auth module checks the user name and password in the user's realm.  It takes
-the standard parameters "debug", "try_first_pass", and "use_first_pass", as
-required by the PAM documentation, and "skip_first_pass" for completeness.
+The pam_sm_authenticate() function checks the user name and password in
+the user's realm.  It takes the standard parameters "debug", "try_first_pass",
+and "use_first_pass", as required by the PAM documentation, and
+"skip_first_pass" for completeness.
 
-With no arguments, the auth module defaults to "try_first_pass" mode.  The TGT
-obtained and is saved for use by the setcred function, but the TGT is not stored
-on disk.  If CRITICAL_SERVICE was defined at compile-time, the new TGT is used
-to obtain a service ticket for it as verification that the TGT wasn't coming
-from a spoofed KDC.
+With no arguments, the pam_sm_authenticate() function defaults to
+"try_first_pass" mode.  The TGT obtained and is saved for later use by
+the pam_sm_setcred() function, but the TGT is NOT stored on disk.  If
+the name of a critical TGS is give in the krb5.conf configuration file
+(described below), the new TGT is used to obtain a service key for it to
+verify that the TGT wasn't coming from a spoofed KDC.
 
-The setcred function creates a Kerberos 5 ticket file and, if libkrb524 was
-found at compile-time, obtains and creates a Kerberos 4 ticket file using
-the krb524 service running on the KDC.  If libkrbafs was found at compile-time,
-the module will create a PAG and get tokens for AFS cells.
+The pam_sm_setcred() function creates a Kerberos 5 ticket file and, if
+libkrb524 was found at compile-time, can obtain and create a Kerberos 4
+ticket file using the krb524 service running on the KDC.  If libkrbafs
+was found at compile-time, the krb5afs module will also create a PAG
+and get tokens for AFS cells specified in the configuration file.
 
-The session management functions merely wrap calls to pam_setcred with
-PAM_ESTABLISH_CREDS and PAM_DELETE_CREDS, respectively, which is handy because
-on my test box some things just don't work right.
+The session management functions (pam_sm_open_session() and
+pam_sm_close_session()) merely wrap calls to pam_setcred with the
+PAM_ESTABLISH_CREDS and PAM_DELETE_CREDS flags, respectively, which is
+handy because on my test box some things just don't work right.
 
-Because session-specific ticket files require that the KRBTKFILE and KRB5CCNAME
-environment variables are set correctly, certain programs that create their own
-environments but don't incorporate the results of pam_getenvlist() will work,
-but a user running 'klist' will think that she has no tickets.  Currently, this
-includes sshd and unpatched versions of every display manager known except gdm2.
+Because session-specific ticket files require that the KRBTKFILE and
+KRB5CCNAME environment variables are set correctly, certain programs that
+create their own environments but don't incorporate the results of
+pam_getenvlist() will work, but a user running 'klist' will think that
+she has no tickets.  Currently, this includes sshd and unpatched versions
+of every display manager known except gdm2.
 
-Certain settings for the module are now stored in the krb5.conf file, which is
-usually stored under /etc.  The section name is "pam":
+Certain settings for the module are now stored in the krb5.conf file, which
+is usually stored under /etc.  The section name is "pam":
 
 [pam]
    debug = true
@@ -41,16 +48,17 @@ usually stored under /etc.  The section name is "pam":
    afs_cells = eos.ncsu.edu unity.ncsu.edu bp.ncsu.edu
    hosts = thermo.stat.ncsu.edu alf.physics.ncsu.edu
 
-Descriptions of the configuration file directives:
+Descriptions of the configuration file directives read by both modules:
    debug		Gratuitous debugging info via syslog.
-   ticket_lifetime	How long tickets are good, in seconds.  The default is
-			36000 (= 10 hours).
-   renew_lifetime	How long tickets are renewable, in seconds.  The default
-			is also 36000 (10 hours).
+   ticket_lifetime	How long tickets are good, in seconds.  The default
+  			is 36000 (= 10 hours).
+   renew_lifetime	How long tickets are renewable, in seconds.  The
+   			default is also 36000 (10 hours).
    forwardable		Whether or not tickets are forwardable.  Default = true.
    krb4_convert		Get krb4 tickets by talking to krb524d on the KDC.
    afs_cells		Cells to get tokens in.  Requires that krb4_convert be
-			set.  Default as distributed is "eos unity bp".
+			set.  Default as distributed is "eos unity bp".  Note
+			that this is only supported by the pam_krb5afs module.
    hosts		Hosts this ticket will also be good for, in addition to
 			this one.  Primarily for use behind firewalls.
 
@@ -62,7 +70,8 @@ Descriptions of configuration directives for use in /etc/pam.d:
    debug		Switch on debugging via syslog.
    tokens		Get tokens during authentication.  Needed for wu-ftpd,
 			Samba, and some other programs that don't use sessions
-			and don't call pam_setcred, but need tokens.
+			and don't call pam_setcred, but need tokens.  Note
+                        that this is only supported by the pam_krb5afs module.
 
 This module was built and tested against MIT Kerberos 5 v1.1.1.
 
@@ -73,4 +82,4 @@ that happens.
 Let me know if you have problems,
 
 Nalin Dahyabhai <nalin@redhat.com>
-6 January 1999
+7 January 1999

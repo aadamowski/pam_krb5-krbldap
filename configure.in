@@ -56,13 +56,18 @@ if test x$ac_cv_lib_krb4_in_tkt = xyes ; then
 			AC_DEFINE(HAVE_KRBAFS_H)
 			AC_CHECK_LIB(krbafs,krb_afslog,
 				SHTARGETS="$SHTARGETS pam_krb5afs.so",
-				MAN5TARGETS="$(MAN5TARGETS) pam_krb5.5"
-				MAN8TARGETS="$(MAN8TARGETS) pam_krb5.8"
+				MAN5TARGETS="$MAN5TARGETS pam_krb5afs.5"
+				MAN8TARGETS="$MAN8TARGETS pam_krb5afs.8"
 				AC_WARN(omitting token-grabbing functions),
 				$LIBS),
 			AC_WARN(omitting token-grabbing functions)
 	,,$LIBS)
 fi
+AC_CHECK_HEADER(kadm5/admin.h)
+AC_CHECK_LIB(gssrpc,svc_auth_any)
+AC_CHECK_LIB(gssapi_krb5,krb5_gss_init_sec_context)
+AC_CHECK_LIB(kdb5,krb5_db_init)
+AC_CHECK_LIB(kadm5clnt,kadm5_init_with_password)
 AC_SUBST(KRB5)
 AC_SUBST(KRBAFS)
 

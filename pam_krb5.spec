@@ -40,5 +40,8 @@ ln -s -f krb5-pam.d pam.d
 %doc README ChangeLog TODO pam.d
 
 %changelog
+* Fri Jan  7 2000 Nalin Dahyabhai <nalin@redhat.com>
+- added both modules to spec file
+
 * Wed Dec 22 1999 Nalin Dahyabhai <nalin@redhat.com>
 - adapted the original spec file from pam_ldap
