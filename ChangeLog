@@ -1,4 +1,7 @@
 2004-03-16 nalin
+	* src/storetmp.c: drop privileges before we exec the helper.
+
+2004-03-16 nalin
 	* src/pam_krb5_storetmp.c: only attempt to change to the required
 	UID/GID if we are not already running with that UID/GID, and only
 	attempt to clear the supplemental groups list if uid == 0 (we're root).
