@@ -1063,7 +1063,7 @@ static int
 pam_prompt_for(pam_handle_t *pamh, int msg_style, const char *msg, char **out)
 {
 	const struct pam_message prompt_message = {msg_style, msg};
-	struct pam_response *responses;
+	struct pam_response *responses = NULL;
 	const struct pam_conv *converse = NULL;
 	int ret = PAM_SUCCESS;
 	const struct pam_message* promptlist[] = {
@@ -1107,7 +1107,7 @@ static int
 pam_prompter(krb5_context context, void *data, const char *name,
 	     const char *banner, int num_prompts, krb5_prompt prompts[])
 {
-	int i = 0, len, ret = PAM_SUCCESS;
+	int i = 0, len = 0, ret = PAM_SUCCESS;
 	char *result = NULL, *prompt = NULL, *tmp = NULL;
 	for (i = 0; i < num_prompts; i++) {
 		len = strlen(prompts[i].prompt) + strlen(": ") + 1;
@@ -1149,12 +1149,12 @@ static int
 validate_tgt(const char *user, krb5_context context, struct config *config,
 	     struct stash *stash)
 {
-	krb5_keytab keytab;
+	krb5_keytab keytab = NULL;
 	krb5_keytab_entry entry;
-	krb5_principal server;
-	krb5_creds st, *tgs;
-	krb5_ticket *ticket;
-	krb5_error_code ret;
+	krb5_principal server = NULL;
+	krb5_creds st, *tgs = NULL;
+	krb5_ticket *ticket = NULL;
+	krb5_error_code ret = 0;
 	struct stat buf;
 
 	/* Catch a few non-fatal errors. */
@@ -1321,12 +1321,12 @@ get_pw(const char *user, uid_t *uid, gid_t *gid)
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-	krb5_context context;
-	krb5_principal principal;
+	krb5_context context = NULL;
+	krb5_principal principal = NULL;
 	struct config *config = NULL;
 	char *user = NULL;
 	char *password = NULL;
-	char *realm, *tmp;
+	char *realm = NULL, *tmp = NULL;
 	int krc = KRB5_SUCCESS, prc = PAM_SUCCESS, *pret = NULL;
 	struct stash *stash = NULL;
 	char *stash_name = NULL;
@@ -1520,7 +1520,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			/* If we're just being told that the key expired, try
 			 * to get a password-changing ticket for the purposes
 			 * of checking the password. */
-			if (krc = KRB5KDC_ERR_KEY_EXP) {
+			if (krc == KRB5KDC_ERR_KEY_EXP) {
 				krc = krb5_get_init_creds_password(context,
 								   &stash->v5_creds,
 								   principal,
@@ -1582,7 +1582,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			} else
 			/* If the key expired, attempt to get a password-
 			 * changing credential. */
-			if (krc = KRB5KDC_ERR_KEY_EXP) {
+			if (krc == KRB5KDC_ERR_KEY_EXP) {
 				krc = krb5_get_init_creds_password(context,
 								   &stash->v5_creds,
 								   principal,
@@ -2313,12 +2313,12 @@ int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	krb5_context context = NULL;
-	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS, *pret;
+	int prc = PAM_SUCCESS, krc = KRB5_SUCCESS, *pret = NULL;
 	struct config *config = NULL;
 	krb5_principal princ = NULL;
 	krb5_creds increds;
 	krb5_kdc_rep *rep = NULL;
-	const char *user;
+	const char *user = NULL;
 	char *unparsedname = NULL;
 	char *stash_name = NULL;
 	char buf[LINE_MAX];

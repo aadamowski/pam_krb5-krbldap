@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 1.59
+Version: 1.60
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -45,6 +45,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 
 # $Id$
 %changelog
+* Thu Jan 30 2003 Nalin Dahyabhai <nalin@redhat.com> 1.60-1
+- fix uninitialized pointer crash reading cached return values
+
 * Wed Jan 29 2003 Nalin Dahyabhai <nalin@redhat.com> 1.59-1
 - fix crash with per-user stashes and return values
 
