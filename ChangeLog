@@ -1,3 +1,7 @@
+Wed May 17 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Make errors chown()ing ccache files non-fatal if (getuid() != 0), suggested
+  by Steve Langasek.
+
 Mon May 15 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Attempt to get initial Kerberos IV credentials when we get Kerberos 5 creds
 

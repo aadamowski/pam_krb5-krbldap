@@ -1,7 +1,7 @@
 Summary: Kerberos 5 Pluggable Authentication Module
 Name: pam_krb5
 Version: 1
-Release: 11
+Release: 12
 Source0: pam_krb5-%{version}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -38,6 +38,10 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Wed May 17 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Make errors chown()ing ccache files non-fatal if (getuid() != 0), suggested
+  by Steve Langasek.
+
 * Mon May 15 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Attempt to get initial Kerberos IV credentials when we get Kerberos 5 creds
 
