@@ -125,8 +125,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
-	/* If we haven't previously attempted to authenticate this user, just
-	 * tell libpam to ignore us. */
+	/* If we haven't previously attempted to authenticate this user, make
+	 * a quick check to screen out unknown users. */
 	if (stash->v5attempted == 0) {
 		/* Attempt to get credentials using an obviously-wrong password
 		 * to check for an expired key. */
@@ -135,6 +135,11 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 				 &stash->v5result);
 		/* Return whichever error we got from Kerberos. */
 		retval = i;
+		/* Except catch the expected-wrong-password case. */
+		if ((retval == PAM_AUTH_ERR) &&
+		    (stash->v5result == KRB5KRB_AP_ERR_BAD_INTEGRITY)) {
+			retval = PAM_SUCCESS;
+		}
 	} else {
 		/* Check what happened when we asked for initial credentials. */
 		switch (stash->v5result) {

@@ -165,6 +165,11 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* If we've been called before, then the stash is more or less stale,
+	 * so reset things for applications which call pam_authenticate() more
+	 * than once with the same library context. */
+	stash->v5attempted = 0;
+
 	/* Try with the stored password, if we've been told to do so. */
 	retval = PAM_AUTH_ERR;
 	if ((retval != PAM_SUCCESS) && (options->use_first_pass)) {

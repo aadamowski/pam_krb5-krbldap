@@ -1,3 +1,14 @@
+2003-09-19 nalin
+	* src/session.c: if v5attempted is 0 or v5result is not 0, don't
+	mess with tokens or credentials.  This allows apps which change their
+	UIDs to keep tokens unless they obtained some of their own.
+	* src/auth.c: before attempting authentication, reset v5attempted so
+	that we don't count a previous authentication failure as a failure
+	forever.
+	* src/acct.c: if v5attempted is not set in the user's stash, attempt
+	to get initial credentials for the user.  If the password check fails,
+	assume the user name is valid.
+
 2003-09-05 nalin
 	* src/stash.h: add a v5attempted field to track whether or not we've
 	attempted to get v5 creds for this user. add an afspag field to track
