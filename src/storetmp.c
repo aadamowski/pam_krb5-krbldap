@@ -117,19 +117,31 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 			char *outfile, size_t outfile_len)
 {
 	int i;
-	int inpipe[2], outpipe[2];
+	int inpipe[2], outpipe[2], dummy[3];
 	pid_t child;
 	void (*saved_sigchld_handler)(int);
+	for (i = 0; i < 3; i++) {
+		dummy[i] = open("/dev/null", O_RDONLY);
+	}
 	if (pipe(inpipe) == -1) {
+		for (i = 0; i < 3; i++) {
+			close(dummy[i]);
+		}
 		return -1;
 	}
 	if (pipe(outpipe) == -1) {
+		for (i = 0; i < 3; i++) {
+			close(dummy[i]);
+		}
 		close(inpipe[0]);
 		close(inpipe[1]);
 		return -1;
 	}
 	switch (child = fork()) {
 	case -1:
+		for (i = 0; i < 3; i++) {
+			close(dummy[i]);
+		}
 		close(inpipe[0]);
 		close(inpipe[1]);
 		close(outpipe[0]);
@@ -147,15 +159,21 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		}
 		dup2(outpipe[1], STDOUT_FILENO);
 		dup2(inpipe[0], STDIN_FILENO);
+		execl(PKGSECURITYDIR "/pam_krb5_storetmp", "pam_krb5_storetmp",
+		      pattern, NULL);
 		_exit(-1);
 		break;
 	default:
 		saved_sigchld_handler = signal(SIGCHLD, SIG_DFL);
+		for (i = 0; i < 3; i++) {
+			close(dummy[i]);
+		}
 		close(inpipe[0]);
 		close(outpipe[1]);
 		if (_pam_krb5_write_with_retry(inpipe[1],
 					       data, data_len) == data_len) {
 			close(inpipe[1]);
+			memset(outfile, 0, outfile_len);
 			_pam_krb5_read_with_retry(outpipe[0],
 						  outfile, outfile_len - 1);
 			outfile[outfile_len - 1] = '\0';

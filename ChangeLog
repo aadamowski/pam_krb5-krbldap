@@ -1,4 +1,9 @@
 2004-02-27 nalin
+	* src/storetmp.c(_pam_krb5_storetmp_data): open /dev/null three times to
+	ensure that pipe() won't give us any stdio descriptors.  Reintroduce the
+	call to execl() which got dropped earlier.
+
+2004-02-27 nalin
 	* src/pam_krb5_storetmp.c: add this helper, which creates a file using
 	mkstemp, filling it with supplied data.
 	* src/storetmp.c: add routines for using pam_krb5_storetmp to create
