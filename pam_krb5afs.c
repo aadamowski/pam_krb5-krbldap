@@ -1569,7 +1569,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef AFS
 	/* Use the new tickets to create tokens. */
-	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) && RC_OK &&
+	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
 	   config->get_tokens && config->cell_list) {
 		if(!k_hasafs()) {
 			CRIT("cells specified but AFS not running");
@@ -1592,19 +1592,19 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* Fix permissions on this file so that the user logging in will
 	 * be able to use it. */
-	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
-	   (strlen(stash->v5_path) > 0) && RC_OK) {
+	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
+	   (strlen(stash->v5_path) > 0)) {
 		prc = safe_fixup(config, stash->v5_path, stash);
 	}
 
 #ifdef HAVE_LIBKRB4
-	if((flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
-	   (strlen(stash->v4_path) > 0) && RC_OK) {
+	if(RC_OK && (flags & (PAM_ESTABLISH_CRED | PAM_REINITIALIZE_CRED)) &&
+	   (strlen(stash->v4_path) > 0)) {
 		prc = safe_fixup(config, stash->v4_path, stash);
 	}
 #endif
 
-	if((flags & PAM_DELETE_CRED) && RC_OK) {
+	if(RC_OK && (flags & PAM_DELETE_CRED)) {
 		prc = pam_get_data(pamh,MODULE_STASH_NAME,(const void**)&stash);
 		if((prc == PAM_SUCCESS) && (strlen(stash->v5_path) > 0)) {
 			DEBUG("credentials retrieved");
