@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 1
-Release: 21
+Release: 22
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 Copyright: LGPL
 Group: System Environment/Base
@@ -38,6 +38,9 @@ make install DESTDIR=$RPM_BUILD_ROOT mandir=%{_mandir}
 %doc README COPYING ChangeLog TODO pam.d krb5afs-pam.d
 
 %changelog
+* Thu Oct 19 2000 Nalin Dahyabhai <nalin@redhat.com>
+- catch and ignore errors reading keys from the keytab (for xscreensaver, vlock)
+
 * Wed Oct 18 2000 Nalin Dahyabhai <nalin@redhat.com>
 - fix prompting when the module's first in the stack and the user does not have
   a corresponding principal in the local realm

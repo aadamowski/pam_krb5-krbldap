@@ -615,13 +615,19 @@ static int verify_tgt(const char *user, krb5_context context,
 				ticket->enc_part.enctype,
 				&entry);
 	if(ret) {
-		CRIT("error reading keys for %s from %s: %s",
-		     config->required_tgs, config->keytab, error_message(ret));
+		if(ret == EACCES) {
+			DEBUG("error reading keys from %s: %s",
+			      config->keytab, error_message(ret));
+		} else {
+			CRIT("error reading keys for %s from %s: %s",
+			     config->required_tgs, config->keytab,
+			     error_message(ret));
+		}
 		krb5_free_principal(context, server);
 		krb5_free_creds(context, tgs);
 		krb5_free_ticket(context, ticket);
 		krb5_kt_close(context, keytab);
-		return 0;
+		return (ret == EACCES);
 	}
 
 	/* Try to decrypt the encrypted part with the key. */
@@ -814,8 +820,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 	}
 
 	/* Verify that the TGT is good (i.e., that the reply wasn't spoofed). */
-	if(verify_tgt(user, context, config, stash) == 0) {
-		ret = PAM_AUTH_ERR;
+	if(ret == KRB5_SUCCESS) {
+		if(verify_tgt(user, context, config, stash) == 0) {
+			ret = PAM_AUTH_ERR;
+		}
 	}
 
 	/* Log something. */
