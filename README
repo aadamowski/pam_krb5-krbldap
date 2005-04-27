@@ -34,6 +34,10 @@ o external
   the calling application authenticated the user using GSSAPI, the user
   delegated credentials to the calling application, and you're using pam_krb5
   to obtain a v4 Kerberos ticket via krb524, or AFS tokens.
+o ignore_unknown_principals
+  ignore_unknown_spn
+  Controls whether or not users with unknown principal names should trigger
+  a PAM_IGNORE error instead of a PAM_USER_UNKNOWN error.
 o initial_prompt
   Controls whether or not pam_krb5 should ask for the user's password, or let
   libkrb5 do it as needed.
@@ -85,7 +89,7 @@ o validate
   the specified keytab file can be read.
 
 Configuration file only:
-o afs_cells = cell1 cell2 cell3
+o afs_cells = cell1 cell2 cell3 cell4=afs/cell4@EXAMPLE.COM
 
 This module's CVS repository is hosted on rhlinux.redhat.com.  To check the
 current sources out of CVS, use the anoncvs access method.
