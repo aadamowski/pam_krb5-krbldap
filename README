@@ -33,7 +33,9 @@ o external
   variable in the PAM environment.  This is mainly useful for situations where
   the calling application authenticated the user using GSSAPI, the user
   delegated credentials to the calling application, and you're using pam_krb5
-  to obtain a v4 Kerberos ticket via krb524, or AFS tokens.
+  to obtain a v4 Kerberos ticket via krb524, or AFS tokens.  The calling
+  application MUST ensure that KRB5CCNAME points to a file which should be
+  used for the authenticating user.
 o ignore_unknown_principals
   ignore_unknown_spn
   Controls whether or not users with unknown principal names should trigger
