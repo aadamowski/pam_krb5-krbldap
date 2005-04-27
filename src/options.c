@@ -534,6 +534,19 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		}
 	}
 
+	options->ignore_unknown_principals = option_b(pamh, argc, argv, ctx,
+						      options->realm,
+						      "ignore_unknown_principal");
+	if (options->ignore_unknown_principals == -1) {
+		options->ignore_unknown_principals = option_b(pamh, argc, argv,
+							      ctx,
+							      options->realm,
+							      "ignore_unknown_spn");
+	}
+	if (options->ignore_unknown_principals == -1) {
+		options->ignore_unknown_principals = 0;
+	}
+
 	/* If /afs is on a different device from /, this suggests that AFS is
 	 * running.  Set up to get tokens for the local cell and attempt to
 	 * get that cell's name if we're not ignoring AFS altogether. */
@@ -545,16 +558,49 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 				}
 			}
 		}
-		options->afs_cells = option_l(pamh, argc, argv,
-					      ctx, options->realm, "afs_cells");
-		if ((options->afs_cells != NULL) &&
-		    (options->afs_cells[0] != NULL)) {
+		list = option_l(pamh, argc, argv,
+				ctx, options->realm, "afs_cells");
+		if ((list != NULL) && (list[0] != NULL)) {
+			int i;
+			char *p;
 			options->v4_for_afs = 1;
+			/* count the number of cells */
+			for (i = 0; list[i] != NULL; i++) {
+				continue;
+			}
+			/* allocate the cell data array */
+			options->afs_cells = malloc(sizeof(struct afs_cell) *
+						    i);
+			if (options->afs_cells != NULL) {
+				memset(options->afs_cells, 0,
+				       sizeof(struct afs_cell) * i);
+				options->n_afs_cells = i;
+				for (i = 0; i < options->n_afs_cells; i++) {
+					/* everything up to an "=", if there is
+					 * one, is the cell name */
+					p = list[i];
+					options->afs_cells[i].cell =
+						xstrndup(p, strcspn(p, "="));
+					p += strcspn(p, "=");
+					p += strspn(p, "=");
+					if (strlen(p) > 0) {
+						options->afs_cells[i].principal_name =
+							xstrdup(p);
+					}
+				}
+			}
 		}
 		if (options->debug && options->afs_cells) {
 			int i;
-			for (i = 0; options->afs_cells[i] != NULL; i++) {
-				debug("afs cell: %s", options->afs_cells[i]);
+			for (i = 0; i < options->n_afs_cells; i++) {
+				if (options->afs_cells[i].principal_name != NULL) {
+					debug("afs cell: %s (%s)",
+					      options->afs_cells[i].cell,
+					      options->afs_cells[i].principal_name);
+				} else {
+					debug("afs cell: %s",
+					      options->afs_cells[i].cell);
+				}
 			}
 		}
 	}
@@ -592,6 +638,7 @@ void
 _pam_krb5_options_free(pam_handle_t *pamh, krb5_context ctx,
 		       struct _pam_krb5_options *options)
 {
+	int i;
 	free_s(options->banner);
 	options->banner = NULL;
 	free_s(options->ccache_dir);
@@ -602,7 +649,17 @@ _pam_krb5_options_free(pam_handle_t *pamh, krb5_context ctx,
 	options->realm = NULL;
 	free_l(options->hosts);
 	options->hosts = NULL;
-	free_l(options->afs_cells);
+	for (i = 0; i < options->n_afs_cells; i++) {
+		xstrfree(options->afs_cells[i].cell);
+		xstrfree(options->afs_cells[i].principal_name);
+	}
+	free(options->afs_cells);
 	options->afs_cells = NULL;
+	for (i = 0; i < options->n_mappings; i++) {
+		xstrfree(options->mappings[i].pattern);
+		xstrfree(options->mappings[i].replacement);
+	}
+	free(options->mappings);
+	options->mappings = NULL;
 	free(options);
 };

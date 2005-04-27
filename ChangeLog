@@ -1,3 +1,42 @@
+2005-04-27:
+	* src/minikafs.c: also try afs@DEFAULTREALM if the default realm is
+	not the same as the derived realm (sort of from Christopher Allen Wing).
+	* src/options.c,src/options.h: track a "ignore_unknown_principals"
+	boolean flag, with "ignore_unknown_spn" being consulted if it's unset.
+	Parse cell names which contain a '=' character as if they're of the
+	form cell_name=principal_name.
+	* src/minikafs.c,src/minikafs.h: if a principal name was given, try
+	to get creds for the named service and use them.  If that doesn't work,
+	fall back to previous behavior.
+	* src/afs5log.c: parse "=" signs in command-line arguments, as options.c
+	does.
+	* src/acct.c: return PAM_IGNORE if the error is either
+	KDC_ERR_C_PRINCIPAL_UNKNOWN or KDC_ERR_NAME_EXP and
+	ignore_unknown_principals was set, else PAM_USER_UNKNOWN as before.
+	* src/v5.c: return PAM_IGNORE if the error is either
+	KDC_ERR_C_PRINCIPAL_UNKNOWN or 5KDC_ERR_NAME_EXP and
+	ignore_unknown_principals was set, else PAM_USER_UNKNOWN as
+	before.
+	* src/minikafs.c: correctly handle E2BIG errors from a WHEREIS pioctl,
+	bug spotted by Lamont Granquist.  Handle multiple IPs coming back,
+	and try to look up a host name and realm name in turn until we either
+	succeed or run out of addresses.
+	* src/minikafs.c: when obtaining tokens, try to get credentials for
+	afs@defaultrealm if defaultrealm resembles the cell name and doesn't
+	resemble the derived realm name, which can happen if deriving the
+	realm name didn't work for whatever reason.
+	* src/options.c: don't leak the mappings list when freeing options
+	structures.
+	* src/pagsh.c: unbreak by not assuming that "-c" as a first option
+	meant that the user wanted a help message.
+	* src/pam_krb5.5,src/pam_krb5.8: use \fR instead of \fP for resetting
+	formatting.
+	* src/tokens.c: if the default or home cell was explicitly listed in
+	the configuration, skip initial attempts to get tokens for them, in
+	case the user specified principal names for the services.
+	* src/tokens.c: remove tokens_getcells() and tokens_freecells(), which
+	weren't being used.
+
 2005-03-14:
 	* src/options.c: accept "," as a separator for list parameters, so that
 	we can pass parameters with list values in via argv

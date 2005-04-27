@@ -40,41 +40,49 @@ priority LOG_DEBUG.
 .IP addressless
 tells pam_krb5.so to obtain credentials without address lists.  This may be
 necessary if your network uses NAT, and should otherwise not be used.  This
-option is deprecated in favor of the \fInoaddresses\fP flag in the
-\fIlibdefaults\fP section of krb5.conf(5).
+option is deprecated in favor of the \fInoaddresses\fR flag in the
+\fIlibdefaults\fR section of krb5.conf(5).
 
-.IP hosts=\fIhost\fP
+.IP hosts=\fIhost\fR
 tells pam_krb5.so to obtain credentials using the address of the given host in
 addition to the addresses of interfaces on the local workstation.  For example,
 if your workstation is behind a masquerading firewall, specifying the
 firewall's outward-facing address here should allow Kerberos authentication to
-succeed.  This option is deprecated in favor of the \fIextra_addresses\fP flag
-in the \fIlibdefaults\fP section of krb5.conf(5).
+succeed.  This option is deprecated in favor of the \fIextra_addresses\fR flag
+in the \fIlibdefaults\fR section of krb5.conf(5).
 
-.IP afs_cells=\fIcell1.example.com cell2.example.com\fP
+.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
 tells pam_krb5.so to obtain tokens for cell1.example.com and cell2.example.com,
-in addition to the local cell, for the user.
+in addition to the local cell, for the user.  The module will guess the
+principal name of the AFS service for the named cells, or it can be specified
+by given cells in the form \fIcellname\fB=principalname\fR.
 
-.IP banner=\fIKerberos 5\fP
+.IP banner=\fIKerberos 5\fR
 tells pam_krb5.so how to identify itself when users attempt to change their
 passwords.  The default setting is "Kerberos 5".
 
-.IP ccache_dir=\fI@default_ccache_dir@\fP
+.IP ccache_dir=\fI@default_ccache_dir@\fR
 tells pam_krb5.so which directory to use for storing credential caches.  The
-default setting is \fI@default_ccache_dir@\fP.
+default setting is \fI@default_ccache_dir@\fR.
 
 .IP external
-.IP external=\fIsshd\fP
+.IP external=\fIsshd\fR
 tells pam_krb5.so to use Kerberos credentials provided by the calling
 application during session setup.  This is most often useful for obtaining
 AFS tokens or a krb4 ticket.
 
 .IP forwardable
 tells pam_krb5.so that credentials it obtains should be forwardable.  This
-option is deprecated in favor of the \fIforwardable\fP option in the
-\fIlibdefaults\fP section of krb5.conf(5).
+option is deprecated in favor of the \fIforwardable\fR option in the
+\fIlibdefaults\fR section of krb5.conf(5).
 
-.IP keytab=\fI@DEFAULT_KEYTAB@\fP
+.IP ignore_unknown_principals
+.IP ignore_unknown_spn
+specifies that not pam_krb5 should return a PAM_IGNORE code to libpam
+instead of PAM_USER_UNKNOWN for users for whom the determined principal
+name is expired or does not exist.
+
+.IP keytab=\fI@DEFAULT_KEYTAB@\fR
 tells pam_krb5.so the location of a keytab to use when validating
 credentials obtained from KDCs.
 
@@ -82,7 +90,7 @@ credentials obtained from KDCs.
 tells pam_krb5.so to obtain Kerberos IV credentials for users, in
 addition to Kerberos 5 credentials.
 
-.IP minimum_uid=\fI0\fP
+.IP minimum_uid=\fI0\fR
 tells pam_krb5.so to ignore authentication attempts by users with
 UIDs below the specified number.
 
@@ -101,19 +109,19 @@ user's password to be eavesdropped.
 
 .IP proxiable
 tells pam_krb5.so that credentials it obtains should be proxiable.  This
-option is deprecated in favor of the \fIproxiable\fP option in the
-\fIlibdefaults\fP section of krb5.conf(5).
+option is deprecated in favor of the \fIproxiable\fR option in the
+\fIlibdefaults\fR section of krb5.conf(5).
 
-.IP realm=\fIrealm\fP
-overrides the default realm set in \fI/etc/krb5.conf\fP, which pam_krb5.so
+.IP realm=\fIrealm\fR
+overrides the default realm set in \fI/etc/krb5.conf\fR, which pam_krb5.so
 will attempt to authenticate users to.
 
-.IP renew_lifetime=\fI36000\fP
+.IP renew_lifetime=\fI36000\fR
 sets the default renewable lifetime for credentials.  This
-option is deprecated in favor of the \fIrenew_lifetime\fP option in the
-\fIlibdefaults\fP section of krb5.conf(5).
+option is deprecated in favor of the \fIrenew_lifetime\fR option in the
+\fIlibdefaults\fR section of krb5.conf(5).
 
-.IP ticket_lifetime=\fI36000\fP
+.IP ticket_lifetime=\fI36000\fR
 sets the default lifetime for credentials.
 
 .IP tokens
@@ -138,7 +146,7 @@ This is useful if you are using pam_cracklib.so to try to enforce use of
 less-easy-to-guess passwords.
 
 .IP use_shmem
-.IP use_shmem=\fIsshd\fP
+.IP use_shmem=\fIsshd\fR
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory, or to do so for
 specific services.
@@ -146,10 +154,10 @@ specific services.
 .IP validate
 tells pam_krb5.so to verify that the TGT obtained from the realm's servers has
 not been spoofed.  Note that the process which is performing authentication
-must be able to read the \fIkeytab\fP in order for validation to be possible.
+must be able to read the \fIkeytab\fR in order for validation to be possible.
 
 .SH FILES
-\fI/etc/krb5.conf\fP
+\fI/etc/krb5.conf\fR
 .br
 
 .SH "SEE ALSO"

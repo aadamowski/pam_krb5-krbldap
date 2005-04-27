@@ -156,9 +156,17 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 			break;
 		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
 		case KRB5KDC_ERR_NAME_EXP:
-			notice("account checks fail for '%s': "
-			       "user is unknown", user);
-			retval = PAM_USER_UNKNOWN;
+			if (options->ignore_unknown_principals) {
+				notice("account checks fail for '%s': "
+				       "user is unknown or account expired "
+				       "(ignoring)", user);
+				retval = PAM_IGNORE;
+			} else {
+				notice("account checks fail for '%s': "
+				       "user is unknown or account expired",
+				       user);
+				retval = PAM_USER_UNKNOWN;
+			}
 			break;
 		case KRB5KDC_ERR_KEY_EXP:
 			notice("account checks fail for '%s': "

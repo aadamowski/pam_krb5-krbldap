@@ -256,9 +256,10 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 {
 	struct minikafs_ioblock iob;
 	struct sockaddr_in sin;
+	in_addr_t *address;
 	krb5_context use_ctx;
 	char *path, host[NI_MAXHOST], **realms;
-	int i;
+	int i, n_addresses, ret;
 
 	if (cell) {
 		path = malloc(strlen(cell) + 6);
@@ -274,63 +275,93 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		sprintf(path, "/afs");
 	}
 
-	memset(&iob, 0, sizeof(iob));
-	iob.in = path;
-	iob.insize = strlen(path) + 1;
-	iob.out = (char*) &sin.sin_addr.s_addr;
-	iob.outsize = sizeof(sin.sin_addr.s_addr);
+	n_addresses = 2;
+	do {
+		/* allocate the output buffer for the address [list] */
+		address = malloc(n_addresses * sizeof(address[0]));
+		if (address == NULL) {
+			break;
+		}
+		memset(&iob, 0, sizeof(iob));
+		iob.in = path;
+		iob.insize = strlen(path) + 1;
+		iob.out = (char*) &address[0];
+		iob.outsize = n_addresses * sizeof(address[0]);
+		ret = minikafs_pioctl(path, minikafs_pioctl_whereis, &iob);
+		/* if we failed, free the address [list], and if the error was
+		 * E2BIG, increase the size we'll use next time, up to a
+		 * hard-coded limit */
+		if (ret != 0) {
+			free(address);
+			address = NULL;
+			if (errno == E2BIG) {
+				if (n_addresses > 256) {
+					break;
+				}
+				n_addresses++;
+			}
+		}
+	} while ((ret != 0) && (errno == E2BIG));
 
-	i = minikafs_pioctl(path, minikafs_pioctl_whereis, &iob);
-
-	if (i != 0) {
+	if (ret != 0) {
 		if (options->debug > 1) {
 			debug("got error %d (%s) determining file server for "
 			      "\"%s\"", i, error_message(i), path);
 		}
 		free(path);
-		return i;
+		return ret;
 	}
 	free(path);
 
-	i = -1;
 	sin.sin_family = AF_INET;
 	if (options->debug > 1) {
-		debug("file server for \"/afs/%s\" is %u.%u.%u.%u", cell,
-		      (sin.sin_addr.s_addr >>  0) & 0xff,
-		      (sin.sin_addr.s_addr >>  8) & 0xff,
-		      (sin.sin_addr.s_addr >> 16) & 0xff,
-		      (sin.sin_addr.s_addr >> 24) & 0xff);
+		for (i = 0; i < n_addresses; i++) {
+			debug("file server for \"/afs/%s\" is %u.%u.%u.%u",
+			      cell,
+			      (address[i] >>  0) & 0xff,
+			      (address[i] >>  8) & 0xff,
+			      (address[i] >> 16) & 0xff,
+			      (address[i] >> 24) & 0xff);
+		}
 	}
 
 	if (ctx == NULL) {
 		if (krb5_init_context(&use_ctx) != 0) {
+			free(address);
 			return -1;
 		}
 	} else {
 		use_ctx = ctx;
 	}
 
-	if (getnameinfo((const struct sockaddr*) &sin, sizeof(sin),
-			host, sizeof(host), NULL, 0, NI_NAMEREQD) == 0) {
-		if (krb5_get_host_realm(use_ctx, host, &realms) == 0) {
-			strncpy(realm, realms[0], length - 1);
-			realm[length - 1] = '\0';
-			krb5_free_host_realm(use_ctx, realms);
-			i = 0;
-			if (options->debug > 1) {
-				debug("%s is in realm %s", host, realm);
+	for (i = 0; i < n_addresses; i++) {
+		memcpy(&sin.sin_addr, &address[i], sizeof(address[i]));
+		if (getnameinfo((const struct sockaddr*) &sin, sizeof(sin),
+				host, sizeof(host), NULL, 0,
+				NI_NAMEREQD) == 0) {
+			if (krb5_get_host_realm(use_ctx, host, &realms) == 0) {
+				strncpy(realm, realms[0], length - 1);
+				realm[length - 1] = '\0';
+				krb5_free_host_realm(use_ctx, realms);
+				if (options->debug > 1) {
+					debug("%s is in realm %s", host, realm);
+				}
+				i = 0;
+				break;
 			}
-		}
-	} else {
-		if (options->debug > 1) {
-			debug("error %d(%s) determining realm for %s",
-			      i, error_message(i), host);
+		} else {
+			if (options->debug > 1) {
+				debug("error %d(%s) determining realm for %s",
+				      i, error_message(i), host);
+			}
 		}
 	}
 
 	if (use_ctx != ctx) {
 		krb5_free_context(use_ctx);
 	}
+
+	free(address);
 
 	return i;
 }
@@ -603,7 +634,8 @@ minikafs_5log_with_principal(krb5_context ctx,
 static int
 minikafs_5log(krb5_context context, krb5_ccache ccache,
 	      struct _pam_krb5_options *options,
-	      const char *cell, uid_t uid, int try_v5_2b)
+	      const char *cell, const char *hint_principal,
+	      uid_t uid, int try_v5_2b)
 {
 	krb5_context ctx;
 	krb5_ccache use_ccache;
@@ -633,9 +665,14 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
+	} else {
+		strcpy(realm, "");
 	}
 
-	principal_size = strlen("afsx/@") + 1;
+	principal_size = strlen("/@") + 1;
+	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
+		principal_size += strlen(base[i]);
+	}
 	principal_size += strlen(cell);
 	principal_size += strlen(realm);
 	if (defaultrealm != NULL) {
@@ -663,7 +700,15 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 
 	ret = -1;
 
-	for (i = 0; i < sizeof(base) / sizeof(base[0]); i++) {
+	/* If we were given a principal name, try it. */
+	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
+		debug("attempting to obtain tokens for \"%s\" (\"%s\")",
+		      cell, hint_principal);
+		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
+						   cell, hint_principal, uid,
+						   try_v5_2b);
+	}
+	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
 		/* Try the cell instance in the cell's realm. */
 		snprintf(principal, principal_size, "%s/%s@%s",
 			 base[i], cell, realm);
@@ -694,9 +739,10 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		if (ret == 0) {
 			break;
 		}
-		/* Try the cell instance in the default realm. */
+		/* Repeat the last two attempts, but using the default realm. */
 		if ((defaultrealm != NULL) &&
 		    (strcmp(defaultrealm, realm) != 0)) {
+			/* Try the cell instance in the default realm. */
 			snprintf(principal, principal_size, "%s/%s@%s",
 				 base[i], cell, defaultrealm);
 			if (options->debug) {
@@ -707,6 +753,26 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 							   use_ccache,
 							   cell, principal, uid,
 							   try_v5_2b);
+			if (ret == 0) {
+				break;
+			}
+			/* If the default realm name and cell name are similar,
+			 * try the NULL instance. */
+			if (strcasecmp(defaultrealm, cell) == 0) {
+				snprintf(principal, principal_size, "%s@%s",
+					 base[i], defaultrealm);
+				if (options->debug) {
+					debug("attempting to obtain tokens for "
+					      "\"%s\" (\"%s\")",
+					      cell, principal);
+				}
+				ret = minikafs_5log_with_principal(ctx, options,
+								   use_ccache,
+								   cell,
+								   principal,
+								   uid,
+								   try_v5_2b);
+			}
 			if (ret == 0) {
 				break;
 			}
@@ -783,12 +849,49 @@ minikafs_4log_with_principal(struct _pam_krb5_options *options,
  * configuration settings. */
 static int
 minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
-	      const char *cell, uid_t uid)
+	      const char *cell, const char *hint_principal, uid_t uid)
 {
 	int ret;
 	unsigned int i;
 	char localrealm[PATH_MAX], realm[PATH_MAX];
+	char service[PATH_MAX], instance[PATH_MAX];
 	char *base[] = {"afs", "afsx"}, *wcell;
+	krb5_principal principal;
+
+	/* If we were given a principal name, try it. */
+	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
+		principal = NULL;
+		if (krb5_parse_name(context, hint_principal, &principal) != 0) {
+			principal = NULL;
+		}
+		if ((principal == NULL) ||
+		    (krb5_524_conv_principal(context, principal,
+					     service, instance, realm) != 0)) {
+			memset(service, '\0', sizeof(service));
+		}
+		ret = -1;
+		if (strlen(service) > 0) {
+			if (options->debug) {
+				debug("attempting to obtain tokens for \"%s\" "
+				      "(\"%s\"(v5)->\"%s%s%s@%s\"(v4))",
+				      cell, hint_principal,
+				      service,
+				      (strlen(service) > 0) ? "." : "",
+				      instance,
+				      realm);
+			}
+			ret = minikafs_4log_with_principal(options, cell,
+							   service, instance,
+							   realm,
+							   uid);
+		}
+		if (principal != NULL) {
+			krb5_free_principal(context, principal);
+		}
+		if (ret == 0) {
+			return 0;
+		}
+	}
 
 	if (krb_get_lrealm(localrealm, 1) != 0) {
 		return -1;
@@ -808,7 +911,9 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		/* Try the cell instance in its own realm. */
 		if (options->debug) {
 			debug("attempting to obtain tokens for \"%s\" "
-			      "(\"%s.%s@%s\")", cell, base[i], wcell, realm);
+			      "(\"%s%s%s@%s\")", cell, base[i],
+			      (strlen(wcell) > 0) ? "." : "",
+			      wcell, realm);
 		}
 		ret = minikafs_4log_with_principal(options, cell,
 						   base[i], wcell, realm, uid);
@@ -829,16 +934,35 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		if (ret == 0) {
 			break;
 		}
-		/* Try the cell instance in the default realm. */
+		/* Repeat with the local realm. */
 		if (strcmp(realm, localrealm) != 0) {
+			/* Try the cell instance in its own realm. */
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
-				      "(\"%s.%s@%s\")", cell, base[i], wcell,
-				      localrealm);
+				      "(\"%s%s%s@%s\")", cell, base[i],
+				      (strlen(wcell) > 0) ? "." : "",
+				      wcell, localrealm);
 			}
 			ret = minikafs_4log_with_principal(options, cell,
 							   base[i], wcell,
 							   localrealm, uid);
+			if (ret == 0) {
+				break;
+			}
+			/* If the realm name and cell name are similar, try the
+			 * NULL instance. */
+			if (strcasecmp(localrealm, cell) == 0) {
+				if (options->debug) {
+					debug("attempting to obtain tokens for "
+					      "\"%s\" (\"%s@%s\")",
+					      cell, base[i], localrealm);
+				}
+				ret = minikafs_4log_with_principal(options,
+								   cell,
+								   base[i], "",
+								   localrealm,
+								   uid);
+			}
 			if (ret == 0) {
 				break;
 			}
@@ -855,10 +979,12 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 int
 minikafs_log(krb5_context ctx, krb5_ccache ccache,
 	     struct _pam_krb5_options *options,
-	     const char *cell, uid_t uid, int try_v5_2b_first)
+	     const char *cell, const char *hint_principal,
+	     uid_t uid, int try_v5_2b_first)
 {
 	int i;
-	i = minikafs_5log(ctx, ccache, options, cell, uid, try_v5_2b_first);
+	i = minikafs_5log(ctx, ccache, options, cell, hint_principal,
+			  uid, try_v5_2b_first);
 	if (i != 0) {
 		if (options->debug) {
 			debug("v5 afslog (2b=%d) failed to \"%s\"",
@@ -870,7 +996,7 @@ minikafs_log(krb5_context ctx, krb5_ccache ccache,
 		if (options->debug) {
 			debug("trying with v4 ticket");
 		}
-		i = minikafs_4log(ctx, options, cell, uid);
+		i = minikafs_4log(ctx, options, cell, hint_principal, uid);
 		if (i != 0) {
 			if (options->debug) {
 				debug("v4 afslog failed to \"%s\"", cell);
@@ -882,7 +1008,8 @@ minikafs_log(krb5_context ctx, krb5_ccache ccache,
 		if (options->debug) {
 			debug("retrying v5 with 2b=1");
 		}
-		i = minikafs_5log(ctx, ccache, options, cell, uid, 1);
+		i = minikafs_5log(ctx, ccache, options, cell, hint_principal,
+				  uid, 1);
 		if (i != 0) {
 			if (options->debug) {
 				debug("v5 afslog (2b=1) failed to \"%s\"",

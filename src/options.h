@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@ struct _pam_krb5_options {
 	int external;
 	int forwardable;
 	int ignore_afs;
+	int ignore_unknown_principals;
 	int proxiable;
 	int renewable;
 	int tokens;
@@ -64,7 +65,10 @@ struct _pam_krb5_options {
 	char *realm;
 	char **hosts;
 
-	char **afs_cells;
+	struct afs_cell {
+		char *cell, *principal_name;
+	} *afs_cells;
+	int n_afs_cells;
 
 	struct name_mapping {
 		char *pattern, *replacement;

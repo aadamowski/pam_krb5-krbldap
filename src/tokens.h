@@ -40,10 +40,4 @@ int tokens_obtain(krb5_context context,
 		  struct _pam_krb5_user_info *info, int newpag);
 int tokens_release(struct _pam_krb5_stash *stash,
 		   struct _pam_krb5_options *options);
-int tokens_getcells(struct _pam_krb5_stash *stash,
-		    struct _pam_krb5_options *options,
-		    char ***cells);
-void tokens_freelocalcells(struct _pam_krb5_stash *stash,
-			   struct _pam_krb5_options *options,
-			   char **cells);
 #endif

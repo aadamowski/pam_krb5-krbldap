@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +64,7 @@ int
 main(int argc, char **argv)
 {
 	char local[PATH_MAX], home[PATH_MAX];
-	char *homedir;
+	char *homedir, *cell, *principal;
 	int i, j, try_v5_2b, cells;
 	krb5_context ctx;
 	krb5_ccache ccache;
@@ -112,19 +112,26 @@ main(int argc, char **argv)
 			case 'v':
 				break;
 			default:
-				printf("%s: [ [-v] [-5] [cell] ] [...]\n",
-				       argv[0]);
+				printf("%s: [ [-v] [-5] [cell[=principal]] ] "
+				       "[...]\n", argv[0]);
 				krb5_free_context(ctx);
 				exit(0);
 				break;
 			}
 		} else {
 			cells++;
+			cell = xstrdup(argv[i]);
+			principal = strchr(cell, '=');
+			if (principal != NULL) {
+				*principal = '\0';
+				principal++;
+			}
 			j = minikafs_log(NULL, ccache, &log_options,
-					 argv[i], uid, try_v5_2b);
+					 cell, principal, uid, try_v5_2b);
 			if (j != 0) {
 				fprintf(stderr, "%s: %d\n", argv[i], j);
 			}
+			xstrfree(cell);
 		}
 	}
 
@@ -134,7 +141,7 @@ main(int argc, char **argv)
 		j = minikafs_cell_of_file("/afs", local, sizeof(local));
 		if ((j == 0) && (strcmp(local, "dynroot") != 0)) {
 			j = minikafs_log(NULL, ccache, &log_options,
-					 local, uid, try_v5_2b);
+					 local, NULL, uid, try_v5_2b);
 			if (j != 0) {
 				fprintf(stderr, "%s: %d\n", local, j);
 			}
@@ -162,7 +169,7 @@ main(int argc, char **argv)
 			    (strcmp(home, local) != 0)) {
 				j = minikafs_log(NULL, ccache,
 						 &log_options,
-						 home, uid, try_v5_2b);
+						 home, NULL, uid, try_v5_2b);
 				if (j != 0) {
 					fprintf(stderr, "%s: %d\n", home, j);
 				}

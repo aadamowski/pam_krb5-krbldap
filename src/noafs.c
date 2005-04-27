@@ -112,18 +112,3 @@ tokens_release(struct _pam_krb5_stash *stash,
 {
 	return -1;
 }
-
-int tokens_getcells(struct _pam_krb5_stash *stash,
-		    struct _pam_krb5_options *options,
-		    char ***cells)
-{
-	*cells = NULL;
-	return -1;
-}
-
-void
-tokens_freelocalcells(struct _pam_krb5_stash *stash,
-		      struct _pam_krb5_options *options, char **cells)
-{
-	return;
-}

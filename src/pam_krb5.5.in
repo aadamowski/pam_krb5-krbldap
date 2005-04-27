@@ -4,97 +4,105 @@
 pam_krb5 \- Kerberos 5 authentication
 
 .SH DESCRIPTION
-pam_krb5.so reads its configuration information from the \fBappdefaults\fP
-section of \fBkrb5.conf\fP(5).  You should read the \fBkrb5.conf(5)\fP man page
+pam_krb5.so reads its configuration information from the \fBappdefaults\fR
+section of \fBkrb5.conf\fR(5).  You should read the \fBkrb5.conf(5)\fR man page
 before continuing here.  The module expects its configuration information to be
-in the \fB@PAM_KRB5_APPNAME@\fP subsection of the \fBappdefaults\fP section.
+in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fR section.
 
 .SH DIRECTIVES
-.IP debug=[\fItrue\fP|\fIfalse\fP]
-turns on debugging via \fBsyslog(3)\fP.  Debug messages are logged with
-priority \fILOG_DEBUG\fP.
+.IP debug=[\fItrue\fR|\fIfalse\fR]
+turns on debugging via \fBsyslog(3)\fR.  Debug messages are logged with
+priority \fILOG_DEBUG\fR.
 
-.IP addressless=[\fItrue\fP|\fIfalse\fP]
+.IP addressless=[\fItrue\fR|\fIfalse\fR]
 if set, requests a TGT with no address information.  This can be necessary
 if you are using Kerberos through a NAT, or on systems whose IP addresses change
-regularly.  This directive is deprecated in favor of the \fBlibdefaults\fP
-\fBnoaddresses\fP directive.
+regularly.  This directive is deprecated in favor of the \fBlibdefaults\fR
+\fBnoaddresses\fR directive.
 
-.IP afs_cells=\fIcell1.example.com cell2.example.com\fP
+.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
 tells pam_krb5.so to obtain tokens for cell1.example.com and cell2.example.com,
 in addition to the local cell and the cell which contains the user's home
-directory, for the user.
+directory, for the user.  The module will guess the principal name of the AFS
+service for the listed cells, or it can be specified by listing cells in the
+form \fIcellname\fB=principalname\fR.
 
-.IP banner=\fIKerberos 5\fP
+.IP banner=\fIKerberos 5\fR
 specifies what sort of password the module claims to be changing whenever it is
-called upon to change passwords.  The default is \fBKerberos 5\fP.
+called upon to change passwords.  The default is \fBKerberos 5\fR.
 
-.IP ccache_dir=\fI@default_ccache_dir@\fP
+.IP ccache_dir=\fI@default_ccache_dir@\fR
 specifies the directory to place credential cache files in.
 
-.IP external=\fItrue\fP
-.IP external=\fIsshd ftp\fP
+.IP external=\fItrue\fR
+.IP external=\fIsshd ftp\fR
 tells pam_krb5.so to use Kerberos credentials provided by the calling
 application during session setup.  This is most often useful for obtaining
 AFS tokens or a krb4 ticket.
 
-.IP forwardable=[\fItrue\fP|\fIfalse\fP]
+.IP forwardable=[\fItrue\fR|\fIfalse\fR]
 controls whether or not credentials are forwardable.  
-This directive is deprecated in favor of the \fBlibdefaults\fP
-\fBforwardable\fP directive.
+This directive is deprecated in favor of the \fBlibdefaults\fR
+\fBforwardable\fR directive.
 
-.IP hosts=\fIhostnames\fP
+.IP hosts=\fIhostnames\fR
 specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that
-the \fIKDC\fP sees it as to this list.
-This directive is deprecated in favor of the \fBlibdefaults\fP
-\fBextra_addresses\fP directive.
+the \fIKDC\fR sees it as to this list.
+This directive is deprecated in favor of the \fBlibdefaults\fR
+\fBextra_addresses\fR directive.
 
-.IP initial_prompt=[\fItrue\fP|\fIfalse\fP]
+.IP ignore_unknown_principals=[\fItrue\fR|\fIfalse\fR]
+.IP ignore_unknown_spn=[\fItrue\fR|\fIfalse\fR]
+specifies which other not pam_krb5 should return a PAM_IGNORE code to libpam
+instead of PAM_USER_UNKNOWN for users for whom the determined principal name
+is expired or does not exist.
+
+.IP initial_prompt=[\fItrue\fR|\fIfalse\fR]
 tells pam_krb5.so whether or not to ask for a password before attempting
 authentication.  If one is needed and pam_krb5.so has not prompted for it,
 the Kerberos library should trigger a request for a password.
 
-.IP keytab=\fI@DEFAULT_KEYTAB@\fP
+.IP keytab=\fI@DEFAULT_KEYTAB@\fR
 specifies the name of a keytab file to search for a service key
 for use in validating TGTs.
 
-.IP krb4_convert=[\fItrue\fP|\fIfalse\fP]
+.IP krb4_convert=[\fItrue\fR|\fIfalse\fR]
 controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
-KDC (or using the \fBkrb524d\fP service on the KDC) and create ticket files with
-them.  Unless you've converted \fIeverything\fP on your network over to use
-Kerberos 5, you'll want to leave this set to \fBtrue\fP.  Note that this
+KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
+them.  Unless you've converted \fIeverything\fR on your network over to use
+Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
 may require valid Kerberos IV configuration data to be present in
-\fB/etc/krb.conf\fP and \fB/etc/krb.realms\fP.
+\fB/etc/krb.conf\fR and \fB/etc/krb.realms\fR.
 
-.IP mappings=[\fIregex1 regex2\fP]
+.IP mappings=[\fIregex1 regex2\fR]
 specifies that pam_krb5 should derive the user's principal name from the Unix
-user name by first checking if the user name matches \fBregex1\fP, and
-formulating a principal name using \fBregex2\fP.  For example,
-\fBmappings = EXAMPLE\\(.*) $1@EXAMPLE.COM\fP
+user name by first checking if the user name matches \fBregex1\fR, and
+formulating a principal name using \fBregex2\fR.  For example,
+\fBmappings = EXAMPLE\\(.*) $1@EXAMPLE.COM\fR
 would map any user with a name of the form "EXAMPLE\whatever" to a principal
 name of "whatever@EXAMPLE.COM".  This is primarily targeted at allowing
 pam_krb5 to be used to authenticate users whose user information is provided by
 winbindd(8).  This will frequently require the reverse to be configured by
 setting up an auth_to_local rule elsewhere in krb5.conf(5).
 
-.IP minimum_uid=\fI0\fP
+.IP minimum_uid=\fI0\fR
 specifies the minimum UID of users being authenticated.  If a user with a UID
 less than this value attempts authentication, the request will be ignored.
 
-.IP proxiable=[\fItrue\fP|\fIfalse\fP]
+.IP proxiable=[\fItrue\fR|\fIfalse\fR]
 controls whether or not credentials are proxiable.  If not specified, they
 are.
-This directive is deprecated in favor of the \fBlibdefaults\fP
-\fBproxiable\fP directive.
+This directive is deprecated in favor of the \fBlibdefaults\fR
+\fBproxiable\fR directive.
 
-.IP renew_lifetime=\fI36000\fP
+.IP renew_lifetime=\fI36000\fR
 default renewable lifetime.  This specifies how much time you have after
 getting credentials to renew them.
-This directive is deprecated in favor of the \fBlibdefaults\fP
-\fBrenew_lifetime\fP directive.
+This directive is deprecated in favor of the \fBlibdefaults\fR
+\fBrenew_lifetime\fR directive.
 
-.IP ticket_lifetime=\fI36000\fP
+.IP ticket_lifetime=\fI36000\fR
 default credential lifetime.
 
 .IP tokens
@@ -103,15 +111,15 @@ authentication in addition to session setup.  This is primarily useful in
 server applications which need to access a user's files but which do not open
 PAM sessions before doing so.
 
-.IP use_shmem=\fItrue\fP
-.IP use_shmem=\fIsshd ftp\fP
+.IP use_shmem=\fItrue\fR
+.IP use_shmem=\fIsshd ftp\fR
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory for specific
 services.
 
-.IP validate=[\fItrue\fP|\fIfalse\fP]
+.IP validate=[\fItrue\fR|\fIfalse\fR]
 specifies whether or not to attempt validation of the TGT.  The default is
-\fBfalse\fP.
+\fBfalse\fR.
 
 .SH EXAMPLE
 
@@ -130,7 +138,7 @@ specifies whether or not to attempt validation of the TGT.  The default is
   }
 
 .SH FILES
-\fI/etc/krb5.conf\fP
+\fI/etc/krb5.conf\fR
 .br
 .SH "SEE ALSO"
 .BR pam_krb5 (8)

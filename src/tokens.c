@@ -71,6 +71,18 @@ tokens_useful(void)
 	return 0;
 }
 
+static int
+cell_is_in_option_list(struct _pam_krb5_options *options, const char *cell)
+{
+	int i;
+	for (i = 0; i < options->n_afs_cells; i++) {
+		if (strcmp(cell, options->afs_cells[i].cell) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int
 tokens_obtain(krb5_context context,
 	      struct _pam_krb5_stash *stash,
@@ -124,13 +136,14 @@ tokens_obtain(krb5_context context,
 	memset(localcell, '\0', sizeof(localcell));
 	if ((minikafs_cell_of_file("/afs", localcell,
 				   sizeof(localcell) - 1) == 0) &&
-	    (strcmp(localcell, "dynroot") != 0)) {
+	    (strcmp(localcell, "dynroot") != 0) &&
+	    (!cell_is_in_option_list(options, localcell))) {
 		if (options->debug) {
 			debug("obtaining tokens for local cell '%s'",
 			      localcell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   localcell, info->uid, 0);
+				   localcell, NULL, info->uid, 0);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -181,12 +194,13 @@ tokens_obtain(krb5_context context,
 	} while ((i != 0) && (strlen(homedir) > 0));
 	if ((i == 0) &&
 	    (strcmp(homecell, "dynroot") != 0) &&
-	    (strcmp(homecell, localcell) != 0)) {
+	    (strcmp(homecell, localcell) != 0) &&
+	    (!cell_is_in_option_list(options, homecell))) {
 		if (options->debug) {
 			debug("obtaining tokens for home cell '%s'", homecell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   homecell, info->uid, 0);
+				   homecell, NULL, info->uid, 0);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -210,39 +224,35 @@ tokens_obtain(krb5_context context,
 		}
 		return PAM_SUCCESS;
 	}
-	if (options->afs_cells[0] == NULL) {
-		if (options->debug) {
-			debug("no additional afs cells configured");
-		}
-		return PAM_SUCCESS;
-	}
 
 	/* Iterate through the list of other cells. */
-	for (i = 0; options->afs_cells[i] != NULL; i++) {
-		if (strcmp(options->afs_cells[i], localcell) == 0) {
+	for (i = 0; i < options->n_afs_cells; i++) {
+		if (strcmp(options->afs_cells[i].cell, localcell) == 0) {
 			continue;
 		}
-		if (strcmp(options->afs_cells[i], homecell) == 0) {
+		if (strcmp(options->afs_cells[i].cell, homecell) == 0) {
 			continue;
 		}
 		if (options->debug) {
 			debug("obtaining tokens for '%s'",
-			      options->afs_cells[i]);
+			      options->afs_cells[i].cell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   options->afs_cells[i], info->uid, 0);
+				   options->afs_cells[i].cell,
+				   options->afs_cells[i].principal_name,
+				   info->uid, 0);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
 				     "tokens for %s",
 				     ret, error_message(ret),
-				     options->afs_cells[i]);
+				     options->afs_cells[i].cell);
 			} else {
 				if (options->debug) {
 					debug("got error %d (%s) while "
 					      "obtaining tokens for %s",
 					      ret, error_message(ret),
-					      options->afs_cells[i]);
+					      options->afs_cells[i].cell);
 				}
 			}
 		}
@@ -285,72 +295,4 @@ tokens_release(struct _pam_krb5_stash *stash, struct _pam_krb5_options *options)
 
 	/* Suppress all errors. */
 	return PAM_SUCCESS;
-}
-
-int
-tokens_getcells(struct _pam_krb5_stash *stash,
-		struct _pam_krb5_options *options,
-		char ***cells)
-{
-	int n_cells, i;
-	char cell[LINE_MAX], **list;
-
-	/* Check if AFS is running.  If it isn't, no other calls to libkrbafs
-	 * will work, or even be safe to call. */
-	if (!minikafs_has_afs()) {
-		*cells = NULL;
-		return 0;
-	}
-
-	/* Get the name of the local cell.  The root.afs volume which is
-	 * mounted in /afs is mounted from the local cell, so we'll use that
-	 * to determine which cell is considered the local cell. */
-	memset(cell, '\0', sizeof(cell));
-	if (minikafs_cell_of_file("/afs", cell, sizeof(cell) - 1) == 0) {
-		n_cells = 1;
-	} else {
-		n_cells = 0;
-		memset(cell, '\0', sizeof(cell));
-	}
-
-	/* Count the number of cells which have been explicitly configured. */
-	if (options->afs_cells != NULL) {
-		for (i = 0; options->afs_cells[i] != NULL; i++) {
-			n_cells++;
-		}
-	}
-
-	/* Create the list. */
-	list = NULL;
-	if (n_cells > 0) {
-		list = malloc(sizeof(char*) * (n_cells + 1));
-		memset(list, 0, sizeof(char*) * (n_cells + 1));
-		for (i = 0; i < n_cells; i++) {
-			if ((options->afs_cells != NULL) &&
-			    (options->afs_cells[i] != NULL)) {
-				list[i] = xstrdup(options->afs_cells[i]);
-			} else {
-				list[i] = xstrdup(cell);
-			}
-		}
-	}
-
-	*cells = list;
-	return n_cells;
-}
-
-void
-tokens_freelocalcells(struct _pam_krb5_stash *stash,
-		      struct _pam_krb5_options *options,
-		      char **cells)
-{
-	int i;
-	if (cells == NULL) {
-		return;
-	}
-	for (i = 0; (cells != NULL) && (cells[i] != NULL); i++) {
-		xstrfree(cells[i]);
-		cells[i] = NULL;
-	}
-	free(cells);
 }

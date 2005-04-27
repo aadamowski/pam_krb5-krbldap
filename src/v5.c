@@ -446,7 +446,11 @@ v5_get_creds(krb5_context ctx,
 	case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
 	case KRB5KDC_ERR_NAME_EXP:
 		/* The user is unknown or a principal has expired. */
-		return PAM_USER_UNKNOWN;
+		if (options->ignore_unknown_principals) {
+			return PAM_IGNORE;
+		} else {
+			return PAM_USER_UNKNOWN;
+		}
 		break;
 	case KRB5KDC_ERR_KEY_EXP:
 		/* The user's key (password) is expired.  We get this error

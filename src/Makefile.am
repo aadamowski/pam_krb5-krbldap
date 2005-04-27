@@ -10,7 +10,8 @@ noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8
 
 if AFS
-noinst_PROGRAMS += afs5log pagsh
+noinst_PROGRAMS += afs5log
+noinst_PROGRAMS += pagsh
 endif
 
 libpam_krb5_la_SOURCES = \

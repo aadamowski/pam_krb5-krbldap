@@ -66,43 +66,55 @@ extern char *log_progname;
 int
 main(int argc, char **argv)
 {
-	const char *shell;
+	const char *shell, *shellbase;
 	char **new_argv;
 	int i;
 
 	memset(&log_options, 0, sizeof(log_options));
 	log_progname = "pagsh";
+
 	shell = getenv("SHELL");
 	if ((shell == NULL) || (strlen(shell) == 0)) {
 		shell = _PATH_BSHELL;
 	}
-	new_argv = malloc(sizeof(char*) * argc);
+	if (strchr(shell, '/')) {
+		shellbase = strrchr(shell, '/') + 1;
+	} else {
+		shellbase = shell;
+	}
+
+	if (argc == 2) {
+		if ((strcmp(argv[1], "--help") == 0) ||
+		    (strcmp(argv[1], "-h") == 0)) {
+			fprintf(stdout,
+				"Usage: pagsh\n"
+				"       pagsh [ -c command ]\n"
+				"       pagsh [ arguments for %s ]\n",
+				shellbase);
+			return 0;
+		}
+	}
+
+	new_argv = malloc(sizeof(char*) * (argc + 1));
 	if (new_argv == NULL) {
 		fprintf(stderr, "pagsh: out of memory\n");
 		return 1;
 	}
-	for (i = 0; i < argc; i++) {
-		switch (i) {
-		case 0:
-			new_argv[i] = xstrdup(shell);
-			break;
-		case 1:
-			if (argv[i][0] == '-') {
-				fprintf(stdout,
-					"Usage: pagsh [command [args ...]]\n");
-				return 1;
-			}
-		default:
-			new_argv[i] = xstrdup(argv[i]);
-			break;
-		}
+	memset(new_argv, 0, sizeof(char*) * (argc + 1));
+
+	new_argv[0] = xstrdup(shell);
+	for (i = 1; i < argc; i++) {
+		new_argv[i] = argv[i];
 	}
+
 	if (minikafs_has_afs()) {
 		if (minikafs_setpag() != 0) {
 			fprintf(stderr, "pagsh: error creating new PAG\n");
 		}
 	}
+
 	execvp(new_argv[0], new_argv);
 	fprintf(stderr, "pagsh: exec() failed: %s\n", strerror(errno));
+
 	return 1;
 }
