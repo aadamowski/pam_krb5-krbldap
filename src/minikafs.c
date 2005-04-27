@@ -243,7 +243,6 @@ minikafs_has_afs(void)
 	return ret;
 }
 
-
 /* Determine in which realm a cell exists.  We do this by obtaining the address
  * of the fileserver which holds /afs/cellname (assuming that the root.cell
  * volume from the cell is mounted there), converting the address to a host
@@ -280,6 +279,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		/* allocate the output buffer for the address [list] */
 		address = malloc(n_addresses * sizeof(address[0]));
 		if (address == NULL) {
+			ret = -1;
 			break;
 		}
 		memset(&iob, 0, sizeof(iob));
@@ -306,7 +306,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	if (ret != 0) {
 		if (options->debug > 1) {
 			debug("got error %d (%s) determining file server for "
-			      "\"%s\"", i, error_message(i), path);
+			      "\"%s\"", errno, error_message(errno), path);
 		}
 		free(path);
 		return ret;
