@@ -128,7 +128,7 @@ enum minikafs_pioctl_fn {
 	minikafs_pioctl_unlog = PIOCTL_FN(9),
 	minikafs_pioctl_whereis = PIOCTL_FN(14),
 	minikafs_pioctl_getcelloffile = PIOCTL_FN(30),
-	minikafs_pioctl_getwscell = PIOCTL_FN(33),
+	minikafs_pioctl_getwscell = PIOCTL_FN(31),
 };
 
 /* Call AFS using an ioctl. Might not port to your system. */
