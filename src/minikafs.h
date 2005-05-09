@@ -52,6 +52,9 @@ int minikafs_realm_of_cell(struct _pam_krb5_options *options,
 /* Create a new PAG. */
 int minikafs_setpag(void);
 
+/* Figure out which cell the workstation is in. */
+int minikafs_ws_cell(char *cell, size_t length);
+
 /* Clear our tokens. */
 int minikafs_unlog(void);
 

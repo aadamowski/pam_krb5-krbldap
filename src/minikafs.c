@@ -128,6 +128,7 @@ enum minikafs_pioctl_fn {
 	minikafs_pioctl_unlog = PIOCTL_FN(9),
 	minikafs_pioctl_whereis = PIOCTL_FN(14),
 	minikafs_pioctl_getcelloffile = PIOCTL_FN(30),
+	minikafs_pioctl_getwscell = PIOCTL_FN(33),
 };
 
 /* Call AFS using an ioctl. Might not port to your system. */
@@ -379,6 +380,26 @@ int
 minikafs_setpag(void)
 {
 	return minikafs_call(minikafs_subsys_setpag, 0, 0, 0, 0);
+}
+
+/* Determine which cell is the default on this workstation. */
+int
+minikafs_ws_cell(char *cell, size_t length)
+{
+	struct minikafs_ioblock iob;
+	char wfile[] = "/afs";
+	int i;
+
+	memset(&iob, 0, sizeof(iob));
+	iob.in = wfile;
+	iob.insize = strlen(wfile) + 1;
+	iob.out = cell;
+	iob.outsize = length - 1;
+	memset(cell, '\0', length);
+
+	i = minikafs_pioctl(wfile, minikafs_pioctl_getwscell, &iob);
+	
+	return i;
 }
 
 #ifdef USE_KRB4
@@ -670,6 +691,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	}
 
 	principal_size = strlen("/@") + 1;
+	ret = -1;
 	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
 		principal_size += strlen(base[i]);
 	}
@@ -697,8 +719,6 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 			return -1;
 		}
 	}
-
-	ret = -1;
 
 	/* If we were given a principal name, try it. */
 	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {

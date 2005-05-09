@@ -134,8 +134,7 @@ tokens_obtain(krb5_context context,
 	 * to determine which cell is considered the local cell.  Avoid getting
 	 * tripped up by dynamic root support in clients. */
 	memset(localcell, '\0', sizeof(localcell));
-	if ((minikafs_cell_of_file("/afs", localcell,
-				   sizeof(localcell) - 1) == 0) &&
+	if ((minikafs_ws_cell(localcell, sizeof(localcell) - 1) == 0) &&
 	    (strcmp(localcell, "dynroot") != 0) &&
 	    (!cell_is_in_option_list(options, localcell))) {
 		if (options->debug) {

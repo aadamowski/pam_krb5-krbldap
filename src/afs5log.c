@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	/* If no parameters were offered, go for the user's home directory and
 	 * the local cell, if we can determine what its name is. */
 	if (cells == 0) {
-		j = minikafs_cell_of_file("/afs", local, sizeof(local));
+		j = minikafs_ws_cell(local, sizeof(local));
 		if ((j == 0) && (strcmp(local, "dynroot") != 0)) {
 			j = minikafs_log(NULL, ccache, &log_options,
 					 local, NULL, uid, try_v5_2b);
