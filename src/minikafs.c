@@ -275,7 +275,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		sprintf(path, "/afs");
 	}
 
-	n_addresses = 2;
+	n_addresses = 4;
 	do {
 		/* allocate the output buffer for the address [list] */
 		address = malloc(n_addresses * sizeof(address[0]));
@@ -283,6 +283,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 			ret = -1;
 			break;
 		}
+		memset(address, 0, n_addresses * sizeof(address[0]));
 		memset(&iob, 0, sizeof(iob));
 		iob.in = path;
 		iob.insize = strlen(path) + 1;
@@ -293,11 +294,21 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		 * E2BIG, increase the size we'll use next time, up to a
 		 * hard-coded limit */
 		if (ret != 0) {
+			if (options->debug) {
+				debug("error during whereis pioctl: %s",
+				      strerror(errno));
+			}
 			free(address);
 			address = NULL;
 			if (errno == E2BIG) {
 				if (n_addresses > 256) {
+					if (options->debug) {
+						debug("giving up");
+					}
 					break;
+				}
+				if (options->debug) {
+					debug("retrying");
 				}
 				n_addresses++;
 			}
@@ -316,7 +327,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 
 	sin.sin_family = AF_INET;
 	if (options->debug > 1) {
-		for (i = 0; i < n_addresses; i++) {
+		for (i = 0; (i < n_addresses) && (address[i] != 0); i++) {
 			debug("file server for \"/afs/%s\" is %u.%u.%u.%u",
 			      cell,
 			      (address[i] >>  0) & 0xff,
@@ -335,7 +346,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		use_ctx = ctx;
 	}
 
-	for (i = 0; i < n_addresses; i++) {
+	for (i = 0; (i < n_addresses) && (address[i] != 0); i++) {
 		memcpy(&sin.sin_addr, &address[i], sizeof(address[i]));
 		if (getnameinfo((const struct sockaddr*) &sin, sizeof(sin),
 				host, sizeof(host), NULL, 0,
@@ -686,8 +697,6 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
-	} else {
-		strcpy(realm, "");
 	}
 
 	principal_size = strlen("/@") + 1;
