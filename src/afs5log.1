@@ -1,0 +1,34 @@
+.TH afs5log 8 2005/05/18 "Red Hat Linux" "System Administrator's Manual"
+
+.SH NAME
+afs5log \- AFS token initializer
+
+.SH SYNOPSIS
+afs5log [-v] [-5] [cell [...]]
+
+.SH DESCRIPTION
+The \fIafs5log\fP command uses Kerberos to obtain AFS tokens for the named
+cells.  If no cell is named, tokens are obtained for the local cell.
+Attempts are made to obtain Kerberos IV credentials first, and if that fails,
+\fIafs5log\fP will create Kerberos 5 (\fI2b-style\fP) tokens.
+
+.SH ARGUMENTS
+.TP
+-v
+Turns on verbose mode.  \fIafs5log\fP will print debugging messages while it
+does its work.  Use more than once to get more detail.
+.TP
+-5
+Skip attempts to use Kerberos IV and just use \fI2b\fP-style tokens, which are
+only supported by OpenAFS 1.2.8 and later.
+
+.SH "SEE ALSO"
+.BR pam_krb5 (5)
+.BR krb5.conf (5)
+.br
+
+.SH BUGS
+Probably, but let's hope not.  If you find any, please email the author.
+
+.SH AUTHOR
+Nalin Dahyabhai <nalin@redhat.com>
