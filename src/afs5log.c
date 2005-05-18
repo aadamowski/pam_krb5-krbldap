@@ -140,6 +140,9 @@ main(int argc, char **argv)
 	if (cells == 0) {
 		j = minikafs_ws_cell(local, sizeof(local));
 		if ((j == 0) && (strcmp(local, "dynroot") != 0)) {
+			if (log_options.debug) {
+				debug("local cell is \"%s\"", local);
+			}
 			j = minikafs_log(NULL, ccache, &log_options,
 					 local, NULL, uid, try_v5_2b);
 			if (j != 0) {
@@ -167,6 +170,9 @@ main(int argc, char **argv)
 			if ((j == 0) &&
 			    (strcmp(home, "dynroot") != 0) &&
 			    (strcmp(home, local) != 0)) {
+				if (log_options.debug) {
+					debug("home cell is \"%s\"", home);
+				}
 				j = minikafs_log(NULL, ccache,
 						 &log_options,
 						 home, NULL, uid, try_v5_2b);

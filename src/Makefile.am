@@ -4,13 +4,16 @@ securitydir = $(libdir)/security
 security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
-EXTRA_DIST = pam_krb5.5  pam_krb5.8
+EXTRA_DIST = afs5log.1 pam_krb5.5 pam_krb5.8
 noinst_PROGRAMS = harness
 noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8
+bin_PROGRAMS =
+noinst_MANS =
 
 if AFS
-noinst_PROGRAMS += afs5log
+bin_PROGRAMS += afs5log
+man_MANS += afs5log.1
 noinst_PROGRAMS += pagsh
 endif
 

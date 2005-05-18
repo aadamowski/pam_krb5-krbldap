@@ -4,11 +4,13 @@
 afs5log \- AFS token initializer
 
 .SH SYNOPSIS
-afs5log [-v] [-5] [cell [...]]
+afs5log [ [-v] [-5] [cell[=principal] ] ] [...]
 
 .SH DESCRIPTION
 The \fIafs5log\fP command uses Kerberos to obtain AFS tokens for the named
-cells.  If no cell is named, tokens are obtained for the local cell.
+cells.  If no cell is named, tokens are obtained for the local cell.  If the
+principal name of the \fIafs\fP service for the cell is known, the cell
+name may also be given in the form \fIcell\fP=\fIprincipal_name\fP.
 Attempts are made to obtain Kerberos IV credentials first, and if that fails,
 \fIafs5log\fP will create Kerberos 5 (\fI2b-style\fP) tokens.
 

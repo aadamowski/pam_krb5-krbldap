@@ -351,6 +351,14 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		if (getnameinfo((const struct sockaddr*) &sin, sizeof(sin),
 				host, sizeof(host), NULL, 0,
 				NI_NAMEREQD) == 0) {
+			if (options->debug > 1) {
+				debug("file server %d.%d.%d.%d has name %s",
+				      (address[i] >>  0) & 0xff,
+				      (address[i] >>  8) & 0xff,
+				      (address[i] >> 16) & 0xff,
+				      (address[i] >> 24) & 0xff,
+				      host);
+			}
 			if (krb5_get_host_realm(use_ctx, host, &realms) == 0) {
 				strncpy(realm, realms[0], length - 1);
 				realm[length - 1] = '\0';

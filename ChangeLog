@@ -1,3 +1,9 @@
+2005-05-18:
+	* src/afs5log.1: add
+	* src/Makefile.am: install afs5log and afs5log.1
+	* src/afs5log.c: debug-log when we're obtaining tokens for the local
+	or the user's home cell
+	* src/minikafs.c(realm_of_cell): debug-log IP->hostname conversion
 2005-05-09:
 	* src/minikafs.c(realm_of_cell): debug-log failures in the whereis
 	pioctl, stop looking at addresses if we hit 0.0.0.0.
