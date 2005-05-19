@@ -693,6 +693,36 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		ctx = context;
 	}
 
+	memset(&use_ccache, 0, sizeof(use_ccache));
+	if (ccache != NULL) {
+		use_ccache = ccache;
+	} else {
+		if (krb5_cc_default(ctx, &use_ccache) != 0) {
+			if (ctx != context) {
+				krb5_free_context(ctx);
+			}
+			return -1;
+		}
+	}
+
+	/* If we were given a principal name, try it. */
+	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
+		debug("attempting to obtain tokens for \"%s\" (\"%s\")",
+		      cell, hint_principal);
+		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
+						   cell, hint_principal, uid,
+						   try_v5_2b);
+		if (ret == 0) {
+			if (use_ccache != ccache) {
+				krb5_cc_close(ctx, use_ccache);
+			}
+			if (ctx != context) {
+				krb5_free_context(ctx);
+			}
+			return 0;
+		}
+	}
+
 	defaultrealm = NULL;
 	if (krb5_get_default_realm(ctx, &defaultrealm) != 0) {
 		defaultrealm = NULL;
@@ -719,32 +749,18 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	}
 	principal = malloc(principal_size);
 	if (principal == NULL) {
+		if (use_ccache != ccache) {
+			krb5_cc_close(ctx, use_ccache);
+		}
 		if (defaultrealm != NULL) {
 			v5_free_default_realm(ctx, defaultrealm);
+		}
+		if (ctx != context) {
+			krb5_free_context(ctx);
 		}
 		return -1;
 	}
 
-	memset(&use_ccache, 0, sizeof(use_ccache));
-	if (ccache != NULL) {
-		use_ccache = ccache;
-	} else {
-		if (krb5_cc_default(ctx, &use_ccache) != 0) {
-			if (ctx != context) {
-				krb5_free_context(ctx);
-			}
-			return -1;
-		}
-	}
-
-	/* If we were given a principal name, try it. */
-	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
-		debug("attempting to obtain tokens for \"%s\" (\"%s\")",
-		      cell, hint_principal);
-		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
-						   cell, hint_principal, uid,
-						   try_v5_2b);
-	}
 	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
 		/* Try the cell instance in the cell's realm. */
 		snprintf(principal, principal_size, "%s/%s@%s",
@@ -893,16 +909,26 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 	char localrealm[PATH_MAX], realm[PATH_MAX];
 	char service[PATH_MAX], instance[PATH_MAX];
 	char *base[] = {"afs", "afsx"}, *wcell;
+	krb5_context ctx;
 	krb5_principal principal;
+
+	/* Make sure we have a context. */
+	if (context == NULL) {
+		if (krb5_init_context(&ctx) != 0) {
+			return -1;
+		}
+	} else {
+		ctx = context;
+	}
 
 	/* If we were given a principal name, try it. */
 	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
 		principal = NULL;
-		if (krb5_parse_name(context, hint_principal, &principal) != 0) {
+		if (krb5_parse_name(ctx, hint_principal, &principal) != 0) {
 			principal = NULL;
 		}
 		if ((principal == NULL) ||
-		    (krb5_524_conv_principal(context, principal,
+		    (krb5_524_conv_principal(ctx, principal,
 					     service, instance, realm) != 0)) {
 			memset(service, '\0', sizeof(service));
 		}
@@ -923,8 +949,12 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 							   uid);
 		}
 		if (principal != NULL) {
-			krb5_free_principal(context, principal);
+			krb5_free_principal(ctx, principal);
 		}
+		if (ctx != context) {
+			krb5_free_context(ctx);
+		}
+		ctx = NULL;
 		if (ret == 0) {
 			return 0;
 		}

@@ -4,6 +4,12 @@
 	* src/afs5log.c: debug-log when we're obtaining tokens for the local
 	or the user's home cell
 	* src/minikafs.c(realm_of_cell): debug-log IP->hostname conversion
+	* src/minikafs.c(minikafs_5log): rearrange the order of things so that
+	we don't always try to determine the realm name ourselves, so that if
+	a principal was supplied, we actually can be faster.
+	* src/minikafs.c(minikafs_4log): be careful for cases where we may have
+	been passed a NULL krb5 context.
+
 2005-05-09:
 	* src/minikafs.c(realm_of_cell): debug-log failures in the whereis
 	pioctl, stop looking at addresses if we hit 0.0.0.0.
