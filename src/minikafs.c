@@ -202,6 +202,30 @@ minikafs_cell_of_file(const char *file, char *cell, size_t length)
 	return i;
 }
 
+/* Do minikafs_cell_of_file, but if we can't find out, walk up the filesystem
+ * tree until we either get an answer or hit the root directory. */
+int
+minikafs_cell_of_file_walk_up(const char *file, char *cell, size_t length)
+{
+	char *p, dir[PATH_MAX + 1];
+	int i;
+
+	snprintf(dir, sizeof(dir), "%s", file);
+	do {
+		memset(cell, '\0', length);
+		i = minikafs_cell_of_file(dir, cell, length);
+		if (i != 0) {
+			p = strrchr(dir, '/');
+			if (p != NULL) {
+				*p = '\0';
+			} else {
+				strcpy(dir, "");
+			}
+		}
+	} while ((i != 0) && (strlen(dir) > 0));
+	return i;
+}
+
 /* Determine if AFS is running. Unlike most other functions, return 0 on
  * FAILURE. */
 int
@@ -275,7 +299,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		sprintf(path, "/afs");
 	}
 
-	n_addresses = 4;
+	n_addresses = 16;
 	do {
 		/* allocate the output buffer for the address [list] */
 		address = malloc(n_addresses * sizeof(address[0]));
@@ -310,7 +334,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 				if (options->debug) {
 					debug("retrying");
 				}
-				n_addresses++;
+				n_addresses *= 2;
 			}
 		}
 	} while ((ret != 0) && (errno == E2BIG));

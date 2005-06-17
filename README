@@ -79,8 +79,8 @@ o ticket_lifetime
   maximum allowable lifetime configured in your KDC's configuration.
 o tokens
   Create a new AFS PAG and obtain AFS tokens during the authentication phase.
-  By default, tokens are obtained for the local cell and the cell which
-  contains the user's home directory.
+  By default, tokens are obtained for the local cell (and the cell which
+  contains the user's home directory, if they're not the same).
 o use_shmem
   Pass credentials from authentication to session management using shared
   memory instead of PAM data items.  This allows authentication and session-

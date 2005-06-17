@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +41,10 @@ int minikafs_has_afs(void);
 
 /* Determine in which cell a given file resides.  Returns 0 on success. */
 int minikafs_cell_of_file(const char *file, char *cell, size_t length);
+
+/* Determine in which cell a given directory resides, walking up the tree if we
+ * can't get an answer.  Returns 0 on success. */
+int minikafs_cell_of_file_walk_up(const char *file, char *cell, size_t length);
 
 /* Determine in which realm a cell exists.  We do this by obtaining the address
  * of the fileserver which holds /afs/cellname (assuming that the root.cell

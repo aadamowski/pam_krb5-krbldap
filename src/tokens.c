@@ -179,18 +179,8 @@ tokens_obtain(krb5_context context,
 			}
 		}
 	}
-	do {
-		memset(homecell, '\0', sizeof(homecell));
-		i = minikafs_cell_of_file(homedir, homecell,
+	i = minikafs_cell_of_file_walk_up(homedir, homecell,
 					  sizeof(homecell) - 1);
-		if (i != 0) {
-			if (strchr(homedir, '/') != NULL) {
-				*(strrchr(homedir, '/')) = '\0';
-			} else {
-				strcpy(homedir, "");
-			}
-		}
-	} while ((i != 0) && (strlen(homedir) > 0));
 	if ((i == 0) &&
 	    (strcmp(homecell, "dynroot") != 0) &&
 	    (strcmp(homecell, localcell) != 0) &&

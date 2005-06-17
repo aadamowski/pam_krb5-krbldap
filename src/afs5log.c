@@ -155,18 +155,8 @@ main(int argc, char **argv)
 			homedir = xstrdup("/afs");
 		}
 		if (homedir != NULL) {
-			do {
-				j = minikafs_cell_of_file(homedir,
-							  home, sizeof(home));
-				if (j == 0) {
-					break;
-				}
-				if (strchr(homedir, '/') != NULL) {
-					*(strrchr(homedir, '/')) = '\0';
-				} else {
-					strcpy(homedir, "");
-				}
-			} while ((j != 0) && (strlen(homedir) > 0));
+			j = minikafs_cell_of_file_walk_up(homedir, home,
+							  sizeof(home));
 			if ((j == 0) &&
 			    (strcmp(home, "dynroot") != 0) &&
 			    (strcmp(home, local) != 0)) {

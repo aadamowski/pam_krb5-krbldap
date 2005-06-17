@@ -1,3 +1,16 @@
+2005-06-17:
+	* src/minikafs.c,src/minikafs.h: add a variant of cell_of_file which
+	walks up the tree if it fails.
+	* src/afs5log.c,src/tokens.c: use the new cell_of_file variant instead
+	of handling the logic locally.
+	* src/minikafs.c: increase the default size of the address list we
+	pass to the whereis pioctl, and make its growth exponential instead of
+	linear if we fail with E2BIG (Jack Neely).
+	* README: note that we don't re-get tokens if the home directory is in
+	the local cell
+	* NEWS: note that SAM support hasn't been tested, and that "external"
+	isn't limited to use with OpenSSH
+
 2005-05-18:
 	* src/afs5log.1: add
 	* src/Makefile.am: install afs5log and afs5log.1

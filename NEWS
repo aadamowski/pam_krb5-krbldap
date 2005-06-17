@@ -3,7 +3,8 @@
          you don't invoke the authentication function with the "tokens" flag,
          which creates a new PAG, if you want this to be useful.
        * new "external" option for use with OpenSSH's GSSAPI authentication
-         with credential delegation and AFS
+         with credential delegation and AFS, *should* work with anything which
+         uses GSSAPI and accepts delegated credentials
        * new "use_shmem" option for use with OpenSSH's privilege separation mode
        * credential and renewal lifetimes can now be given either as krb5-style
          times or as numbers of seconds
@@ -12,7 +13,7 @@
        * configure disables AFS support except on Linux (for now), but can
          be overridden either way
        * can now specify a principal name for AFS cells, to save guesswork
-       * should now correctly work with SAM authentication
+       * should now correctly work with SAM authentication, needs testing
 - 2.1: switch to a minikafs implementation to flush out lurking ABI differences
   between the krb4 interface the kafs library used and the one which libkrb4
   provides.  Also, we support "2b" tokens now.
