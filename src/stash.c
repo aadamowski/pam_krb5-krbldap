@@ -96,7 +96,7 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			    void *blob, size_t blob_size)
 {
 	char tktfile[PATH_MAX + 5];
-	char *blob_creds;
+	unsigned char *blob_creds;
 	ssize_t blob_creds_size;
 	int fd;
 	krb5_context ctx;

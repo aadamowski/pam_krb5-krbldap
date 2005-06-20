@@ -198,7 +198,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 			close(inpipe[1]);
 			memset(outfile, 0, outfile_len);
 			_pam_krb5_read_with_retry(outpipe[0],
-						  outfile, outfile_len - 1);
+						  (unsigned char*) outfile,
+						  outfile_len - 1);
 			outfile[outfile_len - 1] = '\0';
 		} else {
 			memset(outfile, 0, outfile_len);
@@ -267,6 +268,7 @@ int
 _pam_krb5_storetmp_delete(const char *file)
 {
 	char *buf;
+	unsigned char empty[] = "";
 	int ret;
 
 	buf = malloc(strlen(file) + 1);
@@ -274,7 +276,7 @@ _pam_krb5_storetmp_delete(const char *file)
 		return -1;
 	}
 	memset(buf, 0, strlen(file) + 1);
-	ret = _pam_krb5_storetmp_data("", 0, file, -1, -1,
+	ret = _pam_krb5_storetmp_data(empty, 0, file, -1, -1,
 				      buf, strlen(file) + 1);
 	free(buf);
 

@@ -5,6 +5,7 @@ else
 	libdir=/lib
 fi
 if test `id -un` = "nalin" ; then
+	echo "Going to configure with --enable-Werror!"
 	flags=--enable-Werror
 	mandir=${TMPDIR:-/var/tmp}/autogen-man-tmp
 else

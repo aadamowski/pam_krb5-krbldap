@@ -182,7 +182,7 @@ _pam_krb5_shm_new_from_file(pam_handle_t *pamh, size_t lead,
 {
 	int key, fd;
 	struct stat st;
-	char *p;
+	unsigned char *p;
 	void *block;
 
 	/* Attempt to open the file for reading. */
