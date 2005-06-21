@@ -216,12 +216,6 @@ tokens_obtain(krb5_context context,
 
 	/* Iterate through the list of other cells. */
 	for (i = 0; i < options->n_afs_cells; i++) {
-		if (strcmp(options->afs_cells[i].cell, localcell) == 0) {
-			continue;
-		}
-		if (strcmp(options->afs_cells[i].cell, homecell) == 0) {
-			continue;
-		}
 		if (options->debug) {
 			debug("obtaining tokens for '%s'",
 			      options->afs_cells[i].cell);

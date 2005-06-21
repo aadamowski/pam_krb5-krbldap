@@ -1,3 +1,7 @@
+2005-06-21:
+	* src/tokens.c(tokens_obtain): don't skip a cell if it's both the
+	local/home and in the set of explicitly-specified cells (Jack Neely).
+
 2005-06-20:
 	* configure.ac: fix --disable-Werror, --disable-extra-warnings so that
 	they actually work as expected.
