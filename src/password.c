@@ -260,18 +260,34 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		    (v5_creds_check_initialized(ctx, &stash->v5creds) == 0)) {
 			int result_code;
 			krb5_data result_code_string, result_string;
+			result_code = -1;
+			result_string.length = 0;
+			result_string.data = NULL;
+			result_code_string.length = 0;
+			result_code_string.data = NULL;
 			i = krb5_change_password(ctx, &stash->v5creds, password,
 						 &result_code,
 						 &result_code_string,
 						 &result_string);
-			if (i == 0) {
+			if ((i == 0) && (result_code == 0)) {
 				notice("password changed for %s",
 				       userinfo->unparsed_name);
 				retval = PAM_SUCCESS;
 			} else {
-				notice("password change failed for %s: %s",
-				       userinfo->unparsed_name,
-				       v5_error_message(i));
+				if (i != 0) {
+					notice("password change failed for "
+					       "%s: %s",
+					       userinfo->unparsed_name,
+					       v5_error_message(i));
+				} else {
+					notice("password change failed for "
+					       "%s: %.*s(%.*s)",
+					       userinfo->unparsed_name,
+					       result_code_string.length,
+					       result_code_string.data,
+					       result_string.length,
+					       result_string.data);
+				}
 			}
 		}
 

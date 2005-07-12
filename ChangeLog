@@ -1,3 +1,7 @@
+2005-07-12:
+	* src/password.c(pam_sm_chauthtok): check the result_code returned by
+	krb5_change_password() as well as the return code (patch from Dan Perry)
+
 2005-06-21:
 	* src/tokens.c(tokens_obtain): don't skip a cell if it's both the
 	local/home and in the set of explicitly-specified cells (Jack Neely).
