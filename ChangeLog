@@ -1,3 +1,14 @@
+2005-08-15:
+	* src/password.c(pam_sm_chauthtok): save the old password as the
+	PAM_OLDAUTHTOK item, not the PAM_AUTHTOK item.  Apparently libpam
+	doesn't do anything with these (patch from Michael Calmer).
+	* src/password.c(pam_sm_chauthtok): double-check that we don't
+	get NULL as an old or new password (patch from Michael Calmer).
+	* src/password.c(pam_sm_chauthtok): better match the behavior of
+	pam_unix and pam_ldap by treating "use_authtok" as an indication
+	that PAM_AUTHTOK *has* to have been set already, and otherwise
+	that it's okay to prompt (patch from Michael Calmer).
+
 2005-07-12:
 	* src/password.c(pam_sm_chauthtok): check the result_code returned by
 	krb5_change_password() as well as the return code (patch from Dan Perry)

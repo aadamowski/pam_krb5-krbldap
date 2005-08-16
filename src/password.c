@@ -149,7 +149,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 						    &password);
 			/* Duplicate the password so that we can free it later
 			 * without corrupting the heap. */
-			if (i == PAM_SUCCESS) {
+			if ((password != NULL) && (i == PAM_SUCCESS)) {
 				password = xstrdup(password);
 			}
 		}
@@ -181,10 +181,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				options->banner,
 				strlen(options->banner) > 0 ? " " : "");
 			i = _pam_krb5_prompt_for(pamh, prompt, &password);
-			/* Save the password for possible use by other
+			/* Save the old password for possible use by other
 			 * modules. */
-			if (i == PAM_SUCCESS) {
-				pam_set_item(pamh, PAM_AUTHTOK, &password);
+			if ((password != NULL) && (i == PAM_SUCCESS)) {
+				pam_set_item(pamh, PAM_OLDAUTHTOK, &password);
 			}
 		}
 		/* We have a password, so try to obtain initial credentials
@@ -218,19 +218,29 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		retval = PAM_AUTHTOK_ERR;
 		password = NULL;
 
-		if (options->use_authtok) {
-			/* The new password is stored as the PAM_AUTHTOK item.
-			 * The old one is stored as the PAM_OLDAUTHTOK item,
-			 * but we don't use it here. */
-			password = NULL;
-			i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK,
-						    &password);
-			/* Duplicate the password, as above. */
-			if (i == PAM_SUCCESS) {
-				password = xstrdup(password);
-			}
+		/* The new password (if it's already been requested by a
+		 * previously-called module) is stored as the PAM_AUTHTOK item.
+		 * The old one is stored as the PAM_OLDAUTHTOK item, but we
+		 * don't use it here. */
+		password = NULL;
+		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &password);
+		/* Duplicate the password, as above. */
+		if ((password != NULL) && (i == PAM_SUCCESS)) {
+			password = xstrdup(password);
 		} else {
-			/* Ask for the password twice. */
+			i = PAM_AUTHTOK_ERR;
+		}
+
+		/* If there wasn't a previously-entered password, and we need
+		 * one, then return an error. */
+		if ((password == NULL) && (options->use_authtok)) {
+			i = PAM_AUTHTOK_RECOVER_ERR;
+		}
+
+		/* If there wasn't a previously-entered password, and we are
+		 * okay with that, ask for one. */
+		if ((password == NULL) && (i == PAM_SUCCESS)) {
+			/* Ask for the new password twice. */
 			sprintf(prompt, "New %s%sPassword: ",
 				options->banner,
 				strlen(options->banner) > 0 ? " " : "");

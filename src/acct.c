@@ -131,19 +131,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	/* If we haven't previously attempted to authenticate this user, make
 	 * a quick check to screen out unknown users. */
 	if (stash->v5attempted == 0) {
-		/* Attempt to get credentials using an obviously-wrong password
-		 * to check for an expired key. */
-		i = v5_get_creds(ctx, pamh, &stash->v5creds, userinfo, options,
-				 KRB5_TGS_NAME, wrong_password, NULL,
-				 &stash->v5result);
-		/* Return whichever error we got from Kerberos. */
-		retval = i;
-		/* Except catch the expected-wrong-password case. */
-		if ((retval == PAM_AUTH_ERR) &&
-		    ((stash->v5result == KRB5KRB_AP_ERR_BAD_INTEGRITY) ||
-		     (stash->v5result == KRB5KDC_ERR_PREAUTH_FAILED))) {
-			retval = PAM_SUCCESS;
+		/* We didn't participate in authentication, so stand back. */
+		if (options->debug) {
+			debug("user '%s' was not authenticated by " PACKAGE
+			      ", returning \"user unknown\"", user);
 		}
+		retval = PAM_USER_UNKNOWN;
 	} else {
 		/* Check what happened when we asked for initial credentials. */
 		switch (stash->v5result) {

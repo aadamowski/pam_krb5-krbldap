@@ -196,13 +196,13 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		if (_pam_krb5_write_with_retry(inpipe[1],
 					       data, data_len) == data_len) {
 			close(inpipe[1]);
-			memset(outfile, 0, outfile_len);
+			memset(outfile, '\0', outfile_len);
 			_pam_krb5_read_with_retry(outpipe[0],
 						  (unsigned char*) outfile,
 						  outfile_len - 1);
 			outfile[outfile_len - 1] = '\0';
 		} else {
-			memset(outfile, 0, outfile_len);
+			memset(outfile, '\0', outfile_len);
 		}
 		close(outpipe[0]);
 		waitpid(child, NULL, 0);
