@@ -1,3 +1,8 @@
+2005-08-22:
+	* configure.ac: add maintainer mode.  Add definitions so that the
+	preprocessed man pages will be able to omit portions which pertain to
+	options not selected at compile-time (i.e., AFS).
+
 2005-08-15:
 	* src/password.c(pam_sm_chauthtok): save the old password as the
 	PAM_OLDAUTHTOK item, not the PAM_AUTHTOK item.  Apparently libpam

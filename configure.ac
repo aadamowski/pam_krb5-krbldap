@@ -4,6 +4,8 @@ AC_PROG_CC
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
+AM_MAINTAINER_MODE
+
 AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
 AC_ARG_WITH(krb4,
 AC_HELP_STRING(--without-krb4,[Disable Kerberos IV support.]),
@@ -15,8 +17,12 @@ if test x$krb4 != xno ; then
 		AC_MSG_RESULT(Using krb4 provided with krb5.)
 		KRB4_CONFIG="$KRB5_CONFIG krb4"
 	fi
+	MAN_KRB4=""
+	NO_MAN_KRB4=".\\\" "
 else
 	KRB4_CONFIG=:
+	MAN_KRB4=".\\\" "
+	NO_MAN_KRB4=""
 fi
 AC_ARG_WITH(afs,
 AC_HELP_STRING(--without-afs,[Disable AFS support [default=auto].]),
@@ -33,6 +39,11 @@ fi
 
 if test x$afs = xyes ; then
 	AC_DEFINE(HAVE_AFS,1,[Define to enable token-setting support.])
+	MAN_AFS=""
+	NO_MAN_AFS=".\\\" "
+else
+	MAN_AFS=".\\\" "
+	NO_MAN_AFS=""
 fi
 AM_CONDITIONAL(AFS,[test "x$afs" = xyes])
 
@@ -70,6 +81,10 @@ if test x$krb4 != xno ; then
 	AC_MSG_RESULT($KRB4_CFLAGS)
 fi
 
+AC_SUBST(MAN_AFS)
+AC_SUBST(NO_MAN_AFS)
+AC_SUBST(MAN_KRB4)
+AC_SUBST(NO_MAN_KRB4)
 
 AC_CHECK_HEADERS(security/pam_appl.h)
 if test x$ac_cv_header_security_pam_appl_h != xyes ; then
