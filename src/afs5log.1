@@ -1,10 +1,10 @@
-.TH afs5log 8 2005/05/18 "Red Hat Linux" "System Administrator's Manual"
+.TH afs5log 8 2005/09/22 "Red Hat Linux" "System Administrator's Manual"
 
 .SH NAME
 afs5log \- AFS token initializer
 
 .SH SYNOPSIS
-afs5log [ [-v] [-5] [cell[=principal] ] ] [...]
+afs5log [ [-v] [-5] [-p \fIpath\fP] [cell[=principal] ] ] [...]
 
 .SH DESCRIPTION
 The \fIafs5log\fP command uses Kerberos to obtain AFS tokens for the named
@@ -19,6 +19,10 @@ Attempts are made to obtain Kerberos IV credentials first, and if that fails,
 -v
 Turns on verbose mode.  \fIafs5log\fP will print debugging messages while it
 does its work.  Use more than once to get more detail.
+.TP
+-p \fIpath\fP
+Determine which cell the specified \fIpath\fP resides in, and obtain tokens for
+that cell.
 .TP
 -5
 Skip attempts to use Kerberos IV and just use \fI2b\fP-style tokens, which are

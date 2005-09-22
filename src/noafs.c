@@ -87,7 +87,8 @@ minikafs_unlog(void)
 int
 minikafs_log(krb5_context ctx, krb5_ccache ccache,
 	     struct _pam_krb5_options *options,
-	     const char *cell, uid_t uid, int try_v5_2b_first)
+	     const char *cell, const char *hint_principal,
+	     uid_t uid, int try_v5_2b_first)
 {
 	return -1;
 }

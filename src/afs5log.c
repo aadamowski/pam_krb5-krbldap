@@ -63,8 +63,8 @@ extern char *log_progname;
 int
 main(int argc, char **argv)
 {
-	char local[PATH_MAX], home[PATH_MAX];
-	char *homedir, *cell, *principal;
+	char local[PATH_MAX], home[PATH_MAX], path[PATH_MAX];
+	char *homedir, *cell, *principal, *pathdir;
 	int i, j, try_v5_2b, cells;
 	krb5_context ctx;
 	krb5_ccache ccache;
@@ -111,9 +111,31 @@ main(int argc, char **argv)
 				break;
 			case 'v':
 				break;
+			case 'p':
+				i++;
+				pathdir = argv[i];
+				j = minikafs_cell_of_file_walk_up(pathdir, path,
+								  sizeof(path));
+				if ((j == 0) &&
+				    (strcmp(path, "dynroot") != 0) &&
+				    (strcmp(path, local) != 0)) {
+					if (log_options.debug) {
+						debug("cell of \"%s\" is "
+						      "\"%s\"", pathdir, path);
+					}
+					j = minikafs_log(NULL, ccache,
+							 &log_options,
+							 path, NULL,
+							 uid, try_v5_2b);
+					if (j != 0) {
+						fprintf(stderr,
+							"%s: %d\n", path, j);
+					}
+				}
+				break;
 			default:
-				printf("%s: [ [-v] [-5] [cell[=principal]] ] "
-				       "[...]\n", argv[0]);
+				printf("%s: [ [-v] [-5] [-p path] "
+				       "[cell[=principal]] ] [...]\n", argv[0]);
 				krb5_free_context(ctx);
 				exit(0);
 				break;

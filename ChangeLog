@@ -2,6 +2,8 @@
 	* configure.ac: add maintainer mode.  Add definitions so that the
 	preprocessed man pages will be able to omit portions which pertain to
 	options not selected at compile-time (i.e., AFS).
+	* src/afslog.c, src/afslog.h: add (not yet tested) -p flag support.
+	* noafs.c: update for changed prototype for minikafs_log().
 
 2005-08-15:
 	* src/password.c(pam_sm_chauthtok): save the old password as the
