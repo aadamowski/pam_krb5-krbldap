@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <errno.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>

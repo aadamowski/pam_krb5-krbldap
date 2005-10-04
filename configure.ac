@@ -7,16 +7,35 @@ AC_PROG_LIBTOOL
 AM_MAINTAINER_MODE
 
 AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
+if test $KRB5_CONFIG = : ; then
+	AC_MSG_ERROR(krb5-config not found)
+fi
+
 AC_ARG_WITH(krb4,
-AC_HELP_STRING(--without-krb4,[Disable Kerberos IV support.]),
+AC_HELP_STRING(--with-krb4[=AUTO],[Provide Kerberos IV support if possible.]),
 	    krb4=$withval,
-	    krb4=yes)
+	    krb4=AUTO)
 if test x$krb4 != xno ; then
 	AC_PATH_PROG(KRB4_CONFIG,krb4-config,:,[$PATH:/usr/kerberos/bin:/usr/krb4/bin])
-	if $KRB5_CONFIG --libs krb4 > /dev/null 2> /dev/null; then
-		AC_MSG_RESULT(Using krb4 provided with krb5.)
-		KRB4_CONFIG="$KRB5_CONFIG krb4"
+	if test $KRB4_CONFIG = : ; then
+		if $KRB5_CONFIG --libs krb4 > /dev/null 2> /dev/null; then
+			AC_MSG_RESULT(Using krb4 provided with krb5.)
+			KRB4_CONFIG="$KRB5_CONFIG krb4"
+			krb4=yes
+		else
+			if test x$krb4 = xyes ; then
+				AC_MSG_ERROR(krb4 not found)
+			else
+				AC_MSG_WARN(krb4 not found, disabling)
+				krb4=no
+			fi
+		fi
+	else
+		AC_MSG_RESULT(Using krb4 provided by $KRB4_CONFIG.)
+		krb4=yes
 	fi
+fi
+if test x$krb4 != xno ; then
 	MAN_KRB4=""
 	NO_MAN_KRB4=".\\\" "
 else
@@ -24,6 +43,7 @@ else
 	MAN_KRB4=".\\\" "
 	NO_MAN_KRB4=""
 fi
+
 AC_ARG_WITH(afs,
 AC_HELP_STRING(--without-afs,[Disable AFS support [default=auto].]),
 	    afs=$withval,

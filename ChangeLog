@@ -1,3 +1,9 @@
+2005-10-04:
+	* configure.ac: sort out --with-krb4/--without-krb4 logic so that it
+	defaults to use-krb4-if-available.
+	* src/session.c, src/stash.c, src/tokens.c, src/userinfo.c: add missing
+	inclusion of <limits.h>
+
 2005-08-22:
 	* configure.ac: add maintainer mode.  Add definitions so that the
 	preprocessed man pages will be able to omit portions which pertain to
