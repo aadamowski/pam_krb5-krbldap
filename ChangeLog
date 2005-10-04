@@ -1,4 +1,11 @@
 2005-10-04:
+	* src/password.c: save the result of getting new credentials with the
+	newly-set password so that we don't forget to store them in the user's
+	session ccache, and return the more correct PAM_AUTHTOK_RECOVER_ERR
+	instead of PAM_AUTHTOK_ERR if we were called with "use_authtok" and
+	there is no PAM_AUTHTOK item set (patches from Michael Calmer).
+
+2005-10-04:
 	* src/options.c,src/options.h: parse the "krb4_convert_524" option.
 	Accept "don't" and "dont" as prefixes which indicate that a boolean
 	option is disabled.

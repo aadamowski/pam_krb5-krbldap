@@ -159,8 +159,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL,
-					 &tmp_result);
+					 password, NULL, &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
@@ -193,8 +192,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL,
-					 &tmp_result);
+					 password, NULL, &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
@@ -235,6 +233,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 * one, then return an error. */
 		if ((password == NULL) && (options->use_authtok)) {
 			i = PAM_AUTHTOK_RECOVER_ERR;
+			retval = PAM_AUTHTOK_RECOVER_ERR;
 		}
 
 		/* If there wasn't a previously-entered password, and we are
@@ -311,7 +310,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh, &stash->v5creds,
 					 userinfo, options,
 					 KRB5_TGS_NAME, password,
-					 &gic_options, NULL);
+					 &gic_options, &stash->v5result);
 			if ((i == PAM_SUCCESS) &&
 			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 				v4_get_creds(ctx, pamh, stash, userinfo,
