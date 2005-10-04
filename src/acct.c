@@ -32,6 +32,10 @@
 
 #include "../config.h"
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #define PAM_SM_ACCT_MGMT
 #include <security/pam_modules.h>
@@ -100,10 +104,15 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 					    options->n_mappings,
 					    options->mappings);
 	if (userinfo == NULL) {
-		warn("error getting information about '%s'", user);
+		if (options->ignore_unknown_principals == 0) {
+			retval = PAM_IGNORE;
+		} else {
+			warn("error getting information about '%s'", user);
+			retval = PAM_USER_UNKNOWN;
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_USER_UNKNOWN;
+		return retval;
 	}
 
 	/* Check the minimum UID argument. */
@@ -136,7 +145,11 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 			debug("user '%s' was not authenticated by " PACKAGE
 			      ", returning \"user unknown\"", user);
 		}
-		retval = PAM_USER_UNKNOWN;
+		if (options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			retval = PAM_USER_UNKNOWN;
+		}
 	} else {
 		/* Check what happened when we asked for initial credentials. */
 		switch (stash->v5result) {
@@ -150,9 +163,9 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
 		case KRB5KDC_ERR_NAME_EXP:
 			if (options->ignore_unknown_principals) {
-				notice("account checks fail for '%s': "
-				       "user is unknown or account expired "
-				       "(ignoring)", user);
+				debug("account checks fail for '%s': "
+				      "user is unknown or account expired "
+				      "(ignoring)", user);
 				retval = PAM_IGNORE;
 			} else {
 				notice("account checks fail for '%s': "
@@ -194,6 +207,12 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 			       userinfo->unparsed_name, user);
 			retval = PAM_PERM_DENIED;
 		}
+	}
+
+	/* Catch any USER_UNKNOWN errors which we're supposed to suppress. */
+	if ((retval == PAM_USER_UNKNOWN) &&
+	    (options->ignore_unknown_principals)) {
+		retval = PAM_IGNORE;
 	}
 
 	/* Clean up. */

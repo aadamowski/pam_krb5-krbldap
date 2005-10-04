@@ -41,6 +41,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
 #endif
@@ -83,7 +87,7 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid, char **homedir)
 
 		/* Give it a shot. */
 		pwd = NULL;
-#if defined(HAVE_GETPWNAM_R)
+#if defined(HAVE_GETPWNAM_R) && !defined(sun)
 		i = getpwnam_r(name, &passwd, buffer, size, &pwd);
 #else
 		i = __posix_getpwnam_r(name, &passwd, buffer, size, &pwd);

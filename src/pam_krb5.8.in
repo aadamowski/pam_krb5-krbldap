@@ -4,13 +4,13 @@
 pam_krb5 \- Kerberos 5 authentication
 
 .SH SYNOPSIS
-.B auth required /lib/security/pam_krb5.so
+.B auth required @SECURITYDIR@/pam_krb5.so
 .br
-.B session optional /lib/security/pam_krb5.so
+.B session optional @SECURITYDIR@/pam_krb5.so
 .br
-.B account sufficient /lib/security/pam_krb5.so
+.B account sufficient @SECURITYDIR@/pam_krb5.so
 .br
-.B password sufficient /lib/security/pam_krb5.so
+.B password sufficient @SECURITYDIR@/pam_krb5.so
 
 .SH DESCRIPTION
 The pam_krb5.so module is designed to allow smooth integration of Kerberos 5
@@ -86,6 +86,7 @@ option is deprecated in favor of the \fIforwardable\fR option in the
 
 .IP ignore_unknown_principals
 .IP ignore_unknown_spn
+.IP ignore_unknown_upn
 specifies that not pam_krb5 should return a PAM_IGNORE code to libpam
 instead of PAM_USER_UNKNOWN for users for whom the determined principal
 name is expired or does not exist.

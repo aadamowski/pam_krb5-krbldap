@@ -32,6 +32,10 @@
 
 #include "../config.h"
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #define PAM_SM_AUTH
 #define PAM_SM_SESSION
@@ -113,7 +117,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					    options->n_mappings,
 					    options->mappings);
 	if (userinfo == NULL) {
-		warn("error getting information about '%s'", user);
+		if (options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			warn("error getting information about '%s'", user);
+			retval = PAM_USER_UNKNOWN;
+		}
 		if (options->use_second_pass) {
 			password = NULL;
 			i = _pam_krb5_prompt_for(pamh, "Password: ", &password);
@@ -138,7 +147,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_USER_UNKNOWN;
+		return retval;
 	}
 	if (options->debug) {
 		debug("authenticating '%s'", userinfo->unparsed_name);
@@ -354,10 +363,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		notice("authentication succeeds for '%s' (%s)", user,
 		       userinfo->unparsed_name);
 	} else {
-		notice("authentication fails for '%s' (%s): %s (%s)", user,
-		       userinfo->unparsed_name,
-		       pam_strerror(pamh, retval),
-		       v5_error_message(stash->v5result));
+		if ((retval == PAM_USER_UNKNOWN) &&
+		    options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			notice("authentication fails for '%s' (%s): %s (%s)",
+			       user,
+			       userinfo->unparsed_name,
+			       pam_strerror(pamh, retval),
+			       v5_error_message(stash->v5result));
+		}
 	}
 
 	/* Clean up. */

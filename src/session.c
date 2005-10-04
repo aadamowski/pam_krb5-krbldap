@@ -32,6 +32,10 @@
 
 #include "../config.h"
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #define PAM_SM_SESSION
 #include <security/pam_modules.h>
@@ -75,7 +79,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_options *options;
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
-	int i;
+	int i, retval;
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
@@ -108,14 +112,19 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (options->debug) {
 			debug("no user info for '%s'", user);
 		}
+		if (options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			retval = PAM_USER_UNKNOWN;
+		}
 		if (options->debug) {
 			debug("pam_open_session returning %d (%s)",
-			      PAM_USER_UNKNOWN,
-			      pam_strerror(pamh, PAM_USER_UNKNOWN));
+			      retval,
+			      pam_strerror(pamh, retval));
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_USER_UNKNOWN;
+		return retval;
 	}
 	if ((options->minimum_uid != (uid_t)-1) &&
 	    (userinfo->uid < options->minimum_uid)) {
@@ -285,7 +294,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_options *options;
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
-	int i;
+	int i, retval;
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
@@ -314,15 +323,20 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 					    options->n_mappings,
 					    options->mappings);
 	if (userinfo == NULL) {
-		warn("no user info for %s (shouldn't happen)", user);
+		if (options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			warn("no user info for %s (shouldn't happen)", user);
+			retval = PAM_USER_UNKNOWN;
+		}
 		if (options->debug) {
 			debug("pam_close_session returning %d (%s)",
-			      PAM_USER_UNKNOWN,
-			      pam_strerror(pamh, PAM_USER_UNKNOWN));
+			      retval,
+			      pam_strerror(pamh, retval));
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_USER_UNKNOWN;
+		return retval;
 	}
 
 	/* Check the minimum UID argument. */

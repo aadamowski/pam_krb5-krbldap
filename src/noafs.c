@@ -32,6 +32,10 @@
 
 #include "../config.h"
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
 #endif

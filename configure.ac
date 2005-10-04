@@ -106,6 +106,7 @@ AC_SUBST(NO_MAN_AFS)
 AC_SUBST(MAN_KRB4)
 AC_SUBST(NO_MAN_KRB4)
 
+AC_CHECK_HEADERS(sys/ioccom.h inttypes.h stdint.h)
 AC_CHECK_HEADERS(security/pam_appl.h)
 if test x$ac_cv_header_security_pam_appl_h != xyes ; then
 	AC_MSG_ERROR([you must have PAM development files to build $PACKAGE])
@@ -246,7 +247,7 @@ AC_MSG_RESULT([Using "$default_realm" as the default realm])
 AC_ARG_ENABLE(default-ccache-dir,AC_HELP_STRING([--enable-default-ccache-dir=DIRECTORY],[default directory in which ccache files will be stored (default is /tmp)]),default_ccache_dir=$enableval,default_ccache_dir=/tmp)
 AC_DEFINE_UNQUOTED(DEFAULT_CCACHE_DIR,"$default_ccache_dir",[Define to the name of the directory in which ccache files will be stored by default.])
 AC_MSG_RESULT([Using "$default_ccache_dir" to store ccache files])
-AC_ARG_ENABLE(default-keytab-location,AC_HELP_STRING([--enable-default-keytab-location=/etc/krb5.keytab],[default location for local keys used for verifying TGTs (default is /etc/krb5.keytab)]),default_keytab=$enableval,default_keytab=/etc/krb5.keytab)
+AC_ARG_ENABLE(default-keytab-location,AC_HELP_STRING([--enable-default-keytab-location=FILE:/etc/krb5.keytab],[default location for local keys used for verifying TGTs (default is FILE:/etc/krb5.keytab)]),default_keytab=$enableval,default_keytab=FILE:/etc/krb5.keytab)
 AC_DEFINE_UNQUOTED(DEFAULT_KEYTAB_LOCATION,"$default_keytab",[Define to the default location for your keytab file, which will be used for verifying TGTs.])
 DEFAULT_KEYTAB="$default_keytab"
 AC_SUBST(DEFAULT_KEYTAB)
@@ -280,6 +281,10 @@ AH_VERBATIM([PAM_KRB5_GNUC_PRINTF_DEFINED],
 ])
 
 
+pam_krb5_securitydir=`eval echo $libdir/security | sed s,^NONE,$ac_default_prefix,`
+AC_DEFINE_UNQUOTED(SECURITYDIR,"$pam_krb5_securitydir",[The location where the pam_krb5 module will be installed.])
+SECURITYDIR="$pam_krb5_securitydir"
+AC_SUBST(SECURITYDIR)
 pam_krb5_pkgsecuritydir=`eval echo $libdir/security/$PACKAGE | sed s,^NONE,$ac_default_prefix,`
 AC_DEFINE_UNQUOTED(PKGSECURITYDIR,"$pam_krb5_pkgsecuritydir",[The location of pam_krb5 helpers.])
 

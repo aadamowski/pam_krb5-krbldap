@@ -1,4 +1,32 @@
 2005-10-04:
+	* src/options.c,src/pam_krb5.5.in,src/pam_krb5.8.in: add
+	"ignore_unknown_upn" as an alias for the "ignore_unknown_principals",
+	to match behavior of patch from Luke Howard.  Correct the option
+	parsing code so that it matches the option named in the man pages.
+	* src/acct.c,src/auth.c: Merge most of the rest of Luke's patch for
+	changed behavior when this option is supplied.
+	* configure.ac: set the default keytab path to "FILE:/etc/krb5.keytab",
+	not just "/etc/krb5.keytab".
+	* src/acct.c,src/auth.c,src/conv.c,src/harness.c,src/initopts.c,
+	src/items.c,src/map.c,src/minikafs.c,src/noafs.c,src/options.c,
+	src/password.c,src/prompter.c,src/session.c,src/shmem.c,src/sly.c,
+	src/stash.c,src/tokens.c,src/userinfo.c,src/v4.c,src/v5.c: include
+	<security/pam_appl.h> before every inclusion of <security/pam_modules.h>
+	(patch from Luke Howard).
+	* src/minikafs.c: define __NR_afs_syscall on Solaris, use the standard
+	names for sized integer types (patch from Luke Howard).
+	* src/userinfo.c: prefer __posix_getpwnam_r() to getpwnam_r() on
+	Solaris (patch from Luke Howard).
+	* configure.ac,src/pam_krb5.8.in: list the configured path for the
+	module in the example in the man pages.
+
+2005-10-04:
+	* configure.ac: check for the presence of <sys/ioccom.h> (patch from
+	Luke Howard).
+	* src/minikafs.c: include <sys/ioccom.h>, if present (patch from Luke
+	Howard).
+
+2005-10-04:
 	* src/password.c: save the result of getting new credentials with the
 	newly-set password so that we don't forget to store them in the user's
 	session ccache, and return the more correct PAM_AUTHTOK_RECOVER_ERR

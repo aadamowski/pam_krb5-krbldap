@@ -58,6 +58,7 @@ This directive is deprecated in favor of the \fBlibdefaults\fR
 
 .IP ignore_unknown_principals=[\fItrue\fR|\fIfalse\fR]
 .IP ignore_unknown_spn=[\fItrue\fR|\fIfalse\fR]
+.IP ignore_unknown_upn=[\fItrue\fR|\fIfalse\fR]
 specifies which other not pam_krb5 should return a PAM_IGNORE code to libpam
 instead of PAM_USER_UNKNOWN for users for whom the determined principal name
 is expired or does not exist.

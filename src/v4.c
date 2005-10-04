@@ -34,11 +34,21 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 #include <limits.h>
 #include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
 
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>

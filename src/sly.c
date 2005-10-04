@@ -38,6 +38,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
 #endif
@@ -180,11 +184,16 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 					    options->n_mappings,
 					    options->mappings);
 	if (userinfo == NULL) {
-		warn("error getting information about '%s' (shouldn't happen)",
-		     user);
+		if (options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			warn("error getting information about '%s' "
+			     "(shouldn't happen)", user);
+			retval = PAM_USER_UNKNOWN;
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_USER_UNKNOWN;
+		return retval;
 	}
 
 	if ((options->minimum_uid != (uid_t)-1) &&

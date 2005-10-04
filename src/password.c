@@ -32,6 +32,10 @@
 
 #include "../config.h"
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #define PAM_SM_PASSWORD
 #include <security/pam_modules.h>
@@ -108,10 +112,15 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					    options->n_mappings,
 					    options->mappings);
 	if (userinfo == NULL) {
-		warn("error getting information about '%s'", user);
+		if (options->ignore_unknown_principals) {
+			retval = PAM_IGNORE;
+		} else {
+			warn("error getting information about '%s'", user);
+			retval = PAM_USER_UNKNOWN;
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
-		return PAM_USER_UNKNOWN;
+		return retval;
 	}
 
 	/* Check the minimum UID argument. */

@@ -41,6 +41,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
 #endif
@@ -558,12 +562,18 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 
 	options->ignore_unknown_principals = option_b(pamh, argc, argv, ctx,
 						      options->realm,
-						      "ignore_unknown_principal");
+						      "ignore_unknown_principals");
 	if (options->ignore_unknown_principals == -1) {
 		options->ignore_unknown_principals = option_b(pamh, argc, argv,
 							      ctx,
 							      options->realm,
 							      "ignore_unknown_spn");
+	}
+	if (options->ignore_unknown_principals == -1) {
+		options->ignore_unknown_principals = option_b(pamh, argc, argv,
+							      ctx,
+							      options->realm,
+							      "ignore_unknown_upn");
 	}
 	if (options->ignore_unknown_principals == -1) {
 		options->ignore_unknown_principals = 0;

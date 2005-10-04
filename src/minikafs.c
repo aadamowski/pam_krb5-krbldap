@@ -42,15 +42,28 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
+#ifdef HAVE_SYS_IOCCOM_H
+#include <sys/ioccom.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 #include <limits.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
 
 #ifdef HAVE_SECURITY_PAM_MODULES_H
 #include <security/pam_modules.h>
@@ -81,6 +94,12 @@
 #define ARLA_AFS_IOCTL_FILE     "/proc/fs/nnpfs/afs_ioctl"
 #define VIOC_SYSCALL            _IOW('C', 1, void *)
 
+#ifdef sun
+#ifndef __NR_afs_syscall
+#define __NR_afs_syscall 65
+#endif
+#endif
+
 /* A structure specifying parameters to the VIOC_SYSCALL ioctl.  An array would
  * do as well, but this makes the order of items clearer. */
 struct minikafs_procdata {
@@ -100,16 +119,16 @@ static const char *minikafs_procpath = NULL;
  * minikafs_pioctl(). */
 struct minikafs_ioblock {
 	char *in, *out;
-	u_int16_t insize, outsize;
+	uint16_t insize, outsize;
 };
 
 /* The portion of a token which includes our own key and other bookkeeping
  * stuff.  Along with a magic blob used by rxkad, the guts of tokens. */
 struct minikafs_plain_token {
-	u_int32_t kvno;
+	uint32_t kvno;
 	char key[8];
-	u_int32_t uid;
-	u_int32_t start, end; /* must be odd (?) */
+	uint32_t uid;
+	uint32_t start, end; /* must be odd (?) */
 };
 
 /* Functions called through minikafs_syscall().  Might not port to your system. */
@@ -448,7 +467,7 @@ minikafs_ws_cell(char *cell, size_t length)
 #ifdef USE_KRB4
 /* Stuff the ticket and key from a v4 credentials structure into the kernel. */
 static int
-minikafs_4settoken(const char *cell, uid_t uid, u_int32_t start, u_int32_t end,
+minikafs_4settoken(const char *cell, uid_t uid, uint32_t start, uint32_t end,
 		   CREDENTIALS *creds)
 {
 	char buffer[4 + creds->ticket_st.length +
@@ -456,7 +475,7 @@ minikafs_4settoken(const char *cell, uid_t uid, u_int32_t start, u_int32_t end,
 		    4 + strlen(cell) + 1];
 	struct minikafs_plain_token plain_token;
 	struct minikafs_ioblock iob;
-	u_int32_t size;
+	uint32_t size;
 
 	/* their key, encrypted with our key */
 	size = creds->ticket_st.length;
@@ -509,7 +528,7 @@ minikafs_5settoken(const char *cell, krb5_creds *creds, uid_t uid)
 		    4 + strlen(cell) + 1];
 	struct minikafs_plain_token plain_token;
 	struct minikafs_ioblock iob;
-	u_int32_t size;
+	uint32_t size;
 
 	if (v5_creds_key_length(creds) != 8) {
 		return -1;
@@ -879,7 +898,7 @@ minikafs_4log_with_principal(struct _pam_krb5_options *options,
 			     uid_t uid)
 {
 	CREDENTIALS creds;
-	u_int32_t endtime;
+	uint32_t endtime;
 	int lifetime, ret;
 	char lrealm[PATH_MAX];
 
