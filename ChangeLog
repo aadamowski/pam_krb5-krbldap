@@ -1,4 +1,7 @@
 2005-10-04:
+	* configure.ac: oh right, enable AFS support on *-sun-* now.
+
+2005-10-04:
 	* src/options.c,src/pam_krb5.5.in,src/pam_krb5.8.in: add
 	"ignore_unknown_upn" as an alias for the "ignore_unknown_principals",
 	to match behavior of patch from Luke Howard.  Correct the option

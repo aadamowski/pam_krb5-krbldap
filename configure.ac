@@ -51,8 +51,8 @@ AC_HELP_STRING(--without-afs,[Disable AFS support [default=auto].]),
 if test x$afs = xauto ; then
 	AC_MSG_CHECKING(if pam_krb5 knows how to set AFS tokens on $host_os)
 	case x$host_os in
-	*linux|*linux-*)	afs=yes;;
-	*)			afs=no;;
+	*linux|*linux-*|*-sun-*)	afs=yes;;
+	*)				afs=no;;
 	esac
 	AC_MSG_RESULT($afs)
 fi
