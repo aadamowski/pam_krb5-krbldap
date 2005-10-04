@@ -18,7 +18,7 @@ AC_HELP_STRING(--with-krb4[=AUTO],[Provide Kerberos IV support if possible.]),
 if test x$krb4 != xno ; then
 	AC_PATH_PROG(KRB4_CONFIG,krb4-config,:,[$PATH:/usr/kerberos/bin:/usr/krb4/bin])
 	if test $KRB4_CONFIG = : ; then
-		if $KRB5_CONFIG --libs krb4 > /dev/null 2> /dev/null; then
+		if $KRB5_CONFIG --libs krb4 | grep -e -lkrb4 > /dev/null 2> /dev/null; then
 			AC_MSG_RESULT(Using krb4 provided with krb5.)
 			KRB4_CONFIG="$KRB5_CONFIG krb4"
 			krb4=yes

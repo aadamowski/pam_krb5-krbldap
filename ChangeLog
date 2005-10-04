@@ -1,4 +1,9 @@
 2005-10-04:
+	* configure.ac: only trust 'krb5-config --libs krb4' to provide krb4
+	if '-lkrb4' is in the output -- krb5 1.2.7's krb5-config doesn't exit
+	with an error when built without krb4 support
+
+2005-10-04:
 	* configure.ac: sort out --with-krb4/--without-krb4 logic so that it
 	defaults to use-krb4-if-available.
 	* src/session.c, src/stash.c, src/tokens.c, src/userinfo.c: add missing
