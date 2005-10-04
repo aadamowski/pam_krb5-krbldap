@@ -52,6 +52,7 @@ struct _pam_krb5_options {
 	int validate;
 	int v4;
 	int v4_for_afs;
+	int v4_use_524;
 	int warn;
 
 	krb5_deltat ticket_lifetime;

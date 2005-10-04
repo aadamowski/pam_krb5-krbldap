@@ -405,89 +405,96 @@ v4_get_creds(krb5_context ctx,
 	krb5_creds *v4_compat_creds, *in_creds;
 
 	v4_compat_creds = NULL;
-	if (options->debug) {
-		debug("obtaining v4-compatible key");
-	}
-	/* We need a DES-CBC-CRC v5 credential to convert to a proper v4
-	 * credential. */
-	i = v5_get_creds_etype(ctx, userinfo, options, &stash->v5creds,
-			       ENCTYPE_DES_CBC_CRC, &v4_compat_creds);
-	if (i == 0) {
+
+	if (options->v4_use_524) {
 		if (options->debug) {
-			debug("obtained des-cbc-crc v5 creds");
+			debug("obtaining v4-compatible key");
 		}
-		in_creds = v4_compat_creds;
-	} else {
-		if (options->debug) {
-			debug("failed to obtain des-cbc-crc v5 creds: %d (%s)",
-			      i, error_message(i));
-		}
-		in_creds = NULL;
-		if (v5_creds_check_initialized(ctx, &stash->v5creds) == 0) {
-			krb5_copy_creds(ctx, &stash->v5creds, &in_creds);
-		}
-	}
-#ifdef HAVE_KRB5_524_CONVERT_CREDS
-	if (options->debug) {
-		debug("converting v5 creds to v4 creds (etype = %d)",
-		      in_creds ? v5_creds_get_etype(ctx, in_creds) : 0);
-	}
-	if ((in_creds != NULL) &&
-	    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
-		i = krb5_524_convert_creds(ctx, in_creds, &stash->v4creds);
+		/* We need a DES-CBC-CRC v5 credential to convert to a proper v4
+		 * credential. */
+		i = v5_get_creds_etype(ctx, userinfo, options, &stash->v5creds,
+				       ENCTYPE_DES_CBC_CRC, &v4_compat_creds);
 		if (i == 0) {
 			if (options->debug) {
-				debug("conversion succeeded");
+				debug("obtained des-cbc-crc v5 creds");
 			}
-			stash->v4present = 1;
-			if (result) {
-				*result = i;
-			}
-			krb5_free_creds(ctx, in_creds);
-			return PAM_SUCCESS;
+			in_creds = v4_compat_creds;
 		} else {
 			if (options->debug) {
-				debug("conversion failed: %d (%s)",
-				      i, v5_error_message(i));
+				debug("failed to obtain des-cbc-crc v5 creds: "
+				      "%d (%s)", i, error_message(i));
+			}
+			in_creds = NULL;
+			if (v5_creds_check_initialized(ctx,
+						       &stash->v5creds) == 0) {
+				krb5_copy_creds(ctx, &stash->v5creds,
+						&in_creds);
 			}
 		}
-	}
+#ifdef HAVE_KRB5_524_CONVERT_CREDS
+		if (options->debug) {
+			debug("converting v5 creds to v4 creds (etype = %d)",
+			      in_creds ? v5_creds_get_etype(ctx, in_creds) : 0);
+		}
+		if ((in_creds != NULL) &&
+		    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
+			i = krb5_524_convert_creds(ctx, in_creds,
+						   &stash->v4creds);
+			if (i == 0) {
+				if (options->debug) {
+					debug("conversion succeeded");
+				}
+				stash->v4present = 1;
+				if (result) {
+					*result = i;
+				}
+				krb5_free_creds(ctx, in_creds);
+				return PAM_SUCCESS;
+			} else {
+				if (options->debug) {
+					debug("conversion failed: %d (%s)",
+					      i, v5_error_message(i));
+				}
+			}
+		}
 #else
 #ifdef HAVE_KRB524_CONVERT_CREDS_KDC
-	if (options->debug) {
-		debug("converting v5 creds to v4 creds (etype = %d)",
-		      in_creds ? v5_creds_get_etype(ctx, in_creds) : 0);
-	}
-	if ((in_creds != NULL) &&
-	    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
-		i = krb524_convert_creds_kdc(ctx, in_creds, &stash->v4creds);
-		if (i == 0) {
-			if (options->debug) {
-				debug("conversion succeeded");
-			}
-			stash->v4present = 1;
-			if (result) {
-				*result = i;
-			}
-			krb5_free_creds(ctx, in_creds);
-			return PAM_SUCCESS;
-		} else {
-			if (options->debug) {
-				debug("conversion failed: %d (%s)",
-				      i, v5_error_message(i));
+		if (options->debug) {
+			debug("converting v5 creds to v4 creds (etype = %d)",
+			      in_creds ? v5_creds_get_etype(ctx, in_creds) : 0);
+		}
+		if ((in_creds != NULL) &&
+		    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
+			i = krb524_convert_creds_kdc(ctx, in_creds,
+						     &stash->v4creds);
+			if (i == 0) {
+				if (options->debug) {
+					debug("conversion succeeded");
+				}
+				stash->v4present = 1;
+				if (result) {
+					*result = i;
+				}
+				krb5_free_creds(ctx, in_creds);
+				return PAM_SUCCESS;
+			} else {
+				if (options->debug) {
+					debug("conversion failed: %d (%s)",
+					      i, v5_error_message(i));
+				}
 			}
 		}
-	}
 #endif
 #endif
-	if ((in_creds != NULL) &&
-	    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
-		krb5_free_creds(ctx, in_creds);
+		if ((in_creds != NULL) &&
+		    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
+			krb5_free_creds(ctx, in_creds);
+		}
 	}
 #endif
 	if (password != NULL) {
 		if (options->debug) {
-			debug("obtaining initial v4 creds");
+			debug("attempting to obtain initial v4 creds");
 		}
 		i = _pam_krb5_v4_init(ctx, stash, userinfo, options,
 				      KRB5_TGS_NAME, NULL, password, result);

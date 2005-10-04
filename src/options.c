@@ -83,12 +83,20 @@ option_b(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 		    (strcmp(argv[i] + 3, s) == 0)) {
 			return 0;
 		}
+		if ((strncmp(argv[i], "dont", 4) == 0) &&
+		    (strcmp(argv[i] + 4, s) == 0)) {
+			return 0;
+		}
 		if ((strncmp(argv[i], "no_", 3) == 0) &&
 		    (strcmp(argv[i] + 3, s) == 0)) {
 			return 0;
 		}
 		if ((strncmp(argv[i], "not_", 4) == 0) &&
 		    (strcmp(argv[i] + 4, s) == 0)) {
+			return 0;
+		}
+		if ((strncmp(argv[i], "dont_", 5) == 0) &&
+		    (strcmp(argv[i] + 5, s) == 0)) {
 			return 0;
 		}
 	}
@@ -374,6 +382,20 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 	if (options->debug && (options->v4 == 0)) {
 		debug("flag: no krb4_convert");
+	}
+
+	/* private option */
+	options->v4_use_524 = option_b(pamh, argc, argv,
+				       ctx, options->realm, "krb4_convert_524");
+	if (options->v4_use_524 == -1) {
+		/* default is to have this behavior enabled... */
+		options->v4_use_524 = 1;
+	}
+	if (options->debug && (options->v4_use_524 == 1)) {
+		debug("flag: krb4_convert_524");
+	}
+	if (options->debug && (options->v4_use_524 == 0)) {
+		debug("flag: no krb4_convert_524");
 	}
 
 	/* private option */

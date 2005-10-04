@@ -14,13 +14,16 @@ pam_krb5 \- Kerberos 5 authentication
 
 .SH DESCRIPTION
 The pam_krb5.so module is designed to allow smooth integration of Kerberos 5
-password-checking for applications which use PAM.  It creates session-specific
-credential cache files, and can obtain Kerberos IV credentials using a krb524
-service or a v4-capable KDC.  If the system is an AFS client, it will also
-attempt to obtain tokens for the local cell.
+password-checking for applications which use PAM.
+@NO_MAN_KRB4@It creates session-specific credential cache files.
+@MAN_KRB4@It creates session-specific credential cache files, and can obtain
+@MAN_KRB4@Kerberos IV credentials using a krb524 service.
+@MAN_AFS@If the system is an AFS client, it will also attempt to obtain tokens
+@MAN_AFS@for the local and any explicitly-configured cells.
 
 When a user logs in, the module's authentication function performs a simple
-password check and, if possible, obtains Kerberos 5 and Kerberos IV
+password check and, if possible, obtains Kerberos 5
+@MAN_KRB4@and Kerberos IV
 credentials, caching them for later use.  When the application requests
 initialization of credentials (or opens a session), the usual ticket files are
 created.  When the application subsequently requests deletion of credentials or
@@ -34,14 +37,14 @@ user being authenticated, which is expected to be accessible to the module.
 .SH ARGUMENTS
 
 .IP debug
-turns on debugging via \fBsyslog(3)\fR.  Debugging messages are logged with
+turns on debugging via \fBsyslog\fR(3).  Debugging messages are logged with
 priority LOG_DEBUG.
 
 .IP addressless
 tells pam_krb5.so to obtain credentials without address lists.  This may be
 necessary if your network uses NAT, and should otherwise not be used.  This
 option is deprecated in favor of the \fInoaddresses\fR flag in the
-\fIlibdefaults\fR section of krb5.conf(5).
+\fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
 .IP hosts=\fIhost\fR
 tells pam_krb5.so to obtain credentials using the address of the given host in
@@ -49,14 +52,16 @@ addition to the addresses of interfaces on the local workstation.  For example,
 if your workstation is behind a masquerading firewall, specifying the
 firewall's outward-facing address here should allow Kerberos authentication to
 succeed.  This option is deprecated in favor of the \fIextra_addresses\fR flag
-in the \fIlibdefaults\fR section of krb5.conf(5).
+in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
-.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
-tells pam_krb5.so to obtain tokens for cell1.example.com and cell2.example.com,
-in addition to the local cell, for the user.  The module will guess the
-principal name of the AFS service for the named cells, or it can be specified
-by given cells in the form \fIcellname\fB=principalname\fR.
-
+@MAN_AFS@.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
+@MAN_AFS@tells pam_krb5.so to obtain tokens for cell1.example.com and
+@MAN_AFS@cell2.example.com, in addition to the local cell, for the user.
+@MAN_AFS@in addition to the local cell, for the user.  The module will guess
+@MAN_AFS@the principal name of the AFS service for the named cells, or it can
+@MAN_AFS@be specified by given cells in the form
+@MAN_AFS@\fIcellname\fB=principalname\fR.
+@MAN_AFS@
 .IP banner=\fIKerberos 5\fR
 tells pam_krb5.so how to identify itself when users attempt to change their
 passwords.  The default setting is "Kerberos 5".
@@ -68,13 +73,16 @@ default setting is \fI@default_ccache_dir@\fR.
 .IP external
 .IP external=\fIsshd\fR
 tells pam_krb5.so to use Kerberos credentials provided by the calling
-application during session setup.  This is most often useful for obtaining
-AFS tokens or a krb4 ticket.
+application during session setup.
+@MAN_KRB4@This is most often useful for obtaining
+@MAN_KRB4@@MAN_AFS@AFS tokens or
+@MAN_KRB4@a krb4 ticket.
+@NO_MAN_KRB4@@MAN_AFS@This is most often useful for obtaining AFS tokens.
 
 .IP forwardable
 tells pam_krb5.so that credentials it obtains should be forwardable.  This
 option is deprecated in favor of the \fIforwardable\fR option in the
-\fIlibdefaults\fR section of krb5.conf(5).
+\fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
 .IP ignore_unknown_principals
 .IP ignore_unknown_spn
@@ -86,10 +94,17 @@ name is expired or does not exist.
 tells pam_krb5.so the location of a keytab to use when validating
 credentials obtained from KDCs.
 
-.IP krb4_convert
-tells pam_krb5.so to obtain Kerberos IV credentials for users, in
-addition to Kerberos 5 credentials.
-
+@MAN_KRB4@.IP krb4_convert
+@MAN_KRB4@tells pam_krb5.so to obtain Kerberos IV credentials for users, in
+@MAN_KRB4@addition to Kerberos 5 credentials, using either a v4-capable KDC or
+@MAN_KRB4@the krb524 service.
+@MAN_KRB4@
+@MAN_KRB4@.IP krb4_convert_524
+@MAN_KRB4@tells pam_krb5.so to obtain Kerberos IV credentials for users using
+@MAN_KRB4@the krb524 service.  This option modifies the \fBkrb4_convert\fP
+@MAN_KRB4@option.  If disabled, pam_krb5 will only attempt
+@MAN_KRB4@to obtain Kerberos IV credentials using the KDC.
+@MAN_KRB4@
 .IP minimum_uid=\fI0\fR
 tells pam_krb5.so to ignore authentication attempts by users with
 UIDs below the specified number.
@@ -110,7 +125,7 @@ user's password to be eavesdropped.
 .IP proxiable
 tells pam_krb5.so that credentials it obtains should be proxiable.  This
 option is deprecated in favor of the \fIproxiable\fR option in the
-\fIlibdefaults\fR section of krb5.conf(5).
+\fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
 .IP realm=\fIrealm\fR
 overrides the default realm set in \fI/etc/krb5.conf\fR, which pam_krb5.so
@@ -119,17 +134,17 @@ will attempt to authenticate users to.
 .IP renew_lifetime=\fI36000\fR
 sets the default renewable lifetime for credentials.  This
 option is deprecated in favor of the \fIrenew_lifetime\fR option in the
-\fIlibdefaults\fR section of krb5.conf(5).
+\fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
 .IP ticket_lifetime=\fI36000\fR
 sets the default lifetime for credentials.
 
-.IP tokens
-signals that pam_krb5.so should create a new AFS PAG and obtain AFS tokens
-during authentication in addition to session setup.  This is primarily useful
-in server applications which need to access a user's files but which do not
-open PAM sessions before doing so.
-
+@MAN_AFS@.IP tokens
+@MAN_AFS@signals that pam_krb5.so should create a new AFS PAG and obtain AFS
+@MAN_AFS@tokens during authentication in addition to session setup.  This is
+@MAN_AFS@primarily useful in server applications which need to access a user's
+@MAN_AFS@files but which do not open PAM sessions before doing so.
+@MAN_AFS@
 .IP try_first_pass
 tells pam_krb5.so to check the previously-entered password as with
 \fBuse_first_pass\fR, but to prompt the user for another one if the
@@ -166,7 +181,8 @@ must be able to read the \fIkeytab\fR in order for validation to be possible.
 .br
 
 .SH BUGS
-Probably, but let's hope not.  If you find any, please email the author.
+Probably, but let's hope not.  If you find any, please file them in the
+bug database at http://bugzilla.redhat.com/ against the "pam_krb5" component.
 
 .SH AUTHOR
 Nalin Dahyabhai <nalin@redhat.com>

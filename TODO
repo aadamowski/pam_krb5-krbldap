@@ -1,5 +1,14 @@
+For 2.2.0:
+- Luke Howard sent me the diff for the changes he's included for XAD.  Some
+  of it's been integrated, other hard-code changes are now compile-time
+  options.  Double-check that I haven't missed anything.
+- Make sure the password-changing fixes Michael Calmer sent in are properly
+  integrated.
+Longer term (2.3?):
 - Figure out how mappings should work with
   krb5_aname_to_localname
   krb5_kuserok
 - Check if krb5_cc_gen_new() is really a better way to go when generating
   session credential caches.
+- See where the kernel keyring / ccache stuff is and what needs to be done
+  to set that up.

@@ -1,4 +1,15 @@
 2005-10-04:
+	* src/options.c,src/options.h: parse the "krb4_convert_524" option.
+	Accept "don't" and "dont" as prefixes which indicate that a boolean
+	option is disabled.
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: list the "krb4_convert_524"
+	option.  Conditionalize portions of the text which are specific to
+	Kerberos IV or AFS.
+	* src/pam_krb5.8.in: fix the synopsis.
+	* src/v4.c: don't attempt to use the 524 service to obtain a v4 TGT
+	if the "krb4_convert_524" option is disabled.
+
+2005-10-04:
 	* configure.ac: only trust 'krb5-config --libs krb4' to provide krb4
 	if '-lkrb4' is in the output -- krb5 1.2.7's krb5-config doesn't exit
 	with an error when built without krb4 support

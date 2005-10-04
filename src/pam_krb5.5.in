@@ -5,13 +5,13 @@ pam_krb5 \- Kerberos 5 authentication
 
 .SH DESCRIPTION
 pam_krb5.so reads its configuration information from the \fBappdefaults\fR
-section of \fBkrb5.conf\fR(5).  You should read the \fBkrb5.conf(5)\fR man page
+section of \fBkrb5.conf\fR(5).  You should read the \fBkrb5.conf\fR(5) man page
 before continuing here.  The module expects its configuration information to be
 in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fR section.
 
 .SH DIRECTIVES
 .IP debug=[\fItrue\fR|\fIfalse\fR]
-turns on debugging via \fBsyslog(3)\fR.  Debug messages are logged with
+turns on debugging via \fBsyslog\fR(3).  Debug messages are logged with
 priority \fILOG_DEBUG\fR.
 
 .IP addressless=[\fItrue\fR|\fIfalse\fR]
@@ -20,13 +20,14 @@ if you are using Kerberos through a NAT, or on systems whose IP addresses change
 regularly.  This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBnoaddresses\fR directive.
 
-.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
-tells pam_krb5.so to obtain tokens for cell1.example.com and cell2.example.com,
-in addition to the local cell and the cell which contains the user's home
-directory, for the user.  The module will guess the principal name of the AFS
-service for the listed cells, or it can be specified by listing cells in the
-form \fIcellname\fB=principalname\fR.
-
+@MAN_AFS@.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
+@MAN_AFS@tells pam_krb5.so to obtain tokens for cell1.example.com and
+@MAN_AFS@cell2.example.com, in addition to the local cell and the cell which
+@MAN_AFS@contains the user's home directory, for the user.
+@MAN_AFS@The module will guess the principal name of the AFS
+@MAN_AFS@service for the listed cells, or it can be specified by listing cells
+@MAN_AFS@in the form \fIcellname\fB=principalname\fR.
+@MAN_AFS@
 .IP banner=\fIKerberos 5\fR
 specifies what sort of password the module claims to be changing whenever it is
 called upon to change passwords.  The default is \fBKerberos 5\fR.
@@ -37,8 +38,11 @@ specifies the directory to place credential cache files in.
 .IP external=\fItrue\fR
 .IP external=\fIsshd ftp\fR
 tells pam_krb5.so to use Kerberos credentials provided by the calling
-application during session setup.  This is most often useful for obtaining
-AFS tokens or a krb4 ticket.
+application during session setup.
+@MAN_KRB4@This is most often useful for obtaining
+@MAN_KRB4@@MAN_AFS@AFS tokens or a
+@MAN_KRB4@krb4 ticket.
+@NO_MAN_KRB4@@MAN_AFS@This is most often useful for obtaining AFS tokens.
 
 .IP forwardable=[\fItrue\fR|\fIfalse\fR]
 controls whether or not credentials are forwardable.  
@@ -67,24 +71,31 @@ the Kerberos library should trigger a request for a password.
 specifies the name of a keytab file to search for a service key
 for use in validating TGTs.
 
-.IP krb4_convert=[\fItrue\fR|\fIfalse\fR]
-controls whether or not pam_krb5 tries to get Kerberos IV credentials from the
-KDC (or using the \fBkrb524d\fR service on the KDC) and create ticket files with
-them.  Unless you've converted \fIeverything\fR on your network over to use
-Kerberos 5, you'll want to leave this set to \fBtrue\fR.  Note that this
-may require valid Kerberos IV configuration data to be present in
-\fB/etc/krb.conf\fR and \fB/etc/krb.realms\fR.
-
+@MAN_KRB4@.IP krb4_convert=[\fItrue\fR|\fIfalse\fR]
+@MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
+@MAN_KRB4@from the KDC (or using the \fBkrb524d\fR service on the KDC) and
+@MAN_KRB4@create ticket files with them.  Unless you've converted
+@MAN_KRB4@\fIeverything\fR on your network over to use Kerberos 5, you'll want
+@MAN_KRB4@to leave this set to \fBtrue\fR.  Note that this may require valid
+@MAN_KRB4@Kerberos IV configuration data to be present in \fB/etc/krb.conf\fR
+@MAN_KRB4@and \fB/etc/krb.realms\fR.
+@MAN_KRB4@
+@MAN_KRB4@.IP krb4_convert_524=[\fItrue\fR|\fIfalse\fR]
+@MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
+@MAN_KRB4@using the \fBkrb524d\fR service.  This option modifies the
+@MAN_KRB4@\fBkrb4_convert\fP option.  If disabled, pam_krb5 will only attempt
+@MAN_KRB4@to obtain Kerberos IV credentials using the KDC.
+@MAN_KRB4@
 .IP mappings=[\fIregex1 regex2\fR]
 specifies that pam_krb5 should derive the user's principal name from the Unix
 user name by first checking if the user name matches \fBregex1\fR, and
 formulating a principal name using \fBregex2\fR.  For example,
-\fBmappings = EXAMPLE\\(.*) $1@EXAMPLE.COM\fR
-would map any user with a name of the form "EXAMPLE\whatever" to a principal
+\fBmappings = EXAMPLE\e(.*) $1@EXAMPLE.COM\fR
+would map any user with a name of the form "EXAMPLE\ewhatever" to a principal
 name of "whatever@EXAMPLE.COM".  This is primarily targeted at allowing
 pam_krb5 to be used to authenticate users whose user information is provided by
-winbindd(8).  This will frequently require the reverse to be configured by
-setting up an auth_to_local rule elsewhere in krb5.conf(5).
+\fBwinbindd\fP(8).  This will frequently require the reverse to be configured by
+setting up an auth_to_local rule elsewhere in \fBkrb5.conf\fP(5).
 
 .IP minimum_uid=\fI0\fR
 specifies the minimum UID of users being authenticated.  If a user with a UID
@@ -105,12 +116,12 @@ This directive is deprecated in favor of the \fBlibdefaults\fR
 .IP ticket_lifetime=\fI36000\fR
 default credential lifetime.
 
-.IP tokens
-signals that pam_krb5.so should create an AFS PAG and obtain tokens during
-authentication in addition to session setup.  This is primarily useful in
-server applications which need to access a user's files but which do not open
-PAM sessions before doing so.
-
+@MAN_AFS@.IP tokens
+@MAN_AFS@signals that pam_krb5.so should create an AFS PAG and obtain tokens
+@MAN_AFS@during authentication in addition to session setup.  This is primarily
+@MAN_AFS@useful in server applications which need to access a user's files but
+@MAN_AFS@which do not open PAM sessions before doing so.
+@MAN_AFS@
 .IP use_shmem=\fItrue\fR
 .IP use_shmem=\fIsshd ftp\fR
 tells pam_krb5.so to pass credentials from the authentication service function
@@ -128,12 +139,12 @@ specifies whether or not to attempt validation of the TGT.  The default is
     ticket_lifetime = 36000
     renew_lifetime = 36000
     forwardable = true
-    krb4_convert = true
+@MAN_KRB4@    krb4_convert = true
     validate = true
     ccache_dir = /var/tmp
     TEST.EXAMPLE.COM = {
       debug = true
-      afs_cells = testcell.example.com othercell.example.com
+@MAN_AFS@      afs_cells = testcell.example.com othercell.example.com
     }
   }
 
@@ -144,6 +155,8 @@ specifies whether or not to attempt validation of the TGT.  The default is
 .BR pam_krb5 (8)
 .br
 .SH BUGS
-Probably, but let's hope not.  If you find any, please email the author.
+Probably, but let's hope not.  If you find any, please file them in the
+bug database at http://bugzilla.redhat.com/ against the "pam_krb5" component.
+
 .SH AUTHOR
 Nalin Dahyabhai <nalin@redhat.com>
