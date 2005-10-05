@@ -141,14 +141,15 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	 * a quick check to screen out unknown users. */
 	if (stash->v5attempted == 0) {
 		/* We didn't participate in authentication, so stand back. */
-		if (options->debug) {
-			debug("user '%s' was not authenticated by " PACKAGE
-			      ", returning \"user unknown\"", user);
-		}
 		if (options->ignore_unknown_principals) {
 			retval = PAM_IGNORE;
 		} else {
 			retval = PAM_USER_UNKNOWN;
+		}
+		if (options->debug) {
+			debug("user '%s' was not authenticated by " PACKAGE
+			      ", returning \"%s\"", user,
+			      pam_strerror(pamh, retval));
 		}
 	} else {
 		/* Check what happened when we asked for initial credentials. */

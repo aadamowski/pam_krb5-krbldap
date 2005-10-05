@@ -1,4 +1,10 @@
 2005-10-05:
+	* configure.ac: prereq the version of autoconf which my development
+	box has, to avoid possible AC_CONFIG_HEADER/AM_CONFIG_HEADER wackiness.
+	* src/pam_krb5_storetmp.8.in: use the actual installation paths.
+	* src/acct.c: list the actual result code in the debug message.
+
+2005-10-05:
 	clean up CVS version tags
 	* README.winbind: clear up a couple of finer points.
 	* src/Makefile.am,src/pam_krb5_storetmp.8.in: add a man page for the

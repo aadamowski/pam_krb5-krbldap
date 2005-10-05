@@ -1,7 +1,7 @@
 .TH pam_krb5_storetmp 8 2005/10/05 "Red Hat Linux" "System Administrator's Manual"
 
 .SH NAME
-pam_krb5_storetmp \- Temporary file helper
+@SECURITYDIR@/@PACKAGE@/pam_krb5_storetmp \- Temporary file helper
 
 .SH SYNOPSIS
 .B pam_krb5_storetmp pattern [uid] [gid]
@@ -12,10 +12,10 @@ files.  It is not intended for any other use.
 
 .SH ARGUMENTS
 .IP pattern
-A filename pattern of the form \fI/tmp/fooXXXXXX\fR.  A temporary file will
-be created using mkstemp(3) and any data provided to standard input will be
-piped to the file.  Upon reading an end-of-file, the helper will print the
-name of the created file.
+A filename pattern of the form \fI@default_ccache_dir@/fooXXXXXX\fR.  A
+temporary file will be created using mkstemp(3) and any data provided to
+standard input will be piped to the file.  Upon reading an end-of-file, the
+helper will print the name of the created file.
 .br
 If the pattern does not end with the distinctive patterh \fIXXXXXX\fR, then
 the file is simply deleted.
