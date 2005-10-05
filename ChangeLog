@@ -1,4 +1,12 @@
 2005-10-05:
+	clean up CVS version tags
+	* README.winbind: clear up a couple of finer points.
+	* src/Makefile.am,src/pam_krb5_storetmp.8.in: add a man page for the
+	temp file helper.
+	* pam_krb5.spec: list bindir and section 1 man page files in the files
+	manifest.
+
+2005-10-05:
 	* src/session.c: suppress duplicate success messages.
 	* src/stash.c: warn on shmem failures.
 

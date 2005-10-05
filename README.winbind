@@ -5,8 +5,8 @@ doesn't handle this perfectly.
 Specifically, for a user named tester in domain TEST and realm
 TEST.EXAMPLE.COM, we have two names.
 
-Kerberos principal name: tester@TEST.EXAMPLE.COM
-Winbind/POSIX user name: TEST\tester
+Kerberos principal name (userPrincipalName): tester@TEST.EXAMPLE.COM
+Winbind/POSIX user name:                     TEST\tester
 
 For certain internal functions (such as access control checking using a
 user's .k5login file), the library will need to convert a principal name
@@ -26,8 +26,8 @@ The argument to RULE: is the concatentation of:
   "[" number-of-components ":" template "]"
   Where number-of-components is the number of instance parts + 1, and the
   template mixes literal text with portions of the principal name ($1
-  is the root part, $2 is the first instance, $3 the second, $0 the realm in
-  1.3.4 and later).
+  is the root part, $2 is the first instance, $3 the second, etc., $0 the
+  realm in MIT krb5 1.3.4 and later).
 * An optional regex
   If specified, the formulated string must match this regexp for this rule
   to be applied.
