@@ -97,7 +97,7 @@ _pam_krb5_stash_cleanup(pam_handle_t *pamh, void *data, int error)
 /* Read v5 state from the shared memory segment. */
 static void
 _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
-			    struct _pam_krb5_options *options,
+			    struct _pam_krb5_options *options, int key,
 			    void *blob, size_t blob_size)
 {
 	char tktfile[PATH_MAX + 5];
@@ -176,8 +176,16 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 
 	/* If we have an error reading the credential, there's nothing we can
-	 * do at this point. */
-	krb5_cc_next_cred(ctx, ccache, &cursor, &stash->v5creds);
+	 * do at this point to recover from it. */
+	if (krb5_cc_next_cred(ctx, ccache, &cursor, &stash->v5creds) == 0) {
+		/* Read other variables. */
+		stash->v5attempted = ((int*)blob)[1];
+		stash->v5result = ((int*)blob)[2];
+		if (options->debug) {
+			debug("recovered v5 credentials from shared memory "
+			      "segment %d", key);
+		}
+	}
 
 	/* Clean up. */
 	krb5_cc_end_seq_get(ctx, ccache, &cursor);
@@ -187,10 +195,6 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 	unlink(tktfile + 5);
 	close(fd);
-
-	/* Read other variables. */
-	stash->v5attempted = ((int*)blob)[1];
-	stash->v5result = ((int*)blob)[2];
 }
 
 /* Save v5 state to the shared memory segment. */
@@ -287,16 +291,23 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	unlink(variable + 5);
 	close(fd);
 
-	snprintf(variable, sizeof(variable), "_pam_krb5_stash_%s_shm5=%d",
-		 userinfo->unparsed_name, key);
-	pam_putenv(pamh, variable);
+	if (key != -1) {
+		snprintf(variable, sizeof(variable),
+			 "_pam_krb5_stash_%s_shm5=%d",
+			 userinfo->unparsed_name, key);
+		pam_putenv(pamh, variable);
+		if (options->debug) {
+			debug("saved v5 credentials to shared memory "
+			      "segment %d", key);
+		}
+	}
 }
 
 #ifdef USE_KRB4
 /* Read v4 state from the shared memory segment. */
 static void
 _pam_krb5_stash_shm_read_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
-			    struct _pam_krb5_options *options,
+			    struct _pam_krb5_options *options, int key,
 			    void *blob, size_t blob_size)
 {
 	int *intblob;
@@ -309,9 +320,16 @@ _pam_krb5_stash_shm_read_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			p = blob;
 			p += sizeof(int) * 2;
 			memcpy(&stash->v4creds, p, sizeof(stash->v4creds));
+			if (options->debug) {
+				debug("recovered v4 credential state from "
+				      "shared memory segment %d", key);
+			}
 		}
 	} else {
-		warn("shm segment containing krb4 credentials too small");
+		warn("shm segment containing krb4 credential state has wrong "
+		     "size (expected %lu bytes, got %lu)",
+		     (unsigned long) sizeof(int) * 2 + sizeof(stash->v4creds),
+		     (unsigned long) blob_size);
 	}
 }
 
@@ -336,6 +354,10 @@ _pam_krb5_stash_shm_write_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			 "_pam_krb5_stash_%s_shm4=%d",
 			 userinfo->unparsed_name, key);
 		pam_putenv(pamh, variable);
+		if (options->debug) {
+			debug("saved v4 credential state to shared "
+			      "memory segment %d", key);
+		}
 	}
 	if (blob != NULL) {
 		blob = _pam_krb5_shm_detach(blob);
@@ -386,7 +408,8 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 			 * ccache file.  Cross our fingers and hope it's
 			 * useful. */
 			_pam_krb5_stash_shm_read_v5(pamh, stash,
-						    options, blob, blob_size);
+						    options, key,
+						    blob, blob_size);
 			free(blob);
 		}
 	}
@@ -414,8 +437,8 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 			/* Pull credentials from the blob, which contains a
 			 * credentials structure.  Cross our fingers and hope
 			 * it's useful. */
-			_pam_krb5_stash_shm_read_v4(pamh, stash,
-						    options, blob, blob_size);
+			_pam_krb5_stash_shm_read_v4(pamh, stash, options,
+						    key, blob, blob_size);
 			free(blob);
 		}
 	}

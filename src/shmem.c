@@ -298,8 +298,8 @@ _pam_krb5_blob_from_shm(int key, void **block, size_t *block_size)
 				memcpy(*block, address, ds.shm_segsz);
 				*block_size = ds.shm_segsz;
 			}
-			/* Detach from the segment. */
-			address = _pam_krb5_shm_detach(address);
 		}
+		/* Detach from the segment if we haven't already. */
+		address = _pam_krb5_shm_detach(address);
 	}
 }

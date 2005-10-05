@@ -1,3 +1,7 @@
+2005-10-05:
+	* src/shmem.c: always detach from the segment, even in error cases.
+	* src/stash.c: note when we manipulate shared memory when debugging.
+
 2005-10-04:
 	* configure.ac: oh right, enable AFS support on *-sun-* now.
 
