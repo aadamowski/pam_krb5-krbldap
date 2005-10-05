@@ -412,10 +412,6 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		}
 	}
 #endif
-	if (options->debug) {
-		debug("pam_close_session returning %d (%s)", 0,
-		      pam_strerror(pamh, 0));
-	}
 	_pam_krb5_user_info_free(ctx, userinfo);
 	if (options->debug) {
 		debug("pam_close_session returning %d (%s)",

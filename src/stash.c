@@ -300,6 +300,9 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			debug("saved v5 credentials to shared memory "
 			      "segment %d", key);
 		}
+	} else {
+		warn("error saving v5 credential state to shared "
+		     "memory segment");
 	}
 }
 
@@ -324,6 +327,12 @@ _pam_krb5_stash_shm_read_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 				debug("recovered v4 credential state from "
 				      "shared memory segment %d", key);
 			}
+		} else {
+			warn("shm segment containing krb4 credential state has "
+			     "wrong size (expected %lu bytes, got %lu)",
+			     (unsigned long) sizeof(int) * 2 +
+			    		     sizeof(stash->v4creds),
+			     (unsigned long) blob_size);
 		}
 	} else {
 		warn("shm segment containing krb4 credential state has wrong "
@@ -358,6 +367,9 @@ _pam_krb5_stash_shm_write_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			debug("saved v4 credential state to shared "
 			      "memory segment %d", key);
 		}
+	} else {
+		warn("error saving v4 credential state to shared "
+		     "memory segment");
 	}
 	if (blob != NULL) {
 		blob = _pam_krb5_shm_detach(blob);
