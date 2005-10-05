@@ -38,6 +38,7 @@ o external
   used for the authenticating user.
 o ignore_unknown_principals
   ignore_unknown_spn
+  ignore_unknown_upn
   Controls whether or not users with unknown principal names should trigger
   a PAM_IGNORE error instead of a PAM_USER_UNKNOWN error.
 o initial_prompt
