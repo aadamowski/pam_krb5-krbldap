@@ -71,7 +71,11 @@ main(int argc, char **argv)
 	int i;
 
 	memset(&log_options, 0, sizeof(log_options));
+#ifdef IN_UNPAGSH
+	log_progname = "unpagsh";
+#else
 	log_progname = "pagsh";
+#endif
 
 	shell = getenv("SHELL");
 	if ((shell == NULL) || (strlen(shell) == 0)) {
@@ -87,9 +91,10 @@ main(int argc, char **argv)
 		if ((strcmp(argv[1], "--help") == 0) ||
 		    (strcmp(argv[1], "-h") == 0)) {
 			fprintf(stdout,
-				"Usage: pagsh\n"
-				"       pagsh [ -c command ]\n"
-				"       pagsh [ arguments for %s ]\n",
+				"Usage: %s\n"
+				"       %s [ -c command ]\n"
+				"       %s [ arguments for %s ]\n",
+				log_progname, log_progname, log_progname,
 				shellbase);
 			return 0;
 		}
@@ -97,7 +102,7 @@ main(int argc, char **argv)
 
 	new_argv = malloc(sizeof(char*) * (argc + 1));
 	if (new_argv == NULL) {
-		fprintf(stderr, "pagsh: out of memory\n");
+		fprintf(stderr, "%s: out of memory\n", log_progname);
 		return 1;
 	}
 	memset(new_argv, 0, sizeof(char*) * (argc + 1));
@@ -108,13 +113,22 @@ main(int argc, char **argv)
 	}
 
 	if (minikafs_has_afs()) {
-		if (minikafs_setpag() != 0) {
-			fprintf(stderr, "pagsh: error creating new PAG\n");
+#ifdef IN_UNPAGSH
+		if (minikafs_unpag() != 0) {
+			fprintf(stderr, "%s: error leaving PAG\n",
+				log_progname);
 		}
+#else
+		if (minikafs_setpag() != 0) {
+			fprintf(stderr, "%s: error creating new PAG\n",
+				log_progname);
+		}
+#endif
 	}
 
 	execvp(new_argv[0], new_argv);
-	fprintf(stderr, "pagsh: exec() failed: %s\n", strerror(errno));
+	fprintf(stderr, "%s: exec() failed: %s\n", log_progname,
+		strerror(errno));
 
 	return 1;
 }

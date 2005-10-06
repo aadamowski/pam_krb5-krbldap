@@ -146,6 +146,7 @@ enum minikafs_pioctl_fn {
 	minikafs_pioctl_gettoken = PIOCTL_FN(8),
 	minikafs_pioctl_unlog = PIOCTL_FN(9),
 	minikafs_pioctl_whereis = PIOCTL_FN(14),
+	minikafs_pioctl_unpag = PIOCTL_FN(21),
 	minikafs_pioctl_getcelloffile = PIOCTL_FN(30),
 	minikafs_pioctl_getwscell = PIOCTL_FN(31),
 };
@@ -442,6 +443,24 @@ int
 minikafs_setpag(void)
 {
 	return minikafs_call(minikafs_subsys_setpag, 0, 0, 0, 0);
+}
+
+/* Leave any PAG. */
+static int
+minikafs_unpag(void)
+{
+	struct minikafs_ioblock iob;
+	char wfile[] = "/afs";
+	int i;
+
+	memset(&iob, 0, sizeof(iob));
+	iob.in = wfile;
+	iob.insize = sizeof(wfile);
+	iob.out = wfile;
+	iob.outsize = sizeof(wfile);
+
+	i = minikafs_pioctl(wfile, minikafs_pioctl_unpag, &iob);
+	return i;
 }
 
 /* Determine which cell is the default on this workstation. */

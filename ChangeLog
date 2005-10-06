@@ -1,4 +1,11 @@
 2005-10-06:
+	* autogen: use RPM's optflags for CFLAGS, if available.
+	* src/afs5log.c: don't autolog to the local cell if the '-p' flag was
+	given on the command line.
+	* src/minikafs.c,src/pagsh.c: implement an unpag() call, then check
+	and find out that it's the same as unlog(), so comment it out.
+
+2005-10-06:
 	* src/options.c: make "tokens" an option which can also take a list of
 	service names for which it should be enabled.
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: update section for "tokens".

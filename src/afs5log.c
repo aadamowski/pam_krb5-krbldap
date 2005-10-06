@@ -117,8 +117,8 @@ main(int argc, char **argv)
 				j = minikafs_cell_of_file_walk_up(pathdir, path,
 								  sizeof(path));
 				if ((j == 0) &&
-				    (strcmp(path, "dynroot") != 0) &&
-				    (strcmp(path, local) != 0)) {
+				    (strcmp(path, "dynroot") != 0)) {
+					cells++;
 					if (log_options.debug) {
 						debug("cell of \"%s\" is "
 						      "\"%s\"", pathdir, path);
