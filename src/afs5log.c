@@ -65,7 +65,7 @@ main(int argc, char **argv)
 {
 	char local[PATH_MAX], home[PATH_MAX], path[PATH_MAX];
 	char *homedir, *cell, *principal, *pathdir;
-	int i, j, try_v5_2b, cells;
+	int i, j, try_v5_2b, cells, process_options;
 	krb5_context ctx;
 	krb5_ccache ccache;
 	uid_t uid;
@@ -92,9 +92,13 @@ main(int argc, char **argv)
 			i);
 		exit(1);
 	}
+	process_options = 1;
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
+		if (process_options && (argv[i][0] == '-')) {
 			switch (argv[i][1]) {
+			case '-':
+				process_options = 0;
+				break;
 			case 'v':
 				log_options.debug++;
 				break;
@@ -103,9 +107,13 @@ main(int argc, char **argv)
 			}
 		}
 	}
+	process_options = 1;
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
+		if (process_options && (argv[i][0] == '-')) {
 			switch (argv[i][1]) {
+			case '-':
+				process_options = 0;
+				break;
 			case '5':
 				try_v5_2b = !try_v5_2b;
 				break;

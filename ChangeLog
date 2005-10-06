@@ -1,4 +1,7 @@
 2005-10-06:
+	* src/afs5log.c: recognize that "--" means "no more options".
+
+2005-10-06:
 	* autogen: use RPM's optflags for CFLAGS, if available.
 	* src/afs5log.c: don't autolog to the local cell if the '-p' flag was
 	given on the command line.
