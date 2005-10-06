@@ -1,3 +1,9 @@
+2005-10-06:
+	* src/options.c: make "tokens" an option which can also take a list of
+	service names for which it should be enabled.
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: update section for "tokens".
+	* src/pam_krb5.5.in: fix header text for "external" and "use_shmem".
+
 2005-10-05:
 	* configure.ac: prereq the version of autoconf which my development
 	box has, to avoid possible AC_CONFIG_HEADER/AM_CONFIG_HEADER wackiness.

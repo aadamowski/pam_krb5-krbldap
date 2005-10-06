@@ -36,7 +36,7 @@ called upon to change passwords.  The default is \fBKerberos 5\fR.
 specifies the directory to place credential cache files in.
 
 .IP external=\fItrue\fR
-.IP external=\fIsshd ftp\fR
+.IP "external=\fIsshd ftp\fR"
 tells pam_krb5.so to use Kerberos credentials provided by the calling
 application during session setup.
 @MAN_KRB4@This is most often useful for obtaining
@@ -117,14 +117,15 @@ This directive is deprecated in favor of the \fBlibdefaults\fR
 .IP ticket_lifetime=\fI36000\fR
 default credential lifetime.
 
-@MAN_AFS@.IP tokens
+@MAN_AFS@.IP tokens=[\fItrue\fR|\fIfalse\fR]
+@MAN_AFS@.IP "tokens=\fIimap ftp\fR"
 @MAN_AFS@signals that pam_krb5.so should create an AFS PAG and obtain tokens
 @MAN_AFS@during authentication in addition to session setup.  This is primarily
 @MAN_AFS@useful in server applications which need to access a user's files but
 @MAN_AFS@which do not open PAM sessions before doing so.
 @MAN_AFS@
 .IP use_shmem=\fItrue\fR
-.IP use_shmem=\fIsshd ftp\fR
+.IP "use_shmem=\fIsshd\fR \fIftp\fR"
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory for specific
 services.
@@ -143,6 +144,8 @@ specifies whether or not to attempt validation of the TGT.  The default is
 @MAN_KRB4@    krb4_convert = true
     validate = true
     ccache_dir = /var/tmp
+    external = sshd
+    tokens = imap ftpd
     TEST.EXAMPLE.COM = {
       debug = true
 @MAN_AFS@      afs_cells = testcell.example.com othercell.example.com

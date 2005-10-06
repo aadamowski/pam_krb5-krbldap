@@ -141,6 +141,7 @@ option is deprecated in favor of the \fIrenew_lifetime\fR option in the
 sets the default lifetime for credentials.
 
 @MAN_AFS@.IP tokens
+@MAN_AFS@.IP tokens=\fIimap\fR
 @MAN_AFS@signals that pam_krb5.so should create a new AFS PAG and obtain AFS
 @MAN_AFS@tokens during authentication in addition to session setup.  This is
 @MAN_AFS@primarily useful in server applications which need to access a user's

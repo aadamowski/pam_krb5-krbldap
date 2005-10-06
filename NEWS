@@ -19,6 +19,8 @@
          be overridden either way
        * can now specify a principal name for AFS cells, to save guesswork
        * should now correctly work with SAM authentication, needs testing
+       * "tokens" now behaves like "external" and "use_shmem", in that it
+         can be specified in the configuration as a list of service names
 - 2.1: switch to a minikafs implementation to flush out lurking ABI differences
   between the krb4 interface the kafs library used and the one which libkrb4
   provides.  Also, we support "2b" tokens now.

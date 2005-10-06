@@ -343,6 +343,20 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	/* private option */
 	options->tokens = option_b(pamh, argc, argv,
 				   ctx, options->realm, "tokens");
+	if (options->tokens != 1) {
+		options->tokens = 0;
+		if (service != NULL) {
+			list = option_l(pamh, argc, argv, ctx, options->realm,
+					"tokens");
+			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
+				if (strcmp(list[i], service) == 0) {
+					options->tokens = 1;
+					break;
+				}
+			}
+			free_l(list);
+		}
+	}
 	if (options->tokens == -1) {
 		options->tokens = 0;
 	}
