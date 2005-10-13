@@ -94,12 +94,12 @@ AC_SUBST(KRB5_LIBS)
 AC_MSG_RESULT($KRB5_LIBS)
 
 if test x$krb4 != xno ; then
-	AC_MSG_CHECKING(for KRB4_LIBS)
-	AC_SUBST(KRB4_LIBS)
-	AC_MSG_RESULT($KRB4_LIBS)
 	AC_MSG_CHECKING(for KRB4_CFLAGS)
 	AC_SUBST(KRB4_CFLAGS)
 	AC_MSG_RESULT($KRB4_CFLAGS)
+	AC_MSG_CHECKING(for KRB4_LIBS)
+	AC_SUBST(KRB4_LIBS)
+	AC_MSG_RESULT($KRB4_LIBS)
 fi
 
 AC_SUBST(MAN_AFS)
@@ -281,13 +281,16 @@ AH_VERBATIM([PAM_KRB5_GNUC_PRINTF_DEFINED],
  #endif
 ])
 
-
-pam_krb5_securitydir=`eval echo $libdir/security | sed s,^NONE,$ac_default_prefix,`
+AC_MSG_CHECKING([for location to install module and helpers])
+pam_krb5_securitydir=`echo $libdir/security | sed s,^NONE,${exec_prefix},`
+pam_krb5_securitydir=`eval echo $pam_krb5_securitydir | sed s,^NONE,${prefix},`
+pam_krb5_securitydir=`eval echo $pam_krb5_securitydir | sed -e s,^NONE,${ac_default_prefix}, -e s,^//,/,g`
 AC_DEFINE_UNQUOTED(SECURITYDIR,"$pam_krb5_securitydir",[The location where the pam_krb5 module will be installed.])
 SECURITYDIR="$pam_krb5_securitydir"
 AC_SUBST(SECURITYDIR)
-pam_krb5_pkgsecuritydir=`eval echo $libdir/security/$PACKAGE | sed s,^NONE,$ac_default_prefix,`
+pam_krb5_pkgsecuritydir=`eval echo $pam_krb5_securitydir/$PACKAGE`
 AC_DEFINE_UNQUOTED(PKGSECURITYDIR,"$pam_krb5_pkgsecuritydir",[The location of pam_krb5 helpers.])
+AC_MSG_RESULT([modules in $pam_krb5_securitydir, helpers in $pam_krb5_pkgsecuritydir])
 
 TESTDIR=`cd ${ac_top_builddir:-.}; /bin/pwd`/tests
 TESTHOST=`hostname`
