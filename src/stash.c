@@ -482,7 +482,7 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	krb5_ccache ccache;
 	krb5_cc_cursor cursor;
 	int i;
-	const char *ccname, *v4tktname;
+	const char *ccname;
 	char *unparsed;
 
 	/* Read a TGT from $KRB5CCNAME. */
@@ -548,6 +548,7 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 
 #if 0
 #ifdef USE_KRB4
+	const char *v4tktname; /* FIXME: not available before C99! */
 	/* Read a TGT from $KRBTKFILE. */
 	v4tktname = pam_getenv(pamh, "KRBTKFILE");
 	if ((v4tktname != NULL) && (strlen(v4tktname) > 0) &&
