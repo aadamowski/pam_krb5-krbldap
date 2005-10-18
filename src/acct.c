@@ -74,7 +74,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
 	int i, retval;
-	char *wrong_password = "pam_krb5 validity check";
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
