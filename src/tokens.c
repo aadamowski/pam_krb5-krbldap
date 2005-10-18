@@ -177,10 +177,12 @@ tokens_obtain(krb5_context context,
 		if (st.st_mode & S_IFLNK) {
 			/* Read the link. */
 			memset(lnk, '\0', sizeof(lnk));
-			readlink(homedir, lnk, sizeof(lnk) - 1);
-			/* If it's an absolute link, check it instead. */
-			if ((strlen(lnk) > 0) && (lnk[0] == '/')) {
-				strcpy(homedir, lnk);
+			if (readlink(homedir, lnk, sizeof(lnk) - 1) == 0) {
+				/* If it's an absolute link, then we should
+				 * ask about the link destination instead. */
+				if ((strlen(lnk) > 0) && (lnk[0] == '/')) {
+					strcpy(homedir, lnk);
+				}
 			}
 		}
 	}
