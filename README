@@ -27,6 +27,10 @@ o banner=Kerberos
   passwords (unset to avoid using any term other than "password").
 o ccache_dir=/tmp
   Directory in which to store ccache and ticket files.
+o existing_ticket
+  Use the presence of a TGT for the user's realm in the default ccache as
+  sufficient proof of the user's identity.  If you're not also validating
+  credentials, then THIS IS VERY DANGEROUS.
 o external
   external = service1 service2
   Attempt to reuse credentials stored in a ccache pointed to by the KRB5CCNAME
@@ -34,7 +38,7 @@ o external
   the calling application authenticated the user using GSSAPI, the user
   delegated credentials to the calling application, and you're using pam_krb5
   to obtain a v4 Kerberos ticket via krb524, or AFS tokens.  The calling
-  application MUST ensure that KRB5CCNAME points to a file which should be
+  application MUST ensure that KRB5CCNAME points to a ccache which should be
   used for the authenticating user.
 o ignore_unknown_principals
   ignore_unknown_spn
