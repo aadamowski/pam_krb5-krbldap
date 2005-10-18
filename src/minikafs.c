@@ -445,7 +445,9 @@ minikafs_setpag(void)
 	return minikafs_call(minikafs_subsys_setpag, 0, 0, 0, 0);
 }
 
-/* Leave any PAG. */
+#if 0
+/* Leave any PAG. It turns out this results in an unlog(), which is not what we
+ * wanted here. */
 static int
 minikafs_unpag(void)
 {
@@ -462,6 +464,7 @@ minikafs_unpag(void)
 	i = minikafs_pioctl(wfile, minikafs_pioctl_unpag, &iob);
 	return i;
 }
+#endif
 
 /* Determine which cell is the default on this workstation. */
 int
