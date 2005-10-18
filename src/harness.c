@@ -122,8 +122,12 @@ local_conv(int num_msg, const struct pam_message **msgm,
 			(*response)[i].resp_retcode = 0;
 			if (msg->msg_style == PAM_PROMPT_ECHO_OFF) {
 				strcpy(buffer, getpass(""));
-			} else
-				fgets(buffer, sizeof(buffer), stdin);
+			} else {
+				if (fgets(buffer, sizeof(buffer),
+					  stdin) == NULL) {
+					memset(buffer, '\0', sizeof(buffer));
+				}
+			}
 			(*response)[i].resp = xstrndup(buffer,
 						       strcspn(buffer, "\r\n"));
 			break;
