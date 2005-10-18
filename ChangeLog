@@ -1,3 +1,20 @@
+2005-10-18:
+	* src/options.c,src/options.h: parse the "existing_ticket" option
+	(patch from Nathan Huff).
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: update.
+	* src/v5.c: if the "existing_ticket" option is used, attempt to read
+	the TGT cred from the default ccache, and accept that as sufficient
+	for successful authentication (patch from Nathan Huff).
+	* src/auth.c: if the "existing_ticket" option is used, call to get
+	creds before prompting for a password (patch from Nathan Huff).
+	
+2005-10-18:
+	* src/acct.c: remove an unused variable to silence a compile warning.
+	* src/harness.c: check the result of fgets().
+	* src/minikafs.c: comment out minikafs_unpag(), which was static and
+	unused, to silence a compile warning.
+	* src/tokens.c: check for errors from readlink().
+
 2005-10-13:
 	* configure.ac: clean up logic for setting pkgsecuritydir correctly if
 	a libdir isn't passed to configure (Greg Wettstein).

@@ -182,8 +182,27 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	 * than once with the same library context. */
 	stash->v5attempted = 0;
 
-	/* Try with the stored password, if we've been told to do so. */
 	retval = PAM_AUTH_ERR;
+
+	/* If we're configured to use an existing ccache, try that. */
+	if ((retval != PAM_SUCCESS) && (options->existing_ticket)) {
+		if (options->debug) {
+			debug("trying existing credentials for '%s'",user);
+		}
+		retval = v5_get_creds(ctx, pamh,
+				      &stash->v5creds, userinfo,
+				      options,
+				      KRB5_TGS_NAME,
+				      password, &gic_options,
+				      &stash->v5result);
+		stash->v5attempted = 1;
+		if (options->debug) {
+			debug("got result %d (%s)", stash->v5result,
+			      v5_error_message(stash->v5result));
+		}
+	}
+
+	/* Try with the stored password, if we've been told to do so. */
 	if ((retval != PAM_SUCCESS) && (options->use_first_pass)) {
 		password = NULL;
 		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &password);

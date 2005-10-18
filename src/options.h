@@ -38,6 +38,7 @@ struct _pam_krb5_options {
 
 	int addressless;
 	int external;
+	int existing_ticket;
 	int forwardable;
 	int ignore_afs;
 	int ignore_unknown_principals;

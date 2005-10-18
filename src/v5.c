@@ -371,12 +371,13 @@ v5_get_creds(krb5_context ctx,
 	const char *realm;
 	struct pam_message message;
 	struct _pam_krb5_prompter_data prompter_data;
+	krb5_principal service_principal;
 	krb5_creds tmpcreds;
+	krb5_ccache ccache;
 
 	/* In case we already have creds, get rid of them. */
 	krb5_free_cred_contents(ctx, creds);
 	memset(creds, 0, sizeof(*creds));
-	memset(&tmpcreds, 0, sizeof(tmpcreds));
 
 	/* Check some string lengths. */
 	if (strchr(userinfo->unparsed_name, '@') != NULL) {
@@ -410,17 +411,51 @@ v5_get_creds(krb5_context ctx,
 		      userinfo->unparsed_name, realm_service);
 	}
 	/* Get creds. */
-	prompter_data.pamh = pamh;
-	prompter_data.previous_password = password;
-	i = krb5_get_init_creds_password(ctx,
-					 creds,
-					 userinfo->principal_name,
-					 password,
-					 _pam_krb5_prompter,
-					 &prompter_data,
-					 0,
-					 realm_service,
-					 gic_options);
+	if (options->existing_ticket) {
+		/* Try to read the TGT from the existing ccache. */
+		i = KRB5_CC_NOTFOUND;
+		memset(&service_principal, 0, sizeof(service_principal));
+		if (krb5_parse_name(ctx, realm_service,
+				    &service_principal) == 0) {
+			if (options->debug) {
+				debug("attempting to read existing credentials "
+				      "from %s", krb5_cc_default_name(ctx));
+			}
+			memset(&ccache, 0, sizeof(ccache));
+			if (krb5_cc_default(ctx, &ccache) == 0) {
+				tmpcreds.client = userinfo->principal_name;
+				tmpcreds.server = service_principal;
+				i = krb5_cc_retrieve_cred(ctx, ccache, 0,
+							  &tmpcreds, creds);
+				/* FIXME: check if the creds are expired?
+				 * What's the right error code if we check, and
+				 * they are? */
+				memset(&tmpcreds, 0, sizeof(tmpcreds));
+				krb5_cc_close(ctx, ccache);
+			} else {
+				warn("error opening default ccache");
+				i = KRB5_CC_NOTFOUND;
+			}
+			krb5_free_principal(ctx, service_principal);
+		} else {
+			warn("error parsing TGT principal name (%s) "
+			     "(shouldn't happen)", realm_service);
+			i = KRB5_REALM_CANT_RESOLVE;
+		}
+	} else {
+		/* Contact the KDC. */
+		prompter_data.pamh = pamh;
+		prompter_data.previous_password = password;
+		i = krb5_get_init_creds_password(ctx,
+						 creds,
+						 userinfo->principal_name,
+						 password,
+						 _pam_krb5_prompter,
+						 &prompter_data,
+						 0,
+						 realm_service,
+						 gic_options);
+	}
 	/* Let the caller see the krb5 result code. */
 	if (options->debug) {
 		debug("krb5_get_init_creds_password(%s) returned %d (%s)",
@@ -469,6 +504,7 @@ v5_get_creds(krb5_context ctx,
 		}
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
+		memset(&tmpcreds, 0, sizeof(tmpcreds));
 		i = krb5_get_init_creds_password(ctx,
 						 &tmpcreds,
 						 userinfo->principal_name,

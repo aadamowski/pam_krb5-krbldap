@@ -35,6 +35,14 @@ called upon to change passwords.  The default is \fBKerberos 5\fR.
 .IP ccache_dir=\fI@default_ccache_dir@\fR
 specifies the directory to place credential cache files in.
 
+.IP existing_ticket=\fItrue\fR
+tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials
+provided by the calling application in the default credential cache as
+sufficient to authenticate the user.
+.IP
+DANGER!  Unless validation is also in use, it is relatively easy to produce a
+credential cache which looks "good enough" to fool pam_krb5.so.
+
 .IP external=\fItrue\fR
 .IP "external=\fIsshd ftp\fR"
 tells pam_krb5.so to use Kerberos credentials provided by the calling

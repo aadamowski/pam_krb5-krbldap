@@ -486,6 +486,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* private option */
+	options->existing_ticket = option_b(pamh, argc, argv,
+					    ctx, options->realm,
+					    "existing_ticket");
+	if (options->existing_ticket == -1) {
+		options->existing_ticket = 0;
+	}
+	if (options->debug && options->existing_ticket) {
+		debug("flag: existing_ticket");
+	}
+
+	/* private option */
 	options->validate = option_b(pamh, argc, argv,
 				     ctx, options->realm, "validate");
 	if (options->debug && (options->validate == 1)) {
