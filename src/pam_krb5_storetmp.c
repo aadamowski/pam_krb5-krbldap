@@ -134,15 +134,22 @@ main(int argc, const char **argv)
 
 	/* Copy stdin to the file and then close it.  Slowest copy EVER. */
 	while (read(STDIN_FILENO, &c, 1) == 1) {
-		write(fd, &c, 1);
+		if (write(fd, &c, 1) != 1) {
+			break;
+		}
 	}
 	close(fd);
 
 success:
 	/* Tell our caller what the name of the file and bail. */
-	write(STDOUT_FILENO, filename, strlen(filename));
+	if (write(STDOUT_FILENO, filename,
+		  strlen(filename)) != strlen(filename)) {
+		return 8;
+	}
 	if (isatty(STDOUT_FILENO)) {
-		write(STDOUT_FILENO, "\n", 1);
+		if (write(STDOUT_FILENO, "\n", 1) != 1) {
+			return 8;
+		}
 	}
 	return 0;
 }
