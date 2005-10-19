@@ -301,6 +301,9 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	/* private option */
 	options->debug = option_b(pamh, argc, argv,
 				  ctx, options->realm, "debug");
+	if (options->debug == -1) {
+		options->debug = 0;
+	}
 	if (options->debug) {
 		debug("configured realm '%s'", options->realm);
 	}

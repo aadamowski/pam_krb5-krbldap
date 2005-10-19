@@ -1,4 +1,8 @@
 2005-10-19:
+	* src/options.c: initialize options->debug correctly when it's
+	neither explicitly enabled nor disabled (patch from Greg Wettstein).
+
+2005-10-19:
 	* src/acct.c,src/pam_krb5.5.in,src/pam_krb5.8.in: note that the
 	"existing_ticket" option bypasses account management checks, too.
 
