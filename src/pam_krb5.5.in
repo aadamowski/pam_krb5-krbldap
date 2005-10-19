@@ -38,7 +38,7 @@ specifies the directory to place credential cache files in.
 .IP existing_ticket=\fItrue\fR
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials
 provided by the calling application in the default credential cache as
-sufficient to authenticate the user.
+sufficient to authenticate the user, and to skip any account management checks.
 .IP
 DANGER!  Unless validation is also in use, it is relatively easy to produce a
 credential cache which looks "good enough" to fool pam_krb5.so.

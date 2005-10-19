@@ -1,3 +1,7 @@
+2005-10-19:
+	* src/acct.c,src/pam_krb5.5.in,src/pam_krb5.8.in: note that the
+	"existing_ticket" option bypasses account management checks, too.
+
 2005-10-18:
 	* src/options.c,src/options.h: parse the "existing_ticket" option
 	(patch from Nathan Huff).

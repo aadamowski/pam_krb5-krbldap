@@ -137,7 +137,9 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	}
 
 	/* If we haven't previously attempted to authenticate this user, make
-	 * a quick check to screen out unknown users. */
+	 * a quick check to screen out unknown users.  Note that at present,
+	 * the "existing_ticket" option also causes us to always bypass this
+	 * check. */
 	if (stash->v5attempted == 0) {
 		/* We didn't participate in authentication, so stand back. */
 		if (options->ignore_unknown_principals) {
