@@ -5,7 +5,7 @@ security_LTLIBRARIES = pam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = afs5log.1 pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8
-noinst_PROGRAMS = harness
+noinst_PROGRAMS = harness shmcat
 noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8
 bin_PROGRAMS =
@@ -94,7 +94,10 @@ harness_LDADD = \
 	sly.lo \
 	v4.lo \
 	v5.lo
-harness_LDADD += @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+harness_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@
+
+shmcat_SOURCES = shmcat.c
+shmcat_LDADD = libpam_krb5.la @PAM_LIBS@
 
 if AFS
 pam_krb5_la_SOURCES += tokens.c
