@@ -60,7 +60,7 @@ in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 @MAN_AFS@cell2.example.com, in addition to the local cell, for the user.
 @MAN_AFS@in addition to the local cell, for the user.  The module will guess
 @MAN_AFS@the principal name of the AFS service for the named cells, or it can
-@MAN_AFS@be specified by given cells in the form
+@MAN_AFS@be specified by giving cells in the form
 @MAN_AFS@\fIcellname\fB=principalname\fR.
 @MAN_AFS@
 .IP banner=\fIKerberos 5\fR
