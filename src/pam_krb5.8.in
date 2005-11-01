@@ -19,7 +19,8 @@ password-checking for applications which use PAM.
 @MAN_KRB4@It creates session-specific credential cache files, and can obtain
 @MAN_KRB4@Kerberos IV credentials using a krb524 service.
 @MAN_AFS@If the system is an AFS client, it will also attempt to obtain tokens
-@MAN_AFS@for the local and any explicitly-configured cells.
+@MAN_AFS@for the local cell, the cell which contains the user's home directory,
+@MAN_AFS@and any explicitly-configured cells.
 
 When a user logs in, the module's authentication function performs a simple
 password check and, if possible, obtains Kerberos 5

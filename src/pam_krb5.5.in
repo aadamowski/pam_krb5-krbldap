@@ -33,7 +33,7 @@ specifies what sort of password the module claims to be changing whenever it is
 called upon to change passwords.  The default is \fBKerberos 5\fR.
 
 .IP ccache_dir=\fI@default_ccache_dir@\fR
-specifies the directory to place credential cache files in.
+specifies the directory in which to place credential cache files.
 
 .IP existing_ticket=\fItrue\fR
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials

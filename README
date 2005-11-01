@@ -53,6 +53,12 @@ o keytab=/etc/krb5.keytab
   at configure-time.
 o krb4_convert
   Obtain Kerberos IV ticket files, even if not required for the sake of AFS.
+o krb4_convert_524
+  If pam_krb5 is configured to obtain Kerberos IV tickets (see krb4_convert,
+  above), this option controls whether or not pam_krb5 attempts to use the
+  krb524 service to obtain them in addition to contacting the KDC.  This
+  option is enabled by default, but can be disabled using the
+  "no_krb4_convert_524" flag.
 o mappings = regex regex [regex regex...]
   Specifies that pam_krb5 should derive the user's principal name from the Unix
   user name by first checking if the user name matches the first regex, and
@@ -81,7 +87,7 @@ o ticket_lifetime
   The actual lifetime of your tickets will most likely be the lowest of 1) this
   value, 2) the configured maximum lifetime of your ticket-granting principal,
   3) the configured maximum ticket life for your user principal, and 4) the
-  maximum allowable lifetime configured in your KDC's configuration.
+  maximum allowable lifetime specified in your KDC's configuration.
 o tokens
   Create a new AFS PAG and obtain AFS tokens during the authentication phase.
   By default, tokens are obtained for the local cell (and the cell which
