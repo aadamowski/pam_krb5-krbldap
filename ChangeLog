@@ -1,4 +1,10 @@
 2005-11-01:
+	* src/stash.c(_pam_krb5_stash_shm_write_v5/4): initialize the segment
+	key and owner in the stash when we write to it, in case the application
+	decides to never call pam_end(), so that we can clean up the segment
+	during session close.
+
+2005-11-01:
 	* src/stash.c,src/stash.h,src/shmem.csrc/shmem.h: log debug messages
 	when we remove segments.
 

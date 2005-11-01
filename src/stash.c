@@ -304,6 +304,8 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			      "segment %d (creator pid %ld)", key,
 			      (long) getpid());
 		}
+		stash->v5shm = key;
+		stash->v5shm_owner = getpid();
 	} else {
 		warn("error saving v5 credential state to shared "
 		     "memory segment");
@@ -374,6 +376,8 @@ _pam_krb5_stash_shm_write_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			      "memory segment %d (creator pid %ld)", key,
 			      (long) getpid());
 		}
+		stash->v4shm = key;
+		stash->v4shm_owner = getpid();
 	} else {
 		warn("error saving v4 credential state to shared "
 		     "memory segment");
