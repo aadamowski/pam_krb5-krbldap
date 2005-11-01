@@ -35,6 +35,10 @@
 
 #include "userinfo.h"
 
+#define PAM_KRB5_STASH_TEMPLATE		"_pam_krb5_stash_%s"
+#define PAM_KRB5_STASH_SHM5_SUFFIX	"_shm5"
+#define PAM_KRB5_STASH_SHM4_SUFFIX	"_shm4"
+
 struct _pam_krb5_stash {
 	char *key;
 	krb5_context v5ctx;
@@ -42,11 +46,15 @@ struct _pam_krb5_stash {
 	char *v5file;
 	krb5_creds v5creds;
 	int v5setenv;
+	int v5shm;
+	pid_t v5shm_owner;
 	int v4present;
 #ifdef USE_KRB4
 	CREDENTIALS v4creds;
 	char *v4file;
 	int v4setenv;
+	int v4shm;
+	pid_t v4shm_owner;
 #endif
 	int afspag;
 };

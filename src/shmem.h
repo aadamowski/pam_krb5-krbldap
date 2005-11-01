@@ -33,14 +33,17 @@
 #ifndef pam_krb5_shmem_h
 #define pam_krb5_shmem_h
 
-int _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address);
+int _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address,
+		      int debug);
 void *_pam_krb5_shm_attach(int key, size_t *size);
 void *_pam_krb5_shm_detach(void *address);
+void _pam_krb5_shm_remove(pid_t pid, int key, int debug);
 int _pam_krb5_shm_new_from_file(pam_handle_t *pamh, size_t lead,
 				const char *file, size_t *file_size,
-				void **address);
+				void **address, int debug);
 int _pam_krb5_shm_new_from_blob(pam_handle_t *pamh, size_t lead,
-				void *source, size_t size, void **address);
+				void *source, size_t size, void **address,
+				int debug);
 void _pam_krb5_blob_from_shm(int key, void **block, size_t *block_size);
 
 #endif

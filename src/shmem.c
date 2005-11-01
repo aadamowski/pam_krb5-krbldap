@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,8 +73,41 @@
  * structure was saved by libpam. */
 struct _pam_krb5_shm_rec {
 	char *name;
+	pid_t pid;
 	int key;
+	int debug;
 };
+
+/* Release a shared memory segment. */
+void
+_pam_krb5_shm_remove(pid_t pid, int key, int log_debug)
+{
+	struct shmid_ds ds;
+	if (pid != -1) {
+		if (shmctl(key, IPC_STAT, &ds) == 0) {
+			if (ds.shm_cpid == pid) {
+				if (log_debug) {
+					debug("cleanup function removing "
+					      "shared memory segment %d "
+					      "belonging to process %ld", key,
+					      (long) pid);
+				}
+				shmctl(key, IPC_RMID, NULL);
+			} else {
+				warn("shared memory segment %d belongs to a "
+				     "process other than %ld (%ld), not "
+				     "removing",
+				     key, (long) pid, (long) ds.shm_cpid);
+			}
+		}
+	} else {
+		if (log_debug) {
+			debug("cleanup function removing "
+			      "shared memory segment %d", key);
+		}
+		shmctl(key, IPC_RMID, NULL);
+	}
+}
 
 /* Clean up a shared memory segment and its record. */
 static void
@@ -82,7 +115,7 @@ _pam_krb5_shm_cleanup(pam_handle_t *pamh, void *data, int status)
 {
 	struct _pam_krb5_shm_rec *rec;
 	rec = data;
-	shmctl(rec->key, IPC_RMID, NULL);
+	_pam_krb5_shm_remove(rec->pid, rec->key, rec->debug);
 	free(rec->name);
 	free(rec);
 }
@@ -91,7 +124,7 @@ _pam_krb5_shm_cleanup(pam_handle_t *pamh, void *data, int status)
  * be cleaned up automatically by libpam.  If address is not NULL, attach to
  * the segment and return its address (which must be subsequently detached). */
 int
-_pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address)
+_pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address, int debug)
 {
 	int key;
 	struct _pam_krb5_shm_rec *rec;
@@ -106,6 +139,8 @@ _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address)
 		free(rec);
 		return -1;
 	}
+	rec->pid = getpid();
+	rec->debug = debug;
 
 	/* Handle minimum size requirements on shared memory segments. */
 	if (address != NULL) {
@@ -152,13 +187,14 @@ _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address)
  * address, which must be detached by the caller. */
 int
 _pam_krb5_shm_new_from_blob(pam_handle_t *pamh, size_t lead,
-			    void *source, size_t size, void **address)
+			    void *source, size_t size, void **address,
+			    int debug)
 {
 	int key;
 	void *block;
 	block = NULL;
 	/* Create the segment and attach to it here. */
-	key = _pam_krb5_shm_new(pamh, size + lead, &block);
+	key = _pam_krb5_shm_new(pamh, size + lead, &block, debug);
 	/* Copy in the caller's data. */
 	if ((key != -1) && (block != NULL)) {
 		if (lead > 0) {
@@ -182,7 +218,8 @@ _pam_krb5_shm_new_from_blob(pam_handle_t *pamh, size_t lead,
  * and return the address, which must be detached by the caller. */
 int
 _pam_krb5_shm_new_from_file(pam_handle_t *pamh, size_t lead,
-			    const char *file, size_t *file_size, void **address)
+			    const char *file, size_t *file_size, void **address,
+			    int debug)
 {
 	int key, fd;
 	struct stat st;
@@ -203,7 +240,7 @@ _pam_krb5_shm_new_from_file(pam_handle_t *pamh, size_t lead,
 	    (S_ISREG(st.st_mode)) &&
 	    (st.st_size < 0x10000)) {
 		/* Create a shared memory segment in which to store the file. */
-		key = _pam_krb5_shm_new(pamh, st.st_size + lead, &block);
+		key = _pam_krb5_shm_new(pamh, st.st_size + lead, &block, debug);
 		if ((key != -1) && (block != NULL)) {
 			p = block;
 			if (lead > 0) {

@@ -1,3 +1,27 @@
+2005-11-01:
+	* src/stash.c,src/stash.h,src/shmem.csrc/shmem.h: log debug messages
+	when we remove segments.
+
+2005-10-31:
+	* src/stash.c,src/stash.h,src/shmem.csrc/shmem.h: track the PID which
+	created the shared memory segment, so that we don't try to remove it
+	twice and accidentally stomp on another process.
+
+2005-10-28:
+	* src/session.c(pam_sm_open_session): dispose of shared memory segments
+	once we've read their contents, in case we won't be able to dispose of
+	them later (patch from Greg Wettstein).
+	* src/shmem.c,src/shmem.h: add a _pam_krb5_shm_remove() function for
+	use by the session functions (patch from Greg Wettstein).
+	* src/stash.c,src/stash.h: add a v5shm/v4shm field to the stash
+	structure to track the ID of the shared memory segment
+	* src/session.c: don't leak the values of $KRB5CCNAME and $KRBTKFILE
+	which we set; libpam makes copies of the values which are passed-in.
+	* src/session.c: unset PAM environment variables by setting "<VAR>",
+	not "<VAR>=", in accordance with the Linux-PAM docs.
+	* src/session.c: unset PAM environment variables which list the shared
+	memory segment identifiers when we destroy the segments.
+
 2005-10-20:
 	* src/shmcat.c: add.
 	* src/Makefile.am: update.

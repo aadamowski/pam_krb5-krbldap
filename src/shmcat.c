@@ -85,6 +85,9 @@ main(int argc, char **argv)
 				}
 			}
 			_pam_krb5_shm_detach(addr);
+		} else {
+			fprintf(stderr, "Error attaching to segment %d!\n",
+				key);
 		}
 	}
 	return 0;

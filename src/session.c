@@ -59,6 +59,7 @@
 #include "log.h"
 #include "options.h"
 #include "prompter.h"
+#include "shmem.h"
 #include "stash.h"
 #include "tokens.h"
 #include "userinfo.h"
@@ -157,6 +158,44 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* We don't need the shared memory segments any more, so we can get rid
+	 * of them now.  (Depending on the application, we may not get a chance
+	 * to do it later.) */
+	if (options->use_shmem) {
+		if ((stash->v5shm != -1) && (stash->v5shm_owner != -1)) {
+			if (options->debug) {
+				debug("removing v5 shared memory segment %d"
+				      " creator pid %ld",
+				      stash->v5shm, (long) stash->v5shm_owner);
+			}
+			_pam_krb5_shm_remove(stash->v5shm_owner, stash->v5shm,
+					     options->debug);
+			stash->v5shm = -1;
+			snprintf(envstr, sizeof(envstr),
+			 	 PAM_KRB5_STASH_TEMPLATE
+				 PAM_KRB5_STASH_SHM5_SUFFIX,
+				 userinfo->unparsed_name);
+			pam_putenv(pamh, envstr);
+		}
+#ifdef USE_KRB4
+		if ((stash->v4shm != -1) && (stash->v4shm_owner != -1)) {
+			if (options->debug) {
+				debug("removing v4 shared memory segment %d"
+				      " creator pid %ld",
+				      stash->v4shm, (long) stash->v4shm_owner);
+			}
+			_pam_krb5_shm_remove(stash->v4shm_owner, stash->v4shm,
+					     options->debug);
+			stash->v4shm = -1;
+			snprintf(envstr, sizeof(envstr),
+			 	 PAM_KRB5_STASH_TEMPLATE
+				 PAM_KRB5_STASH_SHM4_SUFFIX,
+				 userinfo->unparsed_name);
+			pam_putenv(pamh, envstr);
+		}
+#endif
+	}
+
 	/* If we don't have any credentials, then we're done. */
 	if ((stash->v5attempted == 0) || (stash->v5result != 0)) {
 		debug("no v5 creds for user '%s', skipping session setup",
@@ -175,7 +214,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if (stash->v5file != NULL) {
 		v5_destroy(ctx, stash, options);
 		if (stash->v5setenv) {
-			pam_putenv(pamh, "KRB5CCNAME=");
+			pam_putenv(pamh, "KRB5CCNAME");
 			stash->v5setenv = 0;
 		}
 	}
@@ -183,7 +222,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if (stash->v4file != NULL) {
 		v4_destroy(ctx, stash, options);
 		if (stash->v4setenv) {
-			pam_putenv(pamh, "KRBTKFILE=");
+			pam_putenv(pamh, "KRBTKFILE");
 			stash->v4setenv = 0;
 		}
 	}
@@ -232,7 +271,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 				      ccname, user);
 			}
 			sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
-			pam_putenv(pamh, xstrdup(envstr));
+			pam_putenv(pamh, envstr);
 			stash->v5setenv = 1;
 		}
 	}
@@ -258,7 +297,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 					      "'%s'", ccname, user);
 				}
 				sprintf(envstr, "KRBTKFILE=%s", ccname);
-				pam_putenv(pamh, xstrdup(envstr));
+				pam_putenv(pamh, envstr);
 				stash->v4setenv = 1;
 			}
 		}
@@ -392,7 +431,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	if (stash->v5file != NULL) {
 		v5_destroy(ctx, stash, options);
 		if (stash->v5setenv) {
-			pam_putenv(pamh, "KRB5CCNAME=");
+			pam_putenv(pamh, "KRB5CCNAME");
 			stash->v5setenv = 0;
 		}
 		if (options->debug) {
@@ -404,7 +443,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	if (stash->v4file != NULL) {
 		v4_destroy(ctx, stash, options);
 		if (stash->v4setenv) {
-			pam_putenv(pamh, "KRBTKFILE=");
+			pam_putenv(pamh, "KRBTKFILE");
 			stash->v4setenv = 0;
 		}
 		if (options->debug) {

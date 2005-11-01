@@ -272,7 +272,8 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 
 	/* Read the entire file. */
 	key = _pam_krb5_shm_new_from_file(pamh, sizeof(int) * 3,
-					  variable + 5, &blob_size, &blob);
+					  variable + 5, &blob_size, &blob,
+					  options->debug);
 	if ((key != -1) && (blob != NULL)) {
 		intblob = blob;
 		intblob[0] = blob_size;
@@ -293,12 +294,15 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 
 	if (key != -1) {
 		snprintf(variable, sizeof(variable),
-			 "_pam_krb5_stash_%s_shm5=%d",
-			 userinfo->unparsed_name, key);
+			 PAM_KRB5_STASH_TEMPLATE
+			 PAM_KRB5_STASH_SHM5_SUFFIX
+			 "=%d/%ld",
+			 userinfo->unparsed_name, key, (long) getpid());
 		pam_putenv(pamh, variable);
 		if (options->debug) {
 			debug("saved v5 credentials to shared memory "
-			      "segment %d", key);
+			      "segment %d (creator pid %ld)", key,
+			      (long) getpid());
 		}
 	} else {
 		warn("error saving v5 credential state to shared "
@@ -354,18 +358,21 @@ _pam_krb5_stash_shm_write_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	key = _pam_krb5_shm_new_from_blob(pamh, sizeof(int) * 2,
 					  &stash->v4creds,
 					  sizeof(stash->v4creds),
-					  &blob);
+					  &blob, options->debug);
 	if ((key != -1) && (blob != NULL)) {
 		intblob = blob;
 		intblob[0] = stash->v4present;
 		intblob[1] = sizeof(stash->v4creds);
 		snprintf(variable, sizeof(variable),
-			 "_pam_krb5_stash_%s_shm4=%d",
-			 userinfo->unparsed_name, key);
+			 PAM_KRB5_STASH_TEMPLATE
+			 PAM_KRB5_STASH_SHM4_SUFFIX
+			 "=%d/%ld",
+			 userinfo->unparsed_name, key, (long) getpid());
 		pam_putenv(pamh, variable);
 		if (options->debug) {
 			debug("saved v4 credential state to shared "
-			      "memory segment %d", key);
+			      "memory segment %d (creator pid %ld)", key,
+			      (long) getpid());
 		}
 	} else {
 		warn("error saving v4 credential state to shared "
@@ -385,8 +392,9 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 			 struct _pam_krb5_options *options)
 {
 	int key;
+	pid_t owner;
 	long l;
-	char *variable, *p;
+	char *variable, *p, *q;
 	const char *value;
 	void *blob;
 	size_t blob_size;
@@ -396,21 +404,31 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 	if (variable == NULL) {
 		return;
 	}
-	sprintf(variable, "%s_shm5", partial_key);
+	sprintf(variable, "%s" PAM_KRB5_STASH_SHM5_SUFFIX, partial_key);
 
 	/* Read the variable and extract a shared memory identifier. */
 	value = pam_getenv(pamh, variable);
 	key = -1;
+	owner = -1;
 	if (value != NULL) {
 		l = strtol(value, &p, 0);
-		if ((p != NULL) && (*p == '\0')) {
+		if ((p != NULL) && (*p == '/')) {
 			if ((l < INT_MAX) && (l > INT_MIN)) {
 				key = l;
+			}
+			q = NULL;
+			l = strtol(p + 1, &q, 0);
+			if ((q != NULL) && (*q == '\0') && (q > p + 1)) {
+				owner = l;
 			}
 		}
 	}
 
 	/* Get a copy of the contents of the shared memory segment. */
+	if ((stash->v5shm == -1) && (owner != -1)) {
+		stash->v5shm = key;
+		stash->v5shm_owner = owner;
+	}
 	if (key != -1) {
 		_pam_krb5_blob_from_shm(key, &blob, &blob_size);
 		if ((blob == NULL) || (blob_size == 0)) {
@@ -428,19 +446,31 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 
 #ifdef USE_KRB4
 	/* Construct the name of a variable. */
-	sprintf(variable, "%s_shm4", partial_key);
+	sprintf(variable, "%s" PAM_KRB5_STASH_SHM4_SUFFIX, partial_key);
+
 	/* Read the variable and extract a shared memory identifier. */
 	value = pam_getenv(pamh, variable);
 	key = -1;
+	owner = -1;
 	if (value != NULL) {
 		l = strtol(value, &p, 0);
-		if ((p != NULL) && (*p == '\0')) {
+		if ((p != NULL) && (*p == '/')) {
 			if ((l < INT_MAX) && (l > INT_MIN)) {
 				key = l;
 			}
+			q = NULL;
+			l = strtol(p + 1, &q, 0);
+			if ((q != NULL) && (*q == '\0') && (q > p + 1)) {
+				owner = l;
+			}
 		}
 	}
+
 	/* Get a copy of the contents of the shared memory segment. */
+	if ((stash->v4shm == -1) && (owner != -1)) {
+		stash->v4shm = key;
+		stash->v4shm_owner = owner;
+	}
 	if (key != -1) {
 		_pam_krb5_blob_from_shm(key, &blob, &blob_size);
 		if ((blob == NULL) || (blob_size == 0)) {
@@ -588,13 +618,13 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	struct _pam_krb5_stash *stash;
 	char *key;
 
-	key = malloc(strlen("_pam_krb5_stash_") +
+	key = malloc(strlen(PAM_KRB5_STASH_TEMPLATE) +
 		     strlen(info->unparsed_name) +
 		     1);
 	if (key == NULL) {
 		return NULL;
 	}
-	sprintf(key, "_pam_krb5_stash_%s", info->unparsed_name);
+	sprintf(key, PAM_KRB5_STASH_TEMPLATE, info->unparsed_name);
 
 	stash = NULL;
 	if ((_pam_krb5_get_data_stash(pamh, key, &stash) == PAM_SUCCESS) &&
@@ -618,11 +648,17 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	stash->v5attempted = 0;
 	stash->v5result = KRB5KRB_ERR_GENERIC;
 	stash->v5file = NULL;
+	stash->v5setenv = 0;
+	stash->v5shm = -1;
+	stash->v5shm_owner = -1;
 	memset(&stash->v5creds, 0, sizeof(stash->v5creds));
-#ifdef USE_KRB4
 	stash->v4present = 0;
+#ifdef USE_KRB4
 	memset(&stash->v4creds, 0, sizeof(stash->v4creds));
 	stash->v4file = NULL;
+	stash->v4setenv = 0;
+	stash->v4shm = -1;
+	stash->v4shm_owner = -1;
 #endif
 	stash->afspag = 0;
 	if (options->use_shmem) {

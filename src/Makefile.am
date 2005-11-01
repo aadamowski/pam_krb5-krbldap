@@ -97,7 +97,7 @@ harness_LDADD = \
 harness_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@
 
 shmcat_SOURCES = shmcat.c
-shmcat_LDADD = libpam_krb5.la @PAM_LIBS@
+shmcat_LDADD = logstdio.lo libpam_krb5.la @PAM_LIBS@
 
 if AFS
 pam_krb5_la_SOURCES += tokens.c
