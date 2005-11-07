@@ -1,3 +1,7 @@
+2005-11-07:
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: add proper quoting for arguments
+	which include whitespace
+
 2005-11-01:
 	* src/stash.c(_pam_krb5_stash_shm_write_v5/4): initialize the segment
 	key and owner in the stash when we write to it, in case the application

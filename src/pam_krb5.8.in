@@ -55,7 +55,7 @@ firewall's outward-facing address here should allow Kerberos authentication to
 succeed.  This option is deprecated in favor of the \fIextra_addresses\fR flag
 in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
-@MAN_AFS@.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
+@MAN_AFS@.IP "afs_cells=\fIcell1.example.com cell2.example.com\fR"
 @MAN_AFS@tells pam_krb5.so to obtain tokens for cell1.example.com and
 @MAN_AFS@cell2.example.com, in addition to the local cell, for the user.
 @MAN_AFS@in addition to the local cell, for the user.  The module will guess
@@ -63,7 +63,7 @@ in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 @MAN_AFS@be specified by giving cells in the form
 @MAN_AFS@\fIcellname\fB=principalname\fR.
 @MAN_AFS@
-.IP banner=\fIKerberos 5\fR
+.IP "banner=\fIKerberos 5\fR"
 tells pam_krb5.so how to identify itself when users attempt to change their
 passwords.  The default setting is "Kerberos 5".
 

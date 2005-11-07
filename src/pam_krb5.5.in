@@ -20,7 +20,7 @@ if you are using Kerberos through a NAT, or on systems whose IP addresses change
 regularly.  This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBnoaddresses\fR directive.
 
-@MAN_AFS@.IP afs_cells=\fIcell1.example.com cell2.example.com\fR
+@MAN_AFS@.IP "afs_cells=\fIcell1.example.com cell2.example.com\fR"
 @MAN_AFS@tells pam_krb5.so to obtain tokens for cell1.example.com and
 @MAN_AFS@cell2.example.com, in addition to the local cell and the cell which
 @MAN_AFS@contains the user's home directory, for the user.
@@ -28,7 +28,7 @@ regularly.  This directive is deprecated in favor of the \fBlibdefaults\fR
 @MAN_AFS@service for the listed cells, or it can be specified by listing cells
 @MAN_AFS@in the form \fIcellname\fB=principalname\fR.
 @MAN_AFS@
-.IP banner=\fIKerberos 5\fR
+.IP "banner=\fIKerberos 5\fR"
 specifies what sort of password the module claims to be changing whenever it is
 called upon to change passwords.  The default is \fBKerberos 5\fR.
 
@@ -95,11 +95,11 @@ for use in validating TGTs.
 @MAN_KRB4@\fBkrb4_convert\fP option.  If disabled, pam_krb5 will only attempt
 @MAN_KRB4@to obtain Kerberos IV credentials using the KDC.
 @MAN_KRB4@
-.IP mappings=[\fIregex1 regex2\fR]
+.IP "mappings=[\fIregex1 regex2\fR]"
 specifies that pam_krb5 should derive the user's principal name from the Unix
 user name by first checking if the user name matches \fBregex1\fR, and
 formulating a principal name using \fBregex2\fR.  For example,
-\fBmappings = EXAMPLE\e(.*) $1@EXAMPLE.COM\fR
+\fB"mappings = EXAMPLE\e(.*) $1@EXAMPLE.COM\fR"
 would map any user with a name of the form "EXAMPLE\ewhatever" to a principal
 name of "whatever@EXAMPLE.COM".  This is primarily targeted at allowing
 pam_krb5 to be used to authenticate users whose user information is provided by
