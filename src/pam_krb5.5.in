@@ -139,6 +139,7 @@ to the session management service function using shared memory for specific
 services.
 
 .IP validate=[\fItrue\fR|\fIfalse\fR]
+.IP "validate=\fIlogin sshd\fR"
 specifies whether or not to attempt validation of the TGT.  The default is
 \fBfalse\fR.
 

@@ -178,6 +178,7 @@ to the session management service function using shared memory, or to do so for
 specific services.
 
 .IP validate
+.IP "validate=\fIsshd\fR"
 tells pam_krb5.so to verify that the TGT obtained from the realm's servers has
 not been spoofed.  Note that the process which is performing authentication
 must be able to read the \fIkeytab\fR in order for validation to be possible.

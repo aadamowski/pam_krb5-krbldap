@@ -98,6 +98,7 @@ o use_shmem
   managment to be performed in different processes, so long as the PAM
   environment is correctly propagated from one to the other.
 o validate
+  validate = service1 service2
   Validate initial credentials.  By default, credentials are validated if
   the specified keytab file can be read.
 

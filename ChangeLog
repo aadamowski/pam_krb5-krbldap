@@ -1,4 +1,8 @@
 2005-11-07:
+	* src/options.c: allow "validate" to be specified using a list of
+	service names as well.
+
+2005-11-07:
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: add proper quoting for arguments
 	which include whitespace
 
