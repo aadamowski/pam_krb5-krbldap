@@ -15,8 +15,8 @@
        * new "ignore_unknown_principal"/"ignore_unknown_spn" option
        * new "krb4_convert_524" option
        * configure can now set the default location of the system keytab
-       * configure disables AFS support except on Linux (for now), but can
-         be overridden either way
+       * configure disables AFS support except on Linux and Solaris (for now),
+         but can be overridden either way (needs testing on Solaris)
        * can now specify a principal name for AFS cells, to save guesswork
        * should now correctly work with SAM authentication, needs testing
        * "tokens" now behaves like "external" and "use_shmem", in that it
