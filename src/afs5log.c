@@ -107,6 +107,12 @@ main(int argc, char **argv)
 			}
 		}
 	}
+	if (minikafs_has_afs() == 0) {
+		if (log_options.debug) {
+			debug("afs support not detected\n");
+		}
+		return -1;
+	}
 	process_options = 1;
 	for (i = 1; i < argc; i++) {
 		if (process_options && (argv[i][0] == '-')) {

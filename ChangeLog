@@ -1,3 +1,7 @@
+2005-11-15:
+	* src/afs5log.c: actually check for AFS support first, so that the
+	ioctl-only support case will work properly.
+
 2005-11-07:
 	* src/options.c: allow "validate" to be specified using a list of
 	service names as well.
