@@ -1,3 +1,5 @@
+- 2.2.1: * fix a thinko which broke afs5log on systems where the AFS syscall
+	   isn't available
 - 2.2: * refreshing of preexisting credentials works, so unlocking your
          screensaver should fetch new credentials and tokens.  Be careful that
          you don't invoke the authentication function with the "tokens" flag,
