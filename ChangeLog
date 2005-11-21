@@ -1,3 +1,7 @@
+2005-11-21:
+	* src/v5.c(v5_validate): don't leak the keytab file descriptor (patch
+	from Daniel Colascione, #173681).
+
 2005-11-15:
 	* src/afs5log.c: actually check for AFS support first, so that the
 	ioctl-only support case will work properly.

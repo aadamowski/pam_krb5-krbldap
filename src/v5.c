@@ -333,13 +333,18 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* Close the keytab here.  Even though we're using cursors, the file
+	 * handle is stored in the krb5_keytab structure, and it gets
+	 * overwritten when the verify_init_creds() call below creates its own
+	 * cursor, creating a leak. */
+	krb5_kt_end_seq_get(ctx, keytab, &cursor);
+
 	/* Perform the verification checks using the service key. */
 	krb5_verify_init_creds_opt_init(&opt);
 	i = krb5_verify_init_creds(ctx, creds,
 				   entry.principal, keytab,
 				   NULL, &opt);
 
-	krb5_kt_end_seq_get(ctx, keytab, &cursor);
 	krb5_kt_close(ctx, keytab);
 
 	/* Log success or failure. */
