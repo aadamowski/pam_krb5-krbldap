@@ -47,6 +47,9 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 * Mon Dec 19 2005 Nalin Dahyabhai <nalin@redhat.com> - 2.2.3-1
 - fix a compile problem caused by a missing #include (Jesse Keating)
 
+* Fri Dec 09 2005 Jesse Keating <jkeating@redhat.com> - 2.2.2-1.3
+- rebuilt
+
 * Mon Nov 21 2005 Nalin Dahyabhai <nalin@redhat.com> - 2.2.2-1
 - don't leak the keytab descriptor during validation (#173681)
 
