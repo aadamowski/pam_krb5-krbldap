@@ -1,3 +1,8 @@
+2005-12-19:
+	* src/items.c: include <stdio.h> to get the definition of NULL (Jesse
+	Keating).
+	* src/init.c: same bug, different file.
+
 2005-11-21:
 	* src/v5.c(v5_validate): don't leak the keytab file descriptor (patch
 	from Daniel Colascione, #173681).
