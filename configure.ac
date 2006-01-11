@@ -302,6 +302,8 @@ AC_CONFIG_HEADER(config.h)
 AC_OUTPUT([
 Makefile
 src/Makefile
+src/pam_newpag.5
+src/pam_newpag.8
 src/pam_krb5.5
 src/pam_krb5.8
 src/pam_krb5_storetmp.8

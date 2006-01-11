@@ -1,6 +1,11 @@
 2006-01-11:
 	* src/session.c: no, I did touch that file last year.
 	* src/pam_krb5.5.in: document the "ignore_afs" option.
+	* src/pam_newpag.c: add.
+	* src/pam_newpag.5.in: add.
+	* src/pam_newpag.8.in: add.
+	* src/Makefile.am: add rules for building pam_newpag.so.
+	* configure.ac: generate man pages for pam_newpag.
 
 2005-12-19:
 	* src/items.c: include <stdio.h> to get the definition of NULL (Jesse

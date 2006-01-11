@@ -2,14 +2,18 @@ AM_CFLAGS = @KRB5_CFLAGS@ @KRB4_CFLAGS@
 
 securitydir = $(libdir)/security
 security_LTLIBRARIES = pam_krb5.la
+noinst_LTLIBRARIES = libpam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
-EXTRA_DIST = afs5log.1 pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8
+EXTRA_DIST = afs5log.1 pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8 pam_newpag.5 pam_newpag.8
 noinst_PROGRAMS = harness shmcat
-noinst_LTLIBRARIES = libpam_krb5.la
 man_MANS = pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8
-bin_PROGRAMS =
 noinst_MANS =
+if AFS
+noinst_LTLIBRARIES += pam_newpag.la
+noinst_MANS += pam_newpag.5 pam_newpag.8
+endif
+bin_PROGRAMS =
 
 if AFS
 bin_PROGRAMS += afs5log
@@ -60,6 +64,16 @@ pam_krb5_la_SOURCES = \
 	session.c \
 	sly.c \
 	sly.h
+
+pam_newpag_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' 
+pam_newpag_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+pam_newpag_la_SOURCES = \
+	pam_newpag.c \
+	log.c \
+	log.h \
+	minikafs.h \
+	options.c \
+	options.h
 
 pam_krb5_storetmp_SOURCES = \
 	pam_krb5_storetmp.c
