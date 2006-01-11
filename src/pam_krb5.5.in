@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2005/02/08 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2006/01/11 "Red Hat Linux" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -64,6 +64,10 @@ the \fIKDC\fR sees it as to this list.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBextra_addresses\fR directive.
 
+@MAN_AFS@.IP ignore_afs=[\fItrue\fR|\fIfalse\fR]
+@MAN_AFS@tells pam_krb5.so to completely ignore the presence of AFS, preventing
+@MAN_AFS@any attempts to obtain new tokens on behalf of the calling application.
+@MAN_AFS@
 .IP ignore_unknown_principals=[\fItrue\fR|\fIfalse\fR]
 .IP ignore_unknown_spn=[\fItrue\fR|\fIfalse\fR]
 .IP ignore_unknown_upn=[\fItrue\fR|\fIfalse\fR]

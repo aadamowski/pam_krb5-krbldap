@@ -40,6 +40,9 @@ o external
   to obtain a v4 Kerberos ticket via krb524, or AFS tokens.  The calling
   application MUST ensure that KRB5CCNAME points to a ccache which should be
   used for the authenticating user.
+o ignore_afs
+  Disable the default behavior of attempting to obtain tokens for the local
+  AFS cell on behalf of clients.
 o ignore_unknown_principals
   ignore_unknown_spn
   ignore_unknown_upn
