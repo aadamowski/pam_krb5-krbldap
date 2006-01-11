@@ -6,6 +6,9 @@
 	* src/pam_newpag.8.in: add.
 	* src/Makefile.am: add rules for building pam_newpag.so.
 	* configure.ac: generate man pages for pam_newpag.
+	* src/pam_dummy_acct.c: add.
+	* src/pam_dummy_chauthtok.c: add.
+	* src/Makefile.am: add rules for building harness-newpag
 
 2005-12-19:
 	* src/items.c: include <stdio.h> to get the definition of NULL (Jesse
