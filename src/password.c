@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2005 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -305,6 +305,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       result_code_string.data,
 					       result_string.length,
 					       result_string.data);
+					if ((result_string.length > 0) ||
+					    (result_code_string.length)) {
+						notice_user(pamh, "%.*s (%.*s)",
+							    result_code_string.length,
+							    result_code_string.data,
+							    result_string.length,
+							    result_string.data);
+					}
 				}
 			}
 		}

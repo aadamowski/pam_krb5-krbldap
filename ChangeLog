@@ -1,3 +1,9 @@
+2006-01-13:
+	* src/log.h,src/log.c,src/logstdio.c: add notice_user() to for spewing
+	an error message at the user.
+	* src/password.c(pam_sm_chauthtok): if we got a result string back from
+	the password-changing server, attempt to display it.
+
 2006-01-11:
 	* src/session.c: no, I did touch that file last year.
 	* src/pam_krb5.5.in: document the "ignore_afs" option.
