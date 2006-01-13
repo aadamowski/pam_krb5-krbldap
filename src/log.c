@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +32,23 @@
 
 #include "../config.h"
 #include <sys/types.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
+#ifdef HAVE_SECURITY_PAM_MODULES_H
+#include <security/pam_modules.h>
+#endif
+
+#include "conv.h"
 #include "log.h"
 
 #ident "$Id$"
@@ -133,6 +144,27 @@ crit(const char *fmt, ...)
 	} else {
 		vsyslog(LOG_CRIT, fmt, args);
 	}
+
+	va_end(args);
+}
+
+void
+notice_user(pam_handle_t *pamh, const char *fmt, ...)
+{
+	va_list args;
+	struct pam_message message;
+	struct pam_response *responses;
+	char buf[LINE_MAX];
+
+	va_start(args, fmt);
+
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	memset(&message, 0, sizeof(message));
+	message.msg_style = PAM_ERROR_MSG;
+	message.msg = buf;
+
+	responses = NULL;
+	_pam_krb5_conv_call(pamh, &message, 1, &responses);
 
 	va_end(args);
 }

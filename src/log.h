@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,9 +33,12 @@
 #ifndef pam_krb5_log_h
 #define pam_krb5_log_h
 
+struct pam_handle;
+
 void debug(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
 void warn(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
 void notice(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
 void crit(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
+void notice_user(struct pam_handle *pamh, const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (2, 3);
 
 #endif
