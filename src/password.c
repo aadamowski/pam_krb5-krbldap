@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -231,6 +231,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 * don't use it here. */
 		password = NULL;
 		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &password);
+
 		/* Duplicate the password, as above. */
 		if ((password != NULL) && (i == PAM_SUCCESS)) {
 			password = xstrdup(password);
@@ -247,7 +248,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 		/* If there wasn't a previously-entered password, and we are
 		 * okay with that, ask for one. */
-		if ((password == NULL) && (i == PAM_SUCCESS)) {
+		if ((password == NULL) && (retval != PAM_AUTHTOK_RECOVER_ERR)) {
 			/* Ask for the new password twice. */
 			sprintf(prompt, "New %s%sPassword: ",
 				options->banner,
@@ -264,7 +265,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			/* Save the password for possible use by other
 			 * modules. */
-			if (i == 0) {
+			if (i == PAM_SUCCESS) {
 				pam_set_item(pamh, PAM_AUTHTOK, &password);
 			}
 			/* Free the second password, we only need one copy. */
@@ -299,14 +300,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       v5_error_message(i));
 				} else {
 					notice("password change failed for "
-					       "%s: %.*s(%.*s)",
+					       "%s: %.*s (%.*s)",
 					       userinfo->unparsed_name,
 					       result_code_string.length,
 					       result_code_string.data,
 					       result_string.length,
 					       result_string.data);
 					if ((result_string.length > 0) ||
-					    (result_code_string.length)) {
+					    (result_code_string.length > 0)) {
 						notice_user(pamh, "%.*s (%.*s)",
 							    result_code_string.length,
 							    result_code_string.data,
