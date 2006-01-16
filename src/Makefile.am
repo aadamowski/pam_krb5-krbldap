@@ -110,10 +110,10 @@ harness_LDADD = \
 	v5.lo
 harness_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@
 
-harness_newpag_SOURCES = harness.c
-harness_newpag_LDADD = \
+harness_newpag_SOURCES = harness.c \
 	pam_dummy_acct.c \
-	pam_dummy_chauthtok.c \
+	pam_dummy_chauthtok.c
+harness_newpag_LDADD = \
 	pam_newpag.lo \
 	logstdio.lo \
 	options.lo \

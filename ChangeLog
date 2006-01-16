@@ -8,6 +8,8 @@
 	test case.
 	* src/password.c(pam_sm_chauthtok): cast away a couple of compiler
 	warnings.
+	* src/Makefile.am: tweak dependencies on dummy files for the sake of
+	distcheck.
 
 2006-01-13:
 	* src/log.h,src/log.c,src/logstdio.c: add notice_user() to for spewing
