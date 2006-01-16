@@ -75,6 +75,11 @@
 
 extern char *log_progname;
 
+struct linux_pam_handle {
+	char *authtok;
+	int caller;
+};
+
 static int
 local_conv(int num_msg, const struct pam_message **msgm,
 	   struct pam_response **response, void *appdata_ptr)
@@ -216,7 +221,8 @@ main(int argc, char **argv)
 			"\t--setcred-delete [args...]\n"
 			"\t--close-session [args...]\n"
 			"\t--acct-mgmt [args...]\n"
-			"\t--chauthtok [args...]\n",
+			"\t--chauthtok-prelim [args...]\n"
+			"\t--chauthtok-update [args...]\n",
 			argv[0]);
 		return 1;
 	}
@@ -262,13 +268,25 @@ main(int argc, char **argv)
 		if (pamh == NULL) {
 			ret = pam_start(service, user, &conv, &pamh);
 			printf("start: %d\n", ret);
+#ifdef __LINUX_PAM__
+			/* Linux-PAM *actively* tries to break us. */
+			((struct linux_pam_handle*)pamh)->caller = 1;
+#endif
 		}
 		if (strcmp(argv[i], "--restart") == 0) {
+#ifdef __LINUX_PAM__
+			/* Linux-PAM *actively* tries to break us. */
+			((struct linux_pam_handle*)pamh)->caller = 2;
+#endif
 			ret = pam_end(pamh, 0);
 			printf("end: %d\n", ret);
 			pamh = NULL;
 			ret = pam_start(service, user, &conv, &pamh);
 			printf("start: %d\n", ret);
+#ifdef __LINUX_PAM__
+			/* Linux-PAM *actively* tries to break us. */
+			((struct linux_pam_handle*)pamh)->caller = 1;
+#endif
 			continue;
 		}
 		if (strcmp(argv[i], "--auth") == 0) {
@@ -337,11 +355,22 @@ main(int argc, char **argv)
 			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
 		}
-		if (strcmp(argv[i], "--chauthtok") == 0) {
+		if (strcmp(argv[i], "--chauthtok-prelim") == 0) {
 			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
-			ret = pam_sm_chauthtok(pamh, 0, pargc, pargv);
+			ret = pam_sm_chauthtok(pamh, PAM_PRELIM_CHECK,
+					       pargc, pargv);
 			free_args(&pargc, &pargv);
-			printf("chauthtok: %d%s %s\n", ret,
+			printf("chauthtok-prelim: %d%s %s\n", ret,
+			       ret ? ":" : "",
+			       ret ? pam_strerror(pamh, ret) : "");
+			continue;
+		}
+		if (strcmp(argv[i], "--chauthtok-update") == 0) {
+			i += gather_args(argc, argv, i + 1, &pargc, &pargv);
+			ret = pam_sm_chauthtok(pamh, PAM_UPDATE_AUTHTOK,
+					       pargc, pargv);
+			free_args(&pargc, &pargv);
+			printf("chauthtok-update: %d%s %s\n", ret,
 			       ret ? ":" : "",
 			       ret ? pam_strerror(pamh, ret) : "");
 			continue;
@@ -350,6 +379,10 @@ main(int argc, char **argv)
 		break;
 	}
 	if (pamh != NULL) {
+#ifdef __LINUX_PAM__
+		/* Linux-PAM *actively* tries to break us. */
+		((struct linux_pam_handle*)pamh)->caller = 2;
+#endif
 		ret = pam_end(pamh, 0);
 		printf("end: %d\n", ret);
 		pamh = NULL;
