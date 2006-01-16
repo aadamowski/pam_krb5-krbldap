@@ -303,9 +303,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       "%s: %.*s (%.*s)",
 					       userinfo->unparsed_name,
 					       result_code_string.length,
-					       result_code_string.data,
+					       (char *) result_code_string.data,
 					       result_string.length,
-					       result_string.data);
+					       (char *) result_string.data);
 					if ((result_string.length > 0) ||
 					    (result_code_string.length > 0)) {
 						notice_user(pamh, "%.*s (%.*s)",
