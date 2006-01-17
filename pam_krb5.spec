@@ -40,10 +40,13 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 %{_mandir}/man1/*
 %{_mandir}/man5/*
 %{_mandir}/man8/*
-%doc README* COPYING* ChangeLog
+%doc README* COPYING* ChangeLog NEWS
 
 # $Id$
 %changelog
+* Tue Jan 17 2006 Nalin Dahyabhai <nalin@redhat.com>
+- include the NEWS file as documentation
+
 * Mon Jan 16 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.4-1
 - fix reporting of the exact reason why a password change failed
 
