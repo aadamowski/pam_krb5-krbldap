@@ -1,4 +1,7 @@
 2006-01-16:
+	* src/afs5log.1, src/pagsh.1: fix the bug reporting instructions.
+
+2006-01-16:
 	* src/password.c(pam_sm_chauthtok): fix handling of no-password-given
 	cases.
 	* src/harness.c: work around Linux-PAM actively trying to keep us from
