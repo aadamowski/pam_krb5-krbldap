@@ -96,6 +96,7 @@ o tokens
   By default, tokens are obtained for the local cell (and the cell which
   contains the user's home directory, if they're not the same).
 o use_shmem
+  use_shmem = service1 service2
   Pass credentials from authentication to session management using shared
   memory instead of PAM data items.  This allows authentication and session-
   managment to be performed in different processes, so long as the PAM
