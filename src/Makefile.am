@@ -42,7 +42,7 @@ libpam_krb5_la_SOURCES = \
 	v5.c \
 	v5.h
 	
-pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' 
+pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
 pam_krb5_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
 pam_krb5_la_SOURCES = \
 	initopts.c \
@@ -65,7 +65,7 @@ pam_krb5_la_SOURCES = \
 	sly.c \
 	sly.h
 
-pam_newpag_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' 
+pam_newpag_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
 pam_newpag_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
 pam_newpag_la_SOURCES = \
 	pam_newpag.c \

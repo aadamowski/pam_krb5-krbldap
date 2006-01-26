@@ -271,6 +271,15 @@ if test x$GCC = xyes ; then
 		CFLAGS="$CFLAGS -Werror"
 	fi
 fi
+if test x$with_gnu_ld = xyes ; then
+	if test x$GCC = xyes ; then
+		SYMBOLIC_LINKER_FLAG="-Wl,-Bsymbolic"
+	else
+		SYMBOLIC_LINKER_FLAG="-Bsymbolic"
+	fi
+	AC_MSG_RESULT([will link using "$SYMBOLIC_LINKER_FLAG" to reduce conflicts])
+fi
+AC_SUBST(SYMBOLIC_LINKER_FLAG)
 
 AH_VERBATIM([PAM_KRB5_GNUC_PRINTF_DEFINED],
 [/* Add attribute tags to help spot format specifier problems. */

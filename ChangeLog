@@ -2,6 +2,9 @@
 	* src/minikafs.c: wrap a debug message in an if (debugging) clause.
 	* src/session.c: wrap a pair of debugging messages in an if (debugging)
 	clause (#179037).
+	* configure.ac: if $with_gnu_ld is set, set SYMBOLIC_LINKER_FLAG to
+	the right variation on -Bsymbolic
+	* src/Makefile.am: use the SYMBOLIC_LINKER_FLAG when linking modules
 
 2006-01-16:
 	* src/afs5log.1, src/pagsh.1: fix the bug reporting instructions.
