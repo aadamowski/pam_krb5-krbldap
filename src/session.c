@@ -198,8 +198,10 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	/* If we don't have any credentials, then we're done. */
 	if ((stash->v5attempted == 0) || (stash->v5result != 0)) {
-		debug("no v5 creds for user '%s', skipping session setup",
-		      user);
+		if (options->debug) {
+			debug("no v5 creds for user '%s', "
+			      "skipping session setup", user);
+		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
 			debug("pam_open_session returning %d (%s)", PAM_SUCCESS,
@@ -411,8 +413,11 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 
 	/* If we didn't obtain any credentials, then we're done. */
 	if ((stash->v5attempted == 0) || (stash->v5result != 0)) {
-		debug("no v5 creds for user '%s', skipping session cleanup",
-		      user);
+		if (options->debug) {
+			debug("no v5 creds for user '%s', "
+			      "skipping session cleanup",
+			      user);
+		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
 			debug("pam_close_session returning %d (%s)",

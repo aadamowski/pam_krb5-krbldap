@@ -1,3 +1,8 @@
+2006-01-26:
+	* src/minikafs.c: wrap a debug message in an if (debugging) clause.
+	* src/session.c: wrap a pair of debugging messages in an if (debugging)
+	clause.
+
 2006-01-16:
 	* src/afs5log.1, src/pagsh.1: fix the bug reporting instructions.
 

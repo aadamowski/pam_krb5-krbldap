@@ -772,8 +772,10 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 
 	/* If we were given a principal name, try it. */
 	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
-		debug("attempting to obtain tokens for \"%s\" (\"%s\")",
-		      cell, hint_principal);
+		if (options->debug) {
+			debug("attempting to obtain tokens for \"%s\" (\"%s\")",
+			      cell, hint_principal);
+		}
 		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
 						   cell, hint_principal, uid,
 						   try_v5_2b);
