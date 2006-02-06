@@ -5,6 +5,8 @@
 	tokens when krb4_convert_524 is disabled.
 	* src/v4.c: don't try to get initial creds if krb4_use_as_req is off.
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: document krb4_use_as_req.
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: point out that we turn on v4
+	support if AFS is detected at run-time.
 
 2006-01-26:
 	* src/minikafs.c: wrap a debug message in an if (debugging) clause.

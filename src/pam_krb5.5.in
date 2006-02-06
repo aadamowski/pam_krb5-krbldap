@@ -91,7 +91,8 @@ for use in validating TGTs.
 @MAN_KRB4@\fIeverything\fR on your network over to use Kerberos 5, you'll want
 @MAN_KRB4@to leave this set to \fBtrue\fR.  Note that this may require valid
 @MAN_KRB4@Kerberos IV configuration data to be present in \fB/etc/krb.conf\fR
-@MAN_KRB4@and \fB/etc/krb.realms\fR.
+@MAN_KRB4@and \fB/etc/krb.realms\fR.  This option is poorly named.
+@MAN_KRB4@@MAN_AFS@This option is forced to \fItrue\fR if AFS is detected.
 @MAN_KRB4@
 @MAN_KRB4@.IP krb4_convert_524=[\fItrue\fR|\fIfalse\fR]
 @MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
