@@ -502,7 +502,7 @@ v4_get_creds(krb5_context ctx,
 		}
 	}
 #endif
-	if (password != NULL) {
+	if ((password != NULL) && (options->v4_use_as_req)) {
 		if (options->debug) {
 			debug("attempting to obtain initial v4 creds");
 		}

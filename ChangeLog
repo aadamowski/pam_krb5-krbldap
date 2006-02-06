@@ -3,6 +3,7 @@
 	for disabling v4-via-as-req attempts
 	* src/minikafs.c: don't try to convert creds for use in setting v4
 	tokens when krb4_convert_524 is disabled.
+	* src/v4.c: don't try to get initial creds if krb4_use_as_req is off.
 
 2006-01-26:
 	* src/minikafs.c: wrap a debug message in an if (debugging) clause.
