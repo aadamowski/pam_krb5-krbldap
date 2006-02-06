@@ -7,6 +7,8 @@
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: document krb4_use_as_req.
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: point out that we turn on v4
 	support if AFS is detected at run-time.
+	* README: document krb4_use_as_req.
+	* TODO: update because 2.2 was tagged a while ago
 
 2006-01-26:
 	* src/minikafs.c: wrap a debug message in an if (debugging) clause.

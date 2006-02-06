@@ -1,3 +1,8 @@
+- 2.2.6: * add "krb4_use_as_req" to completely disallow any attempts to get
+           v4 credentials (along with "krb4_convert_524", which was already
+           there)
+         * don't try to convert v5 creds to v4 creds for AFS when
+           "krb4_convert_524" is disabled, either
 - 2.2.5: * fix a couple of cases where a debug message would be logged even if
            debugging wasn't enabled
 - 2.2.4: * fix reporting of the reasons for password change failures

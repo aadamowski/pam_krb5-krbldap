@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.5
+Version: 2.2.6
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -44,6 +44,10 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 
 # $Id$
 %changelog
+* Mon Feb  6 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.6-1
+- add a "krb4_use_as_req" option so that obtaining v4 creds kinit-style can
+  be disabled completely (Hugo Meiland)
+
 * Thu Jan 26 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.5-1
 - don't log debug messages that we're skipping session setup/teardown unless
   debugging is enabled (#179037)

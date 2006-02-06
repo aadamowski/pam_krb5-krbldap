@@ -1,6 +1,4 @@
-For 2.2.0:
-- Test some more.
-Longer term (2.3?):
+2.3?
 - Figure out how mappings should work with
   krb5_aname_to_localname
   krb5_kuserok
