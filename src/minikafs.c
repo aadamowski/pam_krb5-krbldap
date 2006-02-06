@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005 Red Hat, Inc.
+ * Copyright 2004,2005,2006 Red Hat, Inc.
  * Copyright 2004 Kungliga Tekniska Högskolan
  *
  * Redistribution and use in source and binary forms, with or without
@@ -690,7 +690,8 @@ minikafs_5log_with_principal(krb5_context ctx,
 				krb5_free_principal(ctx, server);
 				return 0;
 			}
-			if (minikafs_5convert_and_log(ctx, options, cell,
+			if (options->v4_use_524 &&
+			    minikafs_5convert_and_log(ctx, options, cell,
 						      &creds, uid) == 0) {
 				krb5_free_cred_contents(ctx, &creds);
 				krb5_free_principal(ctx, client);
@@ -717,7 +718,8 @@ minikafs_5log_with_principal(krb5_context ctx,
 				krb5_free_principal(ctx, server);
 				return 0;
 			}
-			if (minikafs_5convert_and_log(ctx, options, cell,
+			if (options->v4_use_524 &&
+			    minikafs_5convert_and_log(ctx, options, cell,
 						      new_creds, uid) == 0) {
 				krb5_free_creds(ctx, new_creds);
 				krb5_free_principal(ctx, client);

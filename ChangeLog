@@ -1,6 +1,8 @@
 2006-02-06:
 	* src/options.c,src/options.h: break down and add an explicit option
 	for disabling v4-via-as-req attempts
+	* src/minikafs.c: don't try to convert creds for use in setting v4
+	tokens when krb4_convert_524 is disabled.
 
 2006-01-26:
 	* src/minikafs.c: wrap a debug message in an if (debugging) clause.
