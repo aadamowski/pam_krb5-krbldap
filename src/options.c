@@ -420,6 +420,21 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* private option */
+	options->v4_use_as_req = option_b(pamh, argc, argv,
+				          ctx, options->realm,
+					  "krb4_use_as_req");
+	if (options->v4_use_as_req == -1) {
+		/* default is to have this behavior enabled... */
+		options->v4_use_as_req = 1;
+	}
+	if (options->debug && (options->v4_use_as_req == 1)) {
+		debug("flag: krb4_use_as_req");
+	}
+	if (options->debug && (options->v4_use_as_req == 0)) {
+		debug("flag: no krb4_use_as_req");
+	}
+
+	/* private option */
 	options->use_first_pass = 1;
 	options->use_second_pass = 1;
 	use_first_pass = option_b(pamh, argc, argv,
