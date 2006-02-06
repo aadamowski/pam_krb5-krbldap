@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2006/01/11 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2006/02/06 "Red Hat Linux" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -98,6 +98,12 @@ for use in validating TGTs.
 @MAN_KRB4@using the \fBkrb524d\fR service.  This option modifies the
 @MAN_KRB4@\fBkrb4_convert\fP option.  If disabled, pam_krb5 will only attempt
 @MAN_KRB4@to obtain Kerberos IV credentials using the KDC.
+@MAN_KRB4@
+@MAN_KRB4@.IP krb4_use_as_req=[\fItrue\fR|\fIfalse\fR]
+@MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
+@MAN_KRB4@using the KDC.  This option modifies the
+@MAN_KRB4@\fBkrb4_convert\fP option.  If disabled, pam_krb5 will only attempt
+@MAN_KRB4@to obtain Kerberos IV credentials using the \fBkrb524d\fR service.
 @MAN_KRB4@
 .IP "mappings=[\fIregex1 regex2\fR]"
 specifies that pam_krb5 should derive the user's principal name from the Unix

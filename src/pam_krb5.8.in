@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2005/02/08 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 8 2006/02/06 "Red Hat Linux" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -114,6 +114,12 @@ credentials obtained from KDCs.
 @MAN_KRB4@the krb524 service.  This option modifies the \fBkrb4_convert\fP
 @MAN_KRB4@option.  If disabled, pam_krb5 will only attempt
 @MAN_KRB4@to obtain Kerberos IV credentials using the KDC.
+@MAN_KRB4@
+@MAN_KRB4@.IP krb4_use_as_req
+@MAN_KRB4@tells pam_krb5.so to obtain Kerberos IV credentials for users using
+@MAN_KRB4@the KDC.  This option modifies the \fBkrb4_convert\fP
+@MAN_KRB4@option.  If disabled, pam_krb5 will only attempt
+@MAN_KRB4@to obtain Kerberos IV credentials using the krb524 service.
 @MAN_KRB4@
 .IP minimum_uid=\fI0\fR
 tells pam_krb5.so to ignore authentication attempts by users with
