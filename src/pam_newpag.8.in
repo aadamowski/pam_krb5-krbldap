@@ -11,8 +11,7 @@ pam_newpag \- create a new process authentication group
 .SH DESCRIPTION
 The pam_newpag.so module's sole purpose is to provide a workaround for
 applications which leak AFS credentials into child processes which are created
-on behalf of other users.  (In most cases, running the calling process under
-\fIpagsh\fR is preferable.)  A new PAG is created when the calling application
+on behalf of other users.  A new PAG is created when the calling application
 attempts to either establish new credentials using the \fBpam_setcred\fR
 function or open a session using the \fBpam_open_session\fR function.
 

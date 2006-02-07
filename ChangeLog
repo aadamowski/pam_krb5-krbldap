@@ -1,3 +1,6 @@
+2006-02-07:
+	* src/pam_newpag.8.in: edit
+
 2006-02-06:
 	* src/options.c,src/options.h: break down and add an explicit option
 	for disabling v4-via-as-req attempts
