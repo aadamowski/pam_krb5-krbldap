@@ -1,3 +1,13 @@
+2006-02-21:
+	* src/v4.c, src/v4.h (v4_save): make ccname a const char *.
+	* src/v5.c, src/v5.h (v5_save): make ccname a const char *.
+	* src/stash.c(_pam_krb5_stash_get): when we pick up v5 creds via either
+	"external" or "use_shmem", do 524 conversion if we need to do so.
+	* src/session.c(pam_sm_open_session): also create a v4 tktfile if
+	KRB5CCNAME was already set.
+	* src/afs5log.c, src/minikafs.c: use init_secure_context when possible.
+	* src/Makefile.am: juggle deps so that linking works again.
+
 2006-02-07:
 	* src/pam_newpag.8.in: edit
 
