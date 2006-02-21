@@ -39,6 +39,8 @@ libpam_krb5_la_SOURCES = \
 	storetmp.h \
 	xstr.c \
 	xstr.h \
+	v4.c \
+	v4.h \
 	v5.c \
 	v5.h
 	
@@ -56,8 +58,6 @@ pam_krb5_la_SOURCES = \
 	tokens.h \
 	userinfo.c \
 	userinfo.h \
-	v4.c \
-	v4.h \
 	auth.c \
 	acct.c \
 	password.c \
