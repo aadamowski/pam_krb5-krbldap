@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -548,7 +548,7 @@ v5_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
-	char **ccname)
+	const char **ccname)
 {
 	char tktfile[PATH_MAX + 6];
 	krb5_ccache ccache;

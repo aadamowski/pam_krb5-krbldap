@@ -291,7 +291,7 @@ v4_save(krb5_context ctx,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
 	uid_t uid, gid_t gid,
-	char **ccname)
+	const char **ccname)
 {
 	char name[ANAME_SZ + 1], instance[INST_SZ + 1], realm[REALM_SZ + 1];
 	char tktfile[PATH_MAX];
@@ -543,7 +543,7 @@ v4_save(krb5_context ctx,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
 	uid_t uid, gid_t gid,
-	char **ccname)
+	const char **ccname)
 {
 	if (ccname != NULL) {
 		*ccname = NULL;

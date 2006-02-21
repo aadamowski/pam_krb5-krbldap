@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,7 +59,7 @@ int v5_save(krb5_context ctx,
 	    struct _pam_krb5_stash *stash,
 	    struct _pam_krb5_user_info *userinfo,
 	    struct _pam_krb5_options *options,
-	    char **ccname);
+	    const char **ccname);
 
 void v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	        struct _pam_krb5_options *options);
