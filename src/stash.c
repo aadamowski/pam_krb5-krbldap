@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,6 +62,7 @@
 #include "stash.h"
 #include "storetmp.h"
 #include "userinfo.h"
+#include "v4.h"
 #include "v5.h"
 #include "xstr.h"
 
@@ -619,6 +620,7 @@ struct _pam_krb5_stash *
 _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 		    struct _pam_krb5_options *options)
 {
+	krb5_context ctx;
 	struct _pam_krb5_stash *stash;
 	char *key;
 
@@ -636,6 +638,13 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	    	free(key);
 		if (options->external && (stash->v5attempted == 0)) {
 			_pam_krb5_stash_external_read(pamh, stash, options);
+			if (stash->v5attempted && (stash->v5result == 0)) {
+				if (_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) {
+					v4_get_creds(ctx, pamh, stash,
+						     info, options, NULL, NULL);
+					krb5_free_context(ctx);
+				}
+			}
 		}
 		return stash;
 	}
@@ -670,6 +679,13 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	}
 	if (options->external && (stash->v5attempted == 0)) {
 		_pam_krb5_stash_external_read(pamh, stash, options);
+		if (stash->v5attempted && (stash->v5result == 0)) {
+			if (_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) {
+				v4_get_creds(ctx, pamh, stash, info,
+					     options, NULL, NULL);
+				krb5_free_context(ctx);
+			}
+		}
 	}
 	pam_set_data(pamh, key, stash, _pam_krb5_stash_cleanup);
 
