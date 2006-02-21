@@ -79,6 +79,7 @@
 #endif
 #endif
 
+#include "init.h"
 #include "log.h"
 #include "minikafs.h"
 #include "v5.h"
@@ -382,7 +383,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	}
 
 	if (ctx == NULL) {
-		if (krb5_init_context(&use_ctx) != 0) {
+		if (_pam_krb5_init_ctx(&use_ctx, 0, NULL) != 0) {
 			free(address);
 			return -1;
 		}
@@ -753,7 +754,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	const char *base[] = {"afs", "afsx"};
 
 	if (context == NULL) {
-		if (krb5_init_context(&ctx) != 0) {
+		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != 0) {
 			return -1;
 		}
 	} else {
@@ -983,7 +984,7 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 
 	/* Make sure we have a context. */
 	if (context == NULL) {
-		if (krb5_init_context(&ctx) != 0) {
+		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != 0) {
 			return -1;
 		}
 	} else {

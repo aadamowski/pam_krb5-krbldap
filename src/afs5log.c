@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005 Red Hat, Inc.
+ * Copyright 2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,6 +50,7 @@
 #endif
 #include <security/pam_appl.h>
 
+#include "init.h"
 #include "logstdio.h"
 #include "options.h"
 #include "stash.h"
@@ -81,7 +82,7 @@ main(int argc, char **argv)
 	uid = getuid();
 	memset(&log_options, 0, sizeof(log_options));
 	memset(&ccache, 0, sizeof(ccache));
-	i = krb5_init_context(&ctx);
+	i = _pam_krb5_init_ctx(&ctx, 0, NULL);
 	if (i != 0) {
 		fprintf(stderr, "Error initializing Kerberos: %d\n", i);
 		exit(1);
