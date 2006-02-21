@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,7 +75,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 {
 	PAM_KRB5_MAYBE_CONST char *user;
 	char envstr[PATH_MAX + 20];
-	char *ccname;
+	const char *ccname;
 	krb5_context ctx;
 	struct _pam_krb5_options *options;
 	struct _pam_krb5_user_info *userinfo;
@@ -279,6 +279,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 #ifdef USE_KRB4
+	/* Keep track of where the v5 ccache is. */
+	if ((ccname == NULL) || (strlen(ccname) == 0)) {
+		ccname = pam_getenv(pamh, "KRB5CCNAME");
+	}
+	/* Only bother to create a v4 tktfile if there's a v5 ccache. */
 	if ((i == PAM_SUCCESS) && (stash->v4present) &&
 	    (ccname != NULL) && (strlen(ccname) > 0)) {
 		if ((pam_getenv(pamh, "KRBTKFILE") != NULL) &&
