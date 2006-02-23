@@ -1,3 +1,7 @@
+2006-02-23:
+	* src/stash.c(_pam_krb5_stash_get): skip v4 creds setup when v4 isn't
+	enabled.
+
 2006-02-21:
 	* src/v4.c, src/v4.h (v4_save): make ccname a const char *.
 	* src/v5.c, src/v5.h (v5_save): make ccname a const char *.

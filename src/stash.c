@@ -639,7 +639,8 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 		if (options->external && (stash->v5attempted == 0)) {
 			_pam_krb5_stash_external_read(pamh, stash, options);
 			if (stash->v5attempted && (stash->v5result == 0)) {
-				if (_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) {
+				if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&
+				    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 					v4_get_creds(ctx, pamh, stash,
 						     info, options, NULL, NULL);
 					krb5_free_context(ctx);
@@ -680,7 +681,8 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	if (options->external && (stash->v5attempted == 0)) {
 		_pam_krb5_stash_external_read(pamh, stash, options);
 		if (stash->v5attempted && (stash->v5result == 0)) {
-			if (_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) {
+			if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&
+			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 				v4_get_creds(ctx, pamh, stash, info,
 					     options, NULL, NULL);
 				krb5_free_context(ctx);
