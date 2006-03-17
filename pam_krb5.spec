@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 2.2.7
-Release: 1
+Release: 2
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -29,7 +29,7 @@ ln -s pam_krb5.so $RPM_BUILD_ROOT/%{_lib}/security/pam_krb5afs.so
 rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 
 # Make the paths jive to avoid conflicts on multilib systems.
-sed -i -e 's,/lib/,/\$LIB/,g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
+sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
@@ -47,6 +47,12 @@ sed -i -e 's,/lib/,/\$LIB/,g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Fri Mar 10 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.7-2
+- fixup man page conflicts in %%install
+
+* Wed Mar  8 2006 Bill Nottingham <notting@redhat.com> - 2.2.6-2.2
+- don't use paths in man pages - avoids multilib conflicts
+
 * Tue Feb 21 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.7-1
 - add v4 credential conversion for "use_shmem" and "external" cases (though
   it should be redundant with "use_shmem") (#182239)
