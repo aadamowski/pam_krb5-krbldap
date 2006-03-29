@@ -48,8 +48,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 # $Id$
 %changelog
 * Wed Mar 29 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.8-1
+- don't try to validate creds in a password-changing situation, because the
+  attempt will always fail unless the matching key is in the keytab, which
+  should never be the case for the password-changing service (#187303, rbasch)
 - if v4 has been disabled completely, go ahead and try to set 2b tokens
-  because we're going to have to end up doing that anyway (#182378)
+  because we're going to end up having to do that anyway (#182378)
 
 * Fri Mar 10 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.7-2
 - fixup man page conflicts in %%install

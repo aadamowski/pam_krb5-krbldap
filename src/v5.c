@@ -472,8 +472,10 @@ v5_get_creds(krb5_context ctx,
 	/* Interpret the return code. */
 	switch (i) {
 	case 0:
-		/* Flat-out success.  Validate the TGT if we can. */
-		if (options->validate == 1) {
+		/* Flat-out success.  Validate the TGT if it's actually a TGT,
+		 * and if we can. */
+		if ((options->validate == 1) &&
+		    (strcmp(service, KRB5_TGS_NAME) == 0)) {
 			if (options->debug) {
 				debug("validating credentials");
 			}

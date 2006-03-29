@@ -1,8 +1,12 @@
 2006-02-29:
+	* src/v5.c(v5_get_creds): don't try to validate creds which aren't
+	TGTs, because the attempt will always fail unless the matching key
+	is in the keytab, which should never be the case for the
+	password-changing service (#187303, rbasch)
 	* src/tokens.c(tokens_obtain): if v4 has been disabled completely,
-	go ahead and try to set 2b tokens because we're going to have to end
-	up doing that anyway (#182378).  If we have a hint principal, note it
-	in debug output.
+	go ahead and try to set 2b tokens because we're going to end up having
+	to do that anyway (#182378).  If we have a hint principal, note it in
+	debug output.
 	* src/minikafs.c(minikafs_5log_with_principal): if we read a client
 	principal from the ccache, unparse it and include it in debug messages.
 	If we fail to obtain creds from the KDC, note why we failed.
