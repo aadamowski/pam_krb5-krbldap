@@ -1,3 +1,5 @@
+- 2.2.8: * skip attempts to set non-"2b" tokens when use of v4 credentials
+           has been completely disabled
 - 2.2.7: * do 524 conversion for the "external" cases, too
 - 2.2.6: * add "krb4_use_as_req" to completely disallow any attempts to get
            v4 credentials (along with "krb4_convert_524", which was already
