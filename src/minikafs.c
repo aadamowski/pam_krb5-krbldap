@@ -657,20 +657,34 @@ minikafs_5log_with_principal(krb5_context ctx,
 {
 	krb5_principal server, client;
 	krb5_creds mcreds, creds, *new_creds;
+	char *unparsed_client;
 	int etypes[] = {
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD4,
 		ENCTYPE_DES_CBC_MD5,
 	};
 	unsigned int i;
+	int tmp;
 
 	memset(&client, 0, sizeof(client));
 	memset(&server, 0, sizeof(server));
 
 	if (krb5_cc_get_principal(ctx, ccache, &client) != 0) {
+		if (options->debug) {
+			debug("error determining default principal name "
+			      "for ccache");
+		}
+		return -1;
+	}
+	unparsed_client = NULL;
+	if (krb5_unparse_name(ctx, client, &unparsed_client) != 0) {
+		warn("error unparsing client principal name from ccache");
+		krb5_free_principal(ctx, client);
 		return -1;
 	}
 	if (krb5_parse_name(ctx, principal, &server) != 0) {
+		warn("error parsing principal name '%s'", principal);
+		v5_free_unparsed_name(ctx, unparsed_client);
 		krb5_free_principal(ctx, client);
 		return -1;
 	}
@@ -687,6 +701,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 			if (try_v5_2b &&
 			    (minikafs_5settoken(cell, &creds, uid) == 0)) {
 				krb5_free_cred_contents(ctx, &creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
@@ -695,6 +710,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 			    minikafs_5convert_and_log(ctx, options, cell,
 						      &creds, uid) == 0) {
 				krb5_free_cred_contents(ctx, &creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
@@ -710,11 +726,13 @@ minikafs_5log_with_principal(krb5_context ctx,
 		mcreds.server = server;
 		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
 		new_creds = NULL;
-		if (krb5_get_credentials(ctx, 0, ccache,
-					 &mcreds, &new_creds) == 0) {
+		tmp = krb5_get_credentials(ctx, 0, ccache,
+					   &mcreds, &new_creds);
+		if (tmp == 0) {
 			if (try_v5_2b &&
 			    (minikafs_5settoken(cell, new_creds, uid) == 0)) {
 				krb5_free_creds(ctx, new_creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
@@ -723,14 +741,23 @@ minikafs_5log_with_principal(krb5_context ctx,
 			    minikafs_5convert_and_log(ctx, options, cell,
 						      new_creds, uid) == 0) {
 				krb5_free_creds(ctx, new_creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
 			}
 			krb5_free_creds(ctx, new_creds);
+		} else {
+			if (options->debug) {
+				debug("error obtaining credentials for '%s'"
+				      "(enctype=%d) on behalf of '%s': %s",
+				      principal, etypes[i],
+				      unparsed_client, error_message(tmp));
+			}
 		}
 	}
 
+	v5_free_unparsed_name(ctx, unparsed_client);
 	krb5_free_principal(ctx, client);
 	krb5_free_principal(ctx, server);
 
@@ -776,7 +803,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	/* If we were given a principal name, try it. */
 	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
 		if (options->debug) {
-			debug("attempting to obtain tokens for \"%s\" (\"%s\")",
+			debug("attempting to obtain tokens for \"%s\" "
+			      "(hint \"%s\")",
 			      cell, hint_principal);
 		}
 		ret = minikafs_5log_with_principal(ctx, options, use_ccache,

@@ -94,7 +94,7 @@ tokens_obtain(krb5_context context,
 	      struct _pam_krb5_options *options,
 	      struct _pam_krb5_user_info *info, int newpag)
 {
-	int i, ret;
+	int i, ret, use_2b;
 	char localcell[LINE_MAX], homecell[LINE_MAX], homedir[LINE_MAX],
 	     lnk[LINE_MAX];
 	struct stat st;
@@ -126,6 +126,14 @@ tokens_obtain(krb5_context context,
 		stash->afspag = 1;
 	}
 
+	/* If options say we should neither use the 524 service nor contact the
+	 * KDC to get v4 creds, then we need to try to use 2b-style tokens,
+	 * because we'll never get v4-formatted credentials for use with AFS. */
+	use_2b = (!options->v4_use_524) && (!options->v4_use_as_req);
+#ifndef USE_KRB4
+	use_2b = 1;
+#endif
+
 	/* Initialize the ccache. */
 	memset(&ccache, 0, sizeof(ccache));
 	if (stash && (stash->v5file != NULL) && (strlen(stash->v5file) > 0)) {
@@ -147,7 +155,7 @@ tokens_obtain(krb5_context context,
 			      localcell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   localcell, NULL, info->uid, 0);
+				   localcell, NULL, info->uid, use_2b);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -196,7 +204,7 @@ tokens_obtain(krb5_context context,
 			debug("obtaining tokens for home cell '%s'", homecell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   homecell, NULL, info->uid, 0);
+				   homecell, NULL, info->uid, use_2b);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -224,13 +232,19 @@ tokens_obtain(krb5_context context,
 	/* Iterate through the list of other cells. */
 	for (i = 0; i < options->n_afs_cells; i++) {
 		if (options->debug) {
-			debug("obtaining tokens for '%s'",
-			      options->afs_cells[i].cell);
+			if (options->afs_cells[i].principal_name != NULL) {
+				debug("obtaining tokens for '%s' ('%s')",
+				      options->afs_cells[i].cell,
+				      options->afs_cells[i].principal_name);
+			} else {
+				debug("obtaining tokens for '%s'",
+				      options->afs_cells[i].cell);
+			}
 		}
 		ret = minikafs_log(context, ccache, options,
 				   options->afs_cells[i].cell,
 				   options->afs_cells[i].principal_name,
-				   info->uid, 0);
+				   info->uid, use_2b);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "

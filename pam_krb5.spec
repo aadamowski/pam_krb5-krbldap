@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.7
-Release: 2
+Version: 2.2.8
+Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -47,6 +47,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Wed Mar 29 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.8-1
+- if v4 has been disabled completely, go ahead and try to set 2b tokens
+  because we're going to have to end up doing that anyway (#182378)
+
 * Fri Mar 10 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.7-2
 - fixup man page conflicts in %%install
 

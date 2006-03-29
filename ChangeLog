@@ -1,3 +1,12 @@
+2006-02-29:
+	* src/tokens.c(tokens_obtain): if v4 has been disabled completely,
+	go ahead and try to set 2b tokens because we're going to have to end
+	up doing that anyway (#182378).  If we have a hint principal, note it
+	in debug output.
+	* src/minikafs.c(minikafs_5log_with_principal): if we read a client
+	principal from the ccache, unparse it and include it in debug messages.
+	If we fail to obtain creds from the KDC, note why we failed.
+
 2006-02-23:
 	* src/stash.c(_pam_krb5_stash_get): skip v4 creds setup when v4 isn't
 	enabled.
