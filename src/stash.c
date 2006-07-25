@@ -523,6 +523,9 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	char *unparsed;
 
 	/* Read a TGT from $KRB5CCNAME. */
+	if (options->debug) {
+		debug("checking for externally-obtained v5 credentials");
+	}
 	ccname = pam_getenv(pamh, "KRB5CCNAME");
 	if ((ccname != NULL) && (strlen(ccname) > 0)) {
 		if (options->debug) {
@@ -629,12 +632,19 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		if (ctx != stash->v5ctx) {
 			krb5_free_context(ctx);
 		}
+	} else {
+		if (options->debug) {
+			debug("KRB5CCNAME is not set, none found");
+		}
 	}
 
 #if 0
 #ifdef USE_KRB4
 	const char *v4tktname; /* FIXME: not available before C99! */
 	/* Read a TGT from $KRBTKFILE. */
+	if (options->debug) {
+		debug("checking for externally-obtained v4 credentials");
+	}
 	v4tktname = pam_getenv(pamh, "KRBTKFILE");
 	if ((v4tktname != NULL) && (strlen(v4tktname) > 0) &&
 	    (stash->v4present == 0)) {
@@ -654,6 +664,10 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 				}
 			}
 			tf_close();
+		}
+	} else {
+		if (options->debug) {
+			debug("KRBTKFILE is not set, none found");
 		}
 	}
 #endif

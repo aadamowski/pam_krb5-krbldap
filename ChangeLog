@@ -1,4 +1,6 @@
 2006-07-25:
+	* src/stash.c(_pam_krb5_stash_external_read): note when we try to
+	pick up external creds, and when we fail to do so.
 	* src/storetmp.c(_pam_krb5_storetmp_data): save and set signal handlers
 	before we fork().  Go back to allowing setuid/setgid to fail, but only
 	after we attempt to drop setuid/setgid status (which gets to fail, too,
