@@ -130,6 +130,22 @@ sly_v5(krb5_context ctx, const char *v5ccname,
 	return PAM_SUCCESS;
 }
 
+/* Inexpensive checks. */
+int
+_pam_krb5_sly_looks_unsafe(void)
+{
+	if (getenv("SUDO_COMMAND") != NULL) {
+		return 1;
+	}
+	if (getuid() != geteuid()) {
+		return 2;
+	}
+	if (getgid() != getegid()) {
+		return 3;
+	}
+	return 0;
+}
+
 int
 _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 			    int argc, PAM_KRB5_MAYBE_CONST char **argv)
@@ -144,13 +160,26 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	char *v5ccname, *v4tktfile;
 
 	/* Inexpensive checks. */
-	if (getenv("SUDO_COMMAND") != NULL) {
+	switch (_pam_krb5_sly_looks_unsafe()) {
+	case 0:
+		/* nothing: everything's okay */
+		break;
+	case 1:
 		warn("won't refresh credentials while running under sudo");
 		return PAM_SERVICE_ERR;
-	}
-	if ((getuid() != geteuid()) || (getgid() != getegid())) {
-		warn("won't refresh credentials while running setuid/setgid");
+		break;
+	case 2:
+		warn("won't refresh credentials while running setuid");
 		return PAM_SERVICE_ERR;
+		break;
+	case 3:
+		warn("won't refresh credentials while running setgid");
+		return PAM_SERVICE_ERR;
+		break;
+	default:
+		warn("not safe to refresh credentials");
+		return PAM_SERVICE_ERR;
+		break;
 	}
 
 	/* Initialize Kerberos. */

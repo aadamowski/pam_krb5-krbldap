@@ -33,7 +33,14 @@
 #ifndef pam_krb5_sly_h
 #define pam_krb5_sly_h
 
+/* Refresh credentials if it's sane to do so. */
 int _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				int argc, PAM_KRB5_MAYBE_CONST char **argv);
+/* Check if it's sane to refresh credentials. Return zero *only* if it's safe,
+ * else a different code for each reason why it isn't:
+ * 1: SUDO_COMMAND is set (running under sudo)
+ * 2: setuid
+ * 3: setgid */
+int _pam_krb5_sly_looks_unsafe(void);
 
 #endif

@@ -414,7 +414,12 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 		return pam_sm_open_session(pamh, flags, argc, argv);
 	}
 	if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED)) {
-		return _pam_krb5_sly_maybe_refresh(pamh, flags, argc, argv);
+		if (_pam_krb5_sly_looks_unsafe() == 0) {
+			return _pam_krb5_sly_maybe_refresh(pamh, flags,
+							   argc, argv);
+		} else {
+			return PAM_IGNORE;
+		}
 	}
 	if (flags & PAM_DELETE_CRED) {
 		return pam_sm_close_session(pamh, flags, argc, argv);
