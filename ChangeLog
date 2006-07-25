@@ -1,3 +1,23 @@
+2006-07-25:
+	* configure.ac: look for krb5/krb5.h in preference to krb5.h (new in
+	MIT Kerberos 1.5)
+	* src/stash.c(_pam_krb5_stash_external_read): if the default principal
+	in the ccache doesn't match the userinfo structure, update the
+	userinfo structure, based on patch from Jan Iven (#182239)
+	* src/v4.c(v4save): always use the name of the v5 principal when saving
+	credentials, especially for the "external" case where it may not be the
+	value we originally guessed.
+	* src/pam_krb5.5.in: note that the krb4_convert_524 and krb4_use_as_req
+	options don't affect each other.
+	* src/prompter.c(_pam_krb5_prompter): be more careful about other
+	ways which our prompting callback can try to break us (noted by Michael
+	Calmer).
+
+2006-04-21:
+	* src/prompter.c(_pam_krb5_prompter): check for dumb converation
+	functions which return success but set the response to NULL.  From
+	Michael Calmer.
+
 2006-02-29:
 	* src/v5.c(v5_get_creds): don't try to validate creds which aren't
 	TGTs, because the attempt will always fail unless the matching key

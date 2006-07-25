@@ -511,12 +511,14 @@ _pam_krb5_stash_shm_write(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
  * exists, incorporate contents of the named ccache/tktfiles into the stash. */
 static void
 _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
+			      struct _pam_krb5_user_info *userinfo,
 			      struct _pam_krb5_options *options)
 {
 	krb5_context ctx;
 	krb5_ccache ccache;
+	krb5_principal princ;
 	krb5_cc_cursor cursor;
-	int i;
+	int i, read_default_principal;
 	const char *ccname;
 	char *unparsed;
 
@@ -535,12 +537,59 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			}
 		}
 		ccache = NULL;
+		read_default_principal = 0;
 		i = krb5_cc_resolve(ctx, ccname, &ccache);
 		if (i != 0) {
 			warn("error opening ccache \"%s\", ignoring", ccname);
 		} else {
+			princ = NULL;
+			/* Read the name of the default principal from the
+			 * ccache. */
+			if (krb5_cc_get_principal(ctx, ccache, &princ) != 0) {
+				warn("error reading ccache's default principal name");
+			} else {
+				read_default_principal++;
+				/* If they're different, update the userinfo
+				 * structure with the new principal name. */
+				if (krb5_principal_compare(ctx, princ,
+							   userinfo->principal_name)) {
+					if (options->debug) {
+						debug("ccache matches current principal");
+					}
+					krb5_free_principal(ctx, princ);
+					princ = NULL;
+				} else {
+					if (options->debug) {
+						debug("ccache is for a different principal, updating");
+					}
+					/* Unparse the name. */
+					unparsed = NULL;
+					if (krb5_unparse_name(ctx, princ, &unparsed) != 0) {
+						warn("error unparsing ccache's default principal name, discarding");
+						krb5_free_principal(ctx, princ);
+						princ = NULL;
+					} else {
+						if (options->debug) {
+							debug("updated user principal from '%s' to '%s'",
+							      userinfo->unparsed_name,
+							      unparsed);
+						}
+						/* Save the unparsed name. */
+						v5_free_unparsed_name(ctx, userinfo->unparsed_name);
+						userinfo->unparsed_name = unparsed;
+						unparsed = NULL;
+						/* Save the principal name. */
+						krb5_free_principal(ctx, userinfo->principal_name);
+						userinfo->principal_name = princ;
+						princ = NULL;
+					}
+				}
+			}
+			/* If we were able to read the default principal, then
+			 * search for a TGT. */
 			cursor = NULL;
-			if (krb5_cc_start_seq_get(ctx, ccache, &cursor) == 0) {
+			if (read_default_principal &&
+			    (krb5_cc_start_seq_get(ctx, ccache, &cursor) == 0)) {
 				memset(&stash->v5creds, 0, sizeof(stash->v5creds));
 				while (krb5_cc_next_cred(ctx, ccache, &cursor,
 							 &stash->v5creds) == 0) {
@@ -551,9 +600,10 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 					if ((i == 0) && (unparsed != NULL)) {
 						i = strcspn(unparsed,
 							    PAM_KRB5_PRINCIPAL_COMPONENT_SEPARATORS);
-						if (strncmp(unparsed,
-							    KRB5_TGS_NAME,
-							    KRB5_TGS_NAME_SIZE) == 0) {
+						if ((i == KRB5_TGS_NAME_SIZE) &&
+						    (strncmp(unparsed,
+							     KRB5_TGS_NAME,
+							     KRB5_TGS_NAME_SIZE) == 0)) {
 							if (options->debug) {
 								debug("using credential for \"%s\" as a v5 TGT", unparsed);
 							}
@@ -637,7 +687,8 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	    (stash != NULL)) {
 	    	free(key);
 		if (options->external && (stash->v5attempted == 0)) {
-			_pam_krb5_stash_external_read(pamh, stash, options);
+			_pam_krb5_stash_external_read(pamh, stash,
+						      info, options);
 			if (stash->v5attempted && (stash->v5result == 0)) {
 				if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&
 				    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
@@ -679,7 +730,7 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 		_pam_krb5_stash_shm_read(pamh, key, stash, options);
 	}
 	if (options->external && (stash->v5attempted == 0)) {
-		_pam_krb5_stash_external_read(pamh, stash, options);
+		_pam_krb5_stash_external_read(pamh, stash, info, options);
 		if (stash->v5attempted && (stash->v5result == 0)) {
 			if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&
 			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {

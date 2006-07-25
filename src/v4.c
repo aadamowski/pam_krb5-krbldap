@@ -306,8 +306,19 @@ v4_save(krb5_context ctx,
 	memset(name, '\0', sizeof(name));
 	memset(instance, '\0', sizeof(instance));
 	memset(realm, '\0', sizeof(realm));
-	i = krb5_524_conv_principal(ctx, userinfo->principal_name,
-				    name, instance, realm);
+	if (stash->v5creds.client != NULL) {
+		/* Use the client principal of the creds we have, which we
+		 * can assume are always correct, even if "external" somehow
+		 * got us to the point where the principal name in "userinfo"
+		 * is incorrect. */
+		i = krb5_524_conv_principal(ctx, stash->v5creds.client,
+					    name, instance, realm);
+	} else {
+		/* Use the parsed principal as a fallback.  We should never
+		 * really get here, but just in case. */
+		i = krb5_524_conv_principal(ctx, userinfo->principal_name,
+					    name, instance, realm);
+	}
 	if (i != 0) {
 		warn("error converting %s to a Kerberos IV principal "
 		     "(shouldn't happen)", userinfo->unparsed_name);
