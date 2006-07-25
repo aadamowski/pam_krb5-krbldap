@@ -127,9 +127,11 @@ KRB4_CPPFLAGS=`echo $KRB4_CFLAGS | sed 's,-[^I][^[:space:]]*,,g'`
 CPPFLAGS="$CPPFLAGS $KRB5_CPPFLAGS $KRB4_CPPFLAGS"
 CFLAGS="$CFLAGS $KRB5_CFLAGS $KRB4_CFLAGS"
 
-AC_CHECK_HEADERS(krb5.h)
+AC_CHECK_HEADERS(krb5.h krb5/krb5.h)
 if test x$ac_cv_header_krb5_h != xyes ; then
-	AC_MSG_ERROR(you must have Kerberos 5 development files to build $PACKAGE)
+	if test x$ac_cv_header_krb5_krb5_h != xyes ; then
+		AC_MSG_ERROR(you must have Kerberos 5 development files to build $PACKAGE)
+	fi
 fi
 if test x$krb4 != xno ; then
 	AC_CHECK_HEADER(krb.h,,[AC_CHECK_HEADER(kerberosIV/krb.h)])
