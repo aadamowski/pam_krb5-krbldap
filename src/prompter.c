@@ -180,10 +180,17 @@ _pam_krb5_prompter(krb5_context context, void *data,
 						 pdata->previous_password)) {
 			continue;
 		}
+		/* If the conversation function failed to read anything. */
 		if (responses[j + headers].resp_retcode != PAM_SUCCESS) {
 			_pam_krb5_maybe_free_responses(responses, num_msgs);
 			return KRB5_LIBOS_CANTREADPWD;
 		}
+		/* Or it claimed it could but didn't. */
+		if (responses[j + headers].resp == NULL) {
+			_pam_krb5_maybe_free_responses(responses, num_msgs);
+			return KRB5_LIBOS_CANTREADPWD;
+		}
+		/* Or it did and we have no space for the answer. */
 		if ((unsigned int)xstrlen(responses[j + headers].resp) >= prompts[i].reply->length) {
 			_pam_krb5_maybe_free_responses(responses, num_msgs);
 			return KRB5_LIBOS_CANTREADPWD;
@@ -197,6 +204,13 @@ _pam_krb5_prompter(krb5_context context, void *data,
 						 pdata->previous_password)) {
 			continue;
 		}
+		/* Double-check for NULL here.  We should have caught it above
+		 * if that was the case, but it doesn't hurt. */
+		if (responses[j + headers].resp == NULL) {
+			_pam_krb5_maybe_free_responses(responses, num_msgs);
+			return KRB5_LIBOS_CANTREADPWD;
+		}
+		/* Save the response text. */
 		strcpy(prompts[i].reply->data, responses[j + headers].resp);
 		prompts[i].reply->length = strlen(responses[j + headers].resp);
 		j++;
