@@ -1,9 +1,13 @@
 2006-07-25:
+	* storetmp.c(_pam_krb5_storetmp_data): save and restore the SIGPIPE
+	handler in case our child exits, drop any setuid/setgid pretense
+	when we're called from a setuid application (#190159, patch by Jon
+	Fautley), bail early if calls to setuid/setgid fail.
 	* configure.ac: look for krb5/krb5.h in preference to krb5.h (new in
 	MIT Kerberos 1.5)
 	* src/stash.c(_pam_krb5_stash_external_read): if the default principal
 	in the ccache doesn't match the userinfo structure, update the
-	userinfo structure, based on patch from Jan Iven (#182239)
+	userinfo structure, based on patch from Jan Iven (#182239,#197660).
 	* src/v4.c(v4save): always use the name of the v5 principal when saving
 	credentials, especially for the "external" case where it may not be the
 	value we originally guessed (#197660).

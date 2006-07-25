@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -128,6 +128,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 	char uidstr[100], gidstr[100];
 	pid_t child;
 	void (*saved_sigchld_handler)(int);
+	void (*saved_sigpipe_handler)(int);
 	for (i = 0; i < 3; i++) {
 		dummy[i] = open("/dev/null", O_RDONLY);
 	}
@@ -176,11 +177,19 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		if (uid == 0) {
 			setgroups(0, NULL);
 		}
+		/* Set the effective UID to match our real UID before calling
+		 * the helper.  If *we* were called from a setuid application,
+		 * then we need to do this to keep the helper from also running
+		 * with differing ruid and euid values. */
 		if (gid != getgid()) {
-			setregid(gid, gid);
+			if (setgid(gid) == -1) {
+				_exit(-1);
+			}
 		}
 		if (uid != getuid()) {
-			setreuid(uid, uid);
+			if (setuid(uid) == -1) {
+				_exit(-1);
+			}
 		}
 		execl(PKGSECURITYDIR "/pam_krb5_storetmp", "pam_krb5_storetmp",
 		      pattern, uidstr, gidstr, NULL);
@@ -188,6 +197,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		break;
 	default:
 		saved_sigchld_handler = signal(SIGCHLD, SIG_DFL);
+		saved_sigpipe_handler = signal(SIGPIPE, SIG_DFL);
 		for (i = 0; i < 3; i++) {
 			close(dummy[i]);
 		}
@@ -207,6 +217,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		close(outpipe[0]);
 		waitpid(child, NULL, 0);
 		signal(SIGCHLD, saved_sigchld_handler);
+		signal(SIGPIPE, saved_sigpipe_handler);
 		if (strlen(outfile) >= strlen(pattern)) {
 			return 0;
 		} else {
