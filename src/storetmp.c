@@ -127,8 +127,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 	int inpipe[2], outpipe[2], dummy[3];
 	char uidstr[100], gidstr[100];
 	pid_t child;
-	void (*saved_sigchld_handler)(int);
-	void (*saved_sigpipe_handler)(int);
+	struct sigaction saved_sigchld_handler, saved_sigpipe_handler;
+	struct sigaction ignore_handler, default_handler;
 	for (i = 0; i < 3; i++) {
 		dummy[i] = open("/dev/null", O_RDONLY);
 	}
@@ -146,8 +146,31 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		close(inpipe[1]);
 		return -1;
 	}
+	/* Set signal handlers here.  We used to do it later, but that turns
+	 * out to be a race if the child decides to exit immediately. */
+	memset(&default_handler, 0, sizeof(default_handler));
+	default_handler.sa_handler = SIG_DFL;
+	if (sigaction(SIGCHLD, &saved_sigchld_handler, &default_handler) != 0) {
+		close(inpipe[0]);
+		close(inpipe[1]);
+		close(outpipe[0]);
+		close(outpipe[1]);
+		return -1;
+	}
+	memset(&ignore_handler, 0, sizeof(ignore_handler));
+	ignore_handler.sa_handler = SIG_IGN;
+	if (sigaction(SIGPIPE, &saved_sigpipe_handler, &ignore_handler) != 0) {
+		sigaction(SIGCHLD, NULL, &saved_sigchld_handler);
+		close(inpipe[0]);
+		close(inpipe[1]);
+		close(outpipe[0]);
+		close(outpipe[1]);
+		return -1;
+	}
 	switch (child = fork()) {
 	case -1:
+		sigaction(SIGCHLD, NULL, &saved_sigchld_handler);
+		sigaction(SIGPIPE, NULL, &saved_sigpipe_handler);
 		for (i = 0; i < 3; i++) {
 			close(dummy[i]);
 		}
@@ -177,27 +200,31 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		if (uid == 0) {
 			setgroups(0, NULL);
 		}
-		/* Set the effective UID to match our real UID before calling
+		/* Set the real UID to match our effective UID before calling
 		 * the helper.  If *we* were called from a setuid application,
 		 * then we need to do this to keep the helper from also running
-		 * with differing ruid and euid values. */
-		if (gid != getgid()) {
-			if (setgid(gid) == -1) {
-				_exit(-1);
-			}
+		 * with differing ruid and euid values.  This is allowed to
+		 * fail, at the cost of the helper not being useful to us. */
+		if (getgid() != getegid()) {
+			setregid(getegid(), getegid());
 		}
-		if (uid != getuid()) {
-			if (setuid(uid) == -1) {
-				_exit(-1);
-			}
+		if (getuid() != geteuid()) {
+			setreuid(geteuid(), geteuid());
+		}
+		/* Now, attempt to assume the desired uid/gid pair.  Note that
+		 * if we're not root, this is allowed to fail. */
+		if (gid != getegid()) {
+			setregid(gid, gid);
+		}
+		if (uid != geteuid()) {
+			setreuid(uid, uid);
 		}
 		execl(PKGSECURITYDIR "/pam_krb5_storetmp", "pam_krb5_storetmp",
 		      pattern, uidstr, gidstr, NULL);
 		_exit(-1);
 		break;
 	default:
-		saved_sigchld_handler = signal(SIGCHLD, SIG_DFL);
-		saved_sigpipe_handler = signal(SIGPIPE, SIG_DFL);
+		/* parent */
 		for (i = 0; i < 3; i++) {
 			close(dummy[i]);
 		}
@@ -216,8 +243,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		}
 		close(outpipe[0]);
 		waitpid(child, NULL, 0);
-		signal(SIGCHLD, saved_sigchld_handler);
-		signal(SIGPIPE, saved_sigpipe_handler);
+		sigaction(SIGCHLD, NULL, &saved_sigchld_handler);
+		sigaction(SIGPIPE, NULL, &saved_sigpipe_handler);
 		if (strlen(outfile) >= strlen(pattern)) {
 			return 0;
 		} else {

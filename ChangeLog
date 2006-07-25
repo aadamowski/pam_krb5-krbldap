@@ -1,4 +1,8 @@
 2006-07-25:
+	* src/storetmp.c(_pam_krb5_storetmp_data): save and set signal handlers
+	before we fork().  Go back to allowing setuid/setgid to fail, but only
+	after we attempt to drop setuid/setgid status (which gets to fail, too,
+	but renders the helper unuseful).
 	* src/sly.c,src/sly.h(_pam_krb5_sly_looks_unsafe,
 	_pam_krb5_sly_maybe_refresh): move detection of whether or not it
 	looks safe into another function.
