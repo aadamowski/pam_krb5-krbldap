@@ -6,7 +6,7 @@
 	userinfo structure, based on patch from Jan Iven (#182239)
 	* src/v4.c(v4save): always use the name of the v5 principal when saving
 	credentials, especially for the "external" case where it may not be the
-	value we originally guessed.
+	value we originally guessed (#197660).
 	* src/pam_krb5.5.in: note that the krb4_convert_524 and krb4_use_as_req
 	options don't affect each other.
 	* src/prompter.c(_pam_krb5_prompter): be more careful about other
