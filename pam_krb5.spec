@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.8
+Version: 2.2.9
 Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
@@ -47,6 +47,14 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Tue Jul 25 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.9-1
+- return PAM_IGNORE instead of PAM_SERVICE_ERR when we're called in
+  an unsafe situation and told to refresh credentials (#197428)
+- drop from setuid to "normal" before calling our storetmp helper, so that
+  it doesn't freak out except when *it* is setuid (#190159)
+- fix handling of "external" cases where the forwarded creds don't belong to
+  the principal name we guessed for the user (#182239,#197660)
+
 * Wed Mar 29 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.8-1
 - don't try to validate creds in a password-changing situation, because the
   attempt will always fail unless the matching key is in the keytab, which

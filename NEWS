@@ -1,3 +1,8 @@
+- 2.2.9: * return PAM_IGNORE instead of PAM_SERVICE_ERR when we're called in
+	   an unsafe situation and told to refresh credentials
+	 * fix a race condition in how the ccache creation helper is invoked
+	 * properly handle "external" cases where the forwarded creds belong
+	   to someone other than the principal name we guessed for the user
 - 2.2.8: * skip attempts to set non-"2b" tokens when use of v4 credentials
            has been completely disabled
 - 2.2.7: * do 524 conversion for the "external" cases, too
