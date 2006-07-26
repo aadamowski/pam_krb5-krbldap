@@ -772,7 +772,13 @@ _pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
 			return;
 		}
 		strcpy(filename, *stored_file);
-		strcpy(filename + length, "_XXXXXX");
+		if (length >= 7) {
+			/* overwrite */
+			strcpy(filename + length - 7, "_XXXXXX");
+		} else {
+			/* append */
+			strcpy(filename + length, "_XXXXXX");
+		}
 		if (_pam_krb5_storetmp_file(*stored_file,
 					    filename,
 					    copy, copy_len,
