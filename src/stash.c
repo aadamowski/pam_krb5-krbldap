@@ -766,20 +766,22 @@ _pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
 	char *filename;
 	size_t length;
 	if (*stored_file != NULL) {
-		filename = strdup(*stored_file);
-		length = strlen(filename);
-		if (length > 6) {
-			strcpy(filename + length - 6, "XXXXXX");
-			if (_pam_krb5_storetmp_file(*stored_file,
-						    filename,
-						    copy, copy_len,
-						    uid, gid,
-						    filename,
-						    length + 1) == 0) {
-				unlink(*stored_file);
-				xstrfree(*stored_file);
-				*stored_file = filename;
-			}
+		length = strlen(*stored_file);
+		filename = malloc(length + 8);
+		if (filename == NULL) {
+			return;
+		}
+		strcpy(filename, *stored_file);
+		strcpy(filename + length, "_XXXXXX");
+		if (_pam_krb5_storetmp_file(*stored_file,
+					    filename,
+					    copy, copy_len,
+					    uid, gid,
+					    filename,
+					    length + 8) == 0) {
+			unlink(*stored_file);
+			xstrfree(*stored_file);
+			*stored_file = filename;
 		}
 		if (*stored_file != filename) {
 			free(filename);
