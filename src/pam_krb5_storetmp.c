@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Red Hat, Inc.
+ * Copyright 2004,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,7 +93,11 @@ main(int argc, const char **argv)
 
 	/* Parse the UID, if given. */
 	if (argc > 2) {
+#ifdef HAVE_STRTOLL
 		uid = strtoll(argv[2], &p, 0);
+#else
+		uid = strtol(argv[2], &p, 0);
+#endif
 		if ((p == NULL) || (*p != '\0')) {
 			return 5;
 		}
@@ -103,7 +107,11 @@ main(int argc, const char **argv)
 
 	/* Parse the GID, if given. */
 	if (argc > 3) {
+#ifdef HAVE_STRTOLL
 		gid = strtoll(argv[3], &p, 0);
+#else
+		gid = strtol(argv[3], &p, 0);
+#endif
 		if ((p == NULL) || (*p != '\0')) {
 			return 6;
 		}
