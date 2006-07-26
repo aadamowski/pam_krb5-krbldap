@@ -1,4 +1,5 @@
 2006-07-26:
+	* src/options.c(option_i): check for strtoll()/long long.
 	* configure.ac: check for strtoll().
 	* src/v4.c(v4_save): actually set the permissions on the new file to
 	the requested values.  Note in the warning why we fail to open a

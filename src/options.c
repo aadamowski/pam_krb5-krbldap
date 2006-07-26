@@ -133,16 +133,28 @@ free_s(char *s)
 {
 	xstrfree(s);
 }
-static int
+#ifdef HAVE_LONG_LONG
+static long long
+#else
+static long
+#endif
 option_i(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	 krb5_context ctx, const char *realm, const char *s)
 {
 	char *tmp, *p;
+#ifdef HAVE_LONG_LONG
+	long long i;
+#else
 	long i;
+#endif
 
 	tmp = option_s(pamh, argc, argv, ctx, realm, s, "");
 
+#ifdef HAVE_STRTOLL
+	i = strtoll(tmp, &p, 10);
+#else
 	i = strtol(tmp, &p, 10);
+#endif
 	if ((p == NULL) || (p == tmp) || (*p != '\0')) {
 		i = -1;
 	}
