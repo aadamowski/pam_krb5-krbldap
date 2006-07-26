@@ -1,4 +1,6 @@
 2006-07-26:
+	* src/auth.c(pam_sm_authenticate): always specify the current real
+	UID and GID when creating temporary v4 credential files.
 	* src/stash.c(_pam_krb5_stash_clone): build the new ccache name by
 	appending the mkstemp template instead of assuming the previous file
 	ended with one
