@@ -7,6 +7,8 @@ AC_PROG_LIBTOOL
 
 AM_MAINTAINER_MODE
 
+AC_CHECK_TYPES([long long])
+
 AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
 if test $KRB5_CONFIG = : ; then
 	AC_MSG_ERROR(krb5-config not found)

@@ -150,7 +150,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 	 * out to be a race if the child decides to exit immediately. */
 	memset(&default_handler, 0, sizeof(default_handler));
 	default_handler.sa_handler = SIG_DFL;
-	if (sigaction(SIGCHLD, &saved_sigchld_handler, &default_handler) != 0) {
+	if (sigaction(SIGCHLD, &default_handler, &saved_sigchld_handler) != 0) {
 		close(inpipe[0]);
 		close(inpipe[1]);
 		close(outpipe[0]);
@@ -159,8 +159,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 	}
 	memset(&ignore_handler, 0, sizeof(ignore_handler));
 	ignore_handler.sa_handler = SIG_IGN;
-	if (sigaction(SIGPIPE, &saved_sigpipe_handler, &ignore_handler) != 0) {
-		sigaction(SIGCHLD, NULL, &saved_sigchld_handler);
+	if (sigaction(SIGPIPE, &ignore_handler, &saved_sigpipe_handler) != 0) {
+		sigaction(SIGCHLD, &saved_sigchld_handler, NULL);
 		close(inpipe[0]);
 		close(inpipe[1]);
 		close(outpipe[0]);
@@ -169,8 +169,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 	}
 	switch (child = fork()) {
 	case -1:
-		sigaction(SIGCHLD, NULL, &saved_sigchld_handler);
-		sigaction(SIGPIPE, NULL, &saved_sigpipe_handler);
+		sigaction(SIGCHLD, &saved_sigchld_handler, NULL);
+		sigaction(SIGPIPE, &saved_sigpipe_handler, NULL);
 		for (i = 0; i < 3; i++) {
 			close(dummy[i]);
 		}
@@ -191,25 +191,21 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		}
 		dup2(outpipe[1], STDOUT_FILENO);
 		dup2(inpipe[0], STDIN_FILENO);
-		snprintf(uidstr, sizeof(uidstr), "%llu", (long long unsigned) uid);
-		snprintf(gidstr, sizeof(gidstr), "%llu", (long long unsigned) gid);
+#ifdef HAVE_LONG_LONG
+		snprintf(uidstr, sizeof(uidstr),
+			 "%llu", (long long unsigned) uid);
+		snprintf(gidstr, sizeof(gidstr),
+			 "%llu", (long long unsigned) gid);
+#else
+		snprintf(uidstr, sizeof(uidstr), "%lu", (long unsigned) uid);
+		snprintf(gidstr, sizeof(gidstr), "%lu", (long unsigned) gid);
+#endif
 		if ((strlen(uidstr) > sizeof(uidstr) - 2) ||
 		    (strlen(gidstr) > sizeof(gidstr) - 2)) {
 			_exit(-1);
 		}
 		if (uid == 0) {
 			setgroups(0, NULL);
-		}
-		/* Set the real UID to match our effective UID before calling
-		 * the helper.  If *we* were called from a setuid application,
-		 * then we need to do this to keep the helper from also running
-		 * with differing ruid and euid values.  This is allowed to
-		 * fail, at the cost of the helper not being useful to us. */
-		if (getgid() != getegid()) {
-			setregid(getegid(), getegid());
-		}
-		if (getuid() != geteuid()) {
-			setreuid(geteuid(), geteuid());
 		}
 		/* Now, attempt to assume the desired uid/gid pair.  Note that
 		 * if we're not root, this is allowed to fail. */
@@ -243,8 +239,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		}
 		close(outpipe[0]);
 		waitpid(child, NULL, 0);
-		sigaction(SIGCHLD, NULL, &saved_sigchld_handler);
-		sigaction(SIGPIPE, NULL, &saved_sigpipe_handler);
+		sigaction(SIGCHLD, &saved_sigchld_handler, NULL);
+		sigaction(SIGPIPE, &saved_sigpipe_handler, NULL);
 		if (strlen(outfile) >= strlen(pattern)) {
 			return 0;
 		} else {

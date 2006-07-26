@@ -2,6 +2,10 @@
 	* src/stash.c(_pam_krb5_stash_clone): build the new ccache name by
 	appending the mkstemp template instead of assuming the previous file
 	ended with one
+	* configure.ac: check for "long long" explicitly
+	* src/storetmp.c(_pam_krb5_storetmp_data): use a long long print
+	specifier only if we actually have a "long long" type.  Fix incorrect
+	usage of sigaction.
 
 2006-07-25:
 	* src/stash.c(_pam_krb5_stash_external_read): note when we try to
