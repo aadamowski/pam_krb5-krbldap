@@ -7,8 +7,6 @@ AC_PROG_LIBTOOL
 
 AM_MAINTAINER_MODE
 
-AC_CHECK_TYPES([long long])
-
 AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
 if test $KRB5_CONFIG = : ; then
 	AC_MSG_ERROR(krb5-config not found)
@@ -119,7 +117,8 @@ if test x$ac_cv_header_security_pam_modules_h != xyes ; then
 	AC_MSG_ERROR([you must have PAM development files to build $PACKAGE])
 fi
 AC_CHECK_HEADERS(security/pam_misc.h)
-AC_CHECK_FUNCS(getpwnam_r __posix_getpwnam_r)
+AC_CHECK_TYPES([long long])
+AC_CHECK_FUNCS(getpwnam_r __posix_getpwnam_r strtoll)
 AC_CHECK_FUNC(crypt,,[AC_CHECK_LIB(crypt,crypt)])
 
 # We need GNU sed for this to work, but okay.

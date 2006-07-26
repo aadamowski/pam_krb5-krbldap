@@ -1,4 +1,5 @@
 2006-07-26:
+	* configure.ac: check for strtoll().
 	* src/v4.c(v4_save): actually set the permissions on the new file to
 	the requested values.  Note in the warning why we fail to open a
 	file, which is returned as the result and not in errno.
