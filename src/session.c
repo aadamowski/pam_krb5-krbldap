@@ -243,7 +243,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		userinfo->gid = getgid();
 
 		v5_save(ctx, stash, userinfo, options, NULL);
-		v4_save(ctx, stash, userinfo, options, -1, -1, NULL);
+		v4_save(ctx, stash, userinfo, options,
+			getuid(), getgid(), NULL);
 		
 		userinfo->uid = uid;
 		userinfo->gid = gid;
@@ -264,7 +265,15 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		ccname = NULL;
 	} else {
 		if (options->debug) {
-			debug("creating v5 ccache for '%s'", user);
+#ifdef HAVE_LONG_LONG
+			debug("creating v5 ccache for '%s', uid=%lld, gid=%lld",
+			      user,
+			      (long long) userinfo->uid,
+			      (long long) userinfo->gid);
+#else
+			debug("creating v5 ccache for '%s', uid=%ld, gid=%ld",
+			      user, (long) userinfo->uid, (long) userinfo->gid);
+#endif
 		}
 		i = v5_save(ctx, stash,  userinfo, options, &ccname);
 		if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
@@ -296,8 +305,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			if (options->debug) {
 				debug("creating v4 ticket file for '%s'", user);
 			}
-			i = v4_save(ctx, stash,  userinfo, options, -1, -1,
-				    &ccname);
+			i = v4_save(ctx, stash,  userinfo, options,
+				    getuid(), getgid(), &ccname);
 			if (i == PAM_SUCCESS) {
 				if (options->debug) {
 					debug("created v4 ticket file '%s' for "
