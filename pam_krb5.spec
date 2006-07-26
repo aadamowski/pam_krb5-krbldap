@@ -55,6 +55,12 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 - fix handling of "external" cases where the forwarded creds don't belong to
   the principal name we guessed for the user (#182239,#197660)
 
+* Mon Jul 17 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.8-1.2
+- rebuild
+
+* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 2.2.8-1.1
+- rebuild
+
 * Wed Mar 29 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.8-1
 - don't try to validate creds in a password-changing situation, because the
   attempt will always fail unless the matching key is in the keytab, which
