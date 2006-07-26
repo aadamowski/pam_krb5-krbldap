@@ -276,8 +276,23 @@ _pam_krb5_v4_init(krb5_context ctx,
 			}
 			tf_close();
 		} else {
+			const char *tferror;
+			switch (i) {
+			case NO_TKT_FIL:
+				tferror = "no ticket file";
+				break;
+			case TKT_FIL_ACC:
+				tferror = "ticket file had wrong permissions";
+				break;
+			case TKT_FIL_LCK:
+				tferror = "error locking ticket file";
+				break;
+			default:
+				tferror = strerror(errno);
+				break;
+			}
 			warn("error opening '%s' for reading: %s",
-			     tktfile, strerror(errno));
+			     tktfile, tferror);
 		}
 	}
 	unlink(tktfile);
@@ -334,6 +349,10 @@ v4_save(krb5_context ctx,
 		     "(shouldn't happen)");
 		return PAM_SERVICE_ERR;
 	}
+	if (fchown(fd, uid, gid) != 0) {
+		warn("error setting permissions on \"%s\" (%s), attempting "
+		     "to continue", tktfile, strerror(errno));
+	}
 
 	if (options->debug) {
 		debug("saving v4 tickets to '%s'", tktfile);
@@ -342,9 +361,25 @@ v4_save(krb5_context ctx,
 	/* Open the ticket file. */
 	saved_tktstring = xstrdup(tkt_string());
 	krb_set_tkt_string(tktfile);
-	if (tf_init(tktfile, W_TKT_FIL) != 0) {
+	i = tf_init(tktfile, W_TKT_FIL);
+	if (i != 0) {
+		const char *tferror;
+		switch (i) {
+		case NO_TKT_FIL:
+			tferror = "no ticket file";
+			break;
+		case TKT_FIL_ACC:
+			tferror = "ticket file had wrong permissions";
+			break;
+		case TKT_FIL_LCK:
+			tferror = "error locking ticket file";
+			break;
+		default:
+			tferror = strerror(errno);
+			break;
+		}
 		warn("error opening ticket file '%s': %s",
-		     tktfile, strerror(errno));
+		     tktfile, tferror);
 		krb_set_tkt_string(saved_tktstring);
 		xstrfree(saved_tktstring);
 		unlink(tktfile);
