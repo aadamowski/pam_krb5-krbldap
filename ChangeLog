@@ -1,4 +1,6 @@
 2006-07-26:
+	* src/storetmp.c(_pam_krb5_storetmp_data): try to setreu/gid if either
+	the real or effective values don't match the desired value.
 	* src/pam_krb5_storetmp.c(main): only use strtoll() if it's
 	available, otherwise just use strtol().
 	* src/stash.c(_pam_krb5_stash_clone): go back to overwriting the

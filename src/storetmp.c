@@ -192,13 +192,13 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		dup2(outpipe[1], STDOUT_FILENO);
 		dup2(inpipe[0], STDIN_FILENO);
 #ifdef HAVE_LONG_LONG
-		snprintf(uidstr, sizeof(uidstr),
-			 "%llu", (long long unsigned) uid);
-		snprintf(gidstr, sizeof(gidstr),
-			 "%llu", (long long unsigned) gid);
+		snprintf(uidstr, sizeof(uidstr), "%llu",
+			 (unsigned long long) uid);
+		snprintf(gidstr, sizeof(gidstr), "%llu",
+			 (unsigned long long) gid);
 #else
-		snprintf(uidstr, sizeof(uidstr), "%lu", (long unsigned) uid);
-		snprintf(gidstr, sizeof(gidstr), "%lu", (long unsigned) gid);
+		snprintf(uidstr, sizeof(uidstr), "%lu", (unsigned long) uid);
+		snprintf(gidstr, sizeof(gidstr), "%lu", (unsigned long) gid);
 #endif
 		if ((strlen(uidstr) > sizeof(uidstr) - 2) ||
 		    (strlen(gidstr) > sizeof(gidstr) - 2)) {
@@ -209,10 +209,10 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		}
 		/* Now, attempt to assume the desired uid/gid pair.  Note that
 		 * if we're not root, this is allowed to fail. */
-		if (gid != getegid()) {
+		if ((gid != getgid()) || (gid != getegid())) {
 			setregid(gid, gid);
 		}
-		if (uid != geteuid()) {
+		if ((uid != getuid()) || (uid != geteuid())) {
 			setreuid(uid, uid);
 		}
 		execl(PKGSECURITYDIR "/pam_krb5_storetmp", "pam_krb5_storetmp",
