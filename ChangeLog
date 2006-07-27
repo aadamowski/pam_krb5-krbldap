@@ -1,3 +1,6 @@
+2006-07-27:
+	* src/auth.c: include unistd.h to get the declaration of getuid().
+
 2006-07-26:
 	* src/options.c(option_i): check for strtoll()/long long.
 	* configure.ac: check for strtoll().

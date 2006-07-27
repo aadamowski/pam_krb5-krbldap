@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,8 +42,10 @@
 #include <security/pam_modules.h>
 #endif
 
+#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <krb5.h>
 #ifdef USE_KRB4
 #include KRB4_DES_H
