@@ -1,3 +1,9 @@
+2006-08-28:
+	* src/v5.c(v5_passwd_error_message): add a function to interpret the
+	error codes returned for password-change requests.
+	* src/password.c(pam_sm_chauthtok): log text for server-supplied error
+	code along with the failure information.
+
 2006-07-27:
 	* src/auth.c: include unistd.h to get the declaration of getuid().
 

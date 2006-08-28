@@ -82,6 +82,7 @@ void v5_appdefault_boolean(krb5_context context,
 			   int *ret_value);
 
 const char *v5_error_message(int error);
+const char *v5_passwd_error_message(int error);
 
 int v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 			   const char *realm);

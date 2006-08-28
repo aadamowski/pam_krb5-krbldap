@@ -74,10 +74,51 @@
 
 #ident "$Id$"
 
+#ifndef KRB5_KPASSWD_ACCESSDENIED
+#define KRB5_KPASSWD_ACCESSDENIED 5
+#endif
+#ifndef KRB5_KPASSWD_BAD_VERSION
+#define KRB5_KPASSWD_BAD_VERSION  6
+#endif
+#ifndef KRB5_KPASSWD_INITIAL_FLAG_NEEDED
+#define KRB5_KPASSWD_INITIAL_FLAG_NEEDED 7
+#endif
+
 const char *
 v5_error_message(int error)
 {
 	return error_message(error);
+}
+const char *
+v5_passwd_error_message(int error)
+{
+	switch (error) {
+	case KRB5_KPASSWD_SUCCESS:
+		return "Success";
+		break;
+	case KRB5_KPASSWD_MALFORMED:
+		return "Malformed request";
+		break;
+	case KRB5_KPASSWD_HARDERROR:
+		return "Hard error";
+		break;
+	case KRB5_KPASSWD_AUTHERROR:
+		return "Auth error";
+		break;
+	case KRB5_KPASSWD_SOFTERROR:
+		return "Soft error";
+		break;
+	case KRB5_KPASSWD_ACCESSDENIED:
+		return "Access denied";
+		break;
+	case KRB5_KPASSWD_BAD_VERSION:
+		return "Bad version";
+		break;
+	case KRB5_KPASSWD_INITIAL_FLAG_NEEDED:
+		return "Attempted to authenticate using non-initial creds";
+		break;
+	}
+	return "Unknown error";
 }
 
 #ifdef HAVE_KRB5_FREE_UNPARSED_NAME

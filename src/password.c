@@ -300,15 +300,17 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       v5_error_message(i));
 				} else {
 					notice("password change failed for "
-					       "%s: %.*s (%.*s)",
+					       "%s: %s, %.*s (%.*s)",
 					       userinfo->unparsed_name,
+					       v5_passwd_error_message(result_code),
 					       result_code_string.length,
 					       (char *) result_code_string.data,
 					       result_string.length,
 					       (char *) result_string.data);
 					if ((result_string.length > 0) ||
 					    (result_code_string.length > 0)) {
-						notice_user(pamh, "%.*s (%.*s)",
+						notice_user(pamh, "%s: %.*s (%.*s)",
+							    v5_passwd_error_message(result_code),
 							    result_code_string.length,
 							    result_code_string.data,
 							    result_string.length,
