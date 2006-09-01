@@ -1,3 +1,6 @@
+2.2.10
+#204939 - keep track of more than one ccache
+
 2.3?
 - Figure out how mappings should work with
   krb5_aname_to_localname
@@ -6,3 +9,4 @@
   session credential caches.
 - See where the kernel keyring / ccache stuff is and what needs to be done
   to set that up.
+- Learn to set up tokens for use by rxk5-enabled cells.
