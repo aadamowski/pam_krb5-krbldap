@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004 Red Hat, Inc.
+ * Copyright 2003,2004,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@
 #include <security/pam_modules.h>
 #endif
 
-#include <krb5.h>
+#include KRB5_H
 #include "conv.h"
 #include "items.h"
 #include "prompter.h"

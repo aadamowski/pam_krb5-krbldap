@@ -1,3 +1,23 @@
+2006-09-08:
+	* src/prompter.c(_pam_krb5_always_fail_prompter): add a prompter which
+	always fails.
+	* src/options.c,options.h: track whether or not we want to let libkrb5
+	ask for information via the callbacks.
+	* src/v5.c(v5_get_creds): give the caller a way to specify which
+	prompter callback we should use.
+	* src/auth.c(pam_sm_authenticate): rework the prompting bits so that
+	it makes more correct use of the initial_prompt/use_first_pass flags
+	and correctly disables use of the callback for arbitrary prompts
+	* configure.ac: provide a --with-os-distribution flag for people who
+	want to replace the "Red Hat Linux" bit in the man pages with the
+	name of a product or OS which still exists
+	* src/pam_krb5.5.in: mention pam_passwdqc.so along with pam_cracklib.so
+
+2006-08-28:
+	* configure.ac: change the preference from <krb5/krb5.h> to <krb5.h>,
+	so that we don't pick up the system <krb5/krb5.h> when we need the
+	<krb5.h> which lives in the directory pointed out by krb5-config
+
 2006-08-28:
 	* src/v5.c(v5_passwd_error_message): add a function to interpret the
 	error codes returned for password-change requests.

@@ -46,7 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <krb5.h>
+#include KRB5_H
 #ifdef USE_KRB4
 #include KRB4_DES_H
 #include KRB4_KRB_H
@@ -196,6 +196,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      options,
 				      KRB5_TGS_NAME,
 				      password, &gic_options,
+				      0,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {
@@ -226,6 +227,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      options,
 					      KRB5_TGS_NAME,
 					      password, &gic_options,
+					      0,
 					      &stash->v5result);
 			stash->v5attempted = 1;
 			if (options->debug) {
@@ -254,9 +256,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 	}
 
-	/* If that didn't work, ask for a new password and try again. */
+	/* If that didn't work, and we're allowed to ask for a new password, do
+	 * so in preparation for another attempt. */
+	password = NULL;
 	if ((retval != PAM_SUCCESS) && (options->use_second_pass)) {
-		password = NULL;
 		i = _pam_krb5_prompt_for(pamh, "Password: ", &password);
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
@@ -276,67 +279,22 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				}
 				pam_set_item(pamh, PAM_AUTHTOK, password);
 			}
-			/* Get creds. */
-			if (options->debug) {
-				debug("trying newly-entered password for "
-				      "'%s'", user);
-			}
-			retval = v5_get_creds(ctx, pamh,
-					      &stash->v5creds, userinfo,
-					      options,
-					      KRB5_TGS_NAME,
-					      password, &gic_options,
-					      &stash->v5result);
-			stash->v5attempted = 1;
-			if (options->debug) {
-				debug("got result %d (%s)", stash->v5result,
-				      v5_error_message(stash->v5result));
-			}
-			/* Save the password for the next module. */
-			if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
-				if (options->debug) {
-					debug("saving newly-entered "
-					      "password for use by "
-					      "other modules");
-				}
-				pam_set_item(pamh, PAM_AUTHTOK, password);
-			}
-		} else {
-			warn("error reading password for '%s'", user);
 		}
-		if ((retval == PAM_SUCCESS) &&
-		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
-			v4_get_creds(ctx, pamh, stash, userinfo, options,
-				     password, &i);
-			if ((i != 0) && (options->debug)) {
-				debug("error obtaining v4 creds: %d (%s)",
-				      i, v5_error_message(i));
-			}
-			if (stash->v4present &&
-			    (options->ignore_afs == 0) &&
-			    (options->tokens == 1)) {
-				v5_save(ctx, stash, userinfo, options, NULL);
-				v4_save(ctx, stash, userinfo, options,
-					getuid(), getgid(), NULL);
-				tokens_obtain(ctx, stash, options, userinfo, 1);
-				v4_destroy(ctx, stash, options);
-				v5_destroy(ctx, stash, options);
-			}
-		}
-		if (password != NULL) {
-			xstrfree(password);
+		if (options->debug) {
+			debug("trying newly-entered password for "
+			      "'%s'", user);
 		}
 	}
 
-	/* If we didn't use any password, try here. */
+	/* If we didn't use any already-prompted-for password, try here. */
 	if ((retval != PAM_SUCCESS) &&
-	    (!options->use_first_pass) && (!options->use_second_pass)) {
-		password = NULL;
+	    (options->use_second_pass || options->prompt_for_libkrb5)) {
 		retval = v5_get_creds(ctx, pamh,
 				      &stash->v5creds, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
-				      NULL, &gic_options,
+				      password, &gic_options,
+				      1,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {

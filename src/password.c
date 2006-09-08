@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <krb5.h>
+#include KRB5_H
 #ifdef USE_KRB4
 #include KRB4_DES_H
 #include KRB4_KRB_H
@@ -168,7 +168,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL, &tmp_result);
+					 password, NULL, 1, &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
@@ -201,7 +201,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL, &tmp_result);
+					 password, NULL, 1, &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
@@ -330,7 +330,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh, &stash->v5creds,
 					 userinfo, options,
 					 KRB5_TGS_NAME, password,
-					 &gic_options, &stash->v5result);
+					 &gic_options, 1, &stash->v5result);
 			if ((i == PAM_SUCCESS) &&
 			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 				v4_get_creds(ctx, pamh, stash, userinfo,

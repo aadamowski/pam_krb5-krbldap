@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,7 +49,7 @@
 #include <security/pam_modules.h>
 #endif
 
-#include <krb5.h>
+#include KRB5_H
 #ifdef USE_KRB4
 #include KRB4_DES_H
 #include KRB4_KRB_H
@@ -69,11 +69,12 @@
 
 #define LIST_SEPARATORS " \t,"
 
-static int
+static krb5_boolean
 option_b(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	 krb5_context ctx, const char *realm, const char *s)
 {
 	int i;
+	krb5_boolean ret;
 
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], s) == 0) {
@@ -105,9 +106,9 @@ option_b(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
 		}
 	}
 
-	v5_appdefault_boolean(ctx, realm, s, -1, &i);
+	v5_appdefault_boolean(ctx, realm, s, -1, &ret);
 
-	return i;
+	return ret;
 }
 static char *
 option_s(pam_handle_t *pamh, int argc, PAM_KRB5_MAYBE_CONST char **argv,
@@ -231,7 +232,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		       krb5_context ctx)
 {
 	struct _pam_krb5_options *options;
-	int try_first_pass, use_first_pass, i;
+	int try_first_pass, use_first_pass, initial_prompt, i;
 	char *default_realm, **list;
 	char *service;
 	struct stat stroot, stafs;
@@ -448,23 +449,28 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 
 	/* private option */
 	options->use_first_pass = 1;
+	options->prompt_for_libkrb5 = 1;
 	options->use_second_pass = 1;
 	use_first_pass = option_b(pamh, argc, argv,
 				  ctx, options->realm, "use_first_pass");
-	if (use_first_pass == 1) {
-		options->use_first_pass = 1;
-		options->use_second_pass = 0;
-	}
 	try_first_pass = option_b(pamh, argc, argv,
 				  ctx, options->realm, "try_first_pass");
+	initial_prompt = option_b(pamh, argc, argv,
+				  ctx, options->realm, "initial_prompt");
+	if (initial_prompt == 0) {
+		options->use_first_pass = 1;
+		options->prompt_for_libkrb5 = 1;
+		options->use_second_pass = 0;
+	}
+	if (use_first_pass == 1) {
+		options->use_first_pass = 1;
+		options->prompt_for_libkrb5 = 0;
+		options->use_second_pass = 0;
+	}
 	if (try_first_pass == 1) {
 		options->use_first_pass = 1;
+		options->prompt_for_libkrb5 = 1;
 		options->use_second_pass = 1;
-	}
-	if (option_b(pamh, argc, argv,
-		     ctx, options->realm, "initial_prompt") == 0) {
-		options->use_first_pass = 0;
-		options->use_second_pass = 0;
 	}
 
 	/* private option */

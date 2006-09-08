@@ -12,6 +12,12 @@ if test $KRB5_CONFIG = : ; then
 	AC_MSG_ERROR(krb5-config not found)
 fi
 
+AC_ARG_WITH(os-distribution,
+AC_HELP_STRING(os-distribution[="Red Hat Linux"],[Override the default OS distribution name in man pages.]),
+	    OS_DISTRIBUTION="$withval",
+	    OS_DISTRIBUTION="Red Hat Linux")
+AC_SUBST(OS_DISTRIBUTION)
+
 AC_ARG_WITH(krb4,
 AC_HELP_STRING(--with-krb4[=AUTO],[Provide Kerberos IV support if possible.]),
 	    krb4=$withval,
@@ -133,6 +139,11 @@ if test x$ac_cv_header_krb5_h != xyes ; then
 	if test x$ac_cv_header_krb5_krb5_h != xyes ; then
 		AC_MSG_ERROR(you must have Kerberos 5 development files to build $PACKAGE)
 	fi
+fi
+if test x$ac_cv_header_krb5_h = xyes ; then
+	AC_DEFINE(KRB5_H,[<krb5.h>],[Define to the name of your Kerberos 5 header.])
+else
+	AC_DEFINE(KRB5_H,[<krb5/krb5.h>],[Define to the name of your Kerberos 5 header.])
 fi
 if test x$krb4 != xno ; then
 	AC_CHECK_HEADER(krb.h,,[AC_CHECK_HEADER(kerberosIV/krb.h)])

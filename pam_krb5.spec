@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.9
-Release: 1
+Version: 2.2.10
+Release: 0
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -47,6 +47,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Fri Sep  8 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.10-1
+- rework prompting so that we stop getting stray prompts every now and then,
+  and so that use_first_pass will *never* prompt for any information
+
 * Tue Jul 25 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.9-1
 - return PAM_IGNORE instead of PAM_SERVICE_ERR when we're called in
   an unsafe situation and told to refresh credentials (#197428)

@@ -40,7 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <krb5.h>
+#include KRB5_H
 #ifdef USE_KRB4
 #include KRB4_DES_H
 #include KRB4_KRB_H

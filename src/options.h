@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2005 Red Hat, Inc.
+ * Copyright 2003,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +43,7 @@ struct _pam_krb5_options {
 	int ignore_afs;
 	int ignore_unknown_principals;
 	int proxiable;
+	int prompt_for_libkrb5;
 	int renewable;
 	int tokens;
 	int user_check;

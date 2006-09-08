@@ -47,6 +47,7 @@ int v5_get_creds(krb5_context ctx,
 		 char *service,
 		 char *password,
 		 krb5_get_init_creds_opt *gic_options,
+		 int allow_callback_prompts,
 		 int *result);
 
 int v5_get_creds_etype(krb5_context ctx,
@@ -78,8 +79,8 @@ void v5_appdefault_string(krb5_context context,
 void v5_appdefault_boolean(krb5_context context,
 			   const char *realm,
 			   const char *option,
-			   int default_value,
-			   int *ret_value);
+			   krb5_boolean default_value,
+			   krb5_boolean *ret_value);
 
 const char *v5_error_message(int error);
 const char *v5_passwd_error_message(int error);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,10 +43,11 @@
 #include <security/pam_modules.h>
 #endif
 
-#include <krb5.h>
+#include KRB5_H
 #include <stdio.h>
 #include "conv.h"
 #include "log.h"
+#include "options.h"
 #include "prompter.h"
 #include "xstr.h"
 
@@ -86,6 +87,14 @@ _pam_krb5_prompt_is_password(krb5_prompt *prompt, const char *password)
 }
 
 krb5_error_code
+_pam_krb5_always_fail_prompter(krb5_context context, void *data,
+			       const char *name, const char *banner,
+			       int num_prompts, krb5_prompt prompts[])
+{
+	return KRB5_LIBOS_CANTREADPWD;
+}
+
+krb5_error_code
 _pam_krb5_prompter(krb5_context context, void *data,
 		   const char *name, const char *banner,
 		   int num_prompts, krb5_prompt prompts[])
@@ -95,6 +104,26 @@ _pam_krb5_prompter(krb5_context context, void *data,
 	int headers, i, j, ret, num_msgs;
 	char *tmp;
 	struct _pam_krb5_prompter_data *pdata = data;
+	PAM_KRB5_MAYBE_CONST void *authtok;
+
+	/* If we're configured to not prompt the user for information, then
+	 * answer each prompt with PAM_AUTHTOK. */
+	if (!pdata->options->prompt_for_libkrb5) {
+		/* Retrieve the PAM_AUTHTOK. */
+		if (pam_get_item(pdata->pamh, PAM_AUTHTOK,
+				 &authtok) != PAM_SUCCESS) {
+			return KRB5_LIBOS_CANTREADPWD;
+		}
+		/* Provide it as the answer to every question. */
+		for (i = 0; i < num_prompts; i++) {
+			if (prompts[i].reply->length > strlen(authtok)) {
+				return KRB5_LIBOS_CANTREADPWD;
+			}
+			strcpy(prompts[i].reply->data, authtok);
+			prompts[i].reply->length = strlen(authtok);
+		}
+		return 0;
+	}
 
 	/* If we have a name or banner, we need to make space for it in the
 	 * messages structure, so keep track of the number of non-prompts which
@@ -145,8 +174,8 @@ _pam_krb5_prompter(krb5_context context, void *data,
 		}
 		messages[j + headers].msg = tmp;
 		messages[j + headers].msg_style = prompts[i].hidden ?
-						 PAM_PROMPT_ECHO_OFF :
-						 PAM_PROMPT_ECHO_ON;
+						  PAM_PROMPT_ECHO_OFF :
+						  PAM_PROMPT_ECHO_ON;
 		j++;
 	}
 	num_msgs = j + headers;

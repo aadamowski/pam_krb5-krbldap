@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2006/02/06 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5 5 2006/02/06 @OS_DISTRIBUTION@ "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -77,8 +77,10 @@ is expired or does not exist.
 
 .IP initial_prompt=[\fItrue\fR|\fIfalse\fR]
 tells pam_krb5.so whether or not to ask for a password before attempting
-authentication.  If one is needed and pam_krb5.so has not prompted for it,
-the Kerberos library should trigger a request for a password.
+authentication.  If one is needed and pam_krb5.so has not prompted for it, the
+Kerberos library should trigger a request for a password.  This option directly
+conflicts with (and if set to \fBfalse\fR, is overridden by) the
+\fBuse_first_pass\fR option.
 
 .IP keytab=\fI@DEFAULT_KEYTAB@\fR
 specifies the name of a keytab file to search for a service key

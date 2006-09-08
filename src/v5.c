@@ -47,7 +47,7 @@
 #include <security/pam_modules.h>
 #endif
 
-#include <krb5.h>
+#include KRB5_H
 #ifdef USE_KRB4
 #include KRB4_DES_H
 #include KRB4_KRB_H
@@ -311,16 +311,18 @@ v5_appdefault_string(krb5_context ctx,
 void
 v5_appdefault_boolean(krb5_context ctx,
 		      const char *realm, const char *option,
-		      int default_value, int *ret_value)
+		      krb5_boolean default_value, krb5_boolean *ret_value)
 {
 	krb5_data *realm_data;
+	int tmp;
 
 	*ret_value = default_value;
 
 	realm_data = data_from_string(realm);
 	if (realm_data != NULL) {
 		krb5_appdefault_boolean(ctx, PAM_KRB5_APPNAME, realm_data,
-					option, default_value, ret_value);
+					option, default_value, &tmp);
+		*ret_value = tmp;
 		data_free(realm_data);
 	}
 }
@@ -410,6 +412,7 @@ v5_get_creds(krb5_context ctx,
 	     char *service,
 	     char *password,
 	     krb5_get_init_creds_opt *gic_options,
+	     int allow_callback_prompts,
 	     int *result)
 {
 	int i;
@@ -492,11 +495,14 @@ v5_get_creds(krb5_context ctx,
 		/* Contact the KDC. */
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
+		prompter_data.options = options;
 		i = krb5_get_init_creds_password(ctx,
 						 creds,
 						 userinfo->principal_name,
 						 password,
-						 _pam_krb5_prompter,
+						 allow_callback_prompts ?
+						 _pam_krb5_prompter :
+						 _pam_krb5_always_fail_prompter,
 						 &prompter_data,
 						 0,
 						 realm_service,
@@ -552,12 +558,15 @@ v5_get_creds(krb5_context ctx,
 		}
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
+		prompter_data.options = options;
 		memset(&tmpcreds, 0, sizeof(tmpcreds));
 		i = krb5_get_init_creds_password(ctx,
 						 &tmpcreds,
 						 userinfo->principal_name,
 						 password,
-						 _pam_krb5_prompter,
+						 allow_callback_prompts ?
+						 _pam_krb5_prompter :
+						 _pam_krb5_always_fail_prompter,
 						 &prompter_data,
 						 0,
 						 realm_service,

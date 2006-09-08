@@ -53,6 +53,12 @@
 
 #ident "$Id$"
 
+#ifndef PACKAGE
+#ifdef PACKAGE_NAME
+#define PACKAGE PACKAGE_NAME
+#endif
+#endif
+
 static int
 llen(unsigned long l)
 {

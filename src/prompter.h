@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2006 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,12 +36,17 @@
 struct _pam_krb5_prompter_data {
 	pam_handle_t *pamh;
 	const char *previous_password;
+	struct _pam_krb5_options *options;
 };
 
 krb5_error_code
 _pam_krb5_prompter(krb5_context context, void *data,
 		   const char *name, const char *banner,
 		   int num_prompts, krb5_prompt prompts[]);
+krb5_error_code
+_pam_krb5_always_fail_prompter(krb5_context context, void *data,
+			       const char *name, const char *banner,
+			       int num_prompts, krb5_prompt prompts[]);
 int _pam_krb5_prompt_for(pam_handle_t *pamh,
 			 const char *prompt, char **response);
 int _pam_krb5_prompt_for_2(pam_handle_t *pamh,
