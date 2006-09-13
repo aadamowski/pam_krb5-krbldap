@@ -8,6 +8,8 @@ o Configuration options which can now be set as library defaults in the
 Standard options:
 o debug
   Log debugging messages at LOG_DEBUG priority.
+o debug_sensitive
+  Even log passwords when logging debugging messages at LOG_DEBUG priority.
 o no_warn
   When authenticating, don't warn the user about an expired password.
 o use_authtok
@@ -91,6 +93,9 @@ o realm=REALM
   Override the default realm.
 o renew_lifetime
   Override the default renewable lifetime (set in libdefaults, else 0).
+o subsequent_prompt
+  Controls whether or not pam_krb5 should just return the PAM_AUTHTOK when
+  libkrb5 requests that pam_krb5 get information from the user.
 o ticket_lifetime
   Override the default ticket lifetime (24 hours with krb5 1.3, else 10 hours).
   The actual lifetime of your tickets will most likely be the lowest of 1) this
