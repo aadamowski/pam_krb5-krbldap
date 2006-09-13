@@ -325,6 +325,8 @@ AC_CONFIG_HEADER(config.h)
 AC_OUTPUT([
 Makefile
 src/Makefile
+src/afs5log.1
+src/pagsh.1
 src/pam_newpag.5
 src/pam_newpag.8
 src/pam_krb5.5
