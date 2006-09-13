@@ -39,14 +39,26 @@ struct _pam_krb5_prompter_data {
 	struct _pam_krb5_options *options;
 };
 
+/* Ask the user. */
 krb5_error_code
-_pam_krb5_prompter(krb5_context context, void *data,
-		   const char *name, const char *banner,
-		   int num_prompts, krb5_prompt prompts[]);
+_pam_krb5_normal_prompter(krb5_context context, void *data,
+			  const char *name, const char *banner,
+			  int num_prompts, krb5_prompt prompts[]);
+
+/* Always pretend we couldn't get anything. */
 krb5_error_code
 _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 			       const char *name, const char *banner,
 			       int num_prompts, krb5_prompt prompts[]);
+
+/* Always return the previous_password stored in the data item, which is a
+ * _pam_krb5_prompter_data structure. */
+krb5_error_code
+_pam_krb5_previous_prompter(krb5_context context, void *data,
+			    const char *name, const char *banner,
+			    int num_prompts, krb5_prompt prompts[]);
+
+/* Wrap calls to the PAM conversation function. */
 int _pam_krb5_prompt_for(pam_handle_t *pamh,
 			 const char *prompt, char **response);
 int _pam_krb5_prompt_for_2(pam_handle_t *pamh,

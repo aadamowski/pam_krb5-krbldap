@@ -91,39 +91,55 @@ _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 			       const char *name, const char *banner,
 			       int num_prompts, krb5_prompt prompts[])
 {
+	struct _pam_krb5_prompter_data *pdata = data;
+	int i;
+	if (pdata->options->debug && pdata->options->debug_sensitive) {
+		for (i = 0; i < num_prompts; i++) {
+			debug("libkrb5 asked for \"%s\", "
+			      "returning password-reading error to libkrb5",
+			      prompts[0].prompt);
+		}
+	}
 	return KRB5_LIBOS_CANTREADPWD;
 }
 
 krb5_error_code
-_pam_krb5_prompter(krb5_context context, void *data,
-		   const char *name, const char *banner,
-		   int num_prompts, krb5_prompt prompts[])
+_pam_krb5_previous_prompter(krb5_context context, void *data,
+			    const char *name, const char *banner,
+			    int num_prompts, krb5_prompt prompts[])
+{
+	struct _pam_krb5_prompter_data *pdata = data;
+	int i;
+
+	if (pdata->previous_password == NULL) {
+		return KRB5_LIBOS_CANTREADPWD;
+	}
+	/* Provide it as the answer to every question. */
+	for (i = 0; i < num_prompts; i++) {
+		if (prompts[i].reply->length <=
+		    strlen(pdata->previous_password)) {
+			return KRB5_LIBOS_CANTREADPWD;
+		}
+		if (pdata->options->debug && pdata->options->debug_sensitive) {
+			debug("libkrb5 asked for \"%s\", returning \"%s\"",
+			      prompts[i].prompt, pdata->previous_password);
+		}
+		strcpy(prompts[i].reply->data, pdata->previous_password);
+		prompts[i].reply->length = strlen(pdata->previous_password);
+	}
+	return 0;
+}
+
+krb5_error_code
+_pam_krb5_normal_prompter(krb5_context context, void *data,
+			  const char *name, const char *banner,
+			  int num_prompts, krb5_prompt prompts[])
 {
 	struct pam_message *messages;
 	struct pam_response *responses;
 	int headers, i, j, ret, num_msgs;
 	char *tmp;
 	struct _pam_krb5_prompter_data *pdata = data;
-	PAM_KRB5_MAYBE_CONST void *authtok;
-
-	/* If we're configured to not prompt the user for information, then
-	 * answer each prompt with PAM_AUTHTOK. */
-	if (!pdata->options->prompt_for_libkrb5) {
-		/* Retrieve the PAM_AUTHTOK. */
-		if (pam_get_item(pdata->pamh, PAM_AUTHTOK,
-				 &authtok) != PAM_SUCCESS) {
-			return KRB5_LIBOS_CANTREADPWD;
-		}
-		/* Provide it as the answer to every question. */
-		for (i = 0; i < num_prompts; i++) {
-			if (prompts[i].reply->length > strlen(authtok)) {
-				return KRB5_LIBOS_CANTREADPWD;
-			}
-			strcpy(prompts[i].reply->data, authtok);
-			prompts[i].reply->length = strlen(authtok);
-		}
-		return 0;
-	}
 
 	/* If we have a name or banner, we need to make space for it in the
 	 * messages structure, so keep track of the number of non-prompts which
@@ -240,6 +256,10 @@ _pam_krb5_prompter(krb5_context context, void *data,
 			return KRB5_LIBOS_CANTREADPWD;
 		}
 		/* Save the response text. */
+		if (pdata->options->debug && pdata->options->debug_sensitive) {
+			debug("libkrb5 asked for \"%s\", returning \"%s\"",
+			      prompts[i].prompt, responses[j + headers].resp);
+		}
 		strcpy(prompts[i].reply->data, responses[j + headers].resp);
 		prompts[i].reply->length = strlen(responses[j + headers].resp);
 		j++;
