@@ -201,7 +201,7 @@ int
 main(int argc, char **argv)
 {
 	int i, ret, abi_flag, pargc;
-	const char *user, *service, **pargv;
+	const char *user, *service, *authtok, *old_authtok, **pargv;
 	struct passwd *pwd;
 	struct pam_conv conv;
 	pam_handle_t *pamh;
@@ -213,6 +213,8 @@ main(int argc, char **argv)
 			"\t--toggle-abi\n"
 			"\t--setservice SERVICE\n"
 			"\t--setuser USER\n"
+			"\t--setauthtok AUTHTOK\n"
+			"\t--setoldauthtok OLD_AUTHTOK\n"
 			"\t--restart\n"
 			"\t--auth [args...]\n"
 			"\t--open-session [args...]\n"
@@ -234,6 +236,8 @@ main(int argc, char **argv)
 	}
 	user = pwd->pw_name;
 	service = "login";
+	authtok = NULL;
+	old_authtok = NULL;
 	ret = 0;
 	pamh = NULL;
 
@@ -265,6 +269,16 @@ main(int argc, char **argv)
 			i++;
 			continue;
 		}
+		if (strcmp(argv[i], "--setauthtok") == 0) {
+			authtok = argv[i + 1];
+			i++;
+			continue;
+		}
+		if (strcmp(argv[i], "--setoldauthtok") == 0) {
+			old_authtok = argv[i + 1];
+			i++;
+			continue;
+		}
 		if (pamh == NULL) {
 			ret = pam_start(service, user, &conv, &pamh);
 			printf("start: %d\n", ret);
@@ -272,6 +286,19 @@ main(int argc, char **argv)
 			/* Linux-PAM *actively* tries to break us. */
 			((struct linux_pam_handle*)pamh)->caller = 1;
 #endif
+			if (authtok != NULL) {
+				ret = pam_set_item(pamh, PAM_AUTHTOK, authtok);
+				printf("set authtok: %d%s %s\n", ret,
+				       ret ? ":" : "",
+				       ret ? pam_strerror(pamh, ret) : "");
+			}
+			if (old_authtok != NULL) {
+				ret = pam_set_item(pamh, PAM_OLDAUTHTOK,
+						   old_authtok);
+				printf("set old authtok: %d%s %s\n", ret,
+				       ret ? ":" : "",
+				       ret ? pam_strerror(pamh, ret) : "");
+			}
 		}
 		if (strcmp(argv[i], "--restart") == 0) {
 #ifdef __LINUX_PAM__
