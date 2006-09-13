@@ -37,19 +37,20 @@ struct _pam_krb5_options {
 	int debug;
 
 	int addressless;
+	int debug_sensitive;
 	int external;
 	int existing_ticket;
 	int forwardable;
 	int ignore_afs;
 	int ignore_unknown_principals;
 	int proxiable;
-	int prompt_for_libkrb5;
 	int renewable;
 	int tokens;
 	int user_check;
 	int use_authtok;
 	int use_first_pass;
 	int use_second_pass;
+	int use_third_pass;
 	int use_shmem;
 	int validate;
 	int v4;

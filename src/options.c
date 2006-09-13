@@ -232,7 +232,8 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		       krb5_context ctx)
 {
 	struct _pam_krb5_options *options;
-	int try_first_pass, use_first_pass, initial_prompt, i;
+	int try_first_pass, use_first_pass, initial_prompt, subsequent_prompt;
+	int i;
 	char *default_realm, **list;
 	char *service;
 	struct stat stroot, stafs;
@@ -319,6 +320,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 	if (options->debug) {
 		debug("configured realm '%s'", options->realm);
+	}
+
+	/* private option */
+	options->debug_sensitive = option_b(pamh, argc, argv,
+					    ctx, options->realm,
+					    "debug_sensitive");
+	if (options->debug_sensitive == -1) {
+		options->debug_sensitive = 0;
+	}
+	if (options->debug && options->debug_sensitive) {
+		debug("flag: debug_sensitive");
 	}
 
 	/* library options */
@@ -449,28 +461,42 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 
 	/* private option */
 	options->use_first_pass = 1;
-	options->prompt_for_libkrb5 = 1;
 	options->use_second_pass = 1;
+	options->use_third_pass = 1;
 	use_first_pass = option_b(pamh, argc, argv,
 				  ctx, options->realm, "use_first_pass");
 	try_first_pass = option_b(pamh, argc, argv,
 				  ctx, options->realm, "try_first_pass");
 	initial_prompt = option_b(pamh, argc, argv,
 				  ctx, options->realm, "initial_prompt");
-	if (initial_prompt == 0) {
-		options->use_first_pass = 1;
-		options->prompt_for_libkrb5 = 1;
-		options->use_second_pass = 0;
+	subsequent_prompt = option_b(pamh, argc, argv,
+				     ctx, options->realm, "subsequent_prompt");
+	if (initial_prompt != -1) {
+		options->use_second_pass = initial_prompt;
+	}
+	if (subsequent_prompt != -1) {
+		options->use_third_pass = subsequent_prompt;
 	}
 	if (use_first_pass == 1) {
-		options->use_first_pass = 1;
-		options->prompt_for_libkrb5 = 0;
 		options->use_second_pass = 0;
 	}
 	if (try_first_pass == 1) {
-		options->use_first_pass = 1;
-		options->prompt_for_libkrb5 = 1;
 		options->use_second_pass = 1;
+	}
+	if (options->debug) {
+		if (options->use_first_pass == 1) {
+			debug("will try previously set password first");
+		}
+		if (options->use_second_pass == 1) {
+			if (options->use_first_pass == 1) {
+				debug("will ask for a password if that fails");
+			} else {
+				debug("will ask for a password");
+			}
+		}
+		if (options->use_third_pass == 1) {
+			debug("will let libkrb5 ask questions");
+		}
 	}
 
 	/* private option */
