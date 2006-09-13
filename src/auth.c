@@ -196,7 +196,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      options,
 				      KRB5_TGS_NAME,
 				      password, &gic_options,
-				      0,
+				      _pam_krb5_always_fail_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {
@@ -227,7 +227,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      options,
 					      KRB5_TGS_NAME,
 					      password, &gic_options,
-					      0,
+					      options->use_third_pass ?
+					      _pam_krb5_always_fail_prompter :
+					      _pam_krb5_previous_prompter,
 					      &stash->v5result);
 			stash->v5attempted = 1;
 			if (options->debug) {
@@ -288,13 +290,18 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	/* If we didn't use any already-prompted-for password, try here. */
 	if ((retval != PAM_SUCCESS) &&
-	    (options->use_second_pass || options->prompt_for_libkrb5)) {
+	    (options->use_second_pass || options->use_third_pass)) {
+		if (options->debug && options->use_third_pass) {
+			debug("allowing libkrb5 to prompt for information");
+		}
 		retval = v5_get_creds(ctx, pamh,
 				      &stash->v5creds, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
 				      password, &gic_options,
-				      1,
+				      options->use_third_pass ?
+				      _pam_krb5_normal_prompter :
+				      _pam_krb5_previous_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {
