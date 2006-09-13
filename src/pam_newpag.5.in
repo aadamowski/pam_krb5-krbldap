@@ -1,4 +1,4 @@
-.TH pam_newpag 5 2006/01/11 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_newpag 5 2006/01/11 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_newpag \- create a new process authentication group

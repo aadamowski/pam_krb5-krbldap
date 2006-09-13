@@ -1,4 +1,4 @@
-.TH pam_krb5_storetmp 8 2005/10/05 "Red Hat Linux" "System Administrator's Manual"
+.TH pam_krb5_storetmp 8 2005/10/05 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 @SECURITYDIR@/@PACKAGE@/pam_krb5_storetmp \- Temporary file helper
