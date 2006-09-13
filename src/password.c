@@ -168,7 +168,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL, 1, &tmp_result);
+					 password, NULL,
+					 _pam_krb5_normal_prompter,
+					 &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
@@ -201,7 +203,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, userinfo, options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL, 1, &tmp_result);
+					 password, NULL,
+					 _pam_krb5_normal_prompter,
+					 &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
@@ -330,14 +334,16 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			i = v5_get_creds(ctx, pamh, &stash->v5creds,
 					 userinfo, options,
 					 KRB5_TGS_NAME, password,
-					 &gic_options, 1, &stash->v5result);
+					 &gic_options,
+					 _pam_krb5_always_fail_prompter,
+					 &stash->v5result);
 			if ((i == PAM_SUCCESS) &&
 			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 				v4_get_creds(ctx, pamh, stash, userinfo,
 					     options, password, &i);
 				if (i != 0) {
 					if (options->debug) {
-						debug("error obtaining initial credentials: %d (%s)",
+						debug("error obtaining initial credentials using newly-set password: %d (%s)",
 						      i, v5_error_message(i));
 					}
 				}
