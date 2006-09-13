@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2006/02/06 @OS_DISTRIBUTION@ "System Administrator's Manual"
+.TH pam_krb5 5 2006/02/06 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -13,6 +13,10 @@ in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fR section.
 .IP debug=[\fItrue\fR|\fIfalse\fR]
 turns on debugging via \fBsyslog\fR(3).  Debug messages are logged with
 priority \fILOG_DEBUG\fR.
+
+.IP debug_sensitive=[\fItrue\fR|\fIfalse\fR]
+turns on debugging of sensitive information via \fBsyslog\fR(3).  Debug
+messages are logged with priority \fILOG_DEBUG\fR.
 
 .IP addressless=[\fItrue\fR|\fIfalse\fR]
 if set, requests a TGT with no address information.  This can be necessary
@@ -78,9 +82,7 @@ is expired or does not exist.
 .IP initial_prompt=[\fItrue\fR|\fIfalse\fR]
 tells pam_krb5.so whether or not to ask for a password before attempting
 authentication.  If one is needed and pam_krb5.so has not prompted for it, the
-Kerberos library should trigger a request for a password.  This option directly
-conflicts with (and if set to \fBfalse\fR, is overridden by) the
-\fBuse_first_pass\fR option.
+Kerberos library should trigger a request for a password.
 
 .IP keytab=\fI@DEFAULT_KEYTAB@\fR
 specifies the name of a keytab file to search for a service key
@@ -136,6 +138,11 @@ default renewable lifetime.  This specifies how much time you have after
 getting credentials to renew them.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBrenew_lifetime\fR directive.
+
+.IP subsequent_prompt=[\fItrue\fR|\fIfalse\fR]
+controls whether or not pam_krb5.so will allow the Kerberos library to ask
+the user for a password or other information, if the previously-entered
+password is somehow insufficient for authenticating the user.
 
 .IP ticket_lifetime=\fI36000\fR
 default credential lifetime.
