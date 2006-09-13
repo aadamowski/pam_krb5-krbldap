@@ -1,4 +1,4 @@
-.TH afs5log 8 2005/09/22 "Red Hat Linux" "System Administrator's Manual"
+.TH afs5log 8 2005/09/22 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 afs5log \- AFS token initializer
