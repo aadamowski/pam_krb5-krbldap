@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 2.2.10
-Release: 0
+Release: 1
 Source0: pam_krb5-%{version}-%{release}.tar.gz
 License: LGPL
 Group: System Environment/Base
@@ -47,7 +47,16 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
-* Fri Sep  8 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.10-1
+* Wed Sep 13 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.10-1
+- build
+
+* Tue Sep 12 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.10-0.1
+- revert previous changes to how prompting works, and add a
+  no_subsequent_prompt option to suppress libkrb5-based prompts during
+  authentication, providing the PAM_AUTHTOK for all questions which
+  libkrb5 asks
+
+* Fri Sep  8 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.10-0
 - rework prompting so that we stop getting stray prompts every now and then,
   and so that use_first_pass will *never* prompt for any information
 

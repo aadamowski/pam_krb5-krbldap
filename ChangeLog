@@ -1,6 +1,14 @@
-2006-09-08:
+2006-09-13:
+	* src/harness.c: add the ability to preset the AUTHTOK an OLDAUTHTOK
+	items.
+2006-09-12:
+	* src/harness.c: add the ability to preset the AUTHTOK an OLDAUTHTOK
+	items.
 	* src/prompter.c(_pam_krb5_always_fail_prompter): add a prompter which
-	always fails.
+	always fails and one which always return a previously-input password.
+	* src/options.c,options.h: rework the processing of initial_prompt,
+	add subsequent_prompt
+2006-09-08:
 	* src/options.c,options.h: track whether or not we want to let libkrb5
 	ask for information via the callbacks.
 	* src/v5.c(v5_get_creds): give the caller a way to specify which
