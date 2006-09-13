@@ -412,7 +412,12 @@ v5_get_creds(krb5_context ctx,
 	     char *service,
 	     char *password,
 	     krb5_get_init_creds_opt *gic_options,
-	     int allow_callback_prompts,
+	     krb5_error_code prompter(krb5_context,
+	    			      void *,
+				      const char *,
+				      const char *,
+				      int,
+				      krb5_prompt[]),
 	     int *result)
 {
 	int i;
@@ -496,13 +501,14 @@ v5_get_creds(krb5_context ctx,
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
 		prompter_data.options = options;
+		if (options->debug && options->debug_sensitive) {
+			debug("attempting with password=\"%s\"", password);
+		}
 		i = krb5_get_init_creds_password(ctx,
 						 creds,
 						 userinfo->principal_name,
 						 password,
-						 allow_callback_prompts ?
-						 _pam_krb5_prompter :
-						 _pam_krb5_always_fail_prompter,
+						 prompter,
 						 &prompter_data,
 						 0,
 						 realm_service,
@@ -560,13 +566,14 @@ v5_get_creds(krb5_context ctx,
 		prompter_data.previous_password = password;
 		prompter_data.options = options;
 		memset(&tmpcreds, 0, sizeof(tmpcreds));
+		if (options->debug && options->debug_sensitive) {
+			debug("attempting with password=\"%s\"", password);
+		}
 		i = krb5_get_init_creds_password(ctx,
 						 &tmpcreds,
 						 userinfo->principal_name,
 						 password,
-						 allow_callback_prompts ?
-						 _pam_krb5_prompter :
-						 _pam_krb5_always_fail_prompter,
+						 prompter,
 						 &prompter_data,
 						 0,
 						 realm_service,

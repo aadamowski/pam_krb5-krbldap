@@ -47,7 +47,12 @@ int v5_get_creds(krb5_context ctx,
 		 char *service,
 		 char *password,
 		 krb5_get_init_creds_opt *gic_options,
-		 int allow_callback_prompts,
+		 krb5_error_code prompter(krb5_context,
+					  void *,
+					  const char *,
+					  const char *,
+					  int,
+					  krb5_prompt[]),
 		 int *result);
 
 int v5_get_creds_etype(krb5_context ctx,
