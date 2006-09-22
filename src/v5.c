@@ -502,7 +502,8 @@ v5_get_creds(krb5_context ctx,
 		prompter_data.previous_password = password;
 		prompter_data.options = options;
 		if (options->debug && options->debug_sensitive) {
-			debug("attempting with password=\"%s\"", password);
+			debug("attempting with password=\"%s\"",
+			      password ? password : "(null)");
 		}
 		i = krb5_get_init_creds_password(ctx,
 						 creds,
