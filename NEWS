@@ -1,3 +1,7 @@
+- 2.2.11: * return success from our account management callback in cases where
+	    our authentication callback simply failed to authenticate (#207410)
+	  * fix setting of items for password-changing modules which get called
+	    after us (Michael Calmer)
 - 2.2.10: * add the "no_subsequent_prompt" option, to force the module to
 	    always answer a libkrb5 prompt with the PAM_AUTHTOK value
 	  * add the "debug_sensitive" option, which actually logs passwords
