@@ -71,16 +71,21 @@ _pam_krb5_maybe_free_responses(struct pam_response *responses, int n_responses)
 }
 
 static int
-_pam_krb5_prompt_is_password(krb5_prompt *prompt, const char *password)
+_pam_krb5_prompt_is_password(krb5_prompt *prompt,
+			     struct _pam_krb5_prompter_data *pdata)
 {
 	size_t length;
-	if (password == NULL) {
+	if (pdata == NULL) {
 		return 0;
 	}
-	length = strlen(password);
-	if (prompt->reply->length == length) {
-		if (memcmp(prompt->reply->data, password, length) == 0) {
-			return 1;
+	if (pdata->previous_password != NULL) {
+		length = strlen(pdata->previous_password);
+		if (prompt->reply->length == length) {
+			if (memcmp(prompt->reply->data,
+				   pdata->previous_password,
+				   length) == 0) {
+				return 1;
+			}
 		}
 	}
 	return 0;
@@ -93,14 +98,36 @@ _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 {
 	struct _pam_krb5_prompter_data *pdata = data;
 	int i;
-	if (pdata->options->debug && pdata->options->debug_sensitive) {
-		for (i = 0; i < num_prompts; i++) {
-			debug("libkrb5 asked for \"%s\", "
-			      "returning password-reading error to libkrb5",
-			      prompts[0].prompt);
+	krb5_error_code ret;
+
+	ret = 0;
+	for (i = 0; i < num_prompts; i++) {
+		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+			if (pdata->options->debug &&
+			    pdata->options->debug_sensitive) {
+				debug("libkrb5 asked for \"%s\", "
+				      "default value \"%.*s\", skipping",
+				      prompts[i].prompt,
+				      prompts[i].reply ?
+				      prompts[i].reply->length : 0,
+				      prompts[i].reply ?
+				      prompts[i].reply->data : "");
+			}
+			continue;
 		}
+		if (pdata->options->debug && pdata->options->debug_sensitive) {
+			debug("libkrb5 asked for \"%s\", "
+			      "default value \"%.*s\"",
+			      prompts[i].prompt,
+			      prompts[i].reply ? prompts[i].reply->length : 0,
+			      prompts[i].reply ? prompts[i].reply->data : "");
+			debug("returning password-reading error to libkrb5");
+		}
+		ret = KRB5_LIBOS_CANTREADPWD;
+		break;
 	}
-	return KRB5_LIBOS_CANTREADPWD;
+
+	return ret;
 }
 
 krb5_error_code
@@ -116,13 +143,30 @@ _pam_krb5_previous_prompter(krb5_context context, void *data,
 	}
 	/* Provide it as the answer to every question. */
 	for (i = 0; i < num_prompts; i++) {
+		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+			if (pdata->options->debug &&
+			    pdata->options->debug_sensitive) {
+				debug("libkrb5 asked for \"%s\", "
+				      "default value \"%.*s\", skipping",
+				      prompts[i].prompt,
+				      prompts[i].reply ?
+				      prompts[i].reply->length : 0,
+				      prompts[i].reply ?
+				      prompts[i].reply->data : "");
+			}
+			continue;
+		}
 		if (prompts[i].reply->length <=
 		    strlen(pdata->previous_password)) {
 			return KRB5_LIBOS_CANTREADPWD;
 		}
 		if (pdata->options->debug && pdata->options->debug_sensitive) {
-			debug("libkrb5 asked for \"%s\", returning \"%s\"",
-			      prompts[i].prompt, pdata->previous_password);
+			debug("libkrb5 asked for \"%s\", "
+			      "default value \"%.*s\"",
+			      prompts[i].prompt,
+			      prompts[i].reply ? prompts[i].reply->length : 0,
+			      prompts[i].reply ? prompts[i].reply->data : "");
+			debug("returning \"%s\"", pdata->previous_password);
 		}
 		strcpy(prompts[i].reply->data, pdata->previous_password);
 		prompts[i].reply->length = strlen(pdata->previous_password);
@@ -180,8 +224,17 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 		/* Skip any prompt for which the supplied default answer is the
 		 * previously-entered password -- it's just a waste of the
 		 * user's time.  */
-		if (_pam_krb5_prompt_is_password(&prompts[i],
-						 pdata->previous_password)) {
+		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+			if (pdata->options->debug &&
+			    pdata->options->debug_sensitive) {
+				debug("libkrb5 asked for \"%s\", "
+				      "default value \"%.*s\", skipping",
+				      prompts[i].prompt,
+				      prompts[i].reply ?
+				      prompts[i].reply->length : 0,
+				      prompts[i].reply ?
+				      prompts[i].reply->data : "");
+			}
 			continue;
 		}
 		tmp = malloc(strlen(prompts[i].prompt) + 3);
@@ -202,8 +255,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	/* We can discard the messages now. */
 	for (i = j = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i],
-						 pdata->previous_password)) {
+		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
 			continue;
 		}
 		free((char*) messages[j + headers].msg);
@@ -221,8 +273,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	/* Check for successfully-read responses. */
 	for (i = j = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i],
-						 pdata->previous_password)) {
+		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
 			continue;
 		}
 		/* If the conversation function failed to read anything. */
@@ -245,8 +296,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	/* Gather up the results. */
 	for (i = j = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i],
-						 pdata->previous_password)) {
+		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
 			continue;
 		}
 		/* Double-check for NULL here.  We should have caught it above
@@ -257,8 +307,12 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 		}
 		/* Save the response text. */
 		if (pdata->options->debug && pdata->options->debug_sensitive) {
-			debug("libkrb5 asked for \"%s\", returning \"%s\"",
-			      prompts[i].prompt, responses[j + headers].resp);
+			debug("libkrb5 asked for \"%s\", default was \"%.*s\", "
+			      "returning \"%s\"",
+			      prompts[i].prompt,
+			      prompts[i].reply ?  prompts[i].reply->length : 0,
+			      prompts[i].reply ?  prompts[i].reply->data : "",
+			      responses[j + headers].resp);
 		}
 		strcpy(prompts[i].reply->data, responses[j + headers].resp);
 		prompts[i].reply->length = strlen(responses[j + headers].resp);
