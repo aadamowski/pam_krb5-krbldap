@@ -82,8 +82,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
 	krb5_get_init_creds_opt gic_options;
-	int i, retval;
-	char *password;
+	int i, retval, use_third_pass;
+	char *first_pass, *second_pass;
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
@@ -124,28 +124,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		} else {
 			warn("error getting information about '%s'", user);
 			retval = PAM_USER_UNKNOWN;
-		}
-		if (options->use_second_pass) {
-			password = NULL;
-			i = _pam_krb5_prompt_for(pamh, "Password: ", &password);
-			if ((i == PAM_SUCCESS) &&
-			    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
-			    (strlen(password) == 0)) {
-				warn("disallowing NULL authtok for '%s'", user);
-				retval = PAM_AUTH_ERR;
-				i = PAM_AUTH_ERR;
-			}
-			if (i == PAM_SUCCESS) {
-				/* Save the password for the next module. */
-				if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
-					if (options->debug) {
-						debug("saving newly-entered "
-						      "password for use by "
-						      "other modules");
-					}
-					pam_set_item(pamh, PAM_AUTHTOK, password);
-				}
-			}
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		krb5_free_context(ctx);
@@ -195,7 +173,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      &stash->v5creds, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
-				      password, &gic_options,
+				      NULL,
+				      &gic_options,
 				      _pam_krb5_always_fail_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
@@ -205,32 +184,46 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 	}
 
-	/* Try with the stored password, if we've been told to do so. */
-	if ((retval != PAM_SUCCESS) && (options->use_first_pass)) {
-		password = NULL;
-		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &password);
+	/* Ideally we're only going to let libkrb5 ask questions once, and
+	 * after that we intend to lie to it. */
+	use_third_pass = options->use_third_pass;
+
+	/* Try with the stored password, if we've been told to use just that
+	 * value. */
+	first_pass = NULL;
+	if ((retval != PAM_SUCCESS) && options->use_first_pass) {
+		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &first_pass);
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
-		    (password != NULL) &&
-		    (strlen(password) == 0)) {
+		    (first_pass != NULL) &&
+		    (strlen(first_pass) == 0)) {
 			warn("disallowing NULL authtok for '%s'", user);
 			retval = PAM_AUTH_ERR;
 			i = PAM_AUTH_ERR;
 		}
-		if ((i == PAM_SUCCESS) && (password != NULL)) {
+		if ((i == PAM_SUCCESS) && (first_pass != NULL)) {
 			if (options->debug) {
-				debug("trying previously-entered password for "
-				      "'%s'", user);
+				if (use_third_pass) {
+					debug("trying previously-entered "
+					      "password for '%s', allowing "
+					      "libkrb5 to prompt for more",
+					      user);
+				} else {
+					debug("trying previously-entered "
+					      "password for '%s'", user);
+				}
 			}
 			retval = v5_get_creds(ctx, pamh,
 					      &stash->v5creds, userinfo,
 					      options,
 					      KRB5_TGS_NAME,
-					      password, &gic_options,
-					      options->use_third_pass ?
-					      _pam_krb5_always_fail_prompter :
+					      first_pass,
+					      &gic_options,
+					      use_third_pass ?
+					      _pam_krb5_normal_prompter :
 					      _pam_krb5_previous_prompter,
 					      &stash->v5result);
+			use_third_pass = 0;
 			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
@@ -240,7 +233,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		if ((retval == PAM_SUCCESS) &&
 		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 			v4_get_creds(ctx, pamh, stash, userinfo, options,
-				     password, &i);
+				     first_pass, &i);
 			if ((i != 0) && (options->debug)) {
 				debug("error obtaining v4 creds: %d (%s)",
 				      i, v5_error_message(i));
@@ -260,18 +253,18 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	/* If that didn't work, and we're allowed to ask for a new password, do
 	 * so in preparation for another attempt. */
-	password = NULL;
-	if ((retval != PAM_SUCCESS) && (options->use_second_pass)) {
-		i = _pam_krb5_prompt_for(pamh, "Password: ", &password);
+	second_pass = NULL;
+	if ((retval != PAM_SUCCESS) && options->use_second_pass) {
+		i = _pam_krb5_prompt_for(pamh, "Password: ", &second_pass);
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
-		    (password != NULL) &&
-		    (strlen(password) == 0)) {
+		    (second_pass != NULL) &&
+		    (strlen(second_pass) == 0)) {
 			warn("disallowing NULL authtok for '%s'", user);
 			retval = PAM_AUTH_ERR;
 			i = PAM_AUTH_ERR;
 		}
-		if ((i == PAM_SUCCESS) && (password != NULL)) {
+		if ((i == PAM_SUCCESS) && (second_pass != NULL)) {
 			/* Save the password for the next module. */
 			if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
 				if (options->debug) {
@@ -279,29 +272,73 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      "password for use by "
 					      "other modules");
 				}
-				pam_set_item(pamh, PAM_AUTHTOK, password);
+				pam_set_item(pamh, PAM_AUTHTOK, second_pass);
+			}
+			if (options->debug) {
+				if (use_third_pass) {
+					debug("trying newly-entered "
+					      "password for '%s', allowing "
+					      "libkrb5 to prompt for more",
+					      user);
+				} else {
+					debug("trying newly-entered "
+					      "password for '%s'", user);
+				}
+			}
+			retval = v5_get_creds(ctx, pamh,
+					      &stash->v5creds, userinfo,
+					      options,
+					      KRB5_TGS_NAME,
+					      second_pass,
+					      &gic_options,
+					      use_third_pass ?
+					      _pam_krb5_normal_prompter :
+					      _pam_krb5_always_fail_prompter,
+					      &stash->v5result);
+			use_third_pass = 0;
+			stash->v5attempted = 1;
+			if (options->debug) {
+				debug("got result %d (%s)", stash->v5result,
+				      v5_error_message(stash->v5result));
 			}
 		}
-		if (options->debug) {
-			debug("trying newly-entered password for "
-			      "'%s'", user);
+		if ((retval == PAM_SUCCESS) &&
+		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
+			v4_get_creds(ctx, pamh, stash, userinfo, options,
+				     second_pass, &i);
+			if ((i != 0) && (options->debug)) {
+				debug("error obtaining v4 creds: %d (%s)",
+				      i, v5_error_message(i));
+			}
+			if (stash->v4present &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
+				v5_save(ctx, stash, userinfo, options, NULL);
+				v4_save(ctx, stash, userinfo, options,
+					getuid(), getgid(), NULL);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
+				v4_destroy(ctx, stash, options);
+				v5_destroy(ctx, stash, options);
+			}
 		}
 	}
 
-	/* If we didn't use any already-prompted-for password, try here. */
-	if ((retval != PAM_SUCCESS) &&
-	    (options->use_second_pass || options->use_third_pass)) {
-		if (options->debug && options->use_third_pass) {
-			debug("allowing libkrb5 to prompt for information");
+	/* If we didn't use the first password (because it wasn't set), and we
+	 * didn't ask for a password (due to the "no_initial_prompt" flag,
+	 * probably), and we can let libkrb5 ask questions (no
+	 * "no_subsequent_prompt"), then let libkrb5 have another go. */
+	if ((retval != PAM_SUCCESS) && use_third_pass) {
+		if (options->debug) {
+			debug("not using an entered password for '%s', "
+			      "allowing libkrb5 to prompt for more", user);
 		}
 		retval = v5_get_creds(ctx, pamh,
 				      &stash->v5creds, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
-				      password, &gic_options,
-				      options->use_third_pass ?
-				      _pam_krb5_normal_prompter :
-				      _pam_krb5_previous_prompter,
+				      NULL,
+				      &gic_options,
+				      _pam_krb5_normal_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {
@@ -311,7 +348,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		if ((retval == PAM_SUCCESS) &&
 		    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 			v4_get_creds(ctx, pamh, stash, userinfo, options,
-				     password, &i);
+				     second_pass, &i);
 			if ((i != 0) && (options->debug)) {
 				debug("error obtaining v4 creds: %d (%s)",
 				      i, v5_error_message(i));
