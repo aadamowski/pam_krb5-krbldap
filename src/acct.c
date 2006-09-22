@@ -162,6 +162,16 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 			}
 			retval = PAM_SUCCESS;
 			break;
+		case KRB5KDC_ERR_PREAUTH_FAILED:
+		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
+			if (options->debug) {
+				debug("authentication failed, but no account "
+				      "management error was indicated; "
+				      "account management succeeds for '%s'",
+				      user);
+			}
+			retval = PAM_SUCCESS;
+			break;
 		case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
 		case KRB5KDC_ERR_NAME_EXP:
 			if (options->ignore_unknown_principals) {
