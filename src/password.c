@@ -194,7 +194,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			/* Save the old password for possible use by other
 			 * modules. */
 			if ((password != NULL) && (i == PAM_SUCCESS)) {
-				pam_set_item(pamh, PAM_OLDAUTHTOK, &password);
+				pam_set_item(pamh, PAM_OLDAUTHTOK, password);
 			}
 		}
 		/* We have a password, so try to obtain initial credentials
@@ -270,7 +270,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			/* Save the password for possible use by other
 			 * modules. */
 			if (i == PAM_SUCCESS) {
-				pam_set_item(pamh, PAM_AUTHTOK, &password);
+				pam_set_item(pamh, PAM_AUTHTOK, password);
 			}
 			/* Free the second password, we only need one copy. */
 			xstrfree(password2);
@@ -333,8 +333,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			i = v5_get_creds(ctx, pamh, &stash->v5creds,
 					 userinfo, options,
-					 KRB5_TGS_NAME, password,
-					 &gic_options,
+					 KRB5_TGS_NAME,
+					 password, &gic_options,
 					 _pam_krb5_always_fail_prompter,
 					 &stash->v5result);
 			if ((i == PAM_SUCCESS) &&
