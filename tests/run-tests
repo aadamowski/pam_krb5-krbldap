@@ -194,6 +194,7 @@ echo "";echo Fail: unacceptable password.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -policy minimum_six '$principal 2> /dev/null > /dev/null
 run -chauthtok $principal $pam_krb5 $flags -- foo bar bar
+kadmin.local -q 'modprinc -clearpolicy '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'delprinc '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'ank -pw foo '$principal 2> /dev/null > /dev/null
 
