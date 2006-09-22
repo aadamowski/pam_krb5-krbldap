@@ -1,13 +1,36 @@
+2006-09-21:
+	* src/auth.c(pam_sm_authenticate): try again to clean up the three
+	possible setups (pre-entered password, one for which we prompt directly,
+	libkrb5 asking questions) to minimize the number of calls we make to
+	krb5_get_init_creds_password().
+	* src/prompter.c(_pam_krb5_prompt_is_password): take the prompter
+	callback data instead of the string.
+	* src/prompter.c(_pam_krb5_*prompter): if we're debugging sensitive
+	data, log both the answer we give and the default provided by libkrb5
+	* src/v5.c(v5_get_creds): guard against potential problems logging a
+	NULL password.
+	* src/acct.c(pam_sm_acct_mgmt): if the previous attempt to authenticate
+	gave us decrypt-integrity-check-failed or preauthentication-failed,
+	assume that there's no pam_acct_mgmt error to report (#207410)
+
+2006-09-20:
+	* src/password.c(pam_sm_chauthtok): set the AUTHTOK and OLDAUTHTOK
+	items properly (report and patch from Michael Calmer).
+	* tests/run-tests: clear any policy we've applied to the user when we
+	delete the user's entry (report and patch from Michael Calmer).
+
 2006-09-13:
-	* src/harness.c: add the ability to preset the AUTHTOK an OLDAUTHTOK
+	* src/harness.c: add the ability to preset the AUTHTOK and OLDAUTHTOK
 	items.
+
 2006-09-12:
-	* src/harness.c: add the ability to preset the AUTHTOK an OLDAUTHTOK
+	* src/harness.c: add the ability to preset the AUTHTOK and OLDAUTHTOK
 	items.
 	* src/prompter.c(_pam_krb5_always_fail_prompter): add a prompter which
 	always fails and one which always return a previously-input password.
 	* src/options.c,options.h: rework the processing of initial_prompt,
 	add subsequent_prompt
+
 2006-09-08:
 	* src/options.c,options.h: track whether or not we want to let libkrb5
 	ask for information via the callbacks.
