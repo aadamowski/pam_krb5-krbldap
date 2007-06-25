@@ -337,6 +337,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 password, &gic_options,
 					 _pam_krb5_always_fail_prompter,
 					 &stash->v5result);
+			stash->v5attempted = 1;
 			if ((i == PAM_SUCCESS) &&
 			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
 				v4_get_creds(ctx, pamh, stash, userinfo,

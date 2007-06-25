@@ -1,4 +1,8 @@
 2007-06-24:
+	* src/password.c(pam_sm_chauthtok): set v5_attempted to 1 for
+	correctness (#230446, Luke Howard, Pieter Krul).
+
+2007-06-24:
 	* src/options.c: don't pass in PAM handles when we don't actually use
 	them.
 
