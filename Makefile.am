@@ -6,7 +6,7 @@ SUBDIRS = src tests
 
 VERSION=`rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1`
 RELEASE=`rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1`
-CVSTAG=pam_krb5-`echo $(VERSION) | tr . _`-`echo $(RELEASE) | tr . _`
+CVSTAG=pam_krb5-`rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}-%{release}\n' | tail -n 1 | tr . _`
 distdir=$(PACKAGE)-$(VERSION)-$(RELEASE)
 DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
