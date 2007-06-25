@@ -161,7 +161,7 @@ echo "";echo Succeed: correct password, warn about expiration.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
 settle
-run -auth -account $principal $pam_krb5 $flags -- foo
+run -auth -account $principal $pam_krb5 $flags -- foo bar bar
 
 echo "";echo Succeed: correct password, do not warn about expiration.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
@@ -173,7 +173,7 @@ echo "";echo Succeed: correct password, expired, change.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
 settle
-run -auth -account -chauthtok -setcred -session $principal $pam_krb5 $flags no_warn -- foo foo bar bar
+run -auth -account -chauthtok -setcred -session $principal $pam_krb5 $flags no_warn -- foo bar bar bar baz baz
 
 # Check password changing.
 echo "";echo Resetting password to \"foo\".

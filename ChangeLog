@@ -1,4 +1,11 @@
 2007-06-24:
+	* src/password.c: display the right string.
+	* tests/run-tests: start to adjust for getting-prompts-changes-passwords
+	behavior.
+	* tests/config/kdc.conf.in: place the location of files in the right
+	part of the file
+
+2007-06-24:
 	* src/password.c(pam_sm_chauthtok): always display result_text for
 	the user's sake.  Actually check that we opened the pwhelp file,
 	like Luke's original patch did.

@@ -163,6 +163,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		if ((options->pwhelp != NULL) && (options->pwhelp[0] != '\0')) {
 			fp = fopen(options->pwhelp, "r");
 			if (fp != NULL) {
+				if (options->debug) {
+					debug("opened help file '%s'",
+					      options->pwhelp);
+				}
 				if (fstat(fileno(fp), &st) != -1) {
 					pwhelp = malloc(st.st_size + 1);
 					if (pwhelp == NULL) {
@@ -177,6 +181,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 						       st.st_size + 1);
 						i = fread(pwhelp, 1,
 							  st.st_size, fp);
+						if (options->debug) {
+							debug("read %d bytes",
+							      (int) st.st_size);
+						}
 					}
 				} else {
 					memset(prompt, '\0', sizeof(prompt));
@@ -185,7 +193,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					pwhelp = prompt;
 				}
 				if (i > 0) {
-					message.msg = prompt;
+					message.msg = pwhelp;
 					message.msg_style = PAM_TEXT_INFO;
 					_pam_krb5_conv_call(pamh, &message, 1,
 							    NULL);
@@ -194,6 +202,11 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					xstrfree(pwhelp);
 				}
 				fclose(fp);
+			} else {
+				if (options->debug) {
+					debug("failed to open help file '%s'",
+					      options->pwhelp);
+				}
 			}
 		}
 
