@@ -1,4 +1,8 @@
 2007-06-24:
+	* src/options.c: don't pass in PAM handles when we don't actually use
+	them.
+
+2007-06-24:
 	* src/acct.c(pam_sm_acct_mgmt): return PAM_USER_UNKNOWN in event of
 	a client-revoked error (#230442, Luke Howard, Christian Bolz, Pieter
 	Krul)
