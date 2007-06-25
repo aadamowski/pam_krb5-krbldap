@@ -67,6 +67,7 @@ struct _pam_krb5_options {
 	char *banner;
 	char *ccache_dir;
 	char *keytab;
+	char *pwhelp;
 	char *realm;
 	char **hosts;
 

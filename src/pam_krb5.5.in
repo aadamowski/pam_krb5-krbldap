@@ -133,6 +133,10 @@ are.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBproxiable\fR directive.
 
+.IP pwhelp=
+specifies the name of a text file whose contents will be displayed to
+clients who attempt to change their passwords.  There is no default.
+
 .IP renew_lifetime=\fI36000\fR
 default renewable lifetime.  This specifies how much time you have after
 getting credentials to renew them.

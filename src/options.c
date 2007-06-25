@@ -646,6 +646,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		debug("keytab: %s", options->keytab);
 	}
 
+	options->pwhelp = option_s(argc, argv,
+				   ctx, options->realm, "pwhelp",
+				   "");
+	if (strlen(options->pwhelp) == 0) {
+		xstrfree(options->pwhelp);
+		options->pwhelp = NULL;
+	}
+	if (options->debug && options->pwhelp) {
+		debug("pwhelp: %s", options->pwhelp);
+	}
+
 	options->hosts = option_l(argc, argv,
 				  ctx, options->realm, "hosts");
 	if (options->hosts) {
@@ -772,6 +783,8 @@ _pam_krb5_options_free(pam_handle_t *pamh, krb5_context ctx,
 	options->ccache_dir = NULL;
 	free_s(options->keytab);
 	options->keytab = NULL;
+	free_s(options->pwhelp);
+	options->pwhelp = NULL;
 	free_s(options->realm);
 	options->realm = NULL;
 	free_l(options->hosts);

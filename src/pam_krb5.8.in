@@ -153,6 +153,10 @@ tells pam_krb5.so that credentials it obtains should be proxiable.  This
 option is deprecated in favor of the \fIproxiable\fR option in the
 \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
+.IP pwhelp=
+specifies the name of a text file whose contents will be displayed to
+clients who attempt to change their passwords.  There is no default.
+
 .IP realm=\fIrealm\fR
 overrides the default realm set in \fI/etc/krb5.conf\fR, which pam_krb5.so
 will attempt to authenticate users to.

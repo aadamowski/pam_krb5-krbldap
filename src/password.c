@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +32,9 @@
 
 #include "../config.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
 #endif
@@ -54,6 +57,7 @@
 #endif
 #endif
 
+#include "conv.h"
 #include "init.h"
 #include "initopts.h"
 #include "items.h"
@@ -81,6 +85,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	krb5_get_init_creds_opt gic_options;
 	int tmp_result;
 	int i, retval;
+	char *pwhelp;
+	struct stat st;
+	FILE *fp;
+	struct pam_message message;
 
 	/* Initialize Kerberos. */
 	if (_pam_krb5_init_ctx(&ctx, argc, argv) != 0) {
@@ -150,6 +158,35 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	if (flags & PAM_PRELIM_CHECK) {
 		retval = PAM_AUTH_ERR;
 		password = NULL;
+
+		/* Display password help text. */
+		if ((options->pwhelp != NULL) && (options->pwhelp[0] != '\0')) {
+			fp = fopen(options->pwhelp, "r");
+			if (fstat(fileno(fp), &st) != -1) {
+				pwhelp = malloc(st.st_size + 1);
+				if (pwhelp == NULL) {
+					pwhelp = prompt;
+					i = fread(pwhelp, 1,
+						  sizeof(prompt) -1, fp);
+				} else {
+					i = fread(pwhelp, 1, st.st_size, fp);
+				}
+			} else {
+				pwhelp = prompt;
+				i = fread(prompt, 1, sizeof(prompt) - 1, fp);
+			}
+			if (i > 0) {
+				prompt[i] = '\0';
+				message.msg = prompt;
+				message.msg_style = PAM_TEXT_INFO;
+				_pam_krb5_conv_call(pamh, &message, 1, NULL);
+			}
+			if (pwhelp != prompt) {
+				xstrfree(pwhelp);
+			}
+			fclose(fp);
+		}
+
 		/* Obtain the current password. */
 		if (options->use_first_pass) {
 			/* Read the stored password. */

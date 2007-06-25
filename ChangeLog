@@ -1,4 +1,10 @@
 2007-06-24:
+	* src/options.c: add a "pwhelp" option.
+	* src/password.c(pam_sm_chauthtok): display the contents of the
+	pwhelp file before doing anything else when in the preliminary check
+	phase (#230465, Luke Howard).
+
+2007-06-24:
 	* src/prompter.c(_pam_krb5_always_fail_prompter,
 	_pam_krb5_previous_prompter): output the banner and name information
 	if it was given (#230450).
