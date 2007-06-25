@@ -1,4 +1,9 @@
 2007-06-24:
+	* src/password.c(pam_sm_chauthtok): always display result_text for
+	the user's sake.  Actually check that we opened the pwhelp file,
+	like Luke's original patch did.
+
+2007-06-24:
 	* tests/pwhelp.txt,tests/run-tests: add a test for the pwhelp option.
 
 2007-06-24:

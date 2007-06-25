@@ -162,29 +162,39 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		/* Display password help text. */
 		if ((options->pwhelp != NULL) && (options->pwhelp[0] != '\0')) {
 			fp = fopen(options->pwhelp, "r");
-			if (fstat(fileno(fp), &st) != -1) {
-				pwhelp = malloc(st.st_size + 1);
-				if (pwhelp == NULL) {
-					pwhelp = prompt;
-					i = fread(pwhelp, 1,
-						  sizeof(prompt) -1, fp);
+			if (fp != NULL) {
+				if (fstat(fileno(fp), &st) != -1) {
+					pwhelp = malloc(st.st_size + 1);
+					if (pwhelp == NULL) {
+						memset(prompt, '\0',
+						       sizeof(prompt));
+						i = fread(prompt, 1,
+							  sizeof(prompt) -1,
+							  fp);
+						pwhelp = prompt;
+					} else {
+						memset(pwhelp, '\0',
+						       st.st_size + 1);
+						i = fread(pwhelp, 1,
+							  st.st_size, fp);
+					}
 				} else {
-					i = fread(pwhelp, 1, st.st_size, fp);
+					memset(prompt, '\0', sizeof(prompt));
+					i = fread(prompt, 1,
+						  sizeof(prompt) - 1, fp);
+					pwhelp = prompt;
 				}
-			} else {
-				pwhelp = prompt;
-				i = fread(prompt, 1, sizeof(prompt) - 1, fp);
+				if (i > 0) {
+					message.msg = prompt;
+					message.msg_style = PAM_TEXT_INFO;
+					_pam_krb5_conv_call(pamh, &message, 1,
+							    NULL);
+				}
+				if (pwhelp != prompt) {
+					xstrfree(pwhelp);
+				}
+				fclose(fp);
 			}
-			if (i > 0) {
-				prompt[i] = '\0';
-				message.msg = prompt;
-				message.msg_style = PAM_TEXT_INFO;
-				_pam_krb5_conv_call(pamh, &message, 1, NULL);
-			}
-			if (pwhelp != prompt) {
-				xstrfree(pwhelp);
-			}
-			fclose(fp);
 		}
 
 		/* Obtain the current password. */
@@ -348,15 +358,15 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       (char *) result_code_string.data,
 					       result_string.length,
 					       (char *) result_string.data);
-					if ((result_string.length > 0) ||
-					    (result_code_string.length > 0)) {
-						notice_user(pamh, "%s: %.*s (%.*s)",
-							    v5_passwd_error_message(result_code),
-							    result_code_string.length,
-							    result_code_string.data,
-							    result_string.length,
-							    result_string.data);
-					}
+				}
+				if ((result_string.length > 0) ||
+				    (result_code_string.length > 0)) {
+					notice_user(pamh, "%s: %.*s (%.*s)",
+						    v5_passwd_error_message(result_code),
+						    result_code_string.length,
+						    result_code_string.data,
+						    result_string.length,
+						    result_string.data);
 				}
 			}
 		}
