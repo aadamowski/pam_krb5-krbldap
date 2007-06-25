@@ -1,3 +1,4 @@
+- 2.2.12: * add a "pwhelp" option.  Display the KDC error to users.
 - 2.2.11: * return success from our account management callback in cases where
 	    our authentication callback simply failed to authenticate (#207410)
 	  * fix setting of items for password-changing modules which get called

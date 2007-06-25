@@ -47,6 +47,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Sun Jun 24 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.12-1
+- update to 2.2.12
+
 * Thu Sep 21 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.11-1
 - update to 2.2.11
 
