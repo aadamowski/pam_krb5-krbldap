@@ -1,4 +1,9 @@
 2007-06-24:
+	* src/acct.c(pam_sm_acct_mgmt): return PAM_USER_UNKNOWN in event of
+	a client-revoked error (#230442, Luke Howard, Christian Bolz, Pieter
+	Krul)
+
+2007-06-24:
 	* src/stash.c(_pam_krb5_stash_shm_read_v5): correct an argument size
 	mismatch calling the logging function.
 

@@ -195,12 +195,17 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		case KRB5_REALM_CANT_RESOLVE:
 			notice("account checks fail for '%s': "
 			       "can't resolve KDC addresses", user);
-			return PAM_AUTHINFO_UNAVAIL;
+			retval = PAM_AUTHINFO_UNAVAIL;
 			break;
 		case KRB5_KDC_UNREACH:
 			notice("account checks fail for '%s': "
 			       "KDCs are unreachable", user);
-			return PAM_AUTHINFO_UNAVAIL;
+			retval = PAM_AUTHINFO_UNAVAIL;
+			break;
+		case KRB5KDC_ERR_CLIENT_REVOKED:
+			notice("account checks fail for '%s': "
+			       "account is locked", user);
+			retval = PAM_USER_UNKNOWN;
 			break;
 		default:
 			notice("account checks fail for '%s': "
