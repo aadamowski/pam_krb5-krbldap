@@ -1,4 +1,7 @@
 2007-06-24:
+	* tests/pwhelp.txt,tests/run-tests: add a test for the pwhelp option.
+
+2007-06-24:
 	* Makefile.am: don't use the gmake $(shell) option; use backticks.
 
 2007-06-24:

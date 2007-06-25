@@ -248,5 +248,9 @@ echo "";echo Banner = K3RB3R05 S
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 run -chauthtok $principal $pam_krb5 $flags banner="K3RB3R05 S" -- foo bar bar
 
+echo "";echo Password-change Help Text
+kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
+run -chauthtok $principal $pam_krb5 $flags pwhelp=$testdir/pwhelp.txt -- foo bar bar
+
 # Stop the KDC.
 kdcstop
