@@ -101,6 +101,9 @@ _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 	krb5_error_code ret;
 
 	ret = 0;
+	if ((name != NULL) || (banner != NULL)) {
+		_pam_krb5_normal_prompter(context, data, name, banner, 0, NULL);
+	}
 	for (i = 0; i < num_prompts; i++) {
 		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
 			if (pdata->options->debug &&
@@ -138,6 +141,9 @@ _pam_krb5_previous_prompter(krb5_context context, void *data,
 	struct _pam_krb5_prompter_data *pdata = data;
 	int i;
 
+	if ((name != NULL) || (banner != NULL)) {
+		_pam_krb5_normal_prompter(context, data, name, banner, 0, NULL);
+	}
 	if (pdata->previous_password == NULL) {
 		return KRB5_LIBOS_CANTREADPWD;
 	}
