@@ -357,8 +357,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 	/* Clean up. */
 	if (options->debug) {
-		debug("pam_chauthtok returning %d (%s)", retval,
-		      pam_strerror(pamh, retval));
+		debug("pam_chauthtok (%s) returning %d (%s)",
+		      (flags & PAM_PRELIM_CHECK) ?
+		      "preliminary check" : "updating authtok",
+		      retval, pam_strerror(pamh, retval));
 	}
 	_pam_krb5_user_info_free(ctx, userinfo);
 	_pam_krb5_options_free(pamh, ctx, options);

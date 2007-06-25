@@ -1,4 +1,9 @@
 2007-06-24:
+	* src/password.c(pam_sm_chauthtok): when returning, note whether
+	we are here for the preliminary check or the actual update in the
+	debug message
+
+2007-06-24:
 	* src/password.c(pam_sm_chauthtok): set v5_attempted to 1 for
 	correctness (#230446, Luke Howard, Pieter Krul).
 
