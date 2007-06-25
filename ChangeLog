@@ -1,3 +1,7 @@
+2007-06-24:
+	* src/stash.c(_pam_krb5_stash_shm_read_v5): correct an argument size
+	mismatch calling the logging function.
+
 2006-09-21:
 	* src/auth.c(pam_sm_authenticate): try again to clean up the three
 	possible setups (pre-entered password, one for which we prompt directly,

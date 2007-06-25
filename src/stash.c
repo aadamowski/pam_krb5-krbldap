@@ -112,7 +112,7 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	/* Sanity checks. */
 	if (blob_size < sizeof(int) * 3) {
 		warn("saved creds too small: %d bytes, need at least %d bytes",
-		     blob_size, sizeof(int) * 3);
+		     (int) blob_size, (int) (sizeof(int) * 3));
 		return;
 	}
 	blob_creds = blob;
@@ -120,7 +120,8 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	blob_creds_size = ((int*)blob)[0];
 	if (blob_creds_size + sizeof(int) * 3 > blob_size) {
 		warn("saved creds too small: %d bytes, need %d bytes",
-		     blob_size, blob_creds_size + sizeof(int) * 3);
+		     (int) blob_size,
+		     (int) (blob_creds_size + sizeof(int) * 3));
 		return;
 	}
 
