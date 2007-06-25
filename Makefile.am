@@ -4,9 +4,9 @@ CONFIGURE_DEPENDENCIES = $(top_srcdir)/pam_krb5.spec
 
 SUBDIRS = src tests
 
-VERSION=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1)
-RELEASE=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1)
-CVSTAG=pam_krb5-$(shell echo $(VERSION) | tr . _)-$(shell echo $(RELEASE) | tr . _)
+VERSION=`rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1`
+RELEASE=`rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1`
+CVSTAG=pam_krb5-`echo $(VERSION) | tr . _`-`echo $(RELEASE) | tr . _`
 distdir=$(PACKAGE)-$(VERSION)-$(RELEASE)
 DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
@@ -16,9 +16,9 @@ tag:
 force-tag:
 	cvs tag -cF $(CVSTAG)
 
-CVSROOT=$(shell test -d CVS && cat CVS/Root)
-REPOSITORY=$(shell test -d CVS && cat CVS/Repository)
-ARCHIVEOUTDIR=$(shell cd $(top_srcdir) && pwd)
+CVSROOT=`test -d CVS && cat CVS/Root`
+REPOSITORY=`test -d CVS && cat CVS/Repository`
+ARCHIVEOUTDIR=`cd $(top_srcdir) && pwd`
 
 archive:
 	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`;\

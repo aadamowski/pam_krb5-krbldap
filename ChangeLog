@@ -1,4 +1,7 @@
 2007-06-24:
+	* Makefile.am: don't use the gmake $(shell) option; use backticks.
+
+2007-06-24:
 	* src/options.c: add a "pwhelp" option.
 	* src/password.c(pam_sm_chauthtok): display the contents of the
 	pwhelp file before doing anything else when in the preliminary check
