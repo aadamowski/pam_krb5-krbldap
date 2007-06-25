@@ -1,13 +1,13 @@
 EXTRA_DIST = pam_krb5.spec TODO README README.winbind
 
-CONFIGURE_DEPENDENCIES = $(abs_top_srcdir)/pam_krb5.spec
+CONFIGURE_DEPENDENCIES = $(top_srcdir)/pam_krb5.spec
 
 SUBDIRS = src tests
 
-VERSION=$(shell rpm -q --specfile $(abs_top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1)
-RELEASE=$(shell rpm -q --specfile $(abs_top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1)
-CVSTAG=pam_krb5-$(shell rpm -q --specfile $(abs_top_srcdir)/pam_krb5.spec --qf '%{version}-%{release}\n' | head -n1 | tr . _)
-distdir=$(shell rpm -q --specfile $(abs_top_srcdir)/pam_krb5.spec | head -n1)
+VERSION=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1)
+RELEASE=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1)
+CVSTAG=pam_krb5-$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}-%{release}\n' | head -n1 | tr . _)
+distdir=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec | head -n1)
 DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
 tag:
@@ -16,9 +16,9 @@ tag:
 force-tag:
 	cvs tag -cF $(CVSTAG)
 
-CVSROOT=$(shell test -d $(abs_top_srcdir)/CVS && cat $(abs_top_srcdir)/CVS/Root)
-REPOSITORY=$(shell test -d $(abs_top_srcdir)/CVS && cat $(abs_top_srcdir)/CVS/Repository)
-ARCHIVEOUTDIR=$(shell cd $(abs_top_srcdir) && pwd)
+CVSROOT=$(shell test -d $(top_srcdir)/CVS && cat $(top_srcdir)/CVS/Root)
+REPOSITORY=$(shell test -d $(top_srcdir)/CVS && cat $(top_srcdir)/CVS/Repository)
+ARCHIVEOUTDIR=$(shell cd $(top_srcdir) && pwd)
 
 archive:
 	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`;\
