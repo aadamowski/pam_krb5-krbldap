@@ -195,6 +195,7 @@ option_l(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	o = option_s(argc, argv, ctx, realm, s, "");
 	list = malloc((strlen(o) + 1) * sizeof(char*));
 	if (list == NULL) {
+		free_s(o);
 		return NULL;
 	}
 	memset(list, 0, (strlen(o) + 1) * sizeof(char*));
@@ -210,6 +211,11 @@ option_l(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	} while (*p != '\0');
 
 	free_s(o);
+
+	if (list[0] == NULL) {
+		free(list);
+		list = NULL;
+	}
 
 	return list;
 }
@@ -727,6 +733,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 					}
 				}
 			}
+			free_l(list);
 		}
 		if (options->debug && options->afs_cells) {
 			int i;

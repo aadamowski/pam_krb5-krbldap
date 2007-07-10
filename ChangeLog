@@ -1,4 +1,8 @@
 2007-07-10:
+	* src/options.c: be more careful about freeing a couple of list
+	parameters.
+
+2007-07-10:
 	* src/harness.c: add a --run option, so that I can run a command
 	when the session's set up and the credentials are initialized.
 
