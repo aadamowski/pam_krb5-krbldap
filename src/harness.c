@@ -1,5 +1,5 @@
 /*
- * Copyright 2005,2006 Red Hat, Inc.
+ * Copyright 2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -216,6 +216,7 @@ main(int argc, char **argv)
 			"\t--setauthtok AUTHTOK\n"
 			"\t--setoldauthtok OLD_AUTHTOK\n"
 			"\t--restart\n"
+			"\t--run [cmd]\n"
 			"\t--auth [args...]\n"
 			"\t--open-session [args...]\n"
 			"\t--setcred-establish [args...]\n"
@@ -323,6 +324,14 @@ main(int argc, char **argv)
 			printf("authenticate: %d%s %s\n", ret,
 			       ret ? ":" : "",
 			       ret ? pam_strerror(pamh, ret) : "");
+			continue;
+		}
+		if (strcmp(argv[i], "--run") == 0) {
+			ret = system(argv[i + 1]);
+			printf("run(\"%s\"): %d%s %s\n", argv[i + 1], ret,
+			       ret ? ":" : "",
+			       ret ? strerror(ret) : "");
+			i++;
 			continue;
 		}
 		if (strcmp(argv[i], "--open-session") == 0) {

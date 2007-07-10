@@ -1,3 +1,7 @@
+2007-07-10:
+	* src/harness.c: add a --run option, so that I can run a command
+	when the session's set up and the credentials are initialized.
+
 2007-06-24:
 	* src/password.c: display the right string.
 	* tests/run-tests: start to adjust for getting-prompts-changes-passwords
