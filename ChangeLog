@@ -1,3 +1,12 @@
+2007-07-12:
+	* src/stash.c: switch from saving a path and removing the file to a
+	push/pop interface, allowing multiple ccaches and ticket files to
+	exist at the same time
+	* src/v4.c,src/v5.c: use push/pop to create/remove files
+	* src/tokens.c: use the topmost ccache name
+	* src/session.c: don't skip creating ccache/ticket files when we've
+	already done so
+
 2007-07-10:
 	* src/options.c: be more careful about freeing a couple of list
 	parameters.

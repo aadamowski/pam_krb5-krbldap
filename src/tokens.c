@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,10 +134,14 @@ tokens_obtain(krb5_context context,
 	use_2b = 1;
 #endif
 
-	/* Initialize the ccache. */
+	/* Open the ccache. */
 	memset(&ccache, 0, sizeof(ccache));
-	if (stash && (stash->v5file != NULL) && (strlen(stash->v5file) > 0)) {
-		if (krb5_cc_resolve(context, stash->v5file, &ccache) != 0) {
+	if (stash &&
+	    (stash->v5ccnames != NULL) &&
+	    (stash->v5ccnames->name != NULL) &&
+	    (strlen(stash->v5ccnames->name) > 0)) {
+		if (krb5_cc_resolve(context, stash->v5ccnames->name,
+				    &ccache) != 0) {
 			memset(&ccache, 0, sizeof(ccache));
 		}
 	}

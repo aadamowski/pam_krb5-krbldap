@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -212,24 +212,6 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		return PAM_SUCCESS;
 	}
 
-	/* Nuke any old credential files which we have lying around. */
-	if (stash->v5file != NULL) {
-		v5_destroy(ctx, stash, options);
-		if (stash->v5setenv) {
-			pam_putenv(pamh, "KRB5CCNAME");
-			stash->v5setenv = 0;
-		}
-	}
-#ifdef USE_KRB4
-	if (stash->v4file != NULL) {
-		v4_destroy(ctx, stash, options);
-		if (stash->v4setenv) {
-			pam_putenv(pamh, "KRBTKFILE");
-			stash->v4setenv = 0;
-		}
-	}
-#endif
-
 	/* Obtain tokens, if necessary. */
 	if ((i == PAM_SUCCESS) &&
 	    (options->ignore_afs == 0) &&
@@ -256,35 +238,24 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Create credential files. */
-	if ((pam_getenv(pamh, "KRB5CCNAME") != NULL) &&
-	    (strlen(pam_getenv(pamh, "KRB5CCNAME")) > 0)) {
-		if (options->debug) {
-			debug("KRB5CCNAME is already set, not creating new v5 "
-			      "ccache for '%s'", user);
-		}
-		ccname = NULL;
-	} else {
-		if (options->debug) {
+	if (options->debug) {
 #ifdef HAVE_LONG_LONG
-			debug("creating v5 ccache for '%s', uid=%lld, gid=%lld",
-			      user,
-			      (long long) userinfo->uid,
-			      (long long) userinfo->gid);
+		debug("creating v5 ccache for '%s', uid=%lld, gid=%lld", user,
+		      (long long) userinfo->uid,
+		      (long long) userinfo->gid);
 #else
-			debug("creating v5 ccache for '%s', uid=%ld, gid=%ld",
-			      user, (long) userinfo->uid, (long) userinfo->gid);
+		debug("creating v5 ccache for '%s', uid=%ld, gid=%ld",
+		      user, (long) userinfo->uid, (long) userinfo->gid);
 #endif
+	}
+	i = v5_save(ctx, stash,  userinfo, options, &ccname);
+	if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
+		if (options->debug) {
+			debug("created v5 ccache '%s' for '%s'", ccname, user);
 		}
-		i = v5_save(ctx, stash,  userinfo, options, &ccname);
-		if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
-			if (options->debug) {
-				debug("created v5 ccache '%s' for '%s'",
-				      ccname, user);
-			}
-			sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
-			pam_putenv(pamh, envstr);
-			stash->v5setenv = 1;
-		}
+		sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
+		pam_putenv(pamh, envstr);
+		stash->v5setenv = 1;
 	}
 
 #ifdef USE_KRB4
@@ -295,27 +266,19 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	/* Only bother to create a v4 tktfile if there's a v5 ccache. */
 	if ((i == PAM_SUCCESS) && (stash->v4present) &&
 	    (ccname != NULL) && (strlen(ccname) > 0)) {
-		if ((pam_getenv(pamh, "KRBTKFILE") != NULL) &&
-		    (strlen(pam_getenv(pamh, "KRBTKFILE")) > 0)) {
+		if (options->debug) {
+			debug("creating v4 ticket file for '%s'", user);
+		}
+		i = v4_save(ctx, stash,  userinfo, options,
+			    getuid(), getgid(), &ccname);
+		if (i == PAM_SUCCESS) {
 			if (options->debug) {
-				debug("KRBTKFILE is set, not creating new v4 "
-				      "ticket file for '%s'", user);
+				debug("created v4 ticket file '%s' for "
+				      "'%s'", ccname, user);
 			}
-		} else {
-			if (options->debug) {
-				debug("creating v4 ticket file for '%s'", user);
-			}
-			i = v4_save(ctx, stash,  userinfo, options,
-				    getuid(), getgid(), &ccname);
-			if (i == PAM_SUCCESS) {
-				if (options->debug) {
-					debug("created v4 ticket file '%s' for "
-					      "'%s'", ccname, user);
-				}
-				sprintf(envstr, "KRBTKFILE=%s", ccname);
-				pam_putenv(pamh, envstr);
-				stash->v4setenv = 1;
-			}
+			sprintf(envstr, "KRBTKFILE=%s", ccname);
+			pam_putenv(pamh, envstr);
+			stash->v4setenv = 1;
 		}
 	}
 #endif
@@ -447,7 +410,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		tokens_release(stash, options);
 	}
 
-	if (stash->v5file != NULL) {
+	if (stash->v5ccnames != NULL) {
 		v5_destroy(ctx, stash, options);
 		if (stash->v5setenv) {
 			pam_putenv(pamh, "KRB5CCNAME");
@@ -459,7 +422,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	}
 
 #ifdef USE_KRB4
-	if (stash->v4file != NULL) {
+	if (stash->v4tktfiles != NULL) {
 		v4_destroy(ctx, stash, options);
 		if (stash->v4setenv) {
 			pam_putenv(pamh, "KRBTKFILE");

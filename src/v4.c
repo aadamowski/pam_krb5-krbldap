@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -419,16 +419,18 @@ v4_save(krb5_context ctx,
 	xstrfree(saved_tktstring);
 	close(fd);
 
-	/* Destroy any old ticket files we might have.  One per customer. */
-	v4_destroy(ctx, stash, options);
-	stash->v4file = xstrdup(tktfile);
-
-	/* Generate a *new* ticket file with the same contents as this one. */
-	_pam_krb5_stash_clone_v4(stash, userinfo->uid, userinfo->gid);
-	krb_set_tkt_string(stash->v4file);
-	if (ccname != NULL) {
-		*ccname = stash->v4file;
+	/* Save the new file's name in the stash, and optionally return it to
+	 * the caller. */
+	if (_pam_krb5_stash_push_v4(stash, tktfile) == 0) {
+		/* Generate a *new* ticket file with the same contents as this
+		 * one. */
+		_pam_krb5_stash_clone_v4(stash, userinfo->uid, userinfo->gid);
+		krb_set_tkt_string(stash->v4tktfiles->name);
+		if (ccname != NULL) {
+			*ccname = stash->v4tktfiles->name;
+		}
 	}
+
 	return PAM_SUCCESS;
 }
 
@@ -436,12 +438,14 @@ void
 v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	   struct _pam_krb5_options *options)
 {
-	if (stash->v4file != NULL) {
+	if (stash->v4tktfiles != NULL) {
 		if (options->debug) {
-			debug("removing ticket file '%s'", stash->v4file);
+			debug("removing ticket file '%s'",
+			      stash->v4tktfiles->name);
 		}
-		if (_pam_krb5_stash_clean_v4(stash) != 0) {
-			warn("error removing ticket file '%s'", stash->v4file);
+		if (_pam_krb5_stash_pop_v4(stash) != 0) {
+			warn("error removing ticket file '%s'",
+			     stash->v4tktfiles->name);
 		}
 	}
 }

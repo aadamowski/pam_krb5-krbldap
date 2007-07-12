@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,11 +39,16 @@
 #define PAM_KRB5_STASH_SHM5_SUFFIX	"_shm5"
 #define PAM_KRB5_STASH_SHM4_SUFFIX	"_shm4"
 
+struct _pam_krb5_ccname_list {
+	char *name;
+	struct _pam_krb5_ccname_list *next;
+};
+
 struct _pam_krb5_stash {
 	char *key;
 	krb5_context v5ctx;
 	int v5attempted, v5result;
-	char *v5file;
+	struct _pam_krb5_ccname_list *v5ccnames;
 	krb5_creds v5creds;
 	int v5setenv;
 	int v5shm;
@@ -51,7 +56,7 @@ struct _pam_krb5_stash {
 	int v4present;
 #ifdef USE_KRB4
 	CREDENTIALS v4creds;
-	char *v4file;
+	struct _pam_krb5_ccname_list *v4tktfiles;
 	int v4setenv;
 	int v4shm;
 	pid_t v4shm_owner;
@@ -66,8 +71,10 @@ void _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash,
 			      uid_t uid, gid_t gid);
 void _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash,
 			      uid_t uid, gid_t gid);
-int _pam_krb5_stash_clean_v5(struct _pam_krb5_stash *stash);
-int _pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash);
+int _pam_krb5_stash_push_v5(struct _pam_krb5_stash *stash, const char *ccname);
+int _pam_krb5_stash_pop_v5(struct _pam_krb5_stash *stash);
+int _pam_krb5_stash_push_v4(struct _pam_krb5_stash *stash, const char *tktfile);
+int _pam_krb5_stash_pop_v4(struct _pam_krb5_stash *stash);
 void _pam_krb5_stash_shm_read(pam_handle_t *pamh,
 			      const char *partial_key,
 			      struct _pam_krb5_stash *stash,

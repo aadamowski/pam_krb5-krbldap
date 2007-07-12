@@ -1,3 +1,7 @@
+- 2.2.13: * make it possible to have more than one ccache (and tktfile) at a
+	    time to work around apps which open a session, set the environment,
+	    and initialize creds (when we previously created a ccache, removing
+	    the one which was named in the environment)
 - 2.2.12: * add a "pwhelp" option.  Display the KDC error to users.
 - 2.2.11: * return success from our account management callback in cases where
 	    our authentication callback simply failed to authenticate (#207410)

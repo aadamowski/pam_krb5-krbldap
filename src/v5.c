@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -667,15 +667,15 @@ v5_save(krb5_context ctx,
 	/* If we got to here, we succeeded. */
 	krb5_cc_close(ctx, ccache);
 	close(fd);
-	/* Destroy any existing ccache file.  One per customer. */
-	v5_destroy(ctx, stash, options);
 	/* Save the new file's name in the stash, and optionally return it to
 	 * the caller. */
-	stash->v5file = xstrdup(tktfile + 5);
-	/* Generate a *new* ticket file with the same contents as this one. */
-	_pam_krb5_stash_clone_v5(stash, userinfo->uid, userinfo->gid);
-	if (ccname != NULL) {
-		*ccname = stash->v5file;
+	if (_pam_krb5_stash_push_v5(stash, tktfile + 5) == 0) {
+		/* Generate a *new* ticket file with the same contents as this
+		 * one, and replace this one. */
+		_pam_krb5_stash_clone_v5(stash, userinfo->uid, userinfo->gid);
+		if (ccname != NULL) {
+			*ccname = stash->v5ccnames->name;
+		}
 	}
 	return PAM_SUCCESS;
 }
@@ -801,13 +801,14 @@ void
 v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	   struct _pam_krb5_options *options)
 {
-	if (stash->v5file != NULL) {
+	if (stash->v5ccnames != NULL) {
 		if (options->debug) {
 			debug("removing ccache file '%s'",
-			      stash->v5file);
+			      stash->v5ccnames->name);
 		}
-		if (_pam_krb5_stash_clean_v5(stash) != 0) {
-			warn("error removing ccache file '%s'", stash->v5file);
+		if (_pam_krb5_stash_pop_v5(stash) != 0) {
+			warn("error removing ccache file '%s'",
+			     stash->v5ccnames->name);
 		}
 	}
 }

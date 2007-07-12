@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -81,14 +81,25 @@ static void
 _pam_krb5_stash_cleanup(pam_handle_t *pamh, void *data, int error)
 {
 	struct _pam_krb5_stash *stash = data;
+	struct _pam_krb5_ccname_list *node;
 	krb5_free_cred_contents(stash->v5ctx, &stash->v5creds);
 	free(stash->key);
-	if (stash->v5file != NULL) {
-		xstrfree(stash->v5file);
+	while (stash->v5ccnames != NULL) {
+		if (stash->v5ccnames->name != NULL) {
+			xstrfree(stash->v5ccnames->name);
+		}
+		node = stash->v5ccnames;
+		stash->v5ccnames = node->next;
+		free(node);
 	}
 #ifdef USE_KRB4
-	if (stash->v4file != NULL) {
-		xstrfree(stash->v4file);
+	while (stash->v4tktfiles != NULL) {
+		if (stash->v4tktfiles->name != NULL) {
+			xstrfree(stash->v4tktfiles->name);
+		}
+		node = stash->v4tktfiles;
+		stash->v4tktfiles = node->next;
+		free(node);
 	}
 #endif
 	memset(stash, 0, sizeof(struct _pam_krb5_stash));
@@ -727,7 +738,7 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	stash->v5ctx = NULL;
 	stash->v5attempted = 0;
 	stash->v5result = KRB5KRB_ERR_GENERIC;
-	stash->v5file = NULL;
+	stash->v5ccnames = NULL;
 	stash->v5setenv = 0;
 	stash->v5shm = -1;
 	stash->v5shm_owner = -1;
@@ -735,7 +746,7 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	stash->v4present = 0;
 #ifdef USE_KRB4
 	memset(&stash->v4creds, 0, sizeof(stash->v4creds));
-	stash->v4file = NULL;
+	stash->v4tktfiles = NULL;
 	stash->v4setenv = 0;
 	stash->v4shm = -1;
 	stash->v4shm_owner = -1;
@@ -760,13 +771,16 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 	return stash;
 }
 
+/* Create a new copy of the named file with the specified owner, optionally
+ * saving its contents in the process.  The original file is removed and its
+ * name is freed and overwritten with the name of the new file. */
 static void
 _pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
 		      uid_t uid, gid_t gid)
 {
 	char *filename;
 	size_t length;
-	if (*stored_file != NULL) {
+	if ((stored_file == NULL) || (*stored_file != NULL)) {
 		length = strlen(*stored_file);
 		filename = malloc(length + 8);
 		if (filename == NULL) {
@@ -799,14 +813,20 @@ _pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
 void
 _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 {
-	_pam_krb5_stash_clone(&stash->v5file, NULL, NULL, uid, gid);
+	if (stash->v5ccnames == NULL) {
+		return;
+	}
+	_pam_krb5_stash_clone(&stash->v5ccnames->name, NULL, NULL, uid, gid);
 }
 
 #ifdef USE_KRB4
 void
 _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 {
-	_pam_krb5_stash_clone(&stash->v4file, NULL, NULL, uid, gid);
+	if (stash->v4tktfiles == NULL) {
+		return;
+	}
+	_pam_krb5_stash_clone(&stash->v4tktfiles->name, NULL, NULL, uid, gid);
 }
 #else
 void
@@ -816,17 +836,47 @@ _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 #endif
 
 static int
-_pam_krb5_stash_clean(char **stored_file)
+_pam_krb5_stash_pop(struct _pam_krb5_ccname_list **list)
 {
-	if (_pam_krb5_storetmp_delete(*stored_file) == 0) {
-		xstrfree(*stored_file);
-		*stored_file = NULL;
-		return 0;
-	} else {
-		if (unlink(*stored_file) == 0) {
-			xstrfree(*stored_file);
-			*stored_file = NULL;
+	struct _pam_krb5_ccname_list *node;
+	if (list != NULL) {
+		if (*list != NULL) {
+			node = *list;
+			if (_pam_krb5_storetmp_delete(node->name) == 0) {
+				xstrfree(node->name);
+				node->name = NULL;
+				*list = node->next;
+				free(node);
+				return 0;
+			} else {
+				if (unlink(node->name) == 0) {
+					node->name = NULL;
+					*list = node->next;
+					free(node);
+					return 0;
+				}
+			}
+		} else {
 			return 0;
+		}
+	}
+	return -1;
+}
+
+static int
+_pam_krb5_stash_push(struct _pam_krb5_ccname_list **list, const char *filename)
+{
+	struct _pam_krb5_ccname_list *node;
+	if (list != NULL) {
+		node = malloc(sizeof(*node));
+		if (node != NULL) {
+			node->name = strdup(filename);
+			if (node->name != NULL) {
+				node->next = *list;
+				*list = node;
+				return 0;
+			}
+			free(node);
 		}
 	}
 	return -1;
@@ -834,20 +884,36 @@ _pam_krb5_stash_clean(char **stored_file)
 
 #ifdef USE_KRB4
 int
-_pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v4(struct _pam_krb5_stash *stash)
 {
-	return _pam_krb5_stash_clean(&stash->v4file);
+	return _pam_krb5_stash_pop(&stash->v4tktfiles);
+}
+int
+_pam_krb5_stash_push_v4(struct _pam_krb5_stash *stash, const char *filename)
+{
+	return _pam_krb5_stash_push(&stash->v4tktfiles, filename);
 }
 #else
 int
-_pam_krb5_stash_clean_v4(struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v4(struct _pam_krb5_stash *stash)
+{
+	return 0;
+}
+int
+_pam_krb5_stash_push_v4(struct _pam_krb5_stash *stash, const char *filename)
 {
 	return 0;
 }
 #endif
 
 int
-_pam_krb5_stash_clean_v5(struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v5(struct _pam_krb5_stash *stash)
 {
-	return _pam_krb5_stash_clean(&stash->v5file);
+	return _pam_krb5_stash_pop(&stash->v5ccnames);
+}
+
+int
+_pam_krb5_stash_push_v5(struct _pam_krb5_stash *stash, const char *filename)
+{
+	return _pam_krb5_stash_push(&stash->v5ccnames, filename);
 }
