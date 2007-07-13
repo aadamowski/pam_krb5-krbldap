@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_SECURITY_PAM_APPL_H
+#include <security/pam_appl.h>
+#endif
+
+#ifdef HAVE_SECURITY_PAM_MODULES_H
+#include <security/pam_modules.h>
+#endif
+
 #include KRB5_H
 #ifdef USE_KRB4
 #include KRB4_DES_H
@@ -47,6 +55,7 @@
 
 #include "init.h"
 #include "log.h"
+#include "v5.h"
 
 #ident "$Id$"
 
@@ -78,7 +87,7 @@ _pam_krb5_init_ctx(krb5_context *ctx,
 		i = krb5_init_secure_context(ctx);
 		if (i != 0) {
 			warn("error initializing kerberos: %d (%s)", i,
-			     error_message(i));
+			     v5_error_message(i));
 		}
 		if (i == 0) {
 			i = set_realm(*ctx, argc, argv);
@@ -93,7 +102,7 @@ _pam_krb5_init_ctx(krb5_context *ctx,
 	i = krb5_init_context(ctx);
 	if (i != 0) {
 		warn("error initializing kerberos: %d (%s)", i,
-		     error_message(i));
+		     v5_error_message(i));
 	}
 	if (i == 0) {
 		i = set_realm(*ctx, argc, argv);
