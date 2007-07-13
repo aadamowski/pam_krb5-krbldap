@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005,2006 Red Hat, Inc.
+ * Copyright 2004,2005,2006,2007 Red Hat, Inc.
  * Copyright 2004 Kungliga Tekniska Högskolan
  *
  * Redistribution and use in source and binary forms, with or without
@@ -363,7 +363,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	if (ret != 0) {
 		if (options->debug > 1) {
 			debug("got error %d (%s) determining file server for "
-			      "\"%s\"", errno, error_message(errno), path);
+			      "\"%s\"", errno, v5_error_message(errno), path);
 		}
 		free(path);
 		return ret;
@@ -417,7 +417,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		} else {
 			if (options->debug > 1) {
 				debug("error %d(%s) determining realm for %s",
-				      i, error_message(i), host);
+				      i, v5_error_message(i), host);
 			}
 		}
 	}
@@ -625,7 +625,7 @@ minikafs_5convert_and_log(krb5_context ctx, struct _pam_krb5_options *options,
 	if (i != 0) {
 		if (options->debug) {
 			debug("got error %d (%s) converting v5 creds to v4 for"
-			      " \"%s\"", i, error_message(i), cell);
+			      " \"%s\"", i, v5_error_message(i), cell);
 		}
 		return i;
 	}
@@ -752,7 +752,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 				debug("error obtaining credentials for '%s'"
 				      "(enctype=%d) on behalf of '%s': %s",
 				      principal, etypes[i],
-				      unparsed_client, error_message(tmp));
+				      unparsed_client, v5_error_message(tmp));
 			}
 		}
 	}
@@ -972,7 +972,8 @@ minikafs_4log_with_principal(struct _pam_krb5_options *options,
 				      lifetime)) != 0) {
 			if (options->debug) {
 				debug("got error %d (%s) obtaining v4 creds for"
-				      " \"%s\"", ret, error_message(ret), cell);
+				      " \"%s\"", ret, v5_error_message(ret),
+				      cell);
 			}
 			return -1;
 		}
