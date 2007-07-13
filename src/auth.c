@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -201,7 +201,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			retval = PAM_AUTH_ERR;
 			i = PAM_AUTH_ERR;
 		}
-		if ((i == PAM_SUCCESS) && (first_pass != NULL)) {
+		if ((i == PAM_SUCCESS) &&
+		    (first_pass != NULL) &&
+		    (strlen(first_pass) > 0)) {
 			if (options->debug) {
 				if (use_third_pass) {
 					debug("trying previously-entered "
@@ -264,7 +266,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			retval = PAM_AUTH_ERR;
 			i = PAM_AUTH_ERR;
 		}
-		if ((i == PAM_SUCCESS) && (second_pass != NULL)) {
+		if ((i == PAM_SUCCESS) &&
+		    (second_pass != NULL) &&
+		    (strlen(second_pass) > 0)) {
 			/* Save the password for the next module. */
 			if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
 				if (options->debug) {

@@ -1,3 +1,6 @@
+2007-07-13:
+	* src/auth.c: check for NULL or empty passwords.
+
 2007-07-12:
 	* src/stash.c: switch from saving a path and removing the file to a
 	push/pop interface, allowing multiple ccaches and ticket files to
