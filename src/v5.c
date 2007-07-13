@@ -501,9 +501,12 @@ v5_get_creds(krb5_context ctx,
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
 		prompter_data.options = options;
+		prompter_data.userinfo = userinfo;
 		if (options->debug && options->debug_sensitive) {
-			debug("attempting with password=\"%s\"",
-			      password ? password : "(null)");
+			debug("attempting with password=%s%s%s",
+			      password ? "\"" : "",
+			      password ? password : "(null)",
+			      password ? "\"" : "");
 		}
 		i = krb5_get_init_creds_password(ctx,
 						 creds,
@@ -518,7 +521,7 @@ v5_get_creds(krb5_context ctx,
 	/* Let the caller see the krb5 result code. */
 	if (options->debug) {
 		debug("krb5_get_init_creds_password(%s) returned %d (%s)",
-		      realm_service, i, error_message(i));
+		      realm_service, i, v5_error_message(i));
 	}
 	if (result != NULL) {
 		*result = i;
@@ -566,9 +569,13 @@ v5_get_creds(krb5_context ctx,
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
 		prompter_data.options = options;
+		prompter_data.userinfo = userinfo;
 		memset(&tmpcreds, 0, sizeof(tmpcreds));
 		if (options->debug && options->debug_sensitive) {
-			debug("attempting with password=\"%s\"", password);
+			debug("attempting with password=%s%s%s",
+			      password ? "\"" : "",
+			      password ? password : "(null)",
+			      password ? "\"" : "");
 		}
 		i = krb5_get_init_creds_password(ctx,
 						 &tmpcreds,

@@ -1,7 +1,7 @@
 2007-07-13:
-	* src/minikafs.c: use the error_message wrapper.
-	* src/tokens.c: use the error_message wrapper.
-	* src/init.c: use the error_message wrapper.
+	* src/v5.c: initialize the entire prompter_data structure.
+	* src/v4.c,src/v5.c,src/minikafs.c,src/tokens.c,src/init.c: use the
+	error_message wrapper.
 	* src/auth.c: check for NULL or empty passwords.
 
 2007-07-12:

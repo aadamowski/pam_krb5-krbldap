@@ -36,6 +36,7 @@
 struct _pam_krb5_prompter_data {
 	pam_handle_t *pamh;
 	const char *previous_password;
+	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_options *options;
 };
 

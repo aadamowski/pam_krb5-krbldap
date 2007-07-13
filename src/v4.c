@@ -482,7 +482,7 @@ v4_get_creds(krb5_context ctx,
 		} else {
 			if (options->debug) {
 				debug("failed to obtain des-cbc-crc v5 creds: "
-				      "%d (%s)", i, error_message(i));
+				      "%d (%s)", i, v5_error_message(i));
 			}
 			in_creds = NULL;
 			if (v5_creds_check_initialized(ctx,
