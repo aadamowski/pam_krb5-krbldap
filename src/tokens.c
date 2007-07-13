@@ -63,6 +63,7 @@
 #include "stash.h"
 #include "tokens.h"
 #include "userinfo.h"
+#include "v5.h"
 #include "xstr.h"
 
 #ident "$Id$"
@@ -164,12 +165,12 @@ tokens_obtain(krb5_context context,
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
 				     "tokens for %s",
-				     ret, error_message(ret), localcell);
+				     ret, v5_error_message(ret), localcell);
 			} else {
 				if (options->debug) {
 					debug("got error %d (%s) while "
 					      "obtaining tokens for %s",
-					      ret, error_message(ret),
+					      ret, v5_error_message(ret),
 					      localcell);
 				}
 			}
@@ -213,12 +214,12 @@ tokens_obtain(krb5_context context,
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
 				     "tokens for %s",
-				     ret, error_message(ret), homecell);
+				     ret, v5_error_message(ret), homecell);
 			} else {
 				if (options->debug) {
 					debug("got error %d (%s) while "
 					      "obtaining tokens for %s",
-					      ret, error_message(ret),
+					      ret, v5_error_message(ret),
 					      homecell);
 				}
 			}
@@ -253,13 +254,13 @@ tokens_obtain(krb5_context context,
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
 				     "tokens for %s",
-				     ret, error_message(ret),
+				     ret, v5_error_message(ret),
 				     options->afs_cells[i].cell);
 			} else {
 				if (options->debug) {
 					debug("got error %d (%s) while "
 					      "obtaining tokens for %s",
-					      ret, error_message(ret),
+					      ret, v5_error_message(ret),
 					      options->afs_cells[i].cell);
 				}
 			}
