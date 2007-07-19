@@ -547,7 +547,7 @@ v5_get_creds(krb5_context ctx,
 		return PAM_SUCCESS;
 		break;
 	case KRB5KDC_ERR_CLIENT_REVOKED:
-		/* There's an entry on the KDC, but it's disabled.  We're try
+		/* There's an entry on the KDC, but it's disabled.  We'll try
 		 * to treat that as we would a "principal unknown error". */
 		if (options->warn) {
 			message.msg = "Error: account is locked.";
