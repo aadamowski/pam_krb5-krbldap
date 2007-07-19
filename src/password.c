@@ -233,9 +233,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 &tmp_result);
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
-				      "%s.",
+				      "%s: %s.",
 				      tmp_result, v5_error_message(tmp_result),
-				      PASSWORD_CHANGE_PRINCIPAL);
+				      PASSWORD_CHANGE_PRINCIPAL,
+				      pam_strerror(pamh, i));
 			}
 			if (i == PAM_SUCCESS) {
 				retval = PAM_SUCCESS;
