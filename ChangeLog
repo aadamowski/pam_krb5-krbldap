@@ -1,4 +1,8 @@
-2007-07-13:
+2007-07-19:
+	* src/acct.c: return ignore instead of user-unknown for client-revoked
+	errors when ignore_unknown_users has been specified, for consistency
+
+2007-07-19:
 	* src/password.c: report the synthetic PAM result from attempting to
 	get password-changing creds (part of #230439)
 
