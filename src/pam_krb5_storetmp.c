@@ -151,7 +151,7 @@ main(int argc, const char **argv)
 success:
 	/* Tell our caller what the name of the file and bail. */
 	if (write(STDOUT_FILENO, filename,
-		  strlen(filename)) != strlen(filename)) {
+		  strlen(filename)) != (ssize_t) strlen(filename)) {
 		return 8;
 	}
 	if (isatty(STDOUT_FILENO)) {

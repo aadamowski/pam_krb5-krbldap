@@ -1,4 +1,10 @@
 2007-07-20:
+	* src/pam_krb5_storetmp.c: silence a compiler warning comparing the
+	return code from write() with strlen().
+	* src/password.c: tweak the error message which is logged when
+	password changing fails to avoid "()".  Check for the presence of
+	password-changing creds in the update phase, and error out if they
+	aren't found.
 	* src/v5.c: add v5_check_initialized_pwc() to check specifically
 	for password-changing credentials.
 	* src/v4.c,src/v5.c,src/auth.c,src/session.c: distinguish between
