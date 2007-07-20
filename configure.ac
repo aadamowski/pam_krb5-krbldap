@@ -74,6 +74,20 @@ else
 fi
 AM_CONDITIONAL(AFS,[test "x$afs" = xyes])
 
+AC_ARG_WITH(default-external,
+AC_HELP_STRING(--with-default-external="sshd gssftp",[Set the default value of the "external" option [default="sshd"].]),
+	    DEFAULT_EXTERNAL="$withval",
+	    DEFAULT_EXTERNAL=sshd)
+AC_DEFINE_UNQUOTED(DEFAULT_EXTERNAL,"$DEFAULT_EXTERNAL",[Set to the default value for the "external" setting.])
+AC_SUBST(DEFAULT_EXTERNAL)
+
+AC_ARG_WITH(default-use-shmem,
+AC_HELP_STRING(--with-default-use-shmem="sshd",[Set the default value of the "use_shmem" option [default="sshd"].]),
+	    DEFAULT_USE_SHMEM="$withval",
+	    DEFAULT_USE_SHMEM=sshd)
+AC_DEFINE_UNQUOTED(DEFAULT_USE_SHMEM,"$DEFAULT_USE_SHMEM",[Set to the default value for the "use-shmem" setting.])
+AC_SUBST(DEFAULT_USE_SHMEM)
+
 KRB5_BINDIR=`dirname $KRB5_CONFIG`
 AC_SUBST(KRB5_BINDIR)
 
