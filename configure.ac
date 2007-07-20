@@ -1,6 +1,7 @@
 AC_INIT(configure.ac)
 AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(pam_krb5,`rpm -q --specfile ${srcdir:-.}/pam_krb5.spec --qf '%{version}\n' | head -n1`)
+AC_LANG_C
 AC_PROG_CC
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
@@ -235,6 +236,8 @@ AC_CHECK_DECL(krb5_get_all_client_addrs,
 AC_CHECK_TYPES(krb5_const_realm,,,[$headers])
 AC_CHECK_MEMBERS(krb5_creds.keyblock,,,[$headers])
 AC_CHECK_MEMBERS(krb5_creds.session,,,[$headers])
+AC_CHECK_MEMBERS(struct krb5_principal_data.data,,,[$headers])
+AC_CHECK_MEMBERS(struct Principal.name,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.enctype,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.keytype,,,[$headers])
 

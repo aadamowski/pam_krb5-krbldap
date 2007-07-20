@@ -1,4 +1,5 @@
 2007-07-20:
+	* src/v5.c: get v5_check_initialized_pwc() working on Heimdal.
 	* src/pam_krb5_storetmp.c: silence a compiler warning comparing the
 	return code from write() with strlen().
 	* src/password.c: tweak the error message which is logged when

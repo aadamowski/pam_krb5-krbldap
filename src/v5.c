@@ -183,6 +183,7 @@ v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 }
 #endif
 
+#if defined(HAVE_STRUCT_KRB5_PRINCIPAL_DATA_DATA)
 static int
 v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 {
@@ -211,6 +212,13 @@ v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 	}
 	return 1;
 }
+#elif defined(HAVE_STRUCT_PRINCIPAL_NAME)
+static int
+v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
+{
+	return strcmp(princ->name, name);
+}
+#endif
 
 #if defined(HAVE_KRB5_CREDS_KEYBLOCK) && defined(HAVE_KRB5_KEYBLOCK_ENCTYPE)
 int
