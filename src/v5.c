@@ -183,6 +183,35 @@ v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 }
 #endif
 
+static int
+v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
+{
+	int i;
+	krb5_principal temp;
+	krb5_data *c1, *c2;
+	temp = NULL;
+	if ((i = krb5_parse_name(ctx, name, &temp)) != 0) {
+		return i;
+	}
+	if (krb5_princ_size(ctx, princ) != krb5_princ_size(ctx, temp)) {
+		krb5_free_principal(ctx, temp);
+		return 1;
+	}
+	for (i = 0; i < krb5_princ_size(ctx, princ); i++) {
+		c1 = krb5_princ_component(ctx, princ, i);
+		c2 = krb5_princ_component(ctx, temp, i);
+		if ((c1->length != c2->length) ||
+		    (memcmp(c1->data, c2->data, c1->length) != 0)) {
+			break;
+		}
+	}
+	krb5_free_principal(ctx, temp);
+	if (i == krb5_princ_size(ctx, princ)) {
+		return 0;
+	}
+	return 1;
+}
+
 #if defined(HAVE_KRB5_CREDS_KEYBLOCK) && defined(HAVE_KRB5_KEYBLOCK_ENCTYPE)
 int
 v5_creds_get_etype(krb5_context ctx, krb5_creds *creds)
@@ -201,6 +230,17 @@ v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
 	        (creds->server != NULL) &&
 	        (creds->keyblock.length > 0) &&
 	        (creds->ticket.length > 0)) ? 0 : 1;
+}
+int
+v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds)
+{
+	return ((creds->client != NULL) &&
+	        (creds->server != NULL) &&
+	        (creds->keyblock.length > 0) &&
+	        (creds->ticket.length > 0) &&
+		(creds->server->length >= 2) &&
+		(v5_principal_compare(ctx, creds->server,
+				      PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
 }
 int
 v5_creds_key_length(krb5_creds *creds)
@@ -227,6 +267,13 @@ int
 v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
 {
 	return (creds->session.keyvalue.length > 0) ? 0 : 1;
+}
+int
+v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds)
+{
+	return ((creds->session.keyvalue.length > 0) &&
+		(v5_principal_compare(ctx, creds->server,
+				      PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
 }
 int
 v5_creds_key_length(krb5_creds *creds)

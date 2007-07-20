@@ -1,4 +1,6 @@
 2007-07-20:
+	* src/v5.c: add v5_check_initialized_pwc() to check specifically
+	for password-changing credentials.
 	* src/v4.c,src/v5.c,src/auth.c,src/session.c: distinguish between
 	ccache and ticket files which we create for users and those which
 	we create for our own use (which needn't involve the helper).

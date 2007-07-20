@@ -76,6 +76,7 @@ void v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	        struct _pam_krb5_options *options);
 
 int v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds);
+int v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds);
 int v5_creds_get_etype(krb5_context ctx, krb5_creds *creds);
 void v5_creds_set_etype(krb5_context ctx, krb5_creds *creds, int etype);
 
