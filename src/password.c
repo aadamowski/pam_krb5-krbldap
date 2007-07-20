@@ -238,13 +238,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				      PASSWORD_CHANGE_PRINCIPAL,
 				      pam_strerror(pamh, i));
 			}
-			if (i == PAM_SUCCESS) {
-				retval = PAM_SUCCESS;
-			} else {
+			if (i != PAM_SUCCESS) {
 				/* No joy. */
 				xstrfree(password);
 				password = NULL;
 			}
+			retval = i;
 		}
 		if ((password == NULL) && (options->use_second_pass)) {
 			/* Ask the user for a password. */
@@ -273,9 +272,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				      tmp_result, v5_error_message(tmp_result),
 				      PASSWORD_CHANGE_PRINCIPAL);
 			}
-			if (i == PAM_SUCCESS) {
-				retval = PAM_SUCCESS;
-			}
+			retval = i;
 		}
 		/* Free [the copy of] the password. */
 		xstrfree(password);
@@ -290,30 +287,52 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		retval = PAM_AUTHTOK_ERR;
 		password = NULL;
 
-		/* The new password (if it's already been requested by a
-		 * previously-called module) is stored as the PAM_AUTHTOK item.
-		 * The old one is stored as the PAM_OLDAUTHTOK item, but we
-		 * don't use it here. */
-		password = NULL;
-		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &password);
+		/* If our preliminary check succeeded, then we'll have
+		 * password-changing credentials. */
+		if (v5_creds_check_initialized_pwc(ctx, &stash->v5creds) == 0) {
+			/* The new password (if it's already been requested by
+			 * a previously-called module) is stored as the
+			 * PAM_AUTHTOK item.  The old one is stored as the
+			 * PAM_OLDAUTHTOK item, but we don't use it here. */
+			i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK,
+						    &password);
 
-		/* Duplicate the password, as above. */
-		if ((password != NULL) && (i == PAM_SUCCESS)) {
-			password = xstrdup(password);
+			/* Duplicate the password, as above. */
+			if ((password != NULL) && (i == PAM_SUCCESS)) {
+				password = xstrdup(password);
+			} else {
+				/* Indicate that we didn't get a satisfactory
+				 * password, but we can ask the user. */
+				retval = PAM_AUTHTOK_ERR;
+				password = NULL;
+			}
+
+			/* If there wasn't a previously-entered password, and
+			 * we can't ask the user, then return an error. */
+			if ((password == NULL) && (options->use_authtok)) {
+				retval = PAM_AUTHTOK_RECOVER_ERR;
+			}
 		} else {
-			i = PAM_AUTHTOK_ERR;
-		}
-
-		/* If there wasn't a previously-entered password, and we need
-		 * one, then return an error. */
-		if ((password == NULL) && (options->use_authtok)) {
-			i = PAM_AUTHTOK_RECOVER_ERR;
-			retval = PAM_AUTHTOK_RECOVER_ERR;
+			/* If we didn't pass the preliminary check, then stand
+			 * back and let whichever module it was that told the
+			 * calling application it was okay to continue to do
+			 * its thing. */
+			if (options->ignore_unknown_principals) {
+				debug("no password-changing credentials for "
+				      "'%s' obtained, ignoring user",
+				      userinfo->unparsed_name);
+				retval = PAM_IGNORE;
+			} else {
+				debug("no password-changing credentials for "
+				      "'%s' obtained, user not known",
+				      userinfo->unparsed_name);
+				retval = PAM_USER_UNKNOWN;
+			}
 		}
 
 		/* If there wasn't a previously-entered password, and we are
 		 * okay with that, ask for one. */
-		if ((password == NULL) && (retval != PAM_AUTHTOK_RECOVER_ERR)) {
+		if ((password == NULL) && (retval == PAM_AUTHTOK_ERR)) {
 			/* Ask for the new password twice. */
 			sprintf(prompt, "New %s%sPassword: ",
 				options->banner,
@@ -335,13 +354,16 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			/* Free the second password, we only need one copy. */
 			xstrfree(password2);
+			password2 = NULL;
 		}
 
 		/* We have the new password, so attempt to change the user's
 		 * password using the previously-acquired password-changing
 		 * magic ticket. */
-		if ((i == PAM_SUCCESS) &&
-		    (v5_creds_check_initialized(ctx, &stash->v5creds) == 0)) {
+		if ((password != NULL) &&
+		    (retval == PAM_AUTHTOK_ERR) &&
+		    (v5_creds_check_initialized_pwc(ctx,
+						    &stash->v5creds) == 0)) {
 			int result_code;
 			krb5_data result_code_string, result_string;
 			result_code = -1;
@@ -365,22 +387,28 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       v5_error_message(i));
 				} else {
 					notice("password change failed for "
-					       "%s: %s, %.*s (%.*s)",
+					       "%s: %s: %.*s %s%.*s%s",
 					       userinfo->unparsed_name,
 					       v5_passwd_error_message(result_code),
 					       result_code_string.length,
 					       (char *) result_code_string.data,
+					       result_string.length ? "(" : "",
 					       result_string.length,
-					       (char *) result_string.data);
+					       (char *) result_string.data,
+					       result_string.length ? ")" : "");
 				}
 				if ((result_string.length > 0) ||
 				    (result_code_string.length > 0)) {
-					notice_user(pamh, "%s: %.*s (%.*s)",
+					notice_user(pamh, "%s: %.*s %s%.*s%s\n",
 						    v5_passwd_error_message(result_code),
 						    result_code_string.length,
 						    result_code_string.data,
+						    result_string.length ?
+						    "(" : "",
 						    result_string.length,
-						    result_string.data);
+						    result_string.data,
+						    result_string.length ?
+						    "(" : "");
 				}
 			}
 		}
@@ -413,14 +441,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 
 		/* Free the new password. */
-		xstrfree(password);
+		if (password != NULL) {
+			xstrfree(password);
+		}
 	}
 
 	/* Clean up. */
 	if (options->debug) {
 		debug("pam_chauthtok (%s) returning %d (%s)",
 		      (flags & PAM_PRELIM_CHECK) ?
-		      "preliminary check" : "updating authtok",
+		      "preliminary check" :
+		      ((flags & PAM_UPDATE_AUTHTOK) ?
+		       "updating authtok":
+		       "unknown phase"),
 		      retval, pam_strerror(pamh, retval));
 	}
 	_pam_krb5_user_info_free(ctx, userinfo);
