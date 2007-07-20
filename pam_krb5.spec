@@ -1,8 +1,8 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.14
+Version: 2.2.15
 Release: 1
-Source0: pam_krb5-%{version}-%{release}.tar.gz
+Source0: pam_krb5-%{version}-1.tar.gz
 License: LGPL
 Group: System Environment/Base
 BuildPrereq: byacc, flex, krb5-devel, pam-devel
@@ -15,11 +15,13 @@ creation, and optional TGT verification and conversion to Kerberos IV tickets.
 The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %prep
-%setup -q -n pam_krb5-%{version}-%{release}
+%setup -q -n pam_krb5-%{version}-1
 
 %build
 CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
-%configure --libdir=/%{_lib}
+%configure --libdir=/%{_lib} \
+	--with-default-use-shmem=sshd \
+	--with-default-external="sshd remote kshell ekshell"
 make
 
 %install
@@ -47,14 +49,26 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Fri Jul 20 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.15-1
+- update to 2.2.15
+
+* Thu Jul 19 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.14-2
+- rebuild
+
 * Fri Jul 13 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.14-1
 - update to 2.2.14
 
 * Thu Jul 12 2007 Nalin Dahyabhai <nalin@redhat.com>
 - update to 2.2.13
 
+* Mon Jun 25 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.12-2
+- rebuild
+
 * Sun Jun 24 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.12-1
 - update to 2.2.12
+
+* Sun Oct 01 2006 Jesse Keating <jkeating@redhat.com> - 2.2.11-2
+- rebuilt for unwind info generation, broken in gcc-4.1.1-21
 
 * Thu Sep 21 2006 Nalin Dahyabhai <nalin@redhat.com> - 2.2.11-1
 - update to 2.2.11

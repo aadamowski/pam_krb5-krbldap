@@ -1,3 +1,10 @@
+- 2.2.15: * let default "external" and "use_shmem" settings be specified at
+	    compile-time
+	  * correctly return a "unknown user" error when attempting to change
+	    a password for a user who has no corresponding principal (#235020)
+	  * don't bother using a helper for creating ccache files, which we're
+	    just going to delete, when we need to get tokens
+- 2.2.14: * handle "client revoked" errors
 - 2.2.13: * make it possible to have more than one ccache (and tktfile) at a
 	    time to work around apps which open a session, set the environment,
 	    and initialize creds (when we previously created a ccache, removing
