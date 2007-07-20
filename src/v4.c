@@ -300,13 +300,14 @@ _pam_krb5_v4_init(krb5_context ctx,
 	return PAM_AUTH_ERR;
 }
 
-int
+static int
 v4_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
 	uid_t uid, gid_t gid,
-	const char **ccname)
+	const char **ccname,
+	int clone_cc)
 {
 	char name[ANAME_SZ + 1], instance[INST_SZ + 1], realm[REALM_SZ + 1];
 	char tktfile[PATH_MAX];
@@ -432,6 +433,27 @@ v4_save(krb5_context ctx,
 	}
 
 	return PAM_SUCCESS;
+}
+
+int
+v4_save_for_user(krb5_context ctx,
+		 struct _pam_krb5_stash *stash,
+		 struct _pam_krb5_user_info *userinfo,
+		 struct _pam_krb5_options *options,
+		 uid_t uid, gid_t gid,
+		 const char **ccname)
+{
+	return v4_save(ctx, stash, userinfo, options, uid, gid, ccname, 1);
+}
+
+int
+v4_save_for_tokens(krb5_context ctx,
+		   struct _pam_krb5_stash *stash,
+		   struct _pam_krb5_user_info *userinfo,
+		   struct _pam_krb5_options *options,
+		   const char **ccname)
+{
+	return v4_save(ctx, stash, userinfo, options, -1, -1, ccname, 0);
 }
 
 void

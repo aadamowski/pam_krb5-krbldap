@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,12 +50,17 @@ int v4_get_creds(krb5_context ctx,
 		 char *password,
 		 int *result);
 
-int v4_save(krb5_context ctx,
-	    struct _pam_krb5_stash *stash,
-	    struct _pam_krb5_user_info *userinfo,
-	    struct _pam_krb5_options *options,
-	    uid_t uid, gid_t gid,
-	    const char **ccname);
+int v4_save_for_user(krb5_context ctx,
+		     struct _pam_krb5_stash *stash,
+		     struct _pam_krb5_user_info *userinfo,
+		     struct _pam_krb5_options *options,
+		     uid_t uid, gid_t gid,
+		     const char **ccname);
+int v4_save_for_tokens(krb5_context ctx,
+		       struct _pam_krb5_stash *stash,
+		       struct _pam_krb5_user_info *userinfo,
+		       struct _pam_krb5_options *options,
+		       const char **ccname);
 void v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	        struct _pam_krb5_options *options);
 int v4_in_tkt(const char *name, const char *instance, const char *realm);

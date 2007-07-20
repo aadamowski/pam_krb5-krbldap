@@ -619,12 +619,13 @@ v5_get_creds(krb5_context ctx,
 	}
 }
 
-int
+static int
 v5_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
-	const char **ccname)
+	const char **ccname,
+	int clone_cc)
 {
 	char tktfile[PATH_MAX + 6];
 	krb5_ccache ccache;
@@ -687,13 +688,36 @@ v5_save(krb5_context ctx,
 	 * the caller. */
 	if (_pam_krb5_stash_push_v5(stash, tktfile + 5) == 0) {
 		/* Generate a *new* ticket file with the same contents as this
-		 * one, and replace this one. */
-		_pam_krb5_stash_clone_v5(stash, userinfo->uid, userinfo->gid);
+		 * one, but for the user's use, and replace this one. */
+		if (clone_cc) {
+			_pam_krb5_stash_clone_v5(stash,
+						 userinfo->uid, userinfo->gid);
+		}
 		if (ccname != NULL) {
 			*ccname = stash->v5ccnames->name;
 		}
 	}
 	return PAM_SUCCESS;
+}
+
+int
+v5_save_for_user(krb5_context ctx,
+		 struct _pam_krb5_stash *stash,
+		 struct _pam_krb5_user_info *userinfo,
+		 struct _pam_krb5_options *options,
+		 const char **ccname)
+{
+	return v5_save(ctx, stash, userinfo, options, ccname, 1);
+}
+
+int
+v5_save_for_tokens(krb5_context ctx,
+		   struct _pam_krb5_stash *stash,
+		   struct _pam_krb5_user_info *userinfo,
+		   struct _pam_krb5_options *options,
+		   const char **ccname)
+{
+	return v5_save(ctx, stash, userinfo, options, ccname, 0);
 }
 
 int

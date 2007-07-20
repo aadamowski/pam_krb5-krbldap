@@ -243,9 +243,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (stash->v4present &&
 			    (options->ignore_afs == 0) &&
 			    (options->tokens == 1)) {
-				v5_save(ctx, stash, userinfo, options, NULL);
-				v4_save(ctx, stash, userinfo, options,
-					getuid(), getgid(), NULL);
+				v5_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
+				v4_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
 				tokens_obtain(ctx, stash, options, userinfo, 1);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
@@ -317,9 +318,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (stash->v4present &&
 			    (options->ignore_afs == 0) &&
 			    (options->tokens == 1)) {
-				v5_save(ctx, stash, userinfo, options, NULL);
-				v4_save(ctx, stash, userinfo, options,
-					getuid(), getgid(), NULL);
+				v5_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
+				v4_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
 				tokens_obtain(ctx, stash, options, userinfo, 1);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
@@ -360,9 +362,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (stash->v4present &&
 			    (options->ignore_afs == 0) &&
 			    (options->tokens == 1)) {
-				v5_save(ctx, stash, userinfo, options, NULL);
-				v4_save(ctx, stash, userinfo, options,
-					getuid(), getgid(), NULL);
+				v5_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
+				v4_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
 				tokens_obtain(ctx, stash, options, userinfo, 1);
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);

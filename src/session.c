@@ -216,21 +216,9 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if ((i == PAM_SUCCESS) &&
 	    (options->ignore_afs == 0) &&
 	    tokens_useful()) {
-		uid_t uid;
-		gid_t gid;
-
-		uid = userinfo->uid;
-		gid = userinfo->gid;
-		userinfo->uid = getuid();
-		userinfo->gid = getgid();
-
-		v5_save(ctx, stash, userinfo, options, NULL);
-		v4_save(ctx, stash, userinfo, options,
-			getuid(), getgid(), NULL);
+		v5_save_for_tokens(ctx, stash, userinfo, options, NULL);
+		v4_save_for_tokens(ctx, stash, userinfo, options, NULL);
 		
-		userinfo->uid = uid;
-		userinfo->gid = gid;
-
 		tokens_obtain(ctx, stash, options, userinfo, 1);
 
 		v4_destroy(ctx, stash, options);
@@ -248,7 +236,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		      user, (long) userinfo->uid, (long) userinfo->gid);
 #endif
 	}
-	i = v5_save(ctx, stash,  userinfo, options, &ccname);
+	i = v5_save_for_user(ctx, stash,  userinfo, options, &ccname);
 	if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
 		if (options->debug) {
 			debug("created v5 ccache '%s' for '%s'", ccname, user);
@@ -269,8 +257,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (options->debug) {
 			debug("creating v4 ticket file for '%s'", user);
 		}
-		i = v4_save(ctx, stash,  userinfo, options,
-			    getuid(), getgid(), &ccname);
+		i = v4_save_for_user(ctx, stash,  userinfo, options,
+				     getuid(), getgid(), &ccname);
 		if (i == PAM_SUCCESS) {
 			if (options->debug) {
 				debug("created v4 ticket file '%s' for "
