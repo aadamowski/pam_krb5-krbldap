@@ -41,7 +41,8 @@ o external
   delegated credentials to the calling application, and you're using pam_krb5
   to obtain a v4 Kerberos ticket via krb524, or AFS tokens.  The calling
   application MUST ensure that KRB5CCNAME points to a ccache which should be
-  used for the authenticating user.
+  used for the authenticating user.  A default list of services can be set at
+  compile-time.
 o ignore_afs
   Disable the default behavior of attempting to obtain tokens for the local
   AFS cell on behalf of clients.
@@ -111,7 +112,8 @@ o use_shmem
   Pass credentials from authentication to session management using shared
   memory instead of PAM data items.  This allows authentication and session-
   managment to be performed in different processes, so long as the PAM
-  environment is correctly propagated from one to the other.
+  environment is correctly propagated from one to the other.  A default list
+  of services can be set at compile-time.
 o validate
   validate = service1 service2
   Validate initial credentials.  By default, credentials are validated if

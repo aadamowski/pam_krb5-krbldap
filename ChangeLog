@@ -2,6 +2,9 @@
 	* src/v4.c,src/v5.c,src/auth.c,src/session.c: distinguish between
 	ccache and ticket files which we create for users and those which
 	we create for our own use (which needn't involve the helper).
+	* src/options.c: let options_l() take a default value.
+	* configure.ac,src/options.c: let the user specify a default
+	"use_shmem" and "external" value at build-time.
 
 2007-07-19:
 	* src/acct.c: return ignore instead of user-unknown for client-revoked

@@ -187,12 +187,12 @@ option_t(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 }
 static char **
 option_l(int argc, PAM_KRB5_MAYBE_CONST char **argv,
-	 krb5_context ctx, const char *realm, const char *s)
+	 krb5_context ctx, const char *realm, const char *s, const char *def)
 {
 	int i;
 	char *o, *p, *q, **list;
 
-	o = option_s(argc, argv, ctx, realm, s, "");
+	o = option_s(argc, argv, ctx, realm, s, def ? def : "");
 	list = malloc((strlen(o) + 1) * sizeof(char*));
 	if (list == NULL) {
 		free_s(o);
@@ -311,7 +311,8 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 			debug("string_parameter_3 = '%s'", s ? s : "(null)");
 			free_s(s);
 			l = option_l(argc, argv,
-				     ctx, options->realm, "list_parameter_1");
+				     ctx, options->realm, "list_parameter_1",
+				     "");
 			for (i = 0; (l != NULL) && (l[i] != NULL); i++) {
 				debug("list_parameter_1[%d] = '%s'", i, l[i]);
 			}
@@ -380,7 +381,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->tokens = 0;
 		if (service != NULL) {
 			list = option_l(argc, argv, ctx, options->realm,
-					"tokens");
+					"tokens", "");
 			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
 				if (strcmp(list[i], service) == 0) {
 					options->tokens = 1;
@@ -511,7 +512,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->use_shmem = 0;
 		if (service != NULL) {
 			list = option_l(argc, argv, ctx, options->realm,
-					"use_shmem");
+					"use_shmem", DEFAULT_USE_SHMEM);
 			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
 				if (strcmp(list[i], service) == 0) {
 					options->use_shmem = 1;
@@ -535,7 +536,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->external = 0;
 		if (service != NULL) {
 			list = option_l(argc, argv, ctx, options->realm,
-					"external");
+					"external", DEFAULT_EXTERNAL);
 			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
 				if (strcmp(list[i], service) == 0) {
 					options->external = 1;
@@ -570,7 +571,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->validate = 0;
 		if (service != NULL) {
 			list = option_l(argc, argv, ctx, options->realm,
-					"validate");
+					"validate", "");
 			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
 				if (strcmp(list[i], service) == 0) {
 					options->validate = 1;
@@ -664,7 +665,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	options->hosts = option_l(argc, argv,
-				  ctx, options->realm, "hosts");
+				  ctx, options->realm, "hosts", "");
 	if (options->hosts) {
 		int i;
 		for (i = 0; options->hosts[i] != NULL; i++) {
@@ -703,7 +704,8 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 				}
 			}
 		}
-		list = option_l(argc, argv, ctx, options->realm, "afs_cells");
+		list = option_l(argc, argv, ctx, options->realm, "afs_cells",
+				"");
 		if ((list != NULL) && (list[0] != NULL)) {
 			int i;
 			char *p;
@@ -750,7 +752,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		}
 	}
 
-	list = option_l(argc, argv, ctx, options->realm, "mappings");
+	list = option_l(argc, argv, ctx, options->realm, "mappings", "");
 	for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
 		/* nothing */
 	}

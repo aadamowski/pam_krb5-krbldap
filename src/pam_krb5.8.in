@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2006/09/08 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 8 2007/07/19 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -192,7 +192,7 @@ This is useful if you are using pam_cracklib.so or pam_passwdqc.so to try to
 enforce use of less-easy-to-guess passwords.
 
 .IP use_shmem
-.IP use_shmem=\fIsshd\fR
+.IP "use_shmem=\fIsshd\fR"
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory, or to do so for
 specific services.

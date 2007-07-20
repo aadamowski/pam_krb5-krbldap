@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2006/02/06 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2007/07/19 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -55,6 +55,7 @@ application during session setup.
 @MAN_KRB4@@MAN_AFS@AFS tokens or a
 @MAN_KRB4@krb4 ticket.
 @NO_MAN_KRB4@@MAN_AFS@This is most often useful for obtaining AFS tokens.
+By default, the module is configured with "external = \fI@DEFAULT_EXTERNAL@\fR".
 
 .IP forwardable=[\fItrue\fR|\fIfalse\fR]
 controls whether or not credentials are forwardable.  
@@ -162,7 +163,8 @@ default credential lifetime.
 .IP "use_shmem=\fIsshd\fR \fIftp\fR"
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory for specific
-services.
+services.  By default, the module is configured with
+"use_shmem = \fI@DEFAULT_USE_SHMEM@\fR".
 
 .IP validate=[\fItrue\fR|\fIfalse\fR]
 .IP "validate=\fIlogin sshd\fR"
