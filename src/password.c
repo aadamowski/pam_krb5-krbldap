@@ -408,7 +408,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 						    result_string.length,
 						    result_string.data,
 						    result_string.length ?
-						    "(" : "");
+						    ")" : "");
 				}
 			}
 		}
