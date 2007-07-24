@@ -1,4 +1,6 @@
 2007-07-24:
+	* configure.ac: check for krb5_get_prompt_types, though we don't do
+	anything with it yet.
 	* src/minikafs.c: factor the v5- and v4-specific bits of settoken()
 	out into a single function, and allocate the buffer from the heap
 	rather than dynamically-sizing it based on the function's arguments.
