@@ -35,6 +35,10 @@
   * A miniature afslog implementation.  Requires a running krb524 server or a
   * v4-capable KDC, or cells served by OpenAFS 1.2.8 or later in combination
   * with MIT Kerberos 1.2.6 or later.
+  *
+  * References:
+  *   http://grand.central.org/numbers/pioctls.html
+  *   http://www.afsig.se/afsig/space/rxgk-client-integration
   */
 
 #include "../config.h"
@@ -93,7 +97,6 @@
 
 #define OPENAFS_AFS_IOCTL_FILE  "/proc/fs/openafs/afs_ioctl"
 #define ARLA_AFS_IOCTL_FILE     "/proc/fs/nnpfs/afs_ioctl"
-#define VIOC_SYSCALL            _IOW('C', 1, void *)
 
 #ifdef sun
 #ifndef __NR_afs_syscall
@@ -101,8 +104,19 @@
 #endif
 #endif
 
-/* A structure specifying parameters to the VIOC_SYSCALL ioctl.  An array would
- * do as well, but this makes the order of items clearer. */
+/* Global(!) containing the path to the file/device/whatever in /proc which we
+ * can use to get the effect of the AFS syscall.  If we ever need to be
+ * thread-safe, we'll have to lock around accesses to this. */
+static const char *minikafs_procpath = NULL;
+
+#define VIOCTL_SYSCALL ((unsigned int) _IOW('C', 1, void *))
+#define VIOCTL_FN(id)  ((unsigned int) _IOW('V', (id), struct minikafs_ioblock))
+#define CIOCTL_FN(id)  ((unsigned int) _IOW('C', (id), struct minikafs_ioblock))
+#define OIOCTL_FN(id)  ((unsigned int) _IOW('O', (id), struct minikafs_ioblock))
+#define AIOCTL_FN(id)  ((unsigned int) _IOW('A', (id), struct minikafs_ioblock))
+
+/* A structure specifying parameters to the VIOCTL_SYSCALL ioctl.  An array
+ * would do as well, but this makes the order of items clearer. */
 struct minikafs_procdata {
 	long param4;
 	long param3;
@@ -111,13 +125,7 @@ struct minikafs_procdata {
 	long function;
 };
 
-/* Global(!) containing the path to the file/device/whatever in /proc which we
- * can use to get the effect of the AFS syscall.  If we ever need to be
- * thread-safe, we'll have to lock around accesses to this. */
-static const char *minikafs_procpath = NULL;
-
-/* A structure specifying input/output buffers to minikafs_syscall() or
- * minikafs_pioctl(). */
+/* A structure specifying input/output buffers to pioctl functions. */
 struct minikafs_ioblock {
 	char *in, *out;
 	uint16_t insize, outsize;
@@ -138,18 +146,21 @@ enum minikafs_subsys {
 	minikafs_subsys_setpag = 21,
 };
 
-/* Subfunctions called through minikafs_pioctl().  Might not port to your system. */
-#define PIOCTL_FN(id) ((unsigned int) _IOW('V', (id), struct minikafs_ioblock))
+/* Subfunctions called through minikafs_pioctl(). */
 enum minikafs_pioctl_fn {
-	minikafs_pioctl_bogus = PIOCTL_FN(0),
-	minikafs_pioctl_settoken = PIOCTL_FN(3),
-	minikafs_pioctl_flush = PIOCTL_FN(6),
-	minikafs_pioctl_gettoken = PIOCTL_FN(8),
-	minikafs_pioctl_unlog = PIOCTL_FN(9),
-	minikafs_pioctl_whereis = PIOCTL_FN(14),
-	minikafs_pioctl_unpag = PIOCTL_FN(21),
-	minikafs_pioctl_getcelloffile = PIOCTL_FN(30),
-	minikafs_pioctl_getwscell = PIOCTL_FN(31),
+	minikafs_pioctl_bogus = VIOCTL_FN(0),
+	minikafs_pioctl_settoken = VIOCTL_FN(3),
+	minikafs_pioctl_flush = VIOCTL_FN(6),
+	minikafs_pioctl_gettoken = VIOCTL_FN(8),
+	minikafs_pioctl_unlog = VIOCTL_FN(9),
+	minikafs_pioctl_whereis = VIOCTL_FN(14),
+	minikafs_pioctl_unpag = VIOCTL_FN(21),
+	minikafs_pioctl_getcelloffile = VIOCTL_FN(30),
+	minikafs_pioctl_getwscell = VIOCTL_FN(31),
+	minikafs_pioctl_gettoken2 = CIOCTL_FN(7),
+	minikafs_pioctl_settoken2 = CIOCTL_FN(8),
+	minikafs_pioctl_getprop = CIOCTL_FN(10),
+	minikafs_pioctl_setprop = CIOCTL_FN(11),
 };
 
 /* Call AFS using an ioctl. Might not port to your system. */
@@ -168,7 +179,7 @@ minikafs_ioctlcall(long function, long arg1, long arg2, long arg3, long arg4)
 	data.param2 = arg2;
 	data.param3 = arg3;
 	data.param4 = arg4;
-	ret = ioctl(fd, VIOC_SYSCALL, &data);
+	ret = ioctl(fd, VIOCTL_SYSCALL, &data);
 	saved_errno = errno;
 	close(fd);
 	errno = saved_errno;
@@ -179,7 +190,12 @@ minikafs_ioctlcall(long function, long arg1, long arg2, long arg3, long arg4)
 static int
 minikafs_syscall(long function, long arg1, long arg2, long arg3, long arg4)
 {
+#ifdef __NR_afs_syscall
 	return syscall(__NR_afs_syscall, function, arg1, arg2, arg3, arg4);
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
 }
 
 /* Call into AFS, somehow. */
@@ -256,12 +272,19 @@ minikafs_has_afs(void)
 	int fd, i, ret;
 	struct sigaction news, olds;
 
-	fd = open(OPENAFS_AFS_IOCTL_FILE, O_RDWR);
-	if (fd != -1) {
-		minikafs_procpath = OPENAFS_AFS_IOCTL_FILE;
-		close(fd);
-		return 1;
+	fd = -1;
+
+#ifdef OPENAFS_AFS_IOCTL_FILE
+	if (fd == -1) {
+		fd = open(OPENAFS_AFS_IOCTL_FILE, O_RDWR);
+		if (fd != -1) {
+			minikafs_procpath = OPENAFS_AFS_IOCTL_FILE;
+			close(fd);
+			return 1;
+		}
 	}
+#endif
+#ifdef ARLA_AFS_IOCTL_FILE
 	if (fd == -1) {
 		fd = open(ARLA_AFS_IOCTL_FILE, O_RDWR);
 		if (fd != -1) {
@@ -269,6 +292,10 @@ minikafs_has_afs(void)
 			close(fd);
 			return 1;
 		}
+	}
+#endif
+	if (fd == -1) {
+		return 0;
 	}
 
 	memset(&news, 0, sizeof(news));
@@ -487,27 +514,36 @@ minikafs_ws_cell(char *cell, size_t length)
 	return i;
 }
 
-#ifdef USE_KRB4
-/* Stuff the ticket and key from a v4 credentials structure into the kernel. */
+/* Stuff a ticket and DES key into the kernel. */
 static int
-minikafs_4settoken(const char *cell, uid_t uid, uint32_t start, uint32_t end,
-		   CREDENTIALS *creds)
+minikafs_settoken(const void *ticket, uint32_t ticket_size,
+		  int kvno, const unsigned char *key,
+		  uint32_t uid, uint32_t start, uint32_t end, uint32_t flags,
+		  const char *cell)
 {
-	char buffer[4 + creds->ticket_st.length +
-		    4 + sizeof(struct minikafs_plain_token) +
-		    4 + strlen(cell) + 1];
+	char *buffer;
 	struct minikafs_plain_token plain_token;
 	struct minikafs_ioblock iob;
 	uint32_t size;
+	int i;
+
+	/* Allocate the input buffer. */
+	buffer = malloc(4 + ticket_size +
+			4 + sizeof(struct minikafs_plain_token) +
+			4 +
+			strlen(cell) + 1);
+	if (buffer == NULL) {
+		return -1;
+	}
 
 	/* their key, encrypted with our key */
-	size = creds->ticket_st.length;
+	size = ticket_size;
 	memcpy(buffer, &size, 4);
-	memcpy(buffer + 4, &creds->ticket_st.dat, size);
+	memcpy(buffer + 4, ticket, size);
 
 	/* our key, plus housekeeping */
-	plain_token.kvno = creds->kvno;
-	memcpy(&plain_token.key, creds->session, 8);
+	plain_token.kvno = kvno;
+	memcpy(&plain_token.key, key, 8);
 	plain_token.uid = uid;
 	plain_token.start = start;
 	plain_token.end = end;
@@ -516,85 +552,64 @@ minikafs_4settoken(const char *cell, uid_t uid, uint32_t start, uint32_t end,
 	}
 
 	size = sizeof(plain_token);
-	memcpy(buffer + 4 + creds->ticket_st.length, &size, 4);
-	memcpy(buffer + 4 + creds->ticket_st.length + 4, &plain_token, size);
+	memcpy(buffer + 4 + ticket_size, &size, 4);
+	memcpy(buffer + 4 + ticket_size + 4, &plain_token, size);
+
+	/* flags */
+	size = flags;
+	memcpy(buffer + 4 + ticket_size + 4 + sizeof(plain_token), &size, 4);
 
 	/* the name of the cell */
-	size = 0;
-	memcpy(buffer + 4 + creds->ticket_st.length + 4 +
-	       sizeof(plain_token), &size, 4);
-	strcpy(buffer + 4 + creds->ticket_st.length + 4 +
-	       sizeof(plain_token) + 4, cell);
+	memcpy(buffer + 4 + ticket_size + 4 + sizeof(plain_token) + 4,
+	       cell, strlen(cell) + 1);
 
 	/* the regular stuff */
 	memset(&iob, 0, sizeof(iob));
 	iob.in = buffer;
-	iob.insize = 4 + creds->ticket_st.length +
+	iob.insize = 4 + ticket_size +
 		     4 + sizeof(struct minikafs_plain_token) +
 		     4 + strlen(cell) + 1;
 	iob.out = NULL;
 	iob.outsize = 0;
 
-	return minikafs_pioctl(NULL, minikafs_pioctl_settoken, &iob);
+	i = minikafs_pioctl(NULL, minikafs_pioctl_settoken, &iob);
+	free(buffer);
+	return i;
+}
+
+#ifdef USE_KRB4
+/* Stuff the ticket and key from a v4 credentials structure into the kernel. */
+static int
+minikafs_4settoken(const char *cell, uid_t uid, uint32_t start, uint32_t end,
+		   CREDENTIALS *creds)
+{
+	return minikafs_settoken(creds->ticket_st.dat,
+				 creds->ticket_st.length,
+				 creds->kvno,
+				 creds->session,
+				 uid, start, end, 0, cell);
 }
 #endif
 
-/* Stuff the ticket and key from a v5 credentials structure into the kernel.
- * While this may succeed and return 0, the cache manager may discard the token
- * without clearing it, so we can't depend on this working in any
- * programmatically verifiable way. Grrrr! */
+/* Stuff the ticket and key from a v5 credentials structure into the kernel. */
 static int
 minikafs_5settoken(const char *cell, krb5_creds *creds, uid_t uid)
 {
-	char buffer[4 + creds->ticket.length +
-		    4 + sizeof(struct minikafs_plain_token) +
-		    4 + strlen(cell) + 1];
-	struct minikafs_plain_token plain_token;
-	struct minikafs_ioblock iob;
-	uint32_t size;
-
+	/* Assume that the only 8-byte keys are DES keys, and sanity-check. */
 	if (v5_creds_key_length(creds) != 8) {
 		return -1;
 	}
-
-	/* their key, encrypted with our key */
-	size = creds->ticket.length;
-	memcpy(buffer, &size, 4);
-	memcpy(buffer + 4, creds->ticket.data, size);
-
-	/* our key, plus housekeeping */
-	plain_token.kvno = 0x100; /* magic number, signals OpenAFS 1.2.8 and
-				     later that the ticket is a v5 ticket */
-	memcpy(&plain_token.key, v5_creds_key_contents(creds),
-	       v5_creds_key_length(creds));
-	plain_token.uid = uid;
-	plain_token.start = creds->times.starttime;
-	plain_token.end = creds->times.endtime;
-	if (((creds->times.endtime - creds->times.starttime) % 1) == 0) {
-		plain_token.end--;
-	}
-
-	size = sizeof(plain_token);
-	memcpy(buffer + 4 + creds->ticket.length, &size, 4);
-	memcpy(buffer + 4 + creds->ticket.length + 4, &plain_token, size);
-
-	/* the name of the cell */
-	size = 0;
-	memcpy(buffer + 4 + creds->ticket.length + 4 +
-	       sizeof(plain_token), &size, 4);
-	strcpy(buffer + 4 + creds->ticket.length + 4 +
-	       sizeof(plain_token) + 4, cell);
-
-	/* the regular stuff */
-	memset(&iob, 0, sizeof(iob));
-	iob.in = buffer;
-	iob.insize = 4 + creds->ticket.length +
-		     4 + sizeof(struct minikafs_plain_token) +
-		     4 + strlen(cell) + 1;
-	iob.out = NULL;
-	iob.outsize = 0;
-
-	return minikafs_pioctl(NULL, minikafs_pioctl_settoken, &iob);
+	return minikafs_settoken(creds->ticket.data,
+				 creds->ticket.length,
+				 0x100, /* magic number, signals OpenAFS
+					 * 1.2.8 and later that the ticket
+					 * is actually a v5 ticket */
+				 v5_creds_key_contents(creds),
+				 uid,
+				 creds->times.starttime,
+				 creds->times.endtime,
+				 0,
+				 cell);
 }
 
 /* Clear our tokens. */
