@@ -1,3 +1,7 @@
+2007-07-25:
+	* src/v4.c: try to clean up the debug message for v5->v4 principal
+	name conversion
+
 2007-07-24:
 	* configure.ac: check for krb5_get_prompt_types, though we don't do
 	anything with it yet.

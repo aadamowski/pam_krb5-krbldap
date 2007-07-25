@@ -188,8 +188,9 @@ _pam_krb5_v4_init(krb5_context ctx,
 		return PAM_SERVICE_ERR;
 	}
 	if (options->debug) {
-		debug("converted principal to '%s'[.]'%s'@'%s'",
-		      name, instance, realm);
+		debug("converted principal to '%s%s%s%s@'%s'", name,
+		      strlen(instance) ? "'.'" : "'", instance,
+		      strlen(instance) ? "'" : "", realm);
 	}
 
 #ifdef HAVE_KRB_TIME_TO_LIFE
