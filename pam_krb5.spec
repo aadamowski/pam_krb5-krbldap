@@ -50,10 +50,15 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 # $Id$
 %changelog
 * Fri Jul 27 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.16-1
-- update to 2.2.16
+- update to 2.2.16, also avoiding use of the helper if we're creating a ticket
+  file for our own use
  
-* Fri Jul 20 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.15-1
-- update to 2.2.15
+* Mon Jul 23 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.15-1
+- update to 2.2.15, adjusting the fix for #150056 so that it doesn't run
+  afoul of SELinux policy by attempting to read a ccache which was created
+  for use by the user via the helper
+- build with --with-default-use-shmem=sshd --with-default-external=sshd, to
+  get the expected behavior without requiring administrator intervention
 
 * Thu Jul 19 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.14-2
 - rebuild
