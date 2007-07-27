@@ -20,8 +20,7 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 %build
 CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
 %configure --libdir=/%{_lib} \
-	--with-default-use-shmem=sshd \
-	--with-default-external="sshd remote kshell ekshell"
+	--with-default-use-shmem=sshd --with-default-external=sshd
 make
 
 %install
@@ -52,7 +51,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 * Fri Jul 27 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.16-1
 - update to 2.2.16, also avoiding use of the helper if we're creating a ticket
   file for our own use
- 
+
+* Mon Jul 23 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.15-2
+- rebuild
+
 * Mon Jul 23 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.15-1
 - update to 2.2.15, adjusting the fix for #150056 so that it doesn't run
   afoul of SELinux policy by attempting to read a ccache which was created
