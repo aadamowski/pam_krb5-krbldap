@@ -1,3 +1,8 @@
+- 2.2.16: * don't bother using a helper for creating v4 ticket files when we're
+	    just getting tokens
+	  * clean up the debug message which we emit when we do v5->v4
+	    principal name conversion
+	  * compilation fixes
 - 2.2.15: * let default "external" and "use_shmem" settings be specified at
 	    compile-time
 	  * correctly return a "unknown user" error when attempting to change
