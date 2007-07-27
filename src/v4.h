@@ -54,7 +54,6 @@ int v4_save_for_user(krb5_context ctx,
 		     struct _pam_krb5_stash *stash,
 		     struct _pam_krb5_user_info *userinfo,
 		     struct _pam_krb5_options *options,
-		     uid_t uid, gid_t gid,
 		     const char **ccname);
 int v4_save_for_tokens(krb5_context ctx,
 		       struct _pam_krb5_stash *stash,

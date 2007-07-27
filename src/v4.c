@@ -426,7 +426,9 @@ v4_save(krb5_context ctx,
 	if (_pam_krb5_stash_push_v4(stash, tktfile) == 0) {
 		/* Generate a *new* ticket file with the same contents as this
 		 * one. */
-		_pam_krb5_stash_clone_v4(stash, userinfo->uid, userinfo->gid);
+		if (clone_cc) {
+			_pam_krb5_stash_clone_v4(stash, uid, gid);
+		}
 		krb_set_tkt_string(stash->v4tktfiles->name);
 		if (ccname != NULL) {
 			*ccname = stash->v4tktfiles->name;
@@ -441,10 +443,10 @@ v4_save_for_user(krb5_context ctx,
 		 struct _pam_krb5_stash *stash,
 		 struct _pam_krb5_user_info *userinfo,
 		 struct _pam_krb5_options *options,
-		 uid_t uid, gid_t gid,
 		 const char **ccname)
 {
-	return v4_save(ctx, stash, userinfo, options, uid, gid, ccname, 1);
+	return v4_save(ctx, stash, userinfo, options,
+		       userinfo->uid, userinfo->gid, ccname, 1);
 }
 
 int
@@ -611,12 +613,11 @@ v4_get_creds(krb5_context ctx,
 }
 
 int
-v4_save(krb5_context ctx,
-	struct _pam_krb5_stash *stash,
-	struct _pam_krb5_user_info *userinfo,
-	struct _pam_krb5_options *options,
-	uid_t uid, gid_t gid,
-	const char **ccname)
+v4_save_for_user(krb5_context ctx,
+		 struct _pam_krb5_stash *stash,
+		 struct _pam_krb5_user_info *userinfo,
+		 struct _pam_krb5_options *options,
+		 const char **ccname)
 {
 	if (ccname != NULL) {
 		*ccname = NULL;
@@ -624,6 +625,18 @@ v4_save(krb5_context ctx,
 	return PAM_SERVICE_ERR;
 }
 
+int
+v4_save_for_tokens(krb5_context ctx,
+		   struct _pam_krb5_stash *stash,
+		   struct _pam_krb5_user_info *userinfo,
+		   struct _pam_krb5_options *options,
+		   const char **ccname)
+{
+	if (ccname != NULL) {
+		*ccname = NULL;
+	}
+	return PAM_SERVICE_ERR;
+}
 void
 v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 	   struct _pam_krb5_options *options)

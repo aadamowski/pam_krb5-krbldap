@@ -216,7 +216,14 @@ v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 static int
 v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 {
-	return strcmp(princ->name, name);
+	if (princ->name.name_string.len != strlen(name)) {
+		return 1;
+	}
+	if (memcmp(princ->name.name_string.val, name,
+		   princ->name.name_string.len) != 0) {
+		return 1;
+	}
+	return 0;
 }
 #endif
 

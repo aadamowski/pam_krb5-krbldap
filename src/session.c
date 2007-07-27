@@ -257,8 +257,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (options->debug) {
 			debug("creating v4 ticket file for '%s'", user);
 		}
-		i = v4_save_for_user(ctx, stash,  userinfo, options,
-				     getuid(), getgid(), &ccname);
+		i = v4_save_for_user(ctx, stash,  userinfo, options, &ccname);
 		if (i == PAM_SUCCESS) {
 			if (options->debug) {
 				debug("created v4 ticket file '%s' for "

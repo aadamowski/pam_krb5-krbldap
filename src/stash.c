@@ -780,7 +780,7 @@ _pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
 {
 	char *filename;
 	size_t length;
-	if ((stored_file == NULL) || (*stored_file != NULL)) {
+	if ((stored_file != NULL) && (*stored_file != NULL)) {
 		length = strlen(*stored_file);
 		filename = malloc(length + 8);
 		if (filename == NULL) {
@@ -850,6 +850,7 @@ _pam_krb5_stash_pop(struct _pam_krb5_ccname_list **list)
 				return 0;
 			} else {
 				if (unlink(node->name) == 0) {
+					xstrfree(node->name);
 					node->name = NULL;
 					*list = node->next;
 					free(node);
