@@ -111,6 +111,7 @@ credentials obtained from KDCs.
 @MAN_KRB4@.IP krb4_convert
 @MAN_KRB4@tells pam_krb5.so to obtain Kerberos IV credentials for users, in
 @MAN_KRB4@addition to Kerberos 5 credentials, using either a v4-capable KDC or
+@MAN_KRB4@a krb524 service.
 @MAN_KRB4@This option is poorly named.
 @MAN_KRB4@@MAN_AFS@This option is automatically enabled if AFS is detected.
 @MAN_KRB4@

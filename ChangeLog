@@ -1,3 +1,7 @@
+2007-07-30:
+	* src/pam_krb5.8.in: reintroduce a missing line.
+	* COPYING: be more explicit about which BSD license we mean
+
 2007-07-27:
 	* src/v5.c: fix v5_check_initialized_pwc() with Heimdal
 	* src/v4.c: fix compilation for no-krb4-support cases, avoid cloning
