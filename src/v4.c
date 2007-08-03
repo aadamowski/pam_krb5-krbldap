@@ -226,6 +226,10 @@ _pam_krb5_v4_init(krb5_context ctx,
 		}
 		return PAM_SERVICE_ERR;
 	}
+	if (fchown(fd, getuid(), getgid()) != 0) {
+		warn("error setting permissions on \"%s\" (%s), attempting "
+		     "to continue", tktfile, strerror(errno));
+	}
 	if (options->debug) {
 		debug("preparing to place v4 credentials in '%s'", tktfile);
 	}
@@ -351,7 +355,7 @@ v4_save(krb5_context ctx,
 		     "(shouldn't happen)");
 		return PAM_SERVICE_ERR;
 	}
-	if (fchown(fd, uid, gid) != 0) {
+	if (fchown(fd, getuid(), getgid()) != 0) {
 		warn("error setting permissions on \"%s\" (%s), attempting "
 		     "to continue", tktfile, strerror(errno));
 	}

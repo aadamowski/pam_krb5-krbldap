@@ -1,4 +1,6 @@
 2007-08-02:
+	* src/v4.c: warn when an fchown() fails, and don't try to give away
+	our file; that's for later
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: note that "tokens" is
 	unnecessary if the calling application was written correctly.
 	* src/pam_krb5.8.in: reintroduce a missing line.
