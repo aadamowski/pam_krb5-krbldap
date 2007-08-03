@@ -175,7 +175,9 @@ sets the default lifetime for credentials.
 @MAN_AFS@signals that pam_krb5.so should create a new AFS PAG and obtain AFS
 @MAN_AFS@tokens during authentication in addition to session setup.  This is
 @MAN_AFS@primarily useful in server applications which need to access a user's
-@MAN_AFS@files but which do not open PAM sessions before doing so.
+@MAN_AFS@files but which do not open PAM sessions before doing so.  A properly-
+@MAN_AFS@written server will not need this flag set in order to function
+@MAN_AFS@correctly.
 @MAN_AFS@
 .IP try_first_pass
 tells pam_krb5.so to check the previously-entered password as with

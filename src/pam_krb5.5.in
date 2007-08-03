@@ -157,7 +157,8 @@ default credential lifetime.
 @MAN_AFS@signals that pam_krb5.so should create an AFS PAG and obtain tokens
 @MAN_AFS@during authentication in addition to session setup.  This is primarily
 @MAN_AFS@useful in server applications which need to access a user's files but
-@MAN_AFS@which do not open PAM sessions before doing so.
+@MAN_AFS@which do not open PAM sessions before doing so.  For correctly-written
+@MAN_AFS@applications, this flag is not necessary.
 @MAN_AFS@
 .IP use_shmem=\fItrue\fR
 .IP "use_shmem=\fIsshd\fR \fIftp\fR"

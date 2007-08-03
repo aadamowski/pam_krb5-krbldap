@@ -51,6 +51,8 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 * Thu Aug  2 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.17-1
 - correct the license: tag -- this module is dual-licensed (LGPL+ or BSD)
 - fix a man page missing line
+- tactfully suggest in the man page that if your app needs the "tokens"
+  flag in order to work properly, it's broken
 
 * Fri Jul 27 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.16-1
 - update to 2.2.16, also avoiding use of the helper if we're creating a ticket
