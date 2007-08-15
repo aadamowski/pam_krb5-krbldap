@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.17
+Version: 2.2.18
 Release: 1
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPL+
@@ -48,6 +48,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Wed Aug 15 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.18-1
+- fix permissions-related problems creating v4 ticket files
+
 * Thu Aug  2 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.17-1
 - correct the license: tag -- this module is dual-licensed (LGPL+ or BSD)
 - fix a man page missing line
