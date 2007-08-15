@@ -1,3 +1,7 @@
+2007-08-15:
+	* src/v4.c: if we fail to open the ticket file with TKT_FIL_ACC,
+	debug log the file's permissions and our process's identity
+
 2007-08-02:
 	* src/v4.c: warn when an fchown() fails, and don't try to give away
 	our file; that's for later

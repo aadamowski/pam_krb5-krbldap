@@ -32,6 +32,8 @@
 
 #include "../config.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifdef HAVE_INTTYPES_H
@@ -172,6 +174,7 @@ _pam_krb5_v4_init(krb5_context ctx,
 	char tktfile[PATH_MAX];
 	char *saved_tktstring;
 	int life, i, fd;
+	struct stat st;
 
 	/* Convert the krb5 version of the principal's name to a v4 principal
 	 * name.  This may involve changing "host" to "rcmd" and so on, so let
@@ -298,6 +301,19 @@ _pam_krb5_v4_init(krb5_context ctx,
 			}
 			warn("error opening '%s' for reading: %s",
 			     tktfile, tferror);
+			if ((i == TKT_FIL_ACC) && (options->debug)) {
+				if (stat(tktfile, &st) == 0) {
+					debug("file owner is %lu:%lu, "
+					      "we are effective %lu:%lu, "
+					      "real %lu:%lu",
+					      (unsigned long) st.st_uid,
+					      (unsigned long) st.st_gid,
+					      (unsigned long) geteuid(),
+					      (unsigned long) getegid(),
+					      (unsigned long) getuid(),
+					      (unsigned long) getgid());
+				}
+			}
 		}
 	}
 	unlink(tktfile);
@@ -318,6 +334,7 @@ v4_save(krb5_context ctx,
 	char tktfile[PATH_MAX];
 	char *saved_tktstring;
 	int i, fd;
+	struct stat st;
 
 	if (ccname != NULL) {
 		*ccname = NULL;
@@ -359,7 +376,6 @@ v4_save(krb5_context ctx,
 		warn("error setting permissions on \"%s\" (%s), attempting "
 		     "to continue", tktfile, strerror(errno));
 	}
-
 	if (options->debug) {
 		debug("saving v4 tickets to '%s'", tktfile);
 	}
@@ -386,6 +402,19 @@ v4_save(krb5_context ctx,
 		}
 		warn("error opening ticket file '%s': %s",
 		     tktfile, tferror);
+		if ((i == TKT_FIL_ACC) && (options->debug)) {
+			if (stat(tktfile, &st) == 0) {
+				debug("file owner is %lu:%lu, "
+				      "we are effective %lu:%lu, "
+				      "real %lu:%lu",
+				      (unsigned long) st.st_uid,
+				      (unsigned long) st.st_gid,
+				      (unsigned long) geteuid(),
+				      (unsigned long) getegid(),
+				      (unsigned long) getuid(),
+				      (unsigned long) getgid());
+			}
+		}
 		krb_set_tkt_string(saved_tktstring);
 		xstrfree(saved_tktstring);
 		unlink(tktfile);
