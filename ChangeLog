@@ -1,3 +1,7 @@
+2007-09-05:
+	* src/v5.c(v5_passwd_error_message): tweak some error text to
+	hopefully make more sense to people (#230438)
+
 2007-08-15:
 	* src/v4.c: if we fail to open the ticket file with TKT_FIL_ACC,
 	debug log the file's permissions and our process's identity

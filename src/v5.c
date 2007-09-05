@@ -100,13 +100,13 @@ v5_passwd_error_message(int error)
 		return "Malformed request";
 		break;
 	case KRB5_KPASSWD_HARDERROR:
-		return "Hard error";
+		return "Password change failed";
 		break;
 	case KRB5_KPASSWD_AUTHERROR:
-		return "Auth error";
+		return "Authentication error";
 		break;
 	case KRB5_KPASSWD_SOFTERROR:
-		return "Soft error";
+		return "Password change rejected";
 		break;
 	case KRB5_KPASSWD_ACCESSDENIED:
 		return "Access denied";
@@ -115,7 +115,7 @@ v5_passwd_error_message(int error)
 		return "Bad version";
 		break;
 	case KRB5_KPASSWD_INITIAL_FLAG_NEEDED:
-		return "Attempted to authenticate using non-initial creds";
+		return "Attempted to authenticate using non-initial credentials";
 		break;
 	}
 	return "Unknown error";
