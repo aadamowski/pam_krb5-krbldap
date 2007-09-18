@@ -642,9 +642,27 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		debug("ccache dir: %s", options->ccache_dir);
 	}
 
-	options->keytab = option_s(argc, argv,
-				   ctx, options->realm, "keytab",
-				   DEFAULT_KEYTAB_LOCATION);
+	if (service != NULL) {
+		list = option_l(argc, argv, ctx, options->realm,
+				"keytab", DEFAULT_KEYTAB_LOCATION);
+		for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
+			if ((strncmp(list[i], service, strlen(service)) == 0) &&
+			    (list[i][strlen(service)] == '=')) {
+				options->keytab = xstrdup(list[i] +
+							  strlen(service) + 1);
+				break;
+			}
+		}
+		if ((list != NULL) && (i > 0) && (list[i] == NULL)) {
+			for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
+				if (strchr(list[i], '=') == NULL) {
+					options->keytab = xstrdup(list[i]);
+					break;
+				}
+			}
+		}
+		free_l(list);
+	}
 	if (strlen(options->keytab) == 0) {
 		xstrfree(options->keytab);
 		options->keytab = xstrdup(DEFAULT_KEYTAB_LOCATION);

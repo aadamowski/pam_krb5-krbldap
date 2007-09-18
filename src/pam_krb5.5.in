@@ -86,8 +86,9 @@ authentication.  If one is needed and pam_krb5.so has not prompted for it, the
 Kerberos library should trigger a request for a password.
 
 .IP keytab=\fI@DEFAULT_KEYTAB@\fR
-specifies the name of a keytab file to search for a service key
-for use in validating TGTs.
+specifies the name of a keytab file to search for a service key for use
+in validating TGTs.  The location can be specified on a per-service basis
+by specifying a list of locations in the form \fIpam_service\fR=\fIlocation\fR.
 
 @MAN_KRB4@.IP krb4_convert=[\fItrue\fR|\fIfalse\fR]
 @MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
@@ -187,6 +188,7 @@ specifies whether or not to attempt validation of the TGT.  The default is
     TEST.EXAMPLE.COM = {
       debug = true
 @MAN_AFS@      afs_cells = testcell.example.com othercell.example.com
+      keytab = @DEFAULT_KEYTAB@ httpd=FILE:/etc/httpd.keytab
     }
   }
 
