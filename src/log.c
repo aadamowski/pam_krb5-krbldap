@@ -59,6 +59,14 @@
 #endif
 #endif
 
+#if defined(LOG_AUTHPRIV)
+#define PACKAGE_FACILITY LOG_AUTHPRIV
+#elif defined(LOG_AUTH)
+#define PACKAGE_FACILITY LOG_AUTH
+#else
+#define PACKAGE_FACILITY 0
+#endif
+
 static int
 llen(unsigned long l)
 {
@@ -82,10 +90,10 @@ debug(const char *fmt, ...)
 	if (fmt2 != NULL) {
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
-		vsyslog(LOG_DEBUG, fmt2, args);
+		vsyslog(PACKAGE_FACILITY | LOG_DEBUG, fmt2, args);
 		free(fmt2);
 	} else {
-		vsyslog(LOG_DEBUG, fmt, args);
+		vsyslog(PACKAGE_FACILITY | LOG_DEBUG, fmt, args);
 	}
 
 	va_end(args);
@@ -103,10 +111,10 @@ warn(const char *fmt, ...)
 	if (fmt2 != NULL) {
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
-		vsyslog(LOG_WARNING, fmt2, args);
+		vsyslog(PACKAGE_FACILITY | LOG_WARNING, fmt2, args);
 		free(fmt2);
 	} else {
-		vsyslog(LOG_WARNING, fmt, args);
+		vsyslog(PACKAGE_FACILITY | LOG_WARNING, fmt, args);
 	}
 
 	va_end(args);
@@ -124,10 +132,10 @@ notice(const char *fmt, ...)
 	if (fmt2 != NULL) {
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
-		vsyslog(LOG_NOTICE, fmt2, args);
+		vsyslog(PACKAGE_FACILITY | LOG_NOTICE, fmt2, args);
 		free(fmt2);
 	} else {
-		vsyslog(LOG_NOTICE, fmt, args);
+		vsyslog(PACKAGE_FACILITY | LOG_NOTICE, fmt, args);
 	}
 
 	va_end(args);
@@ -145,10 +153,10 @@ crit(const char *fmt, ...)
 	if (fmt2 != NULL) {
 		sprintf(fmt2, "%s[%lu]: %s", PACKAGE,
 			(unsigned long) getpid(), fmt);
-		vsyslog(LOG_CRIT, fmt2, args);
+		vsyslog(PACKAGE_FACILITY | LOG_CRIT, fmt2, args);
 		free(fmt2);
 	} else {
-		vsyslog(LOG_CRIT, fmt, args);
+		vsyslog(PACKAGE_FACILITY | LOG_CRIT, fmt, args);
 	}
 
 	va_end(args);
