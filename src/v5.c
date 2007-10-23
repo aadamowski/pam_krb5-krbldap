@@ -121,6 +121,32 @@ v5_passwd_error_message(int error)
 	return "Unknown error";
 }
 
+krb5_error_code
+v5_alloc_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt **opt)
+{
+	*opt = NULL;
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE
+	return krb5_get_init_creds_opt_alloc(ctx, opt);
+#else
+	*opt = malloc(sizeof(**opt));
+	if (*opt != NULL) {
+		return 0;
+	} else {
+		return ENOMEM;
+	}
+#endif
+}
+
+void
+v5_free_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt *opt)
+{
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE
+	krb5_get_init_creds_opt_free(ctx, opt);
+#else
+	free(opt);
+#endif
+}
+
 #ifdef HAVE_KRB5_FREE_UNPARSED_NAME
 void
 v5_free_unparsed_name(krb5_context ctx, char *name)

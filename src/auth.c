@@ -81,7 +81,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_options *options;
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
-	krb5_get_init_creds_opt gic_options;
+	krb5_get_init_creds_opt *gic_options;
 	int i, retval, use_third_pass;
 	char *first_pass, *second_pass;
 
@@ -100,9 +100,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	/* Read our options. */
+	i = v5_alloc_get_init_creds_opt(ctx, &gic_options);
+	if (i != 0) {
+		warn("error initializing options (shouldn't happen)");
+		krb5_free_context(ctx);
+		return PAM_SERVICE_ERR;
+	}
 	options = _pam_krb5_options_init(pamh, argc, argv, ctx);
 	if (options == NULL) {
 		warn("error parsing options (shouldn't happen)");
+		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
 		return PAM_SERVICE_ERR;
 	}
@@ -110,8 +117,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		debug("called to authenticate '%s', realm '%s'", user,
 		      options->realm);
 	}
-	krb5_get_init_creds_opt_init(&gic_options);
-	_pam_krb5_set_init_opts(ctx, &gic_options, options);
+	krb5_get_init_creds_opt_init(gic_options);
+	_pam_krb5_set_init_opts(ctx, gic_options, options);
 
 	/* Get information about the user and the user's principal name. */
 	userinfo = _pam_krb5_user_info_init(ctx, user, options->realm,
@@ -126,6 +133,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			retval = PAM_USER_UNKNOWN;
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
+		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
 		return retval;
 	}
@@ -142,6 +150,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		_pam_krb5_options_free(pamh, ctx, options);
+		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
 		return PAM_IGNORE;
 	}
@@ -153,6 +162,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		     user);
 		_pam_krb5_user_info_free(ctx, userinfo);
 		_pam_krb5_options_free(pamh, ctx, options);
+		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
 		return PAM_SERVICE_ERR;
 	}
@@ -167,14 +177,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	/* If we're configured to use an existing ccache, try that. */
 	if ((retval != PAM_SUCCESS) && (options->existing_ticket)) {
 		if (options->debug) {
-			debug("trying existing credentials for '%s'",user);
+			debug("trying existing credentials for '%s'", user);
 		}
 		retval = v5_get_creds(ctx, pamh,
 				      &stash->v5creds, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
 				      NULL,
-				      &gic_options,
+				      gic_options,
 				      _pam_krb5_always_fail_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
@@ -220,7 +230,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      options,
 					      KRB5_TGS_NAME,
 					      first_pass,
-					      &gic_options,
+					      gic_options,
 					      use_third_pass ?
 					      _pam_krb5_normal_prompter :
 					      _pam_krb5_previous_prompter,
@@ -295,7 +305,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      options,
 					      KRB5_TGS_NAME,
 					      second_pass,
-					      &gic_options,
+					      gic_options,
 					      use_third_pass ?
 					      _pam_krb5_normal_prompter :
 					      _pam_krb5_always_fail_prompter,
@@ -343,7 +353,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      options,
 				      KRB5_TGS_NAME,
 				      NULL,
-				      &gic_options,
+				      gic_options,
 				      _pam_krb5_normal_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
@@ -410,6 +420,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		debug("pam_authenticate returning %d (%s)", retval,
 		      pam_strerror(pamh, retval));
 	}
+	v5_free_get_init_creds_opt(ctx, gic_options);
 	_pam_krb5_options_free(pamh, ctx, options);
 	_pam_krb5_user_info_free(ctx, userinfo);
 	krb5_free_context(ctx);

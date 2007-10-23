@@ -181,7 +181,7 @@ fi
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
@@ -232,6 +232,12 @@ AC_CHECK_DECL(krb5_copy_addr,
 	      [AC_DEFINE(HAVE_KRB5_COPY_ADDR,1,[Define if your krb5.h declares the krb5_copy_addr() function.])],,[$headers])
 AC_CHECK_DECL(krb5_get_all_client_addrs,
 	      [AC_DEFINE(HAVE_KRB5_GET_ALL_CLIENT_ADDRS,1,[Define if your krb5.h declares the krb5_get_all_client_addrs() function.])],,[$headers])
+
+if test x$ac_cv_func_krb5_get_init_creds_opt_alloc = xyes ; then
+	if test x$ac_cv_func_krb5_get_init_creds_opt_free = xyes ; then
+		AC_DEFINE(HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE,1,[Define if your library provides both `krb5_get_init_creds_opt_alloc' and `krb5_get_init_creds_opt_free'.])
+	fi
+fi
 
 AC_CHECK_TYPES(krb5_const_realm,,,[$headers])
 AC_CHECK_MEMBERS(krb5_creds.keyblock,,,[$headers])

@@ -104,4 +104,8 @@ int v5_cc_retrieve_match(void);
 int v5_creds_key_length(krb5_creds *creds);
 unsigned char *v5_creds_key_contents(krb5_creds *creds);
 
+krb5_error_code v5_alloc_get_init_creds_opt(krb5_context ctx,
+					    krb5_get_init_creds_opt **opt);
+void v5_free_get_init_creds_opt(krb5_context ctx,
+				krb5_get_init_creds_opt *opt);
 #endif
