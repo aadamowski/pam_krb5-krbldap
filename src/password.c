@@ -118,7 +118,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		krb5_free_context(ctx);
 		return PAM_SERVICE_ERR;
 	}
-	krb5_get_init_creds_opt_init(gic_options);
 	_pam_krb5_set_init_opts(ctx, gic_options, options);
 
 	/* Get information about the user and the user's principal name. */
@@ -235,7 +234,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			/* We have a password, so try to obtain initial
 			 * credentials using the password. */
 			i = v5_get_creds(ctx, pamh,
-					 &stash->v5creds, userinfo, options,
+					 &stash->v5creds, user, userinfo,
+					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, NULL,
 					 _pam_krb5_normal_prompter,
@@ -270,7 +270,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 * using the password. */
 		if ((password != NULL) && (i == PAM_SUCCESS)) {
 			i = v5_get_creds(ctx, pamh,
-					 &stash->v5creds, userinfo, options,
+					 &stash->v5creds, user, userinfo,
+					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, NULL,
 					 _pam_krb5_normal_prompter,
@@ -430,7 +431,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				      userinfo->unparsed_name);
 			}
 			i = v5_get_creds(ctx, pamh, &stash->v5creds,
-					 userinfo, options,
+					 user, userinfo, options,
 					 KRB5_TGS_NAME,
 					 password, gic_options,
 					 _pam_krb5_always_fail_prompter,

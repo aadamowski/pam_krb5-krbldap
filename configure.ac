@@ -181,7 +181,7 @@ fi
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
@@ -246,6 +246,7 @@ AC_CHECK_MEMBERS(struct krb5_principal_data.data,,,[$headers])
 AC_CHECK_MEMBERS(struct Principal.name,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.enctype,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.keytype,,,[$headers])
+AC_CHECK_MEMBERS(krb5_get_init_creds_opt.opt_private,,,[$headers])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
@@ -337,6 +338,44 @@ AC_SUBST(SECURITYDIR)
 pam_krb5_pkgsecuritydir=`eval echo $pam_krb5_securitydir/$PACKAGE`
 AC_DEFINE_UNQUOTED(PKGSECURITYDIR,"$pam_krb5_pkgsecuritydir",[The location of pam_krb5 helpers.])
 AC_MSG_RESULT([modules in $pam_krb5_securitydir, helpers in $pam_krb5_pkgsecuritydir])
+
+# Set up to make Heimdal-specific PKINIT man page sections variable.
+if test x$ac_cv_func_krb5_get_init_creds_opt_set_pkinit = xyes ; then
+	MAN_HPKINIT=""
+	NO_MAN_HPKINIT=".\\\" "
+else
+	NO_MAN_HPKINIT=""
+	MAN_HPKINIT=".\\\" "
+fi
+AC_SUBST(NO_MAN_HPKINIT)
+AC_SUBST(MAN_HPKINIT)
+
+# Provide a means of setting the location of the user's PKINIT identity
+# information.
+AC_ARG_WITH(default-pkinit-identity,
+AC_HELP_STRING(--with-default-pkinit-identity="DIR",[Set the default value of the "pkinit-identity" option [default="PKCS12:/etc/pki/tls/private/%u.pfx"] (Heimdal).]),
+	    [DEFAULT_PKINIT_IDENTITY="$withval"],
+	    [DEFAULT_PKINIT_IDENTITY="PKCS12:/etc/pki/tls/private/%u.pfx"])
+AC_DEFINE_UNQUOTED(DEFAULT_PKINIT_IDENTITY,"$DEFAULT_PKINIT_IDENTITY",[Set to the default location of the client's private key and PKI certificate.])
+AC_SUBST(DEFAULT_PKINIT_IDENTITY)
+# Provide a means of setting preauthentication options.
+AC_ARG_WITH(default-preauth-options,
+AC_HELP_STRING(--with-default-preauth-options="A=B,C=D",[Set the default preauthentication options passed to libkrb5 [default=""] (Heimdal).]),
+	    [DEFAULT_PREAUTH_OPTIONS="$withval"],
+	    [DEFAULT_PREAUTH_OPTIONS=""])
+AC_DEFINE_UNQUOTED(DEFAULT_PREAUTH_OPTIONS,"$DEFAULT_PREAUTH_OPTIONS",[Set to the default list of preauthentication options.])
+AC_SUBST(DEFAULT_PREAUTH_OPTIONS)
+
+# Set up to make MIT-specific PA man page sections variable.
+if test x$ac_cv_func_krb5_get_init_creds_opt_set_pa = xyes ; then
+	MAN_MPREAUTH=""
+	NO_MAN_MPREAUTH=".\\\" "
+else
+	NO_MAN_MPREAUTH=""
+	MAN_MPREAUTH=".\\\" "
+fi
+AC_SUBST(NO_MAN_MPREAUTH)
+AC_SUBST(MAN_MPREAUTH)
 
 TESTDIR=`cd ${ac_top_builddir:-.}; /bin/pwd`/tests
 TESTHOST=`hostname`

@@ -85,7 +85,7 @@
 #endif
 
 const char *
-v5_error_message(int error)
+v5_error_message(krb5_error_code error)
 {
 	return error_message(error);
 }
@@ -124,8 +124,12 @@ v5_passwd_error_message(int error)
 krb5_error_code
 v5_alloc_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt **opt)
 {
-	*opt = NULL;
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE
+	/* Do NOT call krb5_get_init_creds_opt_init(), which in both Heimdal
+	 * and MIT Kerberos cause the structure to be marked as not having
+	 * extended data members which are used to store preauth and pkinit
+	 * settings. */
+	*opt = NULL;
 	return krb5_get_init_creds_opt_alloc(ctx, opt);
 #else
 	*opt = malloc(sizeof(**opt));
@@ -146,6 +150,107 @@ v5_free_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt *opt)
 #else
 	free(opt);
 #endif
+}
+
+char *
+v5_user_info_subst(krb5_context ctx,
+		   const char *user,
+		   struct _pam_krb5_user_info *userinfo,
+		   struct _pam_krb5_options *options,
+		   const char *template_value)
+{
+	char *ret;
+	int i, j, len;
+	ret = NULL;
+	len = strlen(template_value);
+	for (i = 0; template_value[i] != '\0'; i++) {
+		switch (template_value[i]) {
+		case '%':
+			switch (template_value[i + 1]) {
+			case 'p':
+				len += strlen(userinfo->unparsed_name);
+				i++;
+				break;
+			case 'u':
+				len += strlen(user);
+				i++;
+				break;
+			case 'U':
+				len += sizeof(userinfo->uid) * 4;
+				i++;
+				break;
+			case 'r':
+				len += strlen(options->realm);
+				i++;
+				break;
+			case 'h':
+				len += strlen(userinfo->homedir ?
+					      userinfo->homedir :
+					      "/");
+				i++;
+				break;
+			default:
+			case '%':
+				break;
+			}
+		default:
+			break;
+		}
+	}
+	ret = malloc(len + 1);
+	if (ret == NULL) {
+		return NULL;
+	}
+	memset(ret, '\0', len + 1);
+	for (i = 0, j = 0; template_value[i] != '\0'; i++) {
+		switch (template_value[i]) {
+		case '%':
+			switch (template_value[i + 1]) {
+			case 'p':
+				strcat(ret, userinfo->unparsed_name);
+				i++;
+				j = strlen(ret);
+				break;
+			case 'u':
+				strcat(ret, user);
+				i++;
+				j = strlen(ret);
+				break;
+			case 'U':
+				sprintf(ret + j, "%ld", (long) userinfo->uid);
+				i++;
+				j = strlen(ret);
+				break;
+			case 'r':
+				strcat(ret, options->realm);
+				i++;
+				j = strlen(ret);
+				break;
+			case 'h':
+				strcat(ret,
+				       userinfo->homedir ?
+				       userinfo->homedir : "/");
+				i++;
+				j = strlen(ret);
+				break;
+			case '%':
+				strcat(ret, "%");
+				i++;
+				j = strlen(ret);
+				break;
+			default:
+				strcat(ret, "%");
+				j = strlen(ret);
+				break;
+			}
+			break;
+		default:
+			ret[j++] = template_value[i];
+			break;
+		}
+	}
+	ret[j] = '\0';
+	return ret;
 }
 
 #ifdef HAVE_KRB5_FREE_UNPARSED_NAME
@@ -496,6 +601,7 @@ int
 v5_get_creds(krb5_context ctx,
 	     pam_handle_t *pamh,
 	     krb5_creds *creds,
+	     const char *user,
 	     struct _pam_krb5_user_info *userinfo,
 	     struct _pam_krb5_options *options,
 	     char *service,
@@ -511,6 +617,7 @@ v5_get_creds(krb5_context ctx,
 {
 	int i;
 	char realm_service[LINE_MAX];
+	char *opt;
 	const char *realm;
 	struct pam_message message;
 	struct _pam_krb5_prompter_data prompter_data;
@@ -597,6 +704,64 @@ v5_get_creds(krb5_context ctx,
 			      password ? password : "(null)",
 			      password ? "\"" : "");
 		}
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+		opt = v5_user_info_subst(ctx, user, userinfo, options,
+					 options->pkinit_identity);
+		if (opt != NULL) {
+			if (options->debug) {
+				debug("resolved pkinit identity to \"%s\"",
+				      opt);
+			}
+			krb5_get_init_creds_opt_set_pkinit(ctx,
+							   gic_options,
+							   userinfo->principal_name,
+							   opt,
+							   NULL,
+							   NULL,
+							   NULL,
+							   options->pkinit_flags,
+							   prompter,
+							   &prompter_data,
+							   password);
+			free(opt);
+		} else {
+			warn("error resolving pkinit identity template \"%s\" ",
+			     "to a useful value", options->pkinit_identity);
+		}
+#endif
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+		for (i = 0;
+		     (options->preauth_options != NULL) &&
+		     (options->preauth_options[i] != NULL);
+		     i++) {
+			opt = v5_user_info_subst(ctx, user, userinfo, options,
+						 options->preauth_options[i]);
+			if (opt != NULL) {
+				char *val;
+				val = strchr(opt, '=');
+				if (val != NULL) {
+					*val++ = '\0';
+					if (options->debug) {
+						debug("setting preauth option "
+						      "\"%s\" = \"%s\"",
+						      opt, val);
+					}
+					if (krb5_get_init_creds_opt_set_pa(ctx,
+									   gic_options,
+									   opt,
+									   val) != 0) {
+						warn("error setting preauth "
+						     "option \"%s\"", opt);
+					}
+				}
+				free(opt);
+			} else {
+				warn("error resolving preauth option \"%s\" ",
+				     "to a useful value",
+				     options->preauth_options[i]);
+			}
+		}
+#endif
 		i = krb5_get_init_creds_password(ctx,
 						 creds,
 						 userinfo->principal_name,

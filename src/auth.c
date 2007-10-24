@@ -117,7 +117,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		debug("called to authenticate '%s', realm '%s'", user,
 		      options->realm);
 	}
-	krb5_get_init_creds_opt_init(gic_options);
 	_pam_krb5_set_init_opts(ctx, gic_options, options);
 
 	/* Get information about the user and the user's principal name. */
@@ -180,7 +179,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			debug("trying existing credentials for '%s'", user);
 		}
 		retval = v5_get_creds(ctx, pamh,
-				      &stash->v5creds, userinfo,
+				      &stash->v5creds, user, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
 				      NULL,
@@ -226,7 +225,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				}
 			}
 			retval = v5_get_creds(ctx, pamh,
-					      &stash->v5creds, userinfo,
+					      &stash->v5creds, user, userinfo,
 					      options,
 					      KRB5_TGS_NAME,
 					      first_pass,
@@ -301,7 +300,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				}
 			}
 			retval = v5_get_creds(ctx, pamh,
-					      &stash->v5creds, userinfo,
+					      &stash->v5creds, user, userinfo,
 					      options,
 					      KRB5_TGS_NAME,
 					      second_pass,
@@ -349,7 +348,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			      "allowing libkrb5 to prompt for more", user);
 		}
 		retval = v5_get_creds(ctx, pamh,
-				      &stash->v5creds, userinfo,
+				      &stash->v5creds, user, userinfo,
 				      options,
 				      KRB5_TGS_NAME,
 				      NULL,

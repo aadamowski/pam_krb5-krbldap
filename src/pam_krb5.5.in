@@ -129,13 +129,45 @@ setting up an auth_to_local rule elsewhere in \fBkrb5.conf\fP(5).
 specifies the minimum UID of users being authenticated.  If a user with a UID
 less than this value attempts authentication, the request will be ignored.
 
+@MAN_HPKINIT@.IP pkinit_flags=[0]
+@MAN_HPKINIT@controls the flags value which pam_krb5 passes to libkrb5
+@MAN_HPKINIT@when setting up PKINIT parameters.  This is useful mainly for
+@MAN_HPKINIT@debugging.
+@MAN_HPKINIT@
+@MAN_HPKINIT@.IP pkinit_identity=[@DEFAULT_PKINIT_IDENTITY@]
+@MAN_HPKINIT@controls where pam_krb5 instructs libkrb5 to search for the
+@MAN_HPKINIT@user's private key and certificate, so that the client can be
+@MAN_HPKINIT@authenticated using PKINIT, if the KDC supports it.  This value
+@MAN_HPKINIT@is treated as a template, and these sequences are substituted:
+@MAN_HPKINIT@  %u	login name
+@MAN_HPKINIT@  %U	login UID
+@MAN_HPKINIT@  %p	principal name
+@MAN_HPKINIT@  %r	realm name
+@MAN_HPKINIT@  %h	home directory
+@MAN_HPKINIT@  %%	literal '%'
+@MAN_HPKINIT@.br
+@MAN_HPKINIT@Other PKINIT-specific defaults, such as the locations of trust
+@MAN_HPKINIT@anchors, can be set in krb5.conf(5).
+@MAN_HPKINIT@
+@MAN_MPREAUTH@.IP preauth_options=[@DEFAULT_PREAUTH_OPTIONS@]
+@MAN_MPREAUTH@controls the preauthentication options which pam_krb5 passes
+@MAN_MPREAUTH@to libkrb5, if the system-defaults need to be overridden.
+@MAN_MPREAUTH@The list is treated as a template, and these sequences are
+@MAN_MPREAUTH@substituted:
+@MAN_MPREAUTH@  %u	login name
+@MAN_MPREAUTH@  %U	login UID
+@MAN_MPREAUTH@  %p	principal name
+@MAN_MPREAUTH@  %r	realm name
+@MAN_MPREAUTH@  %h	home directory
+@MAN_MPREAUTH@  %%	literal '%'
+@MAN_MPREAUTH@
 .IP proxiable=[\fItrue\fR|\fIfalse\fR]
 controls whether or not credentials are proxiable.  If not specified, they
 are.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBproxiable\fR directive.
 
-.IP pwhelp=
+.IP pwhelp=\fIfilename\fR
 specifies the name of a text file whose contents will be displayed to
 clients who attempt to change their passwords.  There is no default.
 

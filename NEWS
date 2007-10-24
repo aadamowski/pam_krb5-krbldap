@@ -3,6 +3,11 @@
 	  * log messages are now logged with facility LOG_AUTHPRIV (or LOG_AUTH
 	    if LOG_AUTHPRIV is not defined) instead of the application's default
 	    or LOG_USER
+	  * added the "pkinit_identity" option to provide a way to specify
+	    where the user's public-key credentials are, and "pkinit_flags" to
+	    specify arbitrary flags for libkrb5 (Heimdal only)
+	  * added the "preauth_options" option to provide a way to specify
+	    arbitrary preauthentication options to libkrb5 (MIT only)
 - 2.2.18: * fix permissions-related problems creating v4 ticket files
 - 2.2.17: * corrected a typo in the pam_krb5(8) man page
 	  * clarified that the "tokens" flag should only be needed for

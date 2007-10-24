@@ -90,6 +90,15 @@ o no_user_check
   Go ahead and authenticate users for whom getpwnam() returns no information.
   Credential cache and ticket files will be created and owned by the current
   user and group ID instead of the user's.
+o pkinit_identity=LOCATION (Heimdal-specific)
+  Specify the location of the user's private key and certificate information,
+  in the same format which would be passed to kinit as an argument for its
+  -C/--pk-user command-line option.
+o pkinit_flags=NUMBER (Heimdal-specific)
+  Specify a flags value to pass to libkrb5, useful mainly for debugging.
+o preauth_options=OPT=VAL[,...] (MIT-specific)
+  Specify arbitrary preauthentication options to pass to libkrb5, useful
+  mainly for debugging.
 o realm=REALM
   Override the default realm.
 o renew_lifetime

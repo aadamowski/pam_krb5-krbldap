@@ -71,6 +71,14 @@ struct _pam_krb5_options {
 	char *realm;
 	char **hosts;
 
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+	char *pkinit_identity;
+	int pkinit_flags;
+#endif
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+	char **preauth_options;
+#endif
+
 	struct afs_cell {
 		char *cell, *principal_name;
 	} *afs_cells;

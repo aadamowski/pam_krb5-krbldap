@@ -402,6 +402,37 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->tokens = 0;
 #endif
 
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+	/* option specific to the Heimdal implementation */
+	options->pkinit_identity = option_s(argc, argv, ctx, options->realm,
+					    "pkinit_identity",
+					    DEFAULT_PKINIT_IDENTITY);
+	if (options->debug && options->pkinit_identity) {
+		debug("pkinit_identity(template): %s",
+		      options->pkinit_identity);
+	}
+	options->pkinit_flags = option_i(argc, argv,
+					 ctx, options->realm, "pkinit_flags");
+	if (options->pkinit_flags == -1) {
+		options->pkinit_flags = 0;
+	}
+	if (options->debug) {
+		debug("pkinit_flags: %d", options->pkinit_flags);
+	}
+#endif
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+	/* option specific to the MIT implementation */
+	options->preauth_options = option_l(argc, argv, ctx, options->realm,
+					    "preauth_options",
+					    DEFAULT_PREAUTH_OPTIONS);
+	if (options->debug && options->preauth_options) {
+		int i;
+		for (i = 0; options->preauth_options[i] != NULL; i++) {
+			debug("preauth_options(template): %s",
+			      options->preauth_options[i]);
+		}
+	}
+#endif
 	/* private option */
 	options->user_check = option_b(argc, argv,
 				       ctx, options->realm, "user_check");
@@ -804,6 +835,14 @@ _pam_krb5_options_free(pam_handle_t *pamh, krb5_context ctx,
 		       struct _pam_krb5_options *options)
 {
 	int i;
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
+	free_s(options->pkinit_identity);
+	options->pkinit_identity = NULL;
+#endif
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PA
+	free_l(options->preauth_options);
+	options->preauth_options = NULL;
+#endif
 	free_s(options->banner);
 	options->banner = NULL;
 	free_s(options->ccache_dir);

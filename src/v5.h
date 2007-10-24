@@ -42,6 +42,7 @@
 int v5_get_creds(krb5_context ctx,
 		 pam_handle_t *pamh,
 		 krb5_creds *creds,
+		 const char *user,
 		 struct _pam_krb5_user_info *userinfo,
 		 struct _pam_krb5_options *options,
 		 char *service,
@@ -108,4 +109,9 @@ krb5_error_code v5_alloc_get_init_creds_opt(krb5_context ctx,
 					    krb5_get_init_creds_opt **opt);
 void v5_free_get_init_creds_opt(krb5_context ctx,
 				krb5_get_init_creds_opt *opt);
+char *v5_user_info_subst(krb5_context ctx,
+			 const char *user,
+			 struct _pam_krb5_user_info *userinfo,
+			 struct _pam_krb5_options *options,
+			 const char *template_value);
 #endif
