@@ -64,11 +64,13 @@ int v5_get_creds_etype(krb5_context ctx,
 
 int v5_save_for_user(krb5_context ctx,
 		     struct _pam_krb5_stash *stash,
+		     const char *user,
 		     struct _pam_krb5_user_info *userinfo,
 		     struct _pam_krb5_options *options,
 		     const char **ccname);
 int v5_save_for_tokens(krb5_context ctx,
 		       struct _pam_krb5_stash *stash,
+		       const char *user,
 		       struct _pam_krb5_user_info *userinfo,
 		       struct _pam_krb5_options *options,
 		       const char **ccname);

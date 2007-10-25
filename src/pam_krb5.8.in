@@ -75,6 +75,21 @@ passwords.  The default setting is "Kerberos 5".
 tells pam_krb5.so which directory to use for storing credential caches.  The
 default setting is \fI@default_ccache_dir@\fR.
 
+.IP ccname_template=\fI@default_ccname_template@\fR
+specifies the location in which to place the user's session-specific
+credential cache.  This value is treated as a template, and these sequences
+are substituted:
+  %u	login name
+  %U	login UID
+  %p	principal name
+  %r	realm name
+  %h	home directory
+  %d	the default ccache directory
+  %p	the current process ID
+  %%	literal '%'
+.br
+The default setting is "\fI@default_ccname_template@\fR".
+
 .IP existing_ticket
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials
 provided by the calling application in the default credential cache as
@@ -164,6 +179,8 @@ user's password to be eavesdropped.
 @MAN_HPKINIT@  %p	principal name
 @MAN_HPKINIT@  %r	realm name
 @MAN_HPKINIT@  %h	home directory
+@MAN_HPKINIT@  %d	the default ccache directory
+@MAN_HPKINIT@  %P	the current process ID
 @MAN_HPKINIT@  %%	literal '%'
 @MAN_HPKINIT@.br
 @MAN_HPKINIT@Other PKINIT-specific default, such as the locations of trust
@@ -179,6 +196,8 @@ user's password to be eavesdropped.
 @MAN_MPREAUTH@  %p	principal name
 @MAN_MPREAUTH@  %r	realm name
 @MAN_MPREAUTH@  %h	home directory
+@MAN_MPREAUTH@  %d	the default ccache directory
+@MAN_MPREAUTH@  %P	the current process ID
 @MAN_MPREAUTH@  %%	literal '%'
 @MAN_MPREAUTH@
 .IP proxiable

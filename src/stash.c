@@ -202,11 +202,10 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 
 	/* Clean up. */
 	krb5_cc_end_seq_get(ctx, ccache, &cursor);
-	krb5_cc_close(ctx, ccache);
+	krb5_cc_destroy(ctx, ccache);
 	if (ctx != stash->v5ctx) {
 		krb5_free_context(ctx);
 	}
-	unlink(tktfile + 5);
 	close(fd);
 }
 
@@ -298,11 +297,10 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 
 	/* Clean up. */
-	krb5_cc_close(ctx, ccache);
+	krb5_cc_destroy(ctx, ccache);
 	if (ctx != stash->v5ctx) {
 		krb5_free_context(ctx);
 	}
-	unlink(variable + 5);
 	close(fd);
 
 	if (key != -1) {
@@ -773,30 +771,35 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 
 /* Create a new copy of the named file with the specified owner, optionally
  * saving its contents in the process.  The original file is removed and its
- * name is freed and overwritten with the name of the new file. */
+ * name is freed and overwritten with the name of the new ccache. */
 static void
-_pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
-		      uid_t uid, gid_t gid)
+_pam_krb5_stash_clone_file(char **stored_file, uid_t uid, gid_t gid)
 {
-	char *filename;
+	char *pattern, *filename;
 	size_t length;
 	if ((stored_file != NULL) && (*stored_file != NULL)) {
 		length = strlen(*stored_file);
-		filename = malloc(length + 8);
-		if (filename == NULL) {
+		pattern = malloc(length + 8);
+		if (pattern == NULL) {
 			return;
 		}
-		strcpy(filename, *stored_file);
+		filename = malloc(length + 8);
+		if (filename == NULL) {
+			free(pattern);
+			return;
+		}
+		strcpy(pattern, *stored_file);
+		memset(filename, '\0', length + 8);
 		if (length >= 7) {
 			/* overwrite */
-			strcpy(filename + length - 7, "_XXXXXX");
+			strcpy(pattern + length - 7, "_XXXXXX");
 		} else {
 			/* append */
-			strcpy(filename + length, "_XXXXXX");
+			strcpy(pattern + length, "_XXXXXX");
 		}
 		if (_pam_krb5_storetmp_file(*stored_file,
-					    filename,
-					    copy, copy_len,
+					    pattern,
+					    NULL, NULL,
 					    uid, gid,
 					    filename,
 					    length + 8) == 0) {
@@ -807,16 +810,117 @@ _pam_krb5_stash_clone(char **stored_file, void **copy, size_t *copy_len,
 		if (*stored_file != filename) {
 			free(filename);
 		}
+		free(pattern);
 	}
 }
 
-void
-_pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
+static krb5_error_code
+_pam_krb5_stash_cc_copy(krb5_context ctx,
+			krb5_ccache occache, krb5_ccache nccache)
 {
+	krb5_principal princ;
+	krb5_cc_cursor cursor;
+	krb5_creds creds;
+	princ = NULL;
+	if (krb5_cc_get_principal(ctx, occache, &princ) != 0) {
+		return -1;
+	}
+	if (krb5_cc_initialize(ctx, nccache, princ) != 0) {
+		krb5_free_principal(ctx, princ);
+		return -1;
+	}
+	if (krb5_cc_start_seq_get(ctx, occache, &cursor) != 0) {
+		krb5_cc_destroy(ctx, nccache);
+		krb5_free_principal(ctx, princ);
+		return -1;
+	}
+	memset(&creds, 0, sizeof(creds));
+	while (krb5_cc_next_cred(ctx, occache, &cursor, &creds) == 0) {
+		krb5_cc_store_cred(ctx, nccache, &creds);
+		krb5_free_cred_contents(ctx, &creds);
+		memset(&creds, 0, sizeof(creds));
+	}
+	krb5_cc_end_seq_get(ctx, occache, &cursor);
+	krb5_free_principal(ctx, princ);
+	return 0;
+}
+
+void
+_pam_krb5_stash_clone_v5(krb5_context ctx,
+			 struct _pam_krb5_stash *stash,
+			 struct _pam_krb5_options *options,
+			 struct _pam_krb5_user_info *userinfo,
+			 uid_t uid, gid_t gid)
+{
+	char *filename, *newname;
+	krb5_ccache occache, nccache;
 	if (stash->v5ccnames == NULL) {
 		return;
 	}
-	_pam_krb5_stash_clone(&stash->v5ccnames->name, NULL, NULL, uid, gid);
+	if ((strncmp(stash->v5ccnames->name, "FILE:", 5) == 0) &&
+	    (strncmp(options->ccname_template, "FILE:", 5) == 0)) {
+		/* If the source and destinations are files, do the helper
+		 * dance to get the context right. */
+		filename = xstrdup(stash->v5ccnames->name + 5);
+		if (filename != NULL) {
+			_pam_krb5_stash_clone_file(&filename, uid, gid);
+			newname = malloc(strlen(filename) + 6);
+			if (newname != NULL) {
+				sprintf(newname, "FILE:%s", filename);
+				xstrfree(stash->v5ccnames->name);
+				stash->v5ccnames->name = newname;
+			}
+			xstrfree(filename);
+		}
+	} else {
+		/* Straight-up copy. */
+		occache = NULL;
+		if (krb5_cc_resolve(ctx, stash->v5ccnames->name,
+				    &occache) != 0) {
+			warn("error creating ccache \"%s\"",
+			     stash->v5ccnames->name);
+			return;
+		}
+		nccache = NULL;
+		newname = malloc(strlen(stash->v5ccnames->name) + 2);
+		if (newname == NULL) {
+			krb5_cc_close(ctx, occache);
+			return;
+		}
+		sprintf(newname, "%s_", stash->v5ccnames->name);
+		if (krb5_cc_resolve(ctx, newname, &nccache) != 0) {
+			warn("error creating ccache \"%s\"", newname);
+			free(newname);
+			krb5_cc_close(ctx, occache);
+			return;
+		}
+		if (_pam_krb5_stash_cc_copy(ctx, occache, nccache) == 0) {
+			if (options->debug) {
+				debug("copied credentials from \"%s\" to "
+				      "\"%s\" for the user",
+				      stash->v5ccnames->name, newname);
+			}
+			xstrfree(stash->v5ccnames->name);
+			stash->v5ccnames->name = newname;
+			krb5_cc_close(ctx, nccache);
+			krb5_cc_destroy(ctx, occache);
+			/* If the new source and the destination are files,
+			 * re-clone it to get the permissions right. */
+			if (strncmp(options->ccname_template,
+				    "FILE:", 5) == 0) {
+				_pam_krb5_stash_clone_v5(ctx, stash,
+							 options, userinfo,
+							 uid, gid);
+			}
+		} else {
+			warn("error copying credentials from \"%s\" to "
+			     "\"%s\" for the user", stash->v5ccnames->name,
+			     newname);
+			krb5_cc_destroy(ctx, nccache);
+			krb5_cc_close(ctx, occache);
+			xstrfree(newname);
+		}
+	}
 }
 
 #ifdef USE_KRB4
@@ -826,7 +930,7 @@ _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 	if (stash->v4tktfiles == NULL) {
 		return;
 	}
-	_pam_krb5_stash_clone(&stash->v4tktfiles->name, NULL, NULL, uid, gid);
+	_pam_krb5_stash_clone_file(&stash->v4tktfiles->name, uid, gid);
 }
 #else
 void
@@ -836,25 +940,62 @@ _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash, uid_t uid, gid_t gid)
 #endif
 
 static int
-_pam_krb5_stash_pop(struct _pam_krb5_ccname_list **list)
+_pam_krb5_stash_pop(krb5_context ctx, struct _pam_krb5_ccname_list **list)
 {
 	struct _pam_krb5_ccname_list *node;
+	krb5_ccache ccache;
+	const char *filename;
+	int i;
+
 	if (list != NULL) {
 		if (*list != NULL) {
 			node = *list;
-			if (_pam_krb5_storetmp_delete(node->name) == 0) {
-				xstrfree(node->name);
-				node->name = NULL;
-				*list = node->next;
-				free(node);
-				return 0;
+			filename = NULL;
+			if (strncmp(node->name, "FILE:", 5) == 0) {
+				filename = node->name + 5;
 			} else {
-				if (unlink(node->name) == 0) {
+				if (node->name[0] == '/') {
+					filename = node->name;
+				}
+			}
+			if (filename != NULL) {
+				if (_pam_krb5_storetmp_delete(filename) == 0) {
 					xstrfree(node->name);
 					node->name = NULL;
 					*list = node->next;
 					free(node);
 					return 0;
+				} else {
+					if (unlink(filename) == 0) {
+						xstrfree(node->name);
+						node->name = NULL;
+						*list = node->next;
+						free(node);
+						return 0;
+					}
+				}
+			} else {
+				ccache = NULL;
+				i = krb5_cc_resolve(ctx, node->name, &ccache);
+				if (i != 0) {
+					warn("error accessing ccache \"%s\" "
+					     "for removal: %s", node->name,
+					     error_message(i));
+					return -1;
+				} else {
+					i = krb5_cc_destroy(ctx, ccache);
+					if (i == 0) {
+						xstrfree(node->name);
+						node->name = NULL;
+						*list = node->next;
+						free(node);
+						return 0;
+					} else {
+						warn("error removing ccache "
+						     "\"%s\": %s", node->name,
+						     error_message(i));
+						return -1;
+					}
 				}
 			}
 		} else {
@@ -865,13 +1006,14 @@ _pam_krb5_stash_pop(struct _pam_krb5_ccname_list **list)
 }
 
 static int
-_pam_krb5_stash_push(struct _pam_krb5_ccname_list **list, const char *filename)
+_pam_krb5_stash_push(krb5_context ctx, struct _pam_krb5_ccname_list **list,
+		     const char *ccname)
 {
 	struct _pam_krb5_ccname_list *node;
 	if (list != NULL) {
 		node = malloc(sizeof(*node));
 		if (node != NULL) {
-			node->name = strdup(filename);
+			node->name = strdup(ccname);
 			if (node->name != NULL) {
 				node->next = *list;
 				*list = node;
@@ -885,36 +1027,39 @@ _pam_krb5_stash_push(struct _pam_krb5_ccname_list **list, const char *filename)
 
 #ifdef USE_KRB4
 int
-_pam_krb5_stash_pop_v4(struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash)
 {
-	return _pam_krb5_stash_pop(&stash->v4tktfiles);
+	return _pam_krb5_stash_pop(ctx, &stash->v4tktfiles);
 }
 int
-_pam_krb5_stash_push_v4(struct _pam_krb5_stash *stash, const char *filename)
+_pam_krb5_stash_push_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
+			const char *filename)
 {
-	return _pam_krb5_stash_push(&stash->v4tktfiles, filename);
+	return _pam_krb5_stash_push(ctx, &stash->v4tktfiles, filename);
 }
 #else
 int
-_pam_krb5_stash_pop_v4(struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash)
 {
 	return 0;
 }
 int
-_pam_krb5_stash_push_v4(struct _pam_krb5_stash *stash, const char *filename)
+_pam_krb5_stash_push_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
+			const char *filename)
 {
 	return 0;
 }
 #endif
 
 int
-_pam_krb5_stash_pop_v5(struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v5(krb5_context ctx, struct _pam_krb5_stash *stash)
 {
-	return _pam_krb5_stash_pop(&stash->v5ccnames);
+	return _pam_krb5_stash_pop(ctx, &stash->v5ccnames);
 }
 
 int
-_pam_krb5_stash_push_v5(struct _pam_krb5_stash *stash, const char *filename)
+_pam_krb5_stash_push_v5(krb5_context ctx, struct _pam_krb5_stash *stash,
+			const char *ccname)
 {
-	return _pam_krb5_stash_push(&stash->v5ccnames, filename);
+	return _pam_krb5_stash_push(ctx, &stash->v5ccnames, ccname);
 }

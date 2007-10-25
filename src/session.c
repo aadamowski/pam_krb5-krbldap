@@ -216,7 +216,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if ((i == PAM_SUCCESS) &&
 	    (options->ignore_afs == 0) &&
 	    tokens_useful()) {
-		v5_save_for_tokens(ctx, stash, userinfo, options, NULL);
+		v5_save_for_tokens(ctx, stash, user, userinfo, options, NULL);
 		v4_save_for_tokens(ctx, stash, userinfo, options, NULL);
 		
 		tokens_obtain(ctx, stash, options, userinfo, 1);
@@ -236,12 +236,12 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		      user, (long) userinfo->uid, (long) userinfo->gid);
 #endif
 	}
-	i = v5_save_for_user(ctx, stash,  userinfo, options, &ccname);
+	i = v5_save_for_user(ctx, stash, user, userinfo, options, &ccname);
 	if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
 		if (options->debug) {
 			debug("created v5 ccache '%s' for '%s'", ccname, user);
 		}
-		sprintf(envstr, "KRB5CCNAME=FILE:%s", ccname);
+		sprintf(envstr, "KRB5CCNAME=%s", ccname);
 		pam_putenv(pamh, envstr);
 		stash->v5setenv = 1;
 	}
@@ -257,7 +257,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (options->debug) {
 			debug("creating v4 ticket file for '%s'", user);
 		}
-		i = v4_save_for_user(ctx, stash,  userinfo, options, &ccname);
+		i = v4_save_for_user(ctx, stash, userinfo, options, &ccname);
 		if (i == PAM_SUCCESS) {
 			if (options->debug) {
 				debug("created v4 ticket file '%s' for "
@@ -404,7 +404,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 			stash->v5setenv = 0;
 		}
 		if (options->debug) {
-			debug("destroyed v5 ticket file for '%s'", user);
+			debug("destroyed v5 ccache for '%s'", user);
 		}
 	}
 

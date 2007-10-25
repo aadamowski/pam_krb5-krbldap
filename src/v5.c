@@ -179,6 +179,10 @@ v5_user_info_subst(krb5_context ctx,
 				len += sizeof(userinfo->uid) * 4;
 				i++;
 				break;
+			case 'P':
+				len += sizeof(pid_t) * 4;
+				i++;
+				break;
 			case 'r':
 				len += strlen(options->realm);
 				i++;
@@ -188,6 +192,10 @@ v5_user_info_subst(krb5_context ctx,
 					      userinfo->homedir :
 					      "/");
 				i++;
+			case 'd':
+				len += strlen(options->ccache_dir);
+				i++;
+				break;
 				break;
 			default:
 			case '%':
@@ -221,6 +229,11 @@ v5_user_info_subst(krb5_context ctx,
 				i++;
 				j = strlen(ret);
 				break;
+			case 'P':
+				sprintf(ret + j, "%ld", (long) getpid());
+				i++;
+				j = strlen(ret);
+				break;
 			case 'r':
 				strcat(ret, options->realm);
 				i++;
@@ -230,6 +243,11 @@ v5_user_info_subst(krb5_context ctx,
 				strcat(ret,
 				       userinfo->homedir ?
 				       userinfo->homedir : "/");
+				i++;
+				j = strlen(ret);
+				break;
+			case 'd':
+				strcat(ret, options->ccache_dir);
 				i++;
 				j = strlen(ret);
 				break;
@@ -708,21 +726,28 @@ v5_get_creds(krb5_context ctx,
 		opt = v5_user_info_subst(ctx, user, userinfo, options,
 					 options->pkinit_identity);
 		if (opt != NULL) {
-			if (options->debug) {
-				debug("resolved pkinit identity to \"%s\"",
-				      opt);
+			if (strlen(opt) > 0) {
+				if (options->debug) {
+					debug("resolved pkinit identity to "
+					      "\"%s\"", opt);
+				}
+				krb5_get_init_creds_opt_set_pkinit(ctx,
+								   gic_options,
+								   userinfo->principal_name,
+								   opt,
+								   NULL,
+								   NULL,
+								   NULL,
+								   options->pkinit_flags,
+								   prompter,
+								   &prompter_data,
+								   password);
+			} else {
+				if (options->debug) {
+					debug("pkinit identity has no "
+					      "contents, ignoring");
+				}
 			}
-			krb5_get_init_creds_opt_set_pkinit(ctx,
-							   gic_options,
-							   userinfo->principal_name,
-							   opt,
-							   NULL,
-							   NULL,
-							   NULL,
-							   options->pkinit_flags,
-							   prompter,
-							   &prompter_data,
-							   password);
 			free(opt);
 		} else {
 			warn("error resolving pkinit identity template \"%s\" ",
@@ -876,17 +901,18 @@ v5_get_creds(krb5_context ctx,
 static int
 v5_save(krb5_context ctx,
 	struct _pam_krb5_stash *stash,
+	const char *user,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
-	const char **ccname,
+	const char **ret_ccname,
 	int clone_cc)
 {
-	char tktfile[PATH_MAX + 6];
+	char *ccname;
 	krb5_ccache ccache;
 	int fd;
 
-	if (ccname != NULL) {
-		*ccname = NULL;
+	if (ret_ccname != NULL) {
+		*ret_ccname = NULL;
 	}
 
 	/* Ensure that we have credentials for saving. */
@@ -897,17 +923,30 @@ v5_save(krb5_context ctx,
 		return KRB5KRB_ERR_GENERIC;
 	}
 
-	/* Use mkstemp() to create a unique filename. */
-	snprintf(tktfile, sizeof(tktfile), "FILE:%s/krb5cc_%lu_XXXXXX",
-		 options->ccache_dir, (unsigned long) userinfo->uid);
-	fd = mkstemp(tktfile + 5);
-	if (fd == -1) {
-		warn("error creating unique Kerberos 5 ccache "
-		     "(shouldn't happen)");
-		return PAM_SERVICE_ERR;
+	/* Derive the ccache name from the supplied template. */
+	ccname = v5_user_info_subst(ctx, user, userinfo, options,
+				    options->ccname_template);
+	if (ccname == NULL) {
+		if (options->debug) {
+			debug("could not derive a ccache name from template");
+		}
+		return KRB5KRB_ERR_GENERIC;
+	}
+	/* If it's a file, try to use mkstemp() to create a unique filename. */
+	if (strncmp(ccname, "FILE:", 5) == 0) {
+		fd = mkstemp(ccname + 5);
+		if (fd == -1) {
+			warn("error creating unique Kerberos 5 ccache file "
+			     "using template '%s' (shouldn't happen)",
+			     ccname + 5);
+			free(ccname);
+			return PAM_SERVICE_ERR;
+		}
+	} else {
+		fd = -1;
 	}
 	if (options->debug) {
-		debug("saving v5 credentials to '%s'", tktfile);
+		debug("saving v5 credentials to '%s'", ccname);
 	}
 	/* Create an in-memory structure and then open the file.  One of two
 	 * things will happen here.  Either libkrb5 will just use the file, and
@@ -915,63 +954,76 @@ v5_save(krb5_context ctx,
 	 * will nuke the file and reopen it with O_EXCL.  In the latter case,
 	 * the descriptor we have will become useless, so we don't actually use
 	 * it for anything. */
-	if (krb5_cc_resolve(ctx, tktfile, &ccache) != 0) {
-		warn("error resolving ccache '%s'", tktfile);
-		unlink(tktfile + 5);
-		close(fd);
+	if (krb5_cc_resolve(ctx, ccname, &ccache) != 0) {
+		warn("error resolving ccache '%s'", ccname);
+		if (fd != -1) {
+			unlink(ccname + 5);
+			close(fd);
+		}
+		free(ccname);
 		return PAM_SERVICE_ERR;
 	}
 	if (krb5_cc_initialize(ctx, ccache, userinfo->principal_name) != 0) {
-		warn("error initializing ccache '%s'", tktfile);
+		warn("error initializing ccache '%s'", ccname);
 		krb5_cc_close(ctx, ccache);
-		unlink(tktfile + 5);
-		close(fd);
+		if (fd != -1) {
+			unlink(ccname + 5);
+			close(fd);
+		}
+		free(ccname);
 		return PAM_SERVICE_ERR;
 	}
 	if (krb5_cc_store_cred(ctx, ccache, &stash->v5creds) != 0) {
-		warn("error storing credentials in ccache '%s'", tktfile);
-		krb5_cc_close(ctx, ccache);
-		unlink(tktfile + 5);
-		close(fd);
+		warn("error storing credentials in ccache '%s'", ccname);
+		krb5_cc_destroy(ctx, ccache);
+		if (fd != -1) {
+			close(fd);
+		}
+		free(ccname);
 		return PAM_SERVICE_ERR;
 	}
 	/* If we got to here, we succeeded. */
 	krb5_cc_close(ctx, ccache);
-	close(fd);
-	/* Save the new file's name in the stash, and optionally return it to
+	if (fd != -1) {
+		close(fd);
+	}
+	/* Save the new ccache name in the stash, and optionally return it to
 	 * the caller. */
-	if (_pam_krb5_stash_push_v5(stash, tktfile + 5) == 0) {
+	if (_pam_krb5_stash_push_v5(ctx, stash, ccname) == 0) {
 		/* Generate a *new* ticket file with the same contents as this
 		 * one, but for the user's use, and replace this one. */
 		if (clone_cc) {
-			_pam_krb5_stash_clone_v5(stash,
+			_pam_krb5_stash_clone_v5(ctx, stash, options, userinfo,
 						 userinfo->uid, userinfo->gid);
 		}
-		if (ccname != NULL) {
-			*ccname = stash->v5ccnames->name;
+		if (ret_ccname != NULL) {
+			*ret_ccname = stash->v5ccnames->name;
 		}
 	}
+	free(ccname);
 	return PAM_SUCCESS;
 }
 
 int
 v5_save_for_user(krb5_context ctx,
 		 struct _pam_krb5_stash *stash,
+		 const char *user,
 		 struct _pam_krb5_user_info *userinfo,
 		 struct _pam_krb5_options *options,
 		 const char **ccname)
 {
-	return v5_save(ctx, stash, userinfo, options, ccname, 1);
+	return v5_save(ctx, stash, user, userinfo, options, ccname, 1);
 }
 
 int
 v5_save_for_tokens(krb5_context ctx,
 		   struct _pam_krb5_stash *stash,
+		   const char *user,
 		   struct _pam_krb5_user_info *userinfo,
 		   struct _pam_krb5_options *options,
 		   const char **ccname)
 {
-	return v5_save(ctx, stash, userinfo, options, ccname, 0);
+	return v5_save(ctx, stash, user, userinfo, options, ccname, 0);
 }
 
 int
@@ -984,7 +1036,8 @@ v5_get_creds_etype(krb5_context ctx,
 	krb5_ccache ccache;
 	char ccache_path[PATH_MAX + 6];
 	krb5_creds *new_creds, *tmp_creds;
-	int fd, i;
+	int fd;
+	krb5_error_code i;
 
 	/* First, nuke anything that's already in the target creds struct. */
 	if (*target_creds != NULL) {
@@ -1006,8 +1059,8 @@ v5_get_creds_etype(krb5_context ctx,
 	}
 
 	/* Crap.  We have to do things the long way. */
-	snprintf(ccache_path, sizeof(ccache_path), "FILE:%s/krb5cc_%lu_XXXXXX",
-		 options->ccache_dir, (unsigned long) userinfo->uid);
+	snprintf(ccache_path, sizeof(ccache_path),
+		 "FILE:%s/pam_krb5_tmp_XXXXXX", options->ccache_dir);
 	fd = mkstemp(ccache_path + 5);
 	if (fd == -1) {
 		if (options->debug) {
@@ -1021,8 +1074,8 @@ v5_get_creds_etype(krb5_context ctx,
 	i = krb5_cc_resolve(ctx, ccache_path, &ccache);
 	if (i != 0) {
 		if (options->debug) {
-			debug("error resolving temporary ccache: %s",
-			      v5_error_message(i));
+			debug("error resolving temporary ccache '%s': %s",
+			      ccache_path, v5_error_message(i));
 		}
 		unlink(ccache_path + 5);
 		close(fd);
@@ -1035,6 +1088,7 @@ v5_get_creds_etype(krb5_context ctx,
 			debug("error initializing temporary ccache: %s",
 			      v5_error_message(i));
 		}
+		krb5_cc_close(ctx, ccache);
 		unlink(ccache_path + 5);
 		close(fd);
 		return i;
@@ -1077,14 +1131,14 @@ v5_get_creds_etype(krb5_context ctx,
 			      wanted_etype, i, v5_error_message(i));
 		}
 		krb5_free_creds(ctx, tmp_creds);
-		krb5_cc_destroy(ctx, ccache);
+		krb5_cc_close(ctx, ccache);
 		unlink(ccache_path + 5);
 		close(fd);
 		return i;
 	}
 
 	krb5_free_creds(ctx, tmp_creds);
-	krb5_cc_destroy(ctx, ccache);
+	krb5_cc_close(ctx, ccache);
 	unlink(ccache_path + 5);
 	close(fd);
 	*target_creds = new_creds;
@@ -1097,11 +1151,11 @@ v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 {
 	if (stash->v5ccnames != NULL) {
 		if (options->debug) {
-			debug("removing ccache file '%s'",
+			debug("removing ccache '%s'",
 			      stash->v5ccnames->name);
 		}
-		if (_pam_krb5_stash_pop_v5(stash) != 0) {
-			warn("error removing ccache file '%s'",
+		if (_pam_krb5_stash_pop_v5(ctx, stash) != 0) {
+			warn("error removing ccache '%s'",
 			     stash->v5ccnames->name);
 		}
 	}

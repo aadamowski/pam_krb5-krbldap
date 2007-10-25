@@ -252,7 +252,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (stash->v4present &&
 			    (options->ignore_afs == 0) &&
 			    (options->tokens == 1)) {
-				v5_save_for_tokens(ctx, stash, userinfo,
+				v5_save_for_tokens(ctx, stash, user, userinfo,
 						   options, NULL);
 				v4_save_for_tokens(ctx, stash, userinfo,
 						   options, NULL);
@@ -327,7 +327,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (stash->v4present &&
 			    (options->ignore_afs == 0) &&
 			    (options->tokens == 1)) {
-				v5_save_for_tokens(ctx, stash, userinfo,
+				v5_save_for_tokens(ctx, stash, user, userinfo,
 						   options, NULL);
 				v4_save_for_tokens(ctx, stash, userinfo,
 						   options, NULL);
@@ -371,7 +371,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if (stash->v4present &&
 			    (options->ignore_afs == 0) &&
 			    (options->tokens == 1)) {
-				v5_save_for_tokens(ctx, stash, userinfo,
+				v5_save_for_tokens(ctx, stash, user, userinfo,
 						   options, NULL);
 				v4_save_for_tokens(ctx, stash, userinfo,
 						   options, NULL);

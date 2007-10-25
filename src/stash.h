@@ -67,14 +67,18 @@ struct _pam_krb5_stash {
 struct _pam_krb5_stash *_pam_krb5_stash_get(pam_handle_t *pamh,
 					    struct _pam_krb5_user_info *info,
 					    struct _pam_krb5_options *options);
-void _pam_krb5_stash_clone_v5(struct _pam_krb5_stash *stash,
+void _pam_krb5_stash_clone_v5(krb5_context ctx, struct _pam_krb5_stash *stash,
+			      struct _pam_krb5_options *options,
+			      struct _pam_krb5_user_info *userinfo,
 			      uid_t uid, gid_t gid);
 void _pam_krb5_stash_clone_v4(struct _pam_krb5_stash *stash,
 			      uid_t uid, gid_t gid);
-int _pam_krb5_stash_push_v5(struct _pam_krb5_stash *stash, const char *ccname);
-int _pam_krb5_stash_pop_v5(struct _pam_krb5_stash *stash);
-int _pam_krb5_stash_push_v4(struct _pam_krb5_stash *stash, const char *tktfile);
-int _pam_krb5_stash_pop_v4(struct _pam_krb5_stash *stash);
+int _pam_krb5_stash_push_v5(krb5_context ctx, struct _pam_krb5_stash *stash,
+			    const char *ccname);
+int _pam_krb5_stash_pop_v5(krb5_context ctx, struct _pam_krb5_stash *stash);
+int _pam_krb5_stash_push_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
+			    const char *tktfile);
+int _pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash);
 void _pam_krb5_stash_shm_read(pam_handle_t *pamh,
 			      const char *partial_key,
 			      struct _pam_krb5_stash *stash,

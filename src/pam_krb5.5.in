@@ -39,6 +39,19 @@ called upon to change passwords.  The default is \fBKerberos 5\fR.
 .IP ccache_dir=\fI@default_ccache_dir@\fR
 specifies the directory in which to place credential cache files.
 
+.IP ccname_template=\fI@default_ccname_template@\fR
+specifies the location in which to place the user's session-specific
+credential cache.  This value is treated as a template, and these sequences
+are substituted:
+  %u	login name
+  %U	login UID
+  %p	principal name
+  %r	realm name
+  %h	home directory
+  %d	the default ccache directory
+  %p	the current process ID
+  %%	literal '%'
+
 .IP existing_ticket=\fItrue\fR
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials
 provided by the calling application in the default credential cache as
@@ -144,6 +157,8 @@ less than this value attempts authentication, the request will be ignored.
 @MAN_HPKINIT@  %p	principal name
 @MAN_HPKINIT@  %r	realm name
 @MAN_HPKINIT@  %h	home directory
+@MAN_HPKINIT@  %d	the default ccache directory
+@MAN_HPKINIT@  %P	the current process ID
 @MAN_HPKINIT@  %%	literal '%'
 @MAN_HPKINIT@.br
 @MAN_HPKINIT@Other PKINIT-specific defaults, such as the locations of trust
@@ -159,6 +174,8 @@ less than this value attempts authentication, the request will be ignored.
 @MAN_MPREAUTH@  %p	principal name
 @MAN_MPREAUTH@  %r	realm name
 @MAN_MPREAUTH@  %h	home directory
+@MAN_MPREAUTH@  %d	the default ccache directory
+@MAN_MPREAUTH@  %P	the current process ID
 @MAN_MPREAUTH@  %%	literal '%'
 @MAN_MPREAUTH@
 .IP proxiable=[\fItrue\fR|\fIfalse\fR]

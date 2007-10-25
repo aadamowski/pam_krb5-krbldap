@@ -285,7 +285,10 @@ AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name whic
 AC_MSG_RESULT([Using "$default_realm" as the default realm])
 AC_ARG_ENABLE(default-ccache-dir,AC_HELP_STRING([--enable-default-ccache-dir=DIRECTORY],[default directory in which ccache files will be stored (default is /tmp)]),default_ccache_dir=$enableval,default_ccache_dir=/tmp)
 AC_DEFINE_UNQUOTED(DEFAULT_CCACHE_DIR,"$default_ccache_dir",[Define to the name of the directory in which ccache files will be stored by default.])
+AC_ARG_ENABLE(default-ccname-template,AC_HELP_STRING([--enable-default-ccname-template=TEMPLATE],[default location to store the user's session-specific credentials (default is CCACHE_DIR/krb5cc_%U_XXXXXX)]),default_ccname_template=$enableval,default_ccname_template=FILE:%d/krb5cc_%U_XXXXXX)
+AC_DEFINE_UNQUOTED(DEFAULT_CCNAME_TEMPLATE,"$default_ccname_template",[Define to the template used to generate name of the user's ccache.])
 AC_MSG_RESULT([Using "$default_ccache_dir" to store ccache files])
+AC_MSG_RESULT([Using "$default_ccname_template" to store the user's ccache])
 AC_ARG_ENABLE(default-keytab-location,AC_HELP_STRING([--enable-default-keytab-location=FILE:/etc/krb5.keytab],[default location for local keys used for verifying TGTs (default is FILE:/etc/krb5.keytab)]),default_keytab=$enableval,default_keytab=FILE:/etc/krb5.keytab)
 AC_DEFINE_UNQUOTED(DEFAULT_KEYTAB_LOCATION,"$default_keytab",[Define to the default location for your keytab file, which will be used for verifying TGTs.])
 DEFAULT_KEYTAB="$default_keytab"
@@ -353,9 +356,9 @@ AC_SUBST(MAN_HPKINIT)
 # Provide a means of setting the location of the user's PKINIT identity
 # information.
 AC_ARG_WITH(default-pkinit-identity,
-AC_HELP_STRING(--with-default-pkinit-identity="DIR",[Set the default value of the "pkinit-identity" option [default="PKCS12:/etc/pki/tls/private/%u.pfx"] (Heimdal).]),
+AC_HELP_STRING(--with-default-pkinit-identity="DIR",[Set the default value of the "pkinit-identity" option [default=""] (Heimdal).]),
 	    [DEFAULT_PKINIT_IDENTITY="$withval"],
-	    [DEFAULT_PKINIT_IDENTITY="PKCS12:/etc/pki/tls/private/%u.pfx"])
+	    [DEFAULT_PKINIT_IDENTITY=""])
 AC_DEFINE_UNQUOTED(DEFAULT_PKINIT_IDENTITY,"$DEFAULT_PKINIT_IDENTITY",[Set to the default location of the client's private key and PKI certificate.])
 AC_SUBST(DEFAULT_PKINIT_IDENTITY)
 # Provide a means of setting preauthentication options.
@@ -382,6 +385,7 @@ TESTHOST=`hostname`
 AC_SUBST(TESTDIR)
 AC_SUBST(TESTHOST)
 AC_SUBST(default_ccache_dir)
+AC_SUBST(default_ccname_template)
 
 AC_CONFIG_HEADER(config.h)
 AC_OUTPUT([

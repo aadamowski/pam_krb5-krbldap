@@ -672,6 +672,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	if (options->debug && options->ccache_dir) {
 		debug("ccache dir: %s", options->ccache_dir);
 	}
+	options->ccname_template = option_s(argc, argv,
+					    ctx, options->realm,
+					    "ccname_template",
+					    DEFAULT_CCNAME_TEMPLATE);
+	if (strlen(options->ccname_template) == 0) {
+		xstrfree(options->ccname_template);
+		options->ccname_template = xstrdup(DEFAULT_CCNAME_TEMPLATE);
+	}
+	if (options->debug && options->ccname_template) {
+		debug("ccname template: %s", options->ccname_template);
+	}
 
 	if (service != NULL) {
 		list = option_l(argc, argv, ctx, options->realm,
@@ -847,6 +858,8 @@ _pam_krb5_options_free(pam_handle_t *pamh, krb5_context ctx,
 	options->banner = NULL;
 	free_s(options->ccache_dir);
 	options->ccache_dir = NULL;
+	free_s(options->ccname_template);
+	options->ccname_template = NULL;
 	free_s(options->keytab);
 	options->keytab = NULL;
 	free_s(options->pwhelp);

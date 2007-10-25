@@ -66,6 +66,7 @@ struct _pam_krb5_options {
 
 	char *banner;
 	char *ccache_dir;
+	char *ccname_template;
 	char *keytab;
 	char *pwhelp;
 	char *realm;
