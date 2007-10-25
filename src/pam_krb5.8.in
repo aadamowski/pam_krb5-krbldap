@@ -85,7 +85,7 @@ are substituted:
   %r	realm name
   %h	home directory
   %d	the default ccache directory
-  %p	the current process ID
+  %P	the current process ID
   %%	literal '%'
 .br
 The default setting is "\fI@default_ccname_template@\fR".

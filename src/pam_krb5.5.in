@@ -49,7 +49,7 @@ are substituted:
   %r	realm name
   %h	home directory
   %d	the default ccache directory
-  %p	the current process ID
+  %P	the current process ID
   %%	literal '%'
 
 .IP existing_ticket=\fItrue\fR
