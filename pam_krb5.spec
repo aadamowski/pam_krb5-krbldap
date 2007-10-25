@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.18
+Version: 2.2.19
 Release: 1
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPL+
@@ -48,6 +48,15 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Thu Oct 25 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.19-1
+- log to AUTHPRIV facility by default
+- add a "ccname_template" option, which can be set to "KEYRING:..." to switch
+  to using the kernel keyring
+- add a "preauth_options" option for setting generic preauth parameters
+- allow "keytab" locations to be specified on a per-service basis, so that
+  unprivileged apps which do password-checking and which have their own
+  keytabs can use their own keys to validate the KDC's response
+
 * Wed Aug 15 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.18-1
 - fix permissions-related problems creating v4 ticket files
 
