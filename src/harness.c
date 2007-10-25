@@ -33,6 +33,7 @@
 #include "../config.h"
 
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
@@ -202,6 +203,7 @@ main(int argc, char **argv)
 {
 	int i, ret, abi_flag, pargc;
 	const char *user, *service, *authtok, *old_authtok, **pargv;
+	char **envlist;
 	struct passwd *pwd;
 	struct pam_conv conv;
 	pam_handle_t *pamh;
@@ -327,10 +329,20 @@ main(int argc, char **argv)
 			continue;
 		}
 		if (strcmp(argv[i], "--run") == 0) {
+			envlist = pam_getenvlist(pamh);
+			if (envlist != NULL) {
+				while (*envlist != NULL) {
+					putenv(*envlist);
+					envlist++;
+				}
+			}
 			ret = system(argv[i + 1]);
-			printf("run(\"%s\"): %d%s %s\n", argv[i + 1], ret,
-			       ret ? ":" : "",
-			       ret ? strerror(ret) : "");
+			printf("run(\"%s\"): %d%s %s\n", argv[i + 1],
+			       WEXITSTATUS(ret),
+			       WEXITSTATUS(ret) ? ":" : "",
+			       WEXITSTATUS(ret) ?
+			       strerror(WEXITSTATUS(ret)) :
+			       "");
 			i++;
 			continue;
 		}

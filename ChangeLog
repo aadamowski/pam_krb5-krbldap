@@ -1,3 +1,6 @@
+2007-10-25:
+	* src/harness.c: use the PAM environment when running commands
+
 2007-09-05:
 	* src/v5.c(v5_passwd_error_message): tweak some error text to
 	hopefully make more sense to people (#230438)
