@@ -334,5 +334,9 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		      pam_strerror(pamh, retval));
 	}
 
+	_pam_krb5_user_info_free(ctx, userinfo);
+	_pam_krb5_options_free(pamh, ctx, options);
+	krb5_free_context(ctx);
+
 	return retval;
 }
