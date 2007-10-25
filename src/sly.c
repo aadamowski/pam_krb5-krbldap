@@ -116,6 +116,7 @@ sly_v5(krb5_context ctx, const char *v5ccname,
 		if (krb5_cc_get_principal(ctx, ccache, &princ) == 0) {
 			if (krb5_principal_compare(ctx, princ,
 						   userinfo->principal_name) == FALSE) {
+				krb5_free_principal(ctx, princ);
 				krb5_cc_close(ctx, ccache);
 				return PAM_SERVICE_ERR;
 			}
@@ -124,6 +125,7 @@ sly_v5(krb5_context ctx, const char *v5ccname,
 		if (i == 0) {
 			i = krb5_cc_store_cred(ctx, ccache, &stash->v5creds);
 		}
+		krb5_free_principal(ctx, princ);
 		krb5_cc_close(ctx, ccache);
 	}
 
