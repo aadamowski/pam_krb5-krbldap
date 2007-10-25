@@ -146,7 +146,11 @@ void
 v5_free_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt *opt)
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE
+#ifdef KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE_TAKES_2_ARGS
 	krb5_get_init_creds_opt_free(ctx, opt);
+#else
+	krb5_get_init_creds_opt_free(opt);
+#endif
 #else
 	free(opt);
 #endif
@@ -736,8 +740,10 @@ v5_get_creds(krb5_context ctx,
 								   userinfo->principal_name,
 								   opt,
 								   NULL,
+#ifdef KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_TAKES_11_ARGS
 								   NULL,
 								   NULL,
+#endif
 								   options->pkinit_flags,
 								   prompter,
 								   &prompter_data,

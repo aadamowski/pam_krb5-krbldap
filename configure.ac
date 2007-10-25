@@ -220,6 +220,28 @@ headers='
 #endif
 #include <krb5.h>
 '
+if test x$ac_cv_func_krb5_get_init_creds_opt_free = xyes ; then
+	AC_MSG_CHECKING([if krb5_get_init_creds_opt_free() takes a context])
+	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdlib.h>],[
+					  krb5_get_init_creds_opt_free(NULL,
+					 			       NULL);]),
+	AC_DEFINE(KRB5_GET_INIT_CREDS_OPT_ALLOC_FREE_TAKES_2_ARGS,1,
+		  [Define if krb5_get_init_creds_opt_free() takes two arguments.])
+	AC_MSG_RESULT([yes]),
+	AC_MSG_RESULT([no]))
+fi
+if test x$ac_cv_func_krb5_get_init_creds_opt_set_pkinit = xyes ; then
+	AC_MSG_CHECKING([if krb5_get_init_creds_opt_set_pkinit() takes a pool and a CRL])
+	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <krb5.h>],[
+					  krb5_context ctx;
+					  krb5_get_init_creds_opt *opt;
+					  krb5_get_init_creds_opt_free(ctx,
+					 			       opt);]),
+	AC_DEFINE(KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_TAKES_11_ARGS,1,
+		  [Define if krb5_get_init_creds_opt_set_pkinit() takes 11 arguments.])
+	AC_MSG_RESULT([yes]),
+	AC_MSG_RESULT([no]))
+fi
 AC_CHECK_DECL(error_message,
 	      [AC_DEFINE(HAVE_ERROR_MESSAGE_DECL,1,[Define if your krb5.h declares the error_message() function.])],,[$headers])
 AC_CHECK_HEADERS(com_err.h et/com_err.h)
