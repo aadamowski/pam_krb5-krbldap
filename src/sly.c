@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -110,7 +110,7 @@ sly_v5(krb5_context ctx, const char *v5ccname,
 	int i;
 
 	ccache = NULL;
-	i = krb5_cc_default(ctx, &ccache);
+	i = krb5_cc_resolve(ctx, v5ccname, &ccache);
 	if (i == 0) {
 		princ = NULL;
 		if (krb5_cc_get_principal(ctx, ccache, &princ) == 0) {
@@ -157,7 +157,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_stash *stash;
 	struct stat st;
 	int i, retval, stored;
-	char *v5ccname, *v4tktfile;
+	char *v5ccname, *v5filename, *v4tktfile;
 
 	/* Inexpensive checks. */
 	switch (_pam_krb5_sly_looks_unsafe()) {
@@ -251,21 +251,22 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 
 	/* Save credentials in the right files. */
 	v5ccname = getenv("KRB5CCNAME");
-	if ((v5ccname != NULL) && (strncmp(v5ccname, "FILE:", 5) == 0)) {
-		v5ccname += 5;
-	}
-
+	v5filename = NULL;
 	if (v5ccname == NULL) {
 		/* Ignore us.  We have nothing to do. */
 		retval = PAM_SUCCESS;
 	}
+	if ((v5ccname != NULL) && (strncmp(v5ccname, "FILE:", 5) == 0)) {
+		v5filename = v5ccname + 5;
+	}
 
 	stored = 0;
 
-	if ((v5_creds_check_initialized(ctx, &stash->v5creds) == 0) &&
-	    (v5ccname != NULL)) {
-		if (access(v5ccname, R_OK | W_OK) == 0) {
-			if (lstat(v5ccname, &st) == 0) {
+	if (v5_creds_check_initialized(ctx, &stash->v5creds) == 0) {
+		if (v5filename != NULL) {
+			/* Check the permissions on the ccache file. */
+			if ((access(v5filename, R_OK | W_OK) == 0) &&
+			    (lstat(v5filename, &st) == 0)) {
 				if (S_ISREG(st.st_mode) &&
 				    ((st.st_mode & S_IRWXG) == 0) &&
 				    ((st.st_mode & S_IRWXO) == 0) &&
@@ -288,8 +289,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				}
 			}
 		} else {
-			/* Touch nothing. */
-			retval = PAM_SUCCESS;
+			/* Go ahead and update the current ccache. */
+			retval = sly_v5(ctx, v5ccname, userinfo, stash);
 		}
 	}
 
