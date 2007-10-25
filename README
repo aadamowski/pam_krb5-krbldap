@@ -29,6 +29,8 @@ o banner=Kerberos
   passwords (unset to avoid using any term other than "password").
 o ccache_dir=/tmp
   Directory in which to store ccache and ticket files.
+o ccache_template=FILE:%d/krb5cc_%U_XXXXXX
+  Location of the user's v5 ccache files.
 o existing_ticket
   Use the presence of a TGT for the user's realm in the default ccache as
   sufficient proof of the user's identity.  If you're not also validating
