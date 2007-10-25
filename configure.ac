@@ -246,7 +246,6 @@ AC_CHECK_MEMBERS(struct krb5_principal_data.data,,,[$headers])
 AC_CHECK_MEMBERS(struct Principal.name,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.enctype,,,[$headers])
 AC_CHECK_MEMBERS(krb5_keyblock.keytype,,,[$headers])
-AC_CHECK_MEMBERS(krb5_get_init_creds_opt.opt_private,,,[$headers])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
