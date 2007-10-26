@@ -120,12 +120,12 @@ sly_v5(krb5_context ctx, const char *v5ccname,
 				krb5_cc_close(ctx, ccache);
 				return PAM_SERVICE_ERR;
 			}
+			krb5_free_principal(ctx, princ);
 		}
 		i = krb5_cc_initialize(ctx, ccache, userinfo->principal_name);
 		if (i == 0) {
 			i = krb5_cc_store_cred(ctx, ccache, &stash->v5creds);
 		}
-		krb5_free_principal(ctx, princ);
 		krb5_cc_close(ctx, ccache);
 	}
 
@@ -274,6 +274,11 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				    ((st.st_mode & S_IRWXO) == 0) &&
 				    (st.st_uid == userinfo->uid) &&
 				    (st.st_gid == userinfo->gid)) {
+					if (options->debug) {
+						debug("updating ccache '%s' "
+						      "for '%s'",
+						      v5ccname, user);
+					}
 					retval = sly_v5(ctx, v5ccname,
 							userinfo, stash);
 					stored = (retval == 0);
@@ -291,8 +296,14 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				}
 			}
 		} else {
-			/* Go ahead and update the current ccache. */
-			retval = sly_v5(ctx, v5ccname, userinfo, stash);
+			if (v5ccname != NULL) {
+				/* Go ahead and update the current ccache. */
+				if (options->debug) {
+					debug("updating ccache '%s' for '%s'",
+					      v5ccname, user);
+				}
+				retval = sly_v5(ctx, v5ccname, userinfo, stash);
+			}
 		}
 	}
 
@@ -305,6 +316,11 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				    ((st.st_mode & S_IRWXO) == 0) &&
 				    (st.st_uid == userinfo->uid) &&
 				    (st.st_gid == userinfo->gid)) {
+					if (options->debug) {
+						debug("updating ticket file "
+						      "'%s' for '%s'",
+						      v4tktfile, user);
+					}
 					sly_v4(ctx, v4tktfile, userinfo, stash);
 					stored = 1;
 				} else {

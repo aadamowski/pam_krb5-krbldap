@@ -1,4 +1,8 @@
 2007-10-26:
+	* src/sly.c(sly_v5): only free the ccache principal name if the call
+	to retrieve it succeeded.
+	* src/sly.c(_pam_krb5_sly_maybe_refresh): debug log when we decide
+	to do things.  Don't bother trying to refresh an unset KRB5CCNAME.
 	* src/shmem.c: correctly check the value returned of shmat() in
 	the place where it was being done wrong.
 	* src/v5.c: change internally-used ccaches from FILE: to MEMORY:
