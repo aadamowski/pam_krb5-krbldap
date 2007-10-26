@@ -39,7 +39,7 @@ user being authenticated, which is expected to be accessible to the module.
 
 .IP debug
 turns on debugging via \fBsyslog\fR(3).  Debugging messages are logged with
-priority LOG_DEBUG.
+priority \fILOG_DEBUG\fR.
 
 .IP debug_sensitive
 turns on debugging of sensitive information via \fBsyslog\fR(3).  Debug
