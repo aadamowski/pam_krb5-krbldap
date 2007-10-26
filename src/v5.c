@@ -913,9 +913,9 @@ v5_save(krb5_context ctx,
 	const char **ret_ccname,
 	int clone_cc)
 {
-	char *ccname;
+	char ccname[PATH_MAX];
 	krb5_ccache ccache;
-	int fd;
+	static int counter = 0;
 
 	if (ret_ccname != NULL) {
 		*ret_ccname = NULL;
@@ -930,29 +930,10 @@ v5_save(krb5_context ctx,
 	}
 
 	/* Derive the ccache name from the supplied template. */
-	ccname = v5_user_info_subst(ctx, user, userinfo, options,
-				    options->ccname_template);
-	if (ccname == NULL) {
-		if (options->debug) {
-			debug("could not derive a ccache name from template");
-		}
-		return KRB5KRB_ERR_GENERIC;
-	}
-	/* If it's a file, try to use mkstemp() to create a unique filename. */
-	if (strncmp(ccname, "FILE:", 5) == 0) {
-		fd = mkstemp(ccname + 5);
-		if (fd == -1) {
-			warn("error creating unique Kerberos 5 ccache file "
-			     "using template '%s' (shouldn't happen)",
-			     ccname + 5);
-			free(ccname);
-			return PAM_SERVICE_ERR;
-		}
-	} else {
-		fd = -1;
-	}
+	snprintf(ccname, sizeof(ccname), "MEMORY:_pam_krb5_tmp_s_%s-%d",
+		 userinfo->unparsed_name, counter++);
 	if (options->debug) {
-		debug("saving v5 credentials to '%s'", ccname);
+		debug("saving v5 credentials to '%s' for internal use", ccname);
 	}
 	/* Create an in-memory structure and then open the file.  One of two
 	 * things will happen here.  Either libkrb5 will just use the file, and
@@ -962,51 +943,34 @@ v5_save(krb5_context ctx,
 	 * it for anything. */
 	if (krb5_cc_resolve(ctx, ccname, &ccache) != 0) {
 		warn("error resolving ccache '%s'", ccname);
-		if (fd != -1) {
-			unlink(ccname + 5);
-			close(fd);
-		}
-		free(ccname);
 		return PAM_SERVICE_ERR;
 	}
 	if (krb5_cc_initialize(ctx, ccache, userinfo->principal_name) != 0) {
 		warn("error initializing ccache '%s'", ccname);
-		krb5_cc_close(ctx, ccache);
-		if (fd != -1) {
-			unlink(ccname + 5);
-			close(fd);
-		}
-		free(ccname);
+		krb5_cc_destroy(ctx, ccache);
 		return PAM_SERVICE_ERR;
 	}
 	if (krb5_cc_store_cred(ctx, ccache, &stash->v5creds) != 0) {
 		warn("error storing credentials in ccache '%s'", ccname);
 		krb5_cc_destroy(ctx, ccache);
-		if (fd != -1) {
-			close(fd);
-		}
-		free(ccname);
 		return PAM_SERVICE_ERR;
 	}
 	/* If we got to here, we succeeded. */
 	krb5_cc_close(ctx, ccache);
-	if (fd != -1) {
-		close(fd);
-	}
 	/* Save the new ccache name in the stash, and optionally return it to
 	 * the caller. */
 	if (_pam_krb5_stash_push_v5(ctx, stash, ccname) == 0) {
-		/* Generate a *new* ticket file with the same contents as this
-		 * one, but for the user's use, and replace this one. */
+		/* Generate a *new* ccache with the same contents as this
+		 * one, but for the user's use, and destroy this one. */
 		if (clone_cc) {
-			_pam_krb5_stash_clone_v5(ctx, stash, options, userinfo,
+			_pam_krb5_stash_clone_v5(ctx, stash, options,
+						 user, userinfo,
 						 userinfo->uid, userinfo->gid);
 		}
 		if (ret_ccname != NULL) {
 			*ret_ccname = stash->v5ccnames->name;
 		}
 	}
-	free(ccname);
 	return PAM_SUCCESS;
 }
 
@@ -1042,8 +1006,8 @@ v5_get_creds_etype(krb5_context ctx,
 	krb5_ccache ccache;
 	char ccache_path[PATH_MAX + 6];
 	krb5_creds *new_creds, *tmp_creds;
-	int fd;
 	krb5_error_code i;
+	static int counter = 0;
 
 	/* First, nuke anything that's already in the target creds struct. */
 	if (*target_creds != NULL) {
@@ -1066,16 +1030,8 @@ v5_get_creds_etype(krb5_context ctx,
 
 	/* Crap.  We have to do things the long way. */
 	snprintf(ccache_path, sizeof(ccache_path),
-		 "FILE:%s/pam_krb5_tmp_XXXXXX", options->ccache_dir);
-	fd = mkstemp(ccache_path + 5);
-	if (fd == -1) {
-		if (options->debug) {
-			debug("error creating temporary ccache: %s",
-			      strerror(errno));
-		}
-		return errno;
-	}
-
+		 "MEMORY:_pam_krb5_tmp_e_%s-%d", userinfo->unparsed_name,
+		 counter++);
 	ccache = NULL;
 	i = krb5_cc_resolve(ctx, ccache_path, &ccache);
 	if (i != 0) {
@@ -1083,8 +1039,6 @@ v5_get_creds_etype(krb5_context ctx,
 			debug("error resolving temporary ccache '%s': %s",
 			      ccache_path, v5_error_message(i));
 		}
-		unlink(ccache_path + 5);
-		close(fd);
 		return i;
 	}
 
@@ -1094,9 +1048,7 @@ v5_get_creds_etype(krb5_context ctx,
 			debug("error initializing temporary ccache: %s",
 			      v5_error_message(i));
 		}
-		krb5_cc_close(ctx, ccache);
-		unlink(ccache_path + 5);
-		close(fd);
+		krb5_cc_destroy(ctx, ccache);
 		return i;
 	}
 
@@ -1107,8 +1059,6 @@ v5_get_creds_etype(krb5_context ctx,
 			      "%s", v5_error_message(i));
 		}
 		krb5_cc_destroy(ctx, ccache);
-		unlink(ccache_path + 5);
-		close(fd);
 		return i;
 	}
 
@@ -1120,8 +1070,6 @@ v5_get_creds_etype(krb5_context ctx,
 			debug("error copying credentials (shouldn't happen)");
 		}
 		krb5_cc_destroy(ctx, ccache);
-		unlink(ccache_path + 5);
-		close(fd);
 		return i;
 	}
 	v5_creds_set_etype(ctx, tmp_creds, wanted_etype);
@@ -1137,16 +1085,12 @@ v5_get_creds_etype(krb5_context ctx,
 			      wanted_etype, i, v5_error_message(i));
 		}
 		krb5_free_creds(ctx, tmp_creds);
-		krb5_cc_close(ctx, ccache);
-		unlink(ccache_path + 5);
-		close(fd);
+		krb5_cc_destroy(ctx, ccache);
 		return i;
 	}
 
 	krb5_free_creds(ctx, tmp_creds);
-	krb5_cc_close(ctx, ccache);
-	unlink(ccache_path + 5);
-	close(fd);
+	krb5_cc_destroy(ctx, ccache);
 	*target_creds = new_creds;
 	return i;
 }
