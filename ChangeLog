@@ -1,4 +1,6 @@
 2007-10-26:
+	* src/shmem.c: correctly check the value returned of shmat() in
+	the place where it was being done wrong.
 	* src/v5.c: change internally-used ccaches from FILE: to MEMORY:
 
 2007-10-26:

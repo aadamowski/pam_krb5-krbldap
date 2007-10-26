@@ -129,6 +129,11 @@ _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address, int debug)
 	int key;
 	struct _pam_krb5_shm_rec *rec;
 
+	/* In case of error, return NULL. */
+	if (address != NULL) {
+		*address = NULL;
+	}
+
 	/* Allocate space for the record-keeping structure. */
 	rec = malloc(sizeof(struct _pam_krb5_shm_rec));
 	if (rec == NULL) {
@@ -143,9 +148,6 @@ _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address, int debug)
 	rec->debug = debug;
 
 	/* Handle minimum size requirements on shared memory segments. */
-	if (address != NULL) {
-		*address = NULL;
-	}
 #ifdef SHMMIN
 	if (size < SHMMIN) {
 		size = SHMMIN;
@@ -158,7 +160,7 @@ _pam_krb5_shm_new(pam_handle_t *pamh, size_t size, void **address, int debug)
 		/* Get a local handle to the segment. */
 		if (address != NULL) {
 			*address = shmat(key, NULL, 0);
-			if (*address == NULL) {
+			if (*address == (void *) -1) {
 				warn("failed to attach to shmem segment %d",
 				     key);
 				shmctl(key, IPC_RMID, NULL);
@@ -196,7 +198,7 @@ _pam_krb5_shm_new_from_blob(pam_handle_t *pamh, size_t lead,
 	/* Create the segment and attach to it here. */
 	key = _pam_krb5_shm_new(pamh, size + lead, &block, debug);
 	/* Copy in the caller's data. */
-	if ((key != -1) && (block != NULL)) {
+	if ((key != -1) && (block != (void *) -1)) {
 		if (lead > 0) {
 			memset((unsigned char*)block, 0, lead);
 		}
@@ -241,7 +243,7 @@ _pam_krb5_shm_new_from_file(pam_handle_t *pamh, size_t lead,
 	    (st.st_size < 0x10000)) {
 		/* Create a shared memory segment in which to store the file. */
 		key = _pam_krb5_shm_new(pamh, st.st_size + lead, &block, debug);
-		if ((key != -1) && (block != NULL)) {
+		if ((key != -1) && (block != (void *) -1)) {
 			p = block;
 			if (lead > 0) {
 				memset(p, 0, lead);
