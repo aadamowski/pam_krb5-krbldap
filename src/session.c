@@ -225,7 +225,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		v5_destroy(ctx, stash, options);
 	}
 
-	/* Create credential files. */
+	/* Create the user's credential cache. */
 	if (options->debug) {
 #ifdef HAVE_LONG_LONG
 		debug("creating v5 ccache for '%s', uid=%lld, gid=%lld", user,
