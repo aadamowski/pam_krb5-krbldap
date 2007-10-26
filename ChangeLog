@@ -1,3 +1,9 @@
+2007-10-26:
+	* src/stash.c(_pam_krb5_stash_cc_copy): don't nuke the new ccache
+	on failure iterating it, the parent will for any error.
+	* src/stash.c: obey the ccname_template when we clone for the user,
+	which is the only time it matters anyway.
+
 2007-10-25:
 	* src/harness.c: use the PAM environment when running commands
 

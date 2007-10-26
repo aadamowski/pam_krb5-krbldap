@@ -112,7 +112,7 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			    struct _pam_krb5_options *options, int key,
 			    void *blob, size_t blob_size)
 {
-	char tktfile[PATH_MAX + 5];
+	char tktfile[PATH_MAX + 6];
 	unsigned char *blob_creds;
 	ssize_t blob_creds_size;
 	int fd;
@@ -215,7 +215,7 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			     struct _pam_krb5_options *options,
 			     struct _pam_krb5_user_info *userinfo)
 {
-	char variable[PATH_MAX + 5];
+	char variable[PATH_MAX + 6];
 	void *blob;
 	int *intblob;
 	size_t blob_size;
@@ -830,7 +830,6 @@ _pam_krb5_stash_cc_copy(krb5_context ctx,
 		return -1;
 	}
 	if (krb5_cc_start_seq_get(ctx, occache, &cursor) != 0) {
-		krb5_cc_destroy(ctx, nccache);
 		krb5_free_principal(ctx, princ);
 		return -1;
 	}
@@ -849,6 +848,7 @@ void
 _pam_krb5_stash_clone_v5(krb5_context ctx,
 			 struct _pam_krb5_stash *stash,
 			 struct _pam_krb5_options *options,
+			 const char *user,
 			 struct _pam_krb5_user_info *userinfo,
 			 uid_t uid, gid_t gid)
 {
@@ -882,12 +882,12 @@ _pam_krb5_stash_clone_v5(krb5_context ctx,
 			return;
 		}
 		nccache = NULL;
-		newname = malloc(strlen(stash->v5ccnames->name) + 2);
+		newname = v5_user_info_subst(ctx, user, userinfo, options,
+					     options->ccname_template);
 		if (newname == NULL) {
 			krb5_cc_close(ctx, occache);
 			return;
 		}
-		sprintf(newname, "%s_", stash->v5ccnames->name);
 		if (krb5_cc_resolve(ctx, newname, &nccache) != 0) {
 			warn("error creating ccache \"%s\"", newname);
 			free(newname);
@@ -897,8 +897,9 @@ _pam_krb5_stash_clone_v5(krb5_context ctx,
 		if (_pam_krb5_stash_cc_copy(ctx, occache, nccache) == 0) {
 			if (options->debug) {
 				debug("copied credentials from \"%s\" to "
-				      "\"%s\" for the user",
-				      stash->v5ccnames->name, newname);
+				      "\"%s\" for the user, destroying \"%s\"",
+				      stash->v5ccnames->name, newname,
+				      stash->v5ccnames->name);
 			}
 			xstrfree(stash->v5ccnames->name);
 			stash->v5ccnames->name = newname;
@@ -909,7 +910,8 @@ _pam_krb5_stash_clone_v5(krb5_context ctx,
 			if (strncmp(options->ccname_template,
 				    "FILE:", 5) == 0) {
 				_pam_krb5_stash_clone_v5(ctx, stash,
-							 options, userinfo,
+							 options,
+							 user, userinfo,
 							 uid, gid);
 			}
 		} else {
