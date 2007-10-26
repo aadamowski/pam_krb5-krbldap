@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.19
+Version: 2.2.20
 Release: 1
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPL+
@@ -48,6 +48,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Fri Oct 26 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.20-1
+- move temporary ccaches which aren't used for serializing from FILE: type
+  into MEMORY: type
+
 * Thu Oct 25 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.19-1
 - log to AUTHPRIV facility by default
 - add a "ccname_template" option, which can be set to "KEYRING:..." to switch

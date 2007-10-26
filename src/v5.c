@@ -787,7 +787,7 @@ v5_get_creds(krb5_context ctx,
 				}
 				free(opt);
 			} else {
-				warn("error resolving preauth option \"%s\" ",
+				warn("error resolving preauth option \"%s\" "
 				     "to a useful value",
 				     options->preauth_options[i]);
 			}
