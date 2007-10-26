@@ -1,3 +1,5 @@
+- 2.2.20: * fixes for credential refreshing
+	  * avoid running afoul of SELinux policy when attempting to get tokens
 - 2.2.19: * the "keytab" option can now be used to specify a custom location
             for a given service from within krb5.conf
 	  * log messages are now logged with facility LOG_AUTHPRIV (or LOG_AUTH

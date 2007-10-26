@@ -51,6 +51,7 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 * Fri Oct 26 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.20-1
 - move temporary ccaches which aren't used for serializing from FILE: type
   into MEMORY: type
+- don't barf during credential refresh when $KRB5CCNAME isn't set
 
 * Thu Oct 25 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.19-1
 - log to AUTHPRIV facility by default
