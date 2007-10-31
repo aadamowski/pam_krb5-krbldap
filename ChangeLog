@@ -1,3 +1,8 @@
+2007-10-31:
+	* src/sly.c(_pam_krb5_sly_maybe_refresh): note that we stored creds
+	when we do so for non-FILE ccaches, so that we don't forget to fetch
+	new tokens if we need to do so.
+
 2007-10-26:
 	* src/sly.c(sly_v5): only free the ccache principal name if the call
 	to retrieve it succeeded.

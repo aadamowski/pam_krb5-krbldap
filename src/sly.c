@@ -281,7 +281,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 					}
 					retval = sly_v5(ctx, v5ccname,
 							userinfo, stash);
-					stored = (retval == 0);
+					stored = (retval == PAM_SUCCESS);
 				} else {
 					if (options->debug) {
 						debug("not updating '%s'",
@@ -303,6 +303,7 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 					      v5ccname, user);
 				}
 				retval = sly_v5(ctx, v5ccname, userinfo, stash);
+				stored = (retval == PAM_SUCCESS);
 			}
 		}
 	}
