@@ -128,7 +128,7 @@ AC_SUBST(NO_MAN_AFS)
 AC_SUBST(MAN_KRB4)
 AC_SUBST(NO_MAN_KRB4)
 
-AC_CHECK_HEADERS(sys/ioccom.h inttypes.h stdint.h)
+AC_CHECK_HEADERS(sys/ioccom.h inttypes.h stdint.h keyutils.h)
 AC_CHECK_HEADERS(security/pam_appl.h)
 if test x$ac_cv_header_security_pam_appl_h != xyes ; then
 	AC_MSG_ERROR([you must have PAM development files to build $PACKAGE])
@@ -307,6 +307,19 @@ fi
 PAM_LIBS="$LIBS"
 LIBS="$LIBSsave"
 AC_SUBST(PAM_LIBS)
+
+LIBSsave="$LIBS"
+LIBS=
+AC_CHECK_FUNC(keyctl_chown,,[AC_CHECK_LIB(keyutils,keyctl_chown)])
+unset ac_cv_func_keyctl_chown
+AC_CHECK_FUNCS(keyctl_chown)
+if test x$ac_cv_func_keyctl_chown = xyes ; then
+	KEYUTILS_LIBS="$LIBS"
+	AC_DEFINE(HAVE_KEYUTILS,1,[Define if you have libkeyutils.])
+fi
+KEYUTILS_LIBS="$LIBS"
+LIBS="$LIBSsave"
+AC_SUBST(KEYUTILS_LIBS)
 
 AC_ARG_ENABLE(default-realm,AC_HELP_STRING([--enable-default-realm=REALM],[last-ditch fallback realm (default is EXAMPLE.COM)]),default_realm=$enableval,default_realm=EXAMPLE.COM)
 AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name which will be used if no realm is given as a parameter and none is given in krb5.conf.])

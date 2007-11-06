@@ -56,6 +56,10 @@
 #endif
 #endif
 
+#ifdef HAVE_KEYUTILS_H
+#include <keyutils.h>
+#endif
+
 #include "init.h"
 #include "log.h"
 #include "shmem.h"
@@ -844,6 +848,118 @@ _pam_krb5_stash_cc_copy(krb5_context ctx,
 	return 0;
 }
 
+#ifdef HAVE_KEYUTILS
+static int
+_pam_krb5_stash_chown_keyring(krb5_context ctx, struct _pam_krb5_stash *stash,
+			      struct _pam_krb5_options *options,
+			      uid_t uid, gid_t gid)
+{
+	const char *ccname, *keyring_type = "keyring";
+	key_serial_t *keys;
+	unsigned long perms = KEY_POS_ALL | KEY_USR_ALL;
+	key_serial_t keyring, id;
+	long res, keycount, i;
+	if (stash->v5ccnames == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+	if (strncmp(stash->v5ccnames->name, "KEYRING:", 8) != 0) {
+		errno = ENOSYS;
+		return -1;
+	}
+	ccname = stash->v5ccnames->name + 8;
+	/* select the keyring which we'll search; by default, that's the
+	 * session keyring -- libkrb5 doesn't recognize user, user-session, or
+	 * group keyrings, so checking for them here would be broken, because
+	 * "user:" and friends are still going to be in the session keyring,
+	 * despite the appearance */
+	keyring = KEY_SPEC_SESSION_KEYRING;
+	if (strncmp(ccname, "process:", 8) == 0) {
+		keyring = KEY_SPEC_PROCESS_KEYRING;
+		ccname += 8;
+	} else
+	if (strncmp(ccname, "thread:", 7) == 0) {
+		keyring = KEY_SPEC_THREAD_KEYRING;
+		ccname += 7;
+	}
+	/* find the keyring which holds the ccache's data */
+	id = keyctl_search(keyring, keyring_type, ccname, 0);
+	if (id == -1) {
+		warn("unable to find keyring of type \"%s\" description \"%s\""
+		     "in keyring %ld",
+		     keyring_type, ccname, (long) keyring);
+		return -1;
+	} else {
+		if (options->debug) {
+			debug("resolved keyring for %s to keyring id %ld",
+			      ccname, (long) id);
+		}
+	}
+	/* get a list of the keyring's contents, and set the permissions so
+	 * that if you have access to each of the keys or you're the key's
+	 * owner, that you can mess around with it, which we'll need after we
+	 * give the key to the user */
+	keys = NULL;
+	res = keyctl_read_alloc(id, (void **) &keys);
+	if (res == -1) {
+		warn("error reading contents of keyring %ld", (long) keyring);
+		return -1;
+	}
+	keycount = res / sizeof(key_serial_t);
+	for (i = 0; i < keycount; i++) {
+		res = keyctl_setperm(keys[i], perms);
+		if (res == -1) {
+			warn("unable to set permissions on key %ld",
+			     (long) keyring);
+			free(keys);
+			return -1;
+		}
+		res = keyctl_chown(keys[i], uid, gid);
+		if (res == -1) {
+			warn("unable to give user ownership of key %ld",
+			     (long) keyring);
+			return -1;
+		}
+	}
+	if (keycount > 0) {
+		free(keys);
+	}
+	/* now actually grant access to the keyring for the user, permissions
+ 	 * first so that we don't get hosed */
+	if (options->debug) {
+		debug("setting permissions on keyring 0x%lx to 0x%lx",
+		      (long) id, perms);
+	}
+	res = keyctl_setperm(id, perms);
+	if (res == -1) {
+		warn("unable to set permissions on keyring %ld",
+		     (long) keyring);
+		return -1;
+	}
+	/* give the keyring away */
+	if (options->debug) {
+		debug("changing ownership of keyring 0x%lx",
+		      (long) id);
+	}
+	res = keyctl_chown(id, uid, gid);
+	if (res == -1) {
+		warn("unable to give user ownership of keyring %ld",
+		     (long) keyring);
+		return -1;
+	}
+	return 0;
+}
+#else
+static int
+_pam_krb5_stash_chown_keyring(krb5_context ctx, struct _pam_krb5_stash *stash,
+			      struct _pam_krb5_options *options,
+			      uid_t uid, gid_t gid)
+{
+	errno = ENOSYS;
+	return -1;
+}
+#endif
+
 void
 _pam_krb5_stash_clone_v5(krb5_context ctx,
 			 struct _pam_krb5_stash *stash,
@@ -913,6 +1029,19 @@ _pam_krb5_stash_clone_v5(krb5_context ctx,
 							 options,
 							 user, userinfo,
 							 uid, gid);
+			} else
+			/* If the new source is a keyring, give ownership away
+			 * to the designated user. */
+			if (strncmp(options->ccname_template,
+				    "KEYRING:", 8) == 0) {
+				if (_pam_krb5_stash_chown_keyring(ctx, stash,
+								  options, uid,
+								  gid) != 0) {
+					warn("error setting permissions on "
+					     "ccache \"%s\" for the user: %s",
+					     stash->v5ccnames->name,
+					     error_message(errno));
+				}
 			}
 		} else {
 			warn("error copying credentials from \"%s\" to "

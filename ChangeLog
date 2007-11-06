@@ -1,3 +1,8 @@
+2007-11-05:
+	* src/stash.c(_pam_krb5_stash_chown_keyring): add, to make sure that
+	keyrings we create for the user can actually be modified by the user
+	after the session is opened (spotted by Michael Calmer)
+
 2007-10-31:
 	* src/sly.c(_pam_krb5_sly_maybe_refresh): note that we stored creds
 	when we do so for non-FILE ccaches, so that we don't forget to fetch

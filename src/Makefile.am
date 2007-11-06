@@ -45,7 +45,7 @@ libpam_krb5_la_SOURCES = \
 	v5.h
 	
 pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
-pam_krb5_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+pam_krb5_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 pam_krb5_la_SOURCES = \
 	initopts.c \
 	initopts.h \
@@ -66,7 +66,7 @@ pam_krb5_la_SOURCES = \
 	sly.h
 
 pam_newpag_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
-pam_newpag_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+pam_newpag_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 pam_newpag_la_SOURCES = \
 	pam_newpag.c \
 	log.c \
@@ -85,14 +85,14 @@ afs5log_SOURCES = \
 	logstdio.c \
 	logstdio.h \
 	log.h
-afs5log_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+afs5log_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 pagsh_SOURCES = \
 	pagsh.c \
 	logstdio.c \
 	logstdio.h \
 	log.h
-pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@
+pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 harness_SOURCES = harness.c
 harness_LDADD = \
@@ -108,7 +108,7 @@ harness_LDADD = \
 	sly.lo \
 	v4.lo \
 	v5.lo
-harness_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@
+harness_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 harness_newpag_SOURCES = harness.c \
 	pam_dummy_acct.c \
@@ -119,7 +119,7 @@ harness_newpag_LDADD = \
 	options.lo \
 	v4.lo \
 	v5.lo
-harness_newpag_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@
+harness_newpag_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 shmcat_SOURCES = shmcat.c
 shmcat_LDADD = logstdio.lo libpam_krb5.la @PAM_LIBS@
