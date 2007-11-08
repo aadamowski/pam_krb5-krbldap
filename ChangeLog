@@ -1,3 +1,7 @@
+2007-11-08:
+	* src/stash.c(_pam_krb5_read_keyring): add a level of indirection to
+	avoid a type-safety warning.
+
 2007-11-05:
 	* src/stash.c(_pam_krb5_stash_chown_keyring): add, to make sure that
 	keyrings we create for the user can actually be modified by the user

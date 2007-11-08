@@ -850,6 +850,11 @@ _pam_krb5_stash_cc_copy(krb5_context ctx,
 
 #ifdef HAVE_KEYUTILS
 static int
+_pam_krb5_read_keyring(key_serial_t keyring_id, key_serial_t **keys)
+{
+	return keyctl_read_alloc(keyring_id, (void **) keys);
+}
+static int
 _pam_krb5_stash_chown_keyring(krb5_context ctx, struct _pam_krb5_stash *stash,
 			      struct _pam_krb5_options *options,
 			      uid_t uid, gid_t gid)
@@ -900,7 +905,7 @@ _pam_krb5_stash_chown_keyring(krb5_context ctx, struct _pam_krb5_stash *stash,
 	 * owner, that you can mess around with it, which we'll need after we
 	 * give the key to the user */
 	keys = NULL;
-	res = keyctl_read_alloc(id, (void **) &keys);
+	res = _pam_krb5_read_keyring(id, &keys);
 	if (res == -1) {
 		warn("error reading contents of keyring %ld", (long) keyring);
 		return -1;
