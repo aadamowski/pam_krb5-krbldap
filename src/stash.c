@@ -965,6 +965,39 @@ _pam_krb5_stash_chown_keyring(krb5_context ctx, struct _pam_krb5_stash *stash,
 }
 #endif
 
+static char *
+_pam_krb5_stash_guess_unique_ccname(struct _pam_krb5_stash *stash,
+				    struct _pam_krb5_options *options,
+				    char *newname,
+				    char *append_if_needed)
+{
+	struct _pam_krb5_ccname_list *node;
+	char *ret;
+	/* Search for a match in our list of already-created ccache names. */
+	for (node = stash->v5ccnames;
+	     (node != NULL) && (strcmp(node->name, newname) != 0);
+	     node = node->next) {
+		continue;
+	}
+	if (node == NULL) {
+		/* No match -> return. */
+		return newname;
+	}
+	/* Append something which will hopefully make it unique. */
+	ret = malloc(strlen(newname) + strlen(append_if_needed) + 1);
+	if (ret != NULL) {
+		sprintf(ret, "%s%s", newname, append_if_needed);
+		if (options->debug) {
+			debug("already have a ccache named \"%s\", "
+			      "will create one named \"%s\" instead",
+			      newname, ret);
+		}
+		free(newname);
+	}
+	return _pam_krb5_stash_guess_unique_ccname(stash, options,
+						   ret, append_if_needed);
+}
+
 void
 _pam_krb5_stash_clone_v5(krb5_context ctx,
 			 struct _pam_krb5_stash *stash,
@@ -974,6 +1007,7 @@ _pam_krb5_stash_clone_v5(krb5_context ctx,
 			 uid_t uid, gid_t gid)
 {
 	char *filename, *newname;
+	int fd;
 	krb5_ccache occache, nccache;
 	if (stash->v5ccnames == NULL) {
 		return;
@@ -1002,18 +1036,37 @@ _pam_krb5_stash_clone_v5(krb5_context ctx,
 			     stash->v5ccnames->name);
 			return;
 		}
+		/* Open a new ccache using the desired pattern.  If it's a
+		 * FILE: ccache, use mkstemp() to try to pre-create it.  In any
+		 * case, if it's going to have the same name as the current
+		 * ccache, append a "_" in a feeble attempt at making its name
+		 * unique. */
 		nccache = NULL;
 		newname = v5_user_info_subst(ctx, user, userinfo, options,
 					     options->ccname_template);
+		newname = _pam_krb5_stash_guess_unique_ccname(stash, options,
+							      newname, "_");
 		if (newname == NULL) {
 			krb5_cc_close(ctx, occache);
 			return;
 		}
+		if (strncmp(newname, "FILE:", 5) == 0) {
+			fd = mkstemp(newname + 5);
+		} else {
+			fd = -1;
+		}
 		if (krb5_cc_resolve(ctx, newname, &nccache) != 0) {
 			warn("error creating ccache \"%s\"", newname);
+			if (fd != -1) {
+				close(fd);
+				unlink(newname + 5);
+			}
 			free(newname);
 			krb5_cc_close(ctx, occache);
 			return;
+		}
+		if (fd != -1) {
+			close(fd);
 		}
 		if (_pam_krb5_stash_cc_copy(ctx, occache, nccache) == 0) {
 			if (options->debug) {
@@ -1114,6 +1167,17 @@ _pam_krb5_stash_pop(krb5_context ctx, struct _pam_krb5_ccname_list **list)
 				ccache = NULL;
 				i = krb5_cc_resolve(ctx, node->name, &ccache);
 				if (i != 0) {
+#ifdef EKEYREVOKED
+					if (i == EKEYREVOKED) {
+						/* Well, that's alright then, I
+						 * guess. */
+						xstrfree(node->name);
+						node->name = NULL;
+						*list = node->next;
+						free(node);
+						return 0;
+					}
+#endif
 					warn("error accessing ccache \"%s\" "
 					     "for removal: %s", node->name,
 					     error_message(i));

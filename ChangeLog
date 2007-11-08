@@ -1,4 +1,11 @@
 2007-11-08:
+	* src/stash.c: if we're about to create a ccache with a name identical
+	to one which we've already created (and haven't since destroyed), try
+	to make the name unique by appending a "_" to it (mainly for keyrings).
+	When creating a temporary FILE: ccache, use mkstemp() to generate the
+	file so that mkstemp patterns don't get used literally.  When removing
+	a ccache, treat EKEYREVOKED when resolving the ccache as a successful
+	result.
 	* src/*.c: when printing UIDs and GIDs, case to "unsigned long long"
 	if available.
 	* src/auth.c,src/acct.c,src/session.c: skip "minimum_uid" checks when
