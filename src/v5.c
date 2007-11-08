@@ -180,7 +180,11 @@ v5_user_info_subst(krb5_context ctx,
 				i++;
 				break;
 			case 'U':
-				len += sizeof(userinfo->uid) * 4;
+#ifdef HAVE_LONG_LONG
+				len += sizeof(unsigned long long) * 4;
+#else
+				len += sizeof(unsigned long) * 4;
+#endif
 				i++;
 				break;
 			case 'P':
@@ -229,7 +233,17 @@ v5_user_info_subst(krb5_context ctx,
 				j = strlen(ret);
 				break;
 			case 'U':
-				sprintf(ret + j, "%ld", (long) userinfo->uid);
+#ifdef HAVE_LONG_LONG
+				sprintf(ret + j, "%llu",
+					options->user_check ?
+					(unsigned long long) userinfo->uid :
+					(unsigned long long) getuid());
+#else
+				sprintf(ret + j, "%lu",
+					options->user_check ?
+					(unsigned long) userinfo->uid :
+					(unsigned long) getuid());
+#endif
 				i++;
 				j = strlen(ret);
 				break;
@@ -911,7 +925,7 @@ v5_save(krb5_context ctx,
 	struct _pam_krb5_user_info *userinfo,
 	struct _pam_krb5_options *options,
 	const char **ret_ccname,
-	int clone_cc)
+	int for_user)
 {
 	char ccname[PATH_MAX];
 	krb5_ccache ccache;
@@ -962,10 +976,13 @@ v5_save(krb5_context ctx,
 	if (_pam_krb5_stash_push_v5(ctx, stash, ccname) == 0) {
 		/* Generate a *new* ccache with the same contents as this
 		 * one, but for the user's use, and destroy this one. */
-		if (clone_cc) {
+		if (for_user) {
 			_pam_krb5_stash_clone_v5(ctx, stash, options,
 						 user, userinfo,
-						 userinfo->uid, userinfo->gid);
+						 options->user_check ?
+						 userinfo->uid : getuid(),
+						 options->user_check ?
+						 userinfo->gid : getgid());
 		}
 		if (ret_ccname != NULL) {
 			*ret_ccname = stash->v5ccnames->name;

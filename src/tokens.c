@@ -100,10 +100,12 @@ tokens_obtain(krb5_context context,
 	     lnk[LINE_MAX];
 	struct stat st;
 	krb5_ccache ccache;
+	uid_t uid;
 
 	if (options->debug) {
 		debug("obtaining afs tokens");
 	}
+	uid = options->user_check ? info->uid : getuid();
 
 	/* Check if AFS is running.  If it isn't, no other calls to minikafs
 	 * will work, or even be safe to call. */
@@ -160,7 +162,7 @@ tokens_obtain(krb5_context context,
 			      localcell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   localcell, NULL, info->uid, use_2b);
+				   localcell, NULL, uid, use_2b);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -209,7 +211,7 @@ tokens_obtain(krb5_context context,
 			debug("obtaining tokens for home cell '%s'", homecell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   homecell, NULL, info->uid, use_2b);
+				   homecell, NULL, uid, use_2b);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -249,7 +251,7 @@ tokens_obtain(krb5_context context,
 		ret = minikafs_log(context, ccache, options,
 				   options->afs_cells[i].cell,
 				   options->afs_cells[i].principal_name,
-				   info->uid, use_2b);
+				   uid, use_2b);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "

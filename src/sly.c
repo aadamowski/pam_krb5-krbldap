@@ -159,6 +159,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_stash *stash;
 	struct stat st;
 	int i, retval, stored;
+	uid_t uid;
+	gid_t gid;
 	char *v5ccname, *v5filename, *v4tktfile;
 
 	/* Inexpensive checks. */
@@ -227,7 +229,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 		return retval;
 	}
 
-	if ((options->minimum_uid != (uid_t)-1) &&
+	if ((options->user_check) &&
+	    (options->minimum_uid != (uid_t)-1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum", user);
@@ -263,6 +266,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	}
 
 	stored = 0;
+	uid = options->user_check ? userinfo->uid : getuid();
+	gid = options->user_check ? userinfo->gid : getgid();
 
 	if (v5_creds_check_initialized(ctx, &stash->v5creds) == 0) {
 		if (v5filename != NULL) {
@@ -272,8 +277,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				if (S_ISREG(st.st_mode) &&
 				    ((st.st_mode & S_IRWXG) == 0) &&
 				    ((st.st_mode & S_IRWXO) == 0) &&
-				    (st.st_uid == userinfo->uid) &&
-				    (st.st_gid == userinfo->gid)) {
+				    (st.st_uid == uid) &&
+				    (st.st_gid == gid)) {
 					if (options->debug) {
 						debug("updating ccache '%s' "
 						      "for '%s'",
@@ -315,8 +320,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				if (S_ISREG(st.st_mode) &&
 				    ((st.st_mode & S_IRWXG) == 0) &&
 				    ((st.st_mode & S_IRWXO) == 0) &&
-				    (st.st_uid == userinfo->uid) &&
-				    (st.st_gid == userinfo->gid)) {
+				    (st.st_uid == uid) &&
+				    (st.st_gid == gid)) {
 					if (options->debug) {
 						debug("updating ticket file "
 						      "'%s' for '%s'",

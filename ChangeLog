@@ -1,4 +1,8 @@
 2007-11-08:
+	* src/*.c: when printing UIDs and GIDs, case to "unsigned long long"
+	if available.
+	* src/auth.c,src/acct.c,src/session.c: skip "minimum_uid" checks when
+	"no_user_check" was given, in which case we can't know the user's UID.
 	* configure.ac: fix some of the help text. make use of keyutils
 	something we can issue an error for if the library isn't detected,
 	if the user explicitly requests it.

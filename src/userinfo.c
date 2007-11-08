@@ -229,7 +229,8 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 
 	if (check_user) {
 		/* Look up the user's UID/GID. */
-		if (_get_pw_nam(local_name, &ret->uid, &ret->gid,
+		if (_get_pw_nam(local_name,
+				&ret->uid, &ret->gid,
 				&ret->homedir) != 0) {
 			warn("error resolving user name '%s' to uid/gid pair",
 			     local_name);
@@ -240,8 +241,8 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		}
 	} else {
 		/* Set things to the current UID/GID. */
-		ret->uid = getuid();
-		ret->gid = getgid();
+		ret->uid = -1;
+		ret->gid = -1;
 		ret->homedir = xstrdup("/");
 	}
 

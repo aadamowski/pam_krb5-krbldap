@@ -220,8 +220,19 @@ _pam_krb5_v4_init(krb5_context ctx,
 	 * wouldn't have used O_EXCL to do so, or it will nuke the file and
 	 * reopen it with O_EXCL.  In the latter case, the descriptor we have
 	 * will become useless, so we don't actually use it for anything. */
+#ifdef HAVE_LONG_LONG
+	snprintf(tktfile, sizeof(tktfile), "%s/tkt%llu_XXXXXX",
+		 options->ccache_dir,
+		 options->user_check ?
+		 (unsigned long long) user->uid :
+		 (unsigned long long) getuid());
+#else
 	snprintf(tktfile, sizeof(tktfile), "%s/tkt%lu_XXXXXX",
-		 options->ccache_dir, (unsigned long) user->uid);
+		 options->ccache_dir,
+		 options->user_check ?
+		 (unsigned long) user->uid :
+		 (unsigned long) getuid());
+#endif
 	fd = mkstemp(tktfile);
 	if (fd == -1) {
 		if (result) {
@@ -364,8 +375,19 @@ v4_save(krb5_context ctx,
 	}
 
 	/* Create a new ticket file. */
+#ifdef HAVE_LONG_LONG
+	snprintf(tktfile, sizeof(tktfile), "%s/tkt%llu_XXXXXX",
+		 options->ccache_dir,
+		 options->user_check ?
+		 (unsigned long long) userinfo->uid :
+		 (unsigned long long) getuid());
+#else
 	snprintf(tktfile, sizeof(tktfile), "%s/tkt%lu_XXXXXX",
-		 options->ccache_dir, (unsigned long) userinfo->uid);
+		 options->ccache_dir,
+		 options->user_check ?
+		 (unsigned long) userinfo->uid :
+		 (unsigned long) getuid());
+#endif
 	fd = mkstemp(tktfile);
 	if (fd == -1) {
 		warn("error creating unique Kerberos IV ticket file "
@@ -479,7 +501,9 @@ v4_save_for_user(krb5_context ctx,
 		 const char **ccname)
 {
 	return v4_save(ctx, stash, userinfo, options,
-		       userinfo->uid, userinfo->gid, ccname, 1);
+		       options->user_check ? userinfo->uid : getuid(),
+		       options->user_check ? userinfo->gid : getgid(),
+		       ccname, 1);
 }
 
 int

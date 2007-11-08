@@ -127,7 +127,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		krb5_free_context(ctx);
 		return retval;
 	}
-	if ((options->minimum_uid != (uid_t)-1) &&
+	if ((options->user_check) &&
+	    (options->minimum_uid != (uid_t)-1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum = %lu", user,
@@ -228,12 +229,22 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	/* Create the user's credential cache. */
 	if (options->debug) {
 #ifdef HAVE_LONG_LONG
-		debug("creating v5 ccache for '%s', uid=%lld, gid=%lld", user,
-		      (long long) userinfo->uid,
-		      (long long) userinfo->gid);
+		debug("creating v5 ccache for '%s', uid=%llu, gid=%llu", user,
+		      options->user_check ?
+		      (unsigned long long) userinfo->uid :
+		      (unsigned long long) getuid(),
+		      options->user_check ?
+		      (unsigned long long) userinfo->gid :
+		      (unsigned long long) getgid());
 #else
-		debug("creating v5 ccache for '%s', uid=%ld, gid=%ld",
-		      user, (long) userinfo->uid, (long) userinfo->gid);
+		debug("creating v5 ccache for '%s', uid=%lu, gid=%lu",
+		      user,
+		      options->user_check ?
+		      (unsigned long) userinfo->uid :
+		      (unsigned long) getuid(),
+		      options->user_check ?
+		      (unsigned long) userinfo->gid :
+		      (unsigned long) getgid());
 #endif
 	}
 	i = v5_save_for_user(ctx, stash, user, userinfo, options, &ccname);
@@ -345,7 +356,8 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Check the minimum UID argument. */
-	if ((options->minimum_uid != (uid_t)-1) &&
+	if ((options->user_check) &&
+	    (options->minimum_uid != (uid_t)-1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum", user);

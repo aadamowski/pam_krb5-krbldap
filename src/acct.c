@@ -115,7 +115,8 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	}
 
 	/* Check the minimum UID argument. */
-	if ((options->minimum_uid != (uid_t) -1) &&
+	if ((options->user_check) &&
+	    (options->minimum_uid != (uid_t) -1) &&
 	    (userinfo->uid < options->minimum_uid)) {
 		if (options->debug) {
 			debug("ignoring '%s' -- uid below minimum = %lu", user,
