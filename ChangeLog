@@ -1,4 +1,7 @@
 2007-11-08:
+	* configure.ac: fix some of the help text. make use of keyutils
+	something we can issue an error for if the library isn't detected,
+	if the user explicitly requests it.
 	* src/stash.c(_pam_krb5_read_keyring): add a level of indirection to
 	avoid a type-safety warning.
 

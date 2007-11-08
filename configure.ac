@@ -14,7 +14,7 @@ if test $KRB5_CONFIG = : ; then
 fi
 
 AC_ARG_WITH(os-distribution,
-AC_HELP_STRING(os-distribution[="Red Hat Linux"],[Override the default OS distribution name in man pages.]),
+[AC_HELP_STRING([--with-os-distribution="Super Duper Linux"],[Override the default OS distribution name in man pages. (default is "Red Hat Linux")])],
 	    OS_DISTRIBUTION="$withval",
 	    OS_DISTRIBUTION="Red Hat Linux")
 AC_SUBST(OS_DISTRIBUTION)
@@ -53,10 +53,10 @@ else
 fi
 
 AC_ARG_WITH(afs,
-AC_HELP_STRING(--without-afs,[Disable AFS support [default=auto].]),
+[AC_HELP_STRING(--without-afs,[Disable AFS support (default is AUTO).])],
 	    afs=$withval,
-	    afs=auto)
-if test x$afs = xauto ; then
+	    afs=AUTO)
+if test x$afs != xno ; then
 	AC_MSG_CHECKING(if pam_krb5 knows how to set AFS tokens on $host_os)
 	case x$host_os in
 	*linux|*linux-*|*-sun-*)	afs=yes;;
@@ -76,14 +76,14 @@ fi
 AM_CONDITIONAL(AFS,[test "x$afs" = xyes])
 
 AC_ARG_WITH(default-external,
-AC_HELP_STRING(--with-default-external="sshd gssftp",[Set the default value of the "external" option [default="sshd"].]),
+[AC_HELP_STRING(--with-default-external="sshd gssftp",[Set the default value of the "external" option (default is "sshd").])],
 	    DEFAULT_EXTERNAL="$withval",
 	    DEFAULT_EXTERNAL=sshd)
 AC_DEFINE_UNQUOTED(DEFAULT_EXTERNAL,"$DEFAULT_EXTERNAL",[Set to the default value for the "external" setting.])
 AC_SUBST(DEFAULT_EXTERNAL)
 
 AC_ARG_WITH(default-use-shmem,
-AC_HELP_STRING(--with-default-use-shmem="sshd",[Set the default value of the "use_shmem" option [default="sshd"].]),
+[AC_HELP_STRING(--with-default-use-shmem="sshd",[Set the default value of the "use_shmem" option (default is "sshd").])],
 	    DEFAULT_USE_SHMEM="$withval",
 	    DEFAULT_USE_SHMEM=sshd)
 AC_DEFINE_UNQUOTED(DEFAULT_USE_SHMEM,"$DEFAULT_USE_SHMEM",[Set to the default value for the "use-shmem" setting.])
@@ -128,7 +128,7 @@ AC_SUBST(NO_MAN_AFS)
 AC_SUBST(MAN_KRB4)
 AC_SUBST(NO_MAN_KRB4)
 
-AC_CHECK_HEADERS(sys/ioccom.h inttypes.h stdint.h keyutils.h)
+AC_CHECK_HEADERS(sys/ioccom.h inttypes.h stdint.h)
 AC_CHECK_HEADERS(security/pam_appl.h)
 if test x$ac_cv_header_security_pam_appl_h != xyes ; then
 	AC_MSG_ERROR([you must have PAM development files to build $PACKAGE])
@@ -308,18 +308,32 @@ PAM_LIBS="$LIBS"
 LIBS="$LIBSsave"
 AC_SUBST(PAM_LIBS)
 
-LIBSsave="$LIBS"
-LIBS=
-AC_CHECK_FUNC(keyctl_chown,,[AC_CHECK_LIB(keyutils,keyctl_chown)])
-unset ac_cv_func_keyctl_chown
-AC_CHECK_FUNCS(keyctl_chown)
-if test x$ac_cv_func_keyctl_chown = xyes ; then
+AC_ARG_WITH(keyutils,
+[AC_HELP_STRING(--without-keyutils,[Disable support for setting permissions on keyring credential caches (default is AUTO).])],
+	    keyutils=$withval,
+	    keyutils=AUTO)
+if test x$keyutils != xno ; then
+	AC_CHECK_HEADERS(keyutils.h)
+	LIBSsave="$LIBS"
+	LIBS=
+	AC_CHECK_FUNC(keyctl_chown,,[AC_CHECK_LIB(keyutils,keyctl_chown)])
+	unset ac_cv_func_keyctl_chown
+	AC_CHECK_FUNCS(keyctl_chown)
+	if test x$ac_cv_header_keyutils_h = xyes && \
+	   test x$ac_cv_func_keyctl_chown = xyes ; then
+		KEYUTILS_LIBS="$LIBS"
+		AC_DEFINE(HAVE_KEYUTILS,1,[Define if you have libkeyutils.])
+	else
+		if test x$keyutils = xyes ; then
+			AC_MSG_WARN(keyutils library not found)
+		else
+			AC_MSG_ERROR(keyutils library not found)
+		fi
+	fi
 	KEYUTILS_LIBS="$LIBS"
-	AC_DEFINE(HAVE_KEYUTILS,1,[Define if you have libkeyutils.])
+	LIBS="$LIBSsave"
+	AC_SUBST(KEYUTILS_LIBS)
 fi
-KEYUTILS_LIBS="$LIBS"
-LIBS="$LIBSsave"
-AC_SUBST(KEYUTILS_LIBS)
 
 AC_ARG_ENABLE(default-realm,AC_HELP_STRING([--enable-default-realm=REALM],[last-ditch fallback realm (default is EXAMPLE.COM)]),default_realm=$enableval,default_realm=EXAMPLE.COM)
 AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name which will be used if no realm is given as a parameter and none is given in krb5.conf.])
@@ -397,15 +411,17 @@ AC_SUBST(MAN_HPKINIT)
 # Provide a means of setting the location of the user's PKINIT identity
 # information.
 AC_ARG_WITH(default-pkinit-identity,
-AC_HELP_STRING(--with-default-pkinit-identity="DIR",[Set the default value of the "pkinit-identity" option [default=""] (Heimdal).]),
-	    [DEFAULT_PKINIT_IDENTITY="$withval"],
+[AC_HELP_STRING(--with-default-pkinit-identity="PKCS11:/usr/$LIB/pkcs11.so",[Set the default value of the "pkinit-identity" option (default is "") (Heimdal).])],
+	    [DEFAULT_PKINIT_IDENTITY="$withval"
+	     AC_MSG_RESULT(Using default PKINIT identity "$withval".)],
 	    [DEFAULT_PKINIT_IDENTITY=""])
 AC_DEFINE_UNQUOTED(DEFAULT_PKINIT_IDENTITY,"$DEFAULT_PKINIT_IDENTITY",[Set to the default location of the client's private key and PKI certificate.])
 AC_SUBST(DEFAULT_PKINIT_IDENTITY)
 # Provide a means of setting preauthentication options.
 AC_ARG_WITH(default-preauth-options,
-AC_HELP_STRING(--with-default-preauth-options="A=B,C=D",[Set the default preauthentication options passed to libkrb5 [default=""] (Heimdal).]),
-	    [DEFAULT_PREAUTH_OPTIONS="$withval"],
+[AC_HELP_STRING([--with-default-preauth-options="X509_user_identity=PKCS11:/usr/$LIB/pkcs11.so"],[Set the default preauthentication options passed to libkrb5 (default is "") (MIT).])],
+	    [DEFAULT_PREAUTH_OPTIONS="$withval"
+	     AC_MSG_RESULT(Using default preauthentication options "$withval".)],
 	    [DEFAULT_PREAUTH_OPTIONS=""])
 AC_DEFINE_UNQUOTED(DEFAULT_PREAUTH_OPTIONS,"$DEFAULT_PREAUTH_OPTIONS",[Set to the default list of preauthentication options.])
 AC_SUBST(DEFAULT_PREAUTH_OPTIONS)
