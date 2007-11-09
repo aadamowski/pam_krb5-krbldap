@@ -1,6 +1,10 @@
 2007-11-09:
 	* src/auth.c: fetch tokens when "tokens" is enabled and we're not
 	configured to use krb4, instead of not doing anything like that
+	* src/auth.c(pam_sm_authenticate): fetch tokens (if we haven't
+	already) before checking the user's .k5login with krb5_kuserok()
+	* src/acct.c(pam_sm_acct_mgmt): fetch tokens before checking the
+	user's .k5login with krb5_kuserok()
 
 2007-11-08:
 	* src/stash.c: if we're about to create a ccache with a name identical

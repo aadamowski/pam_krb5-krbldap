@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +58,7 @@
 #include "options.h"
 #include "prompter.h"
 #include "stash.h"
+#include "tokens.h"
 #include "userinfo.h"
 #include "v5.h"
 #include "v4.h"
@@ -225,11 +226,31 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 
 	/* If we got this far, check the target user's .k5login file. */
 	if ((retval == PAM_SUCCESS) && options->user_check) {
+		if ((options->ignore_afs == 0) && tokens_useful()) {
+			v5_save_for_tokens(ctx, stash, user, userinfo,
+					   options, NULL);
+			if (stash->v4present) {
+				v4_save_for_tokens(ctx, stash, userinfo,
+						   options, NULL);
+			}
+			tokens_obtain(ctx, stash, options, userinfo, 1);
+		}
 		if (krb5_kuserok(ctx, userinfo->principal_name, user) == 0) {
 			notice("account checks fail for '%s': user disallowed "
 			       "by .k5login file for '%s'",
 			       userinfo->unparsed_name, user);
 			retval = PAM_PERM_DENIED;
+		} else {
+			if (options->debug) {
+				debug("'%s' passes .k5login check for '%s'",
+				      userinfo->unparsed_name, user);
+			}
+		}
+		if ((options->ignore_afs == 0) && tokens_useful()) {
+			if (stash->v4present) {
+				v4_destroy(ctx, stash, options);
+			}
+			v5_destroy(ctx, stash, options);
 		}
 	}
 
