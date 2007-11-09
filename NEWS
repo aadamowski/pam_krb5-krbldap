@@ -1,5 +1,7 @@
 - 2.2.21: * fix permissions problems on keyring ccaches, so that users can write
 	    to them after we've set them up, and we can still do the cleanup
+	  * fix permission problems accessing .k5login files in home directories
+	    which live in AFS (#371761)
 - 2.2.20: * fixes for credential refreshing
 	  * avoid running afoul of SELinux policy when attempting to get tokens
 - 2.2.19: * the "keytab" option can now be used to specify a custom location
