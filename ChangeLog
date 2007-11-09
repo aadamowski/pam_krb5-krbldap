@@ -1,3 +1,7 @@
+2007-11-09:
+	* src/auth.c: fetch tokens when "tokens" is enabled and we're not
+	configured to use krb4, instead of not doing anything like that
+
 2007-11-08:
 	* src/stash.c: if we're about to create a ccache with a name identical
 	to one which we've already created (and haven't since destroyed), try

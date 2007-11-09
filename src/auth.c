@@ -43,6 +43,7 @@
 #endif
 
 #include <sys/types.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -261,6 +262,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
 			}
+		} else {
+			if ((retval == PAM_SUCCESS) &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
+				v5_save_for_tokens(ctx, stash, user, userinfo,
+						   options, NULL);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
+				v5_destroy(ctx, stash, options);
+			}
 		}
 	}
 
@@ -336,6 +346,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				v4_destroy(ctx, stash, options);
 				v5_destroy(ctx, stash, options);
 			}
+		} else {
+			if ((retval == PAM_SUCCESS) &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
+				v5_save_for_tokens(ctx, stash, user, userinfo,
+						   options, NULL);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
+				v5_destroy(ctx, stash, options);
+			}
 		}
 	}
 
@@ -378,6 +397,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 						   options, NULL);
 				tokens_obtain(ctx, stash, options, userinfo, 1);
 				v4_destroy(ctx, stash, options);
+				v5_destroy(ctx, stash, options);
+			}
+		} else {
+			if ((retval == PAM_SUCCESS) &&
+			    (options->ignore_afs == 0) &&
+			    (options->tokens == 1)) {
+				v5_save_for_tokens(ctx, stash, user, userinfo,
+						   options, NULL);
+				tokens_obtain(ctx, stash, options, userinfo, 1);
 				v5_destroy(ctx, stash, options);
 			}
 		}
