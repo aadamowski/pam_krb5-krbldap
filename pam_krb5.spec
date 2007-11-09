@@ -48,7 +48,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
-* Thu Nov  8 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.21-1
+* Fri Nov  9 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.21-1
+- make sure that we have tokens when checking the user's .k5login (#371761)
+
+* Thu Nov  8 2007 Nalin Dahyabhai <nalin@redhat.com>
 - set perms on the user's KEYRING: ccache so that the user can write to it
 - suppress an error message if a KEYRING: ccache we're about to destroy has
   already been revoked
