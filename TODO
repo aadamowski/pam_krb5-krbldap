@@ -1,12 +1,6 @@
 Soon:
 - Learn to set up tokens for use by rxk5-enabled cells, once a spec for
   what the structure we provide to the cache manager should contain exists.
-- See where the kernel keyring / ccache stuff is and what needs to be done
-  to set up and tear down session-specific ccaches properly.
-  Provide a way to specify that we should create the user's ccache in the
-  session keyring instead of on-disk, or maybe just default to that, and fall
-  back to files if we know that keyrings aren't available (or libkrb5 fails).
-  Keep in mind that the keyring apparently has a hard upper limit on its size.
 
 Later:
 - Figure out how mappings should work with
