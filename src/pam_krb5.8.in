@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2007/07/19 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 8 2007/12/04 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -51,20 +51,11 @@ necessary if your network uses NAT, and should otherwise not be used.  This
 option is deprecated in favor of the \fInoaddresses\fR flag in the
 \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
-.IP hosts=\fIhost\fR
-tells pam_krb5.so to obtain credentials using the address of the given host in
-addition to the addresses of interfaces on the local workstation.  For example,
-if your workstation is behind a masquerading firewall, specifying the
-firewall's outward-facing address here should allow Kerberos authentication to
-succeed.  This option is deprecated in favor of the \fIextra_addresses\fR flag
-in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
-
-@MAN_AFS@.IP "afs_cells=\fIcell1.example.com cell2.example.com\fR"
-@MAN_AFS@tells pam_krb5.so to obtain tokens for cell1.example.com and
-@MAN_AFS@cell2.example.com, in addition to the local cell, for the user.
+@MAN_AFS@.IP "afs_cells=\fIcell.example.com[,...]\fR"
+@MAN_AFS@tells pam_krb5.so to obtain tokens for the named cells,
 @MAN_AFS@in addition to the local cell, for the user.  The module will guess
 @MAN_AFS@the principal name of the AFS service for the named cells, or it can
-@MAN_AFS@be specified by giving cells in the form
+@MAN_AFS@be specified by giving cell in the form
 @MAN_AFS@\fIcellname\fB=principalname\fR.
 @MAN_AFS@
 .IP "banner=\fIKerberos 5\fR"
@@ -84,7 +75,7 @@ are substituted:
   %p	principal name
   %r	realm name
   %h	home directory
-  %d	the default ccache directory
+  %d	the default ccache directory (as set with \fIccache_dir\fR)
   %P	the current process ID
   %%	literal '%'
 .br
@@ -111,6 +102,14 @@ application during session setup.
 tells pam_krb5.so that credentials it obtains should be forwardable.  This
 option is deprecated in favor of the \fIforwardable\fR option in the
 \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
+
+.IP hosts=\fIhost[,...]\fR
+tells pam_krb5.so to obtain credentials using the addresses of the given hosts in
+addition to the addresses of interfaces on the local workstation.  For example,
+if your workstation is behind a masquerading firewall, specifying the
+firewall's outward-facing address here should allow Kerberos authentication to
+succeed.  This option is deprecated in favor of the \fIextra_addresses\fR flag
+in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
 .IP ignore_unknown_principals
 .IP ignore_unknown_spn
@@ -226,9 +225,9 @@ sets the default lifetime for credentials.
 @MAN_AFS@signals that pam_krb5.so should create a new AFS PAG and obtain AFS
 @MAN_AFS@tokens during authentication in addition to session setup.  This is
 @MAN_AFS@primarily useful in server applications which need to access a user's
-@MAN_AFS@files but which do not open PAM sessions before doing so.  A properly-
-@MAN_AFS@written server will not need this flag set in order to function
-@MAN_AFS@correctly.
+@MAN_AFS@files but which do not open PAM sessions before doing so.  A
+@MAN_AFS@properly-written server will not need this flag set in order to
+@MAN_AFS@function correctly.
 @MAN_AFS@
 .IP try_first_pass
 tells pam_krb5.so to check the previously-entered password as with
@@ -242,8 +241,8 @@ instead of prompting the user for it.
 
 .IP use_authtok
 tells pam_krb5.so to never prompt for new passwords when changing passwords.
-This is useful if you are using pam_cracklib.so or pam_passwdqc.so to try to
-enforce use of less-easy-to-guess passwords.
+This is useful if you are using \fBpam_cracklib\fR or \fBpam_passwdqc\fR to try
+to enforce use of less-easy-to-guess passwords.
 
 .IP use_shmem
 .IP "use_shmem=\fIsshd\fR"

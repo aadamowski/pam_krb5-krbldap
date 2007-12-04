@@ -1,3 +1,13 @@
+2007-12-04:
+	* src/options.c(option_b): take a service name, and a default enable
+	and disable list.  If we have no command-line argument, check for the
+	service's name in the list of values given in the config file, then
+	check for a regular boolean setting in the configuration file, and
+	lastly check our default configuration using the default enable and
+	disable lists.
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: note that boolean options take
+	lists of service names now.
+
 2007-11-09:
 	* src/auth.c: fetch tokens when "tokens" is enabled and we're not
 	configured to use krb4, instead of not doing anything like that

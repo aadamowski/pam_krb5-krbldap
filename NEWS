@@ -1,3 +1,5 @@
+- 2.2.22: * all options which took true/false before ("debug", "tokens", and
+	    so on) can now take service names
 - 2.2.21: * fix permissions problems on keyring ccaches, so that users can write
 	    to them after we've set them up, and we can still do the cleanup
 	  * fix permission problems accessing .k5login files in home directories
@@ -5,7 +7,7 @@
 - 2.2.20: * fixes for credential refreshing
 	  * avoid running afoul of SELinux policy when attempting to get tokens
 - 2.2.19: * the "keytab" option can now be used to specify a custom location
-            for a given service from within krb5.conf
+	    for a given service from within krb5.conf
 	  * log messages are now logged with facility LOG_AUTHPRIV (or LOG_AUTH
 	    if LOG_AUTHPRIV is not defined) instead of the application's default
 	    or LOG_USER

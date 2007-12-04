@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2007/07/19 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2007/12/04 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -10,36 +10,38 @@ before continuing here.  The module expects its configuration information to be
 in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fR section.
 
 .SH DIRECTIVES
-.IP debug=[\fItrue\fR|\fIfalse\fR]
+.IP "debug = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 turns on debugging via \fBsyslog\fR(3).  Debug messages are logged with
 priority \fILOG_DEBUG\fR.
 
-.IP debug_sensitive=[\fItrue\fR|\fIfalse\fR]
+.IP "debug_sensitive = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 turns on debugging of sensitive information via \fBsyslog\fR(3).  Debug
 messages are logged with priority \fILOG_DEBUG\fR.
 
-.IP addressless=[\fItrue\fR|\fIfalse\fR]
+.IP "addressless = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 if set, requests a TGT with no address information.  This can be necessary
 if you are using Kerberos through a NAT, or on systems whose IP addresses change
 regularly.  This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBnoaddresses\fR directive.
 
-@MAN_AFS@.IP "afs_cells=\fIcell1.example.com cell2.example.com\fR"
-@MAN_AFS@tells pam_krb5.so to obtain tokens for cell1.example.com and
-@MAN_AFS@cell2.example.com, in addition to the local cell and the cell which
+@MAN_AFS@.IP "afs_cells = \fIcell.example.com [...]\fR"
+@MAN_AFS@tells pam_krb5.so to obtain tokens for the listed cells,
+@MAN_AFS@in addition to the local cell and the cell which
 @MAN_AFS@contains the user's home directory, for the user.
 @MAN_AFS@The module will guess the principal name of the AFS
 @MAN_AFS@service for the listed cells, or it can be specified by listing cells
 @MAN_AFS@in the form \fIcellname\fB=principalname\fR.
 @MAN_AFS@
-.IP "banner=\fIKerberos 5\fR"
+.IP "banner = \fIKerberos 5\fR"
 specifies what sort of password the module claims to be changing whenever it is
 called upon to change passwords.  The default is \fBKerberos 5\fR.
 
-.IP ccache_dir=\fI@default_ccache_dir@\fR
-specifies the directory in which to place credential cache files.
+.IP "ccache_dir = \fI/var/tmp\fR"
+specifies the directory in which to place credential cache files.  The default
+is \fI@default_ccache_dir@\fR.
 
-.IP ccname_template=\fI@default_ccname_template@\fR
+.IP "ccname_template = \fIKEYRING:krb5cc_%U_%P\fR"
+.IP "ccname_template = \fIFILE:%d/krb5cc_%U_XXXXXX\fR"
 specifies the location in which to place the user's session-specific
 credential cache.  This value is treated as a template, and these sequences
 are substituted:
@@ -48,62 +50,66 @@ are substituted:
   %p	principal name
   %r	realm name
   %h	home directory
-  %d	the default ccache directory
+  %d	the default ccache directory (as set with \fIccache_dir\fR)
   %P	the current process ID
   %%	literal '%'
 
-.IP existing_ticket=\fItrue\fR
+The default is \fI@default_ccname_template@\fR".
+
+.IP "existing_ticket = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials
 provided by the calling application in the default credential cache as
 sufficient to authenticate the user, and to skip any account management checks.
+The default is \fBfalse\fR.
 .IP
 DANGER!  Unless validation is also in use, it is relatively easy to produce a
 credential cache which looks "good enough" to fool pam_krb5.so.
 
-.IP external=\fItrue\fR
-.IP "external=\fIsshd ftp\fR"
+.IP "external = \fItrue\fR|\fIfalse\fR|\fIsshd ftp [...]\fR"
 tells pam_krb5.so to use Kerberos credentials provided by the calling
 application during session setup.
 @MAN_KRB4@This is most often useful for obtaining
 @MAN_KRB4@@MAN_AFS@AFS tokens or a
 @MAN_KRB4@krb4 ticket.
 @NO_MAN_KRB4@@MAN_AFS@This is most often useful for obtaining AFS tokens.
-By default, the module is configured with "external = \fI@DEFAULT_EXTERNAL@\fR".
+The default is "\fI@DEFAULT_EXTERNAL@\fR".
 
-.IP forwardable=[\fItrue\fR|\fIfalse\fR]
+.IP "forwardable = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 controls whether or not credentials are forwardable.  
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBforwardable\fR directive.
 
-.IP hosts=\fIhostnames\fR
+.IP "hosts = \fIhostname [...]\fR"
 specifies which other hosts credentials obtained by pam_krb5 will be good on.
 If your host is behind a firewall, you should add the IP address or name that
 the \fIKDC\fR sees it as to this list.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBextra_addresses\fR directive.
 
-@MAN_AFS@.IP ignore_afs=[\fItrue\fR|\fIfalse\fR]
+@MAN_AFS@.IP "ignore_afs=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 @MAN_AFS@tells pam_krb5.so to completely ignore the presence of AFS, preventing
 @MAN_AFS@any attempts to obtain new tokens on behalf of the calling application.
 @MAN_AFS@
-.IP ignore_unknown_principals=[\fItrue\fR|\fIfalse\fR]
-.IP ignore_unknown_spn=[\fItrue\fR|\fIfalse\fR]
-.IP ignore_unknown_upn=[\fItrue\fR|\fIfalse\fR]
+.IP "ignore_unknown_principals=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+.IP "ignore_unknown_spn=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+.IP "ignore_unknown_upn=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 specifies which other not pam_krb5 should return a PAM_IGNORE code to libpam
 instead of PAM_USER_UNKNOWN for users for whom the determined principal name
 is expired or does not exist.
 
-.IP initial_prompt=[\fItrue\fR|\fIfalse\fR]
+.IP "initial_prompt=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 tells pam_krb5.so whether or not to ask for a password before attempting
 authentication.  If one is needed and pam_krb5.so has not prompted for it, the
 Kerberos library should trigger a request for a password.
 
-.IP keytab=\fI@DEFAULT_KEYTAB@\fR
+.IP "keytab = \fIFILE:/etc/krb5.keytab\fR
+.IP "keytab = \fIFILE:/etc/krb5.keytab imap=FILE:/etc/imap.keytab\fR"
 specifies the name of a keytab file to search for a service key for use
 in validating TGTs.  The location can be specified on a per-service basis
 by specifying a list of locations in the form \fIpam_service\fR=\fIlocation\fR.
+The default is \fI@DEFAULT_KEYTAB@\fR.
 
-@MAN_KRB4@.IP krb4_convert=[\fItrue\fR|\fIfalse\fR]
+@MAN_KRB4@.IP "krb4_convert = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 @MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
 @MAN_KRB4@from the KDC (or using the \fBkrb524d\fR service on the KDC) and
 @MAN_KRB4@create ticket files with them.  Unless you've converted
@@ -111,23 +117,23 @@ by specifying a list of locations in the form \fIpam_service\fR=\fIlocation\fR.
 @MAN_KRB4@to leave this set to \fBtrue\fR.  Note that this may require valid
 @MAN_KRB4@Kerberos IV configuration data to be present in \fB/etc/krb.conf\fR
 @MAN_KRB4@and \fB/etc/krb.realms\fR.  This option is poorly named.
-@MAN_KRB4@@MAN_AFS@This option is forced to \fItrue\fR if AFS is detected.
+@MAN_KRB4@@MAN_AFS@This option defaults to \fItrue\fR if AFS is detected.
 @MAN_KRB4@
-@MAN_KRB4@.IP krb4_convert_524=[\fItrue\fR|\fIfalse\fR]
+@MAN_KRB4@.IP "krb4_convert_524 = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 @MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
 @MAN_KRB4@using the \fBkrb524d\fR service.  This option modifies the
 @MAN_KRB4@\fBkrb4_convert\fP option.  If disabled, pam_krb5 will only attempt
 @MAN_KRB4@to obtain Kerberos IV credentials using the KDC
 @MAN_KRB4@(unless the \fBkrb4_use_as_req\fR option is also disabled).
 @MAN_KRB4@
-@MAN_KRB4@.IP krb4_use_as_req=[\fItrue\fR|\fIfalse\fR]
+@MAN_KRB4@.IP "krb4_use_as_req = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 @MAN_KRB4@controls whether or not pam_krb5 tries to get Kerberos IV credentials
 @MAN_KRB4@using the KDC.  This option modifies the
 @MAN_KRB4@\fBkrb4_convert\fP option.  If disabled, pam_krb5 will only attempt
 @MAN_KRB4@to obtain Kerberos IV credentials using the \fBkrb524d\fR service
 @MAN_KRB4@(unless the \fBkrb4_convert_524\fR option is also disabled).
 @MAN_KRB4@
-.IP "mappings=[\fIregex1 regex2\fR]"
+.IP "mappings = \fIregex1 regex2 [...]\fR"
 specifies that pam_krb5 should derive the user's principal name from the Unix
 user name by first checking if the user name matches \fBregex1\fR, and
 formulating a principal name using \fBregex2\fR.  For example,
@@ -138,16 +144,16 @@ pam_krb5 to be used to authenticate users whose user information is provided by
 \fBwinbindd\fP(8).  This will frequently require the reverse to be configured by
 setting up an auth_to_local rule elsewhere in \fBkrb5.conf\fP(5).
 
-.IP minimum_uid=\fI0\fR
+.IP "minimum_uid = \fI0\fR"
 specifies the minimum UID of users being authenticated.  If a user with a UID
 less than this value attempts authentication, the request will be ignored.
 
-@MAN_HPKINIT@.IP pkinit_flags=[0]
+@MAN_HPKINIT@.IP "pkinit_flags = \fI0\fR"
 @MAN_HPKINIT@controls the flags value which pam_krb5 passes to libkrb5
 @MAN_HPKINIT@when setting up PKINIT parameters.  This is useful mainly for
 @MAN_HPKINIT@debugging.
 @MAN_HPKINIT@
-@MAN_HPKINIT@.IP pkinit_identity=[@DEFAULT_PKINIT_IDENTITY@]
+@MAN_HPKINIT@.IP "pkinit_identity = \fI@DEFAULT_PKINIT_IDENTITY@\fR"
 @MAN_HPKINIT@controls where pam_krb5 instructs libkrb5 to search for the
 @MAN_HPKINIT@user's private key and certificate, so that the client can be
 @MAN_HPKINIT@authenticated using PKINIT, if the KDC supports it.  This value
@@ -157,14 +163,14 @@ less than this value attempts authentication, the request will be ignored.
 @MAN_HPKINIT@  %p	principal name
 @MAN_HPKINIT@  %r	realm name
 @MAN_HPKINIT@  %h	home directory
-@MAN_HPKINIT@  %d	the default ccache directory
+@MAN_HPKINIT@  %d	the default ccache directory (as set with \fIccache_dir\fR)
 @MAN_HPKINIT@  %P	the current process ID
 @MAN_HPKINIT@  %%	literal '%'
 @MAN_HPKINIT@.br
 @MAN_HPKINIT@Other PKINIT-specific defaults, such as the locations of trust
 @MAN_HPKINIT@anchors, can be set in krb5.conf(5).
 @MAN_HPKINIT@
-@MAN_MPREAUTH@.IP preauth_options=[@DEFAULT_PREAUTH_OPTIONS@]
+@MAN_MPREAUTH@.IP "preauth_options = \fI@DEFAULT_PREAUTH_OPTIONS@\fR"
 @MAN_MPREAUTH@controls the preauthentication options which pam_krb5 passes
 @MAN_MPREAUTH@to libkrb5, if the system-defaults need to be overridden.
 @MAN_MPREAUTH@The list is treated as a template, and these sequences are
@@ -174,51 +180,48 @@ less than this value attempts authentication, the request will be ignored.
 @MAN_MPREAUTH@  %p	principal name
 @MAN_MPREAUTH@  %r	realm name
 @MAN_MPREAUTH@  %h	home directory
-@MAN_MPREAUTH@  %d	the default ccache directory
+@MAN_MPREAUTH@  %d	the default ccache directory (as set with \fIccache_dir\fR)
 @MAN_MPREAUTH@  %P	the current process ID
 @MAN_MPREAUTH@  %%	literal '%'
 @MAN_MPREAUTH@
-.IP proxiable=[\fItrue\fR|\fIfalse\fR]
+.IP "proxiable = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 controls whether or not credentials are proxiable.  If not specified, they
 are.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBproxiable\fR directive.
 
-.IP pwhelp=\fIfilename\fR
+.IP "pwhelp = \fIfilename\fR"
 specifies the name of a text file whose contents will be displayed to
 clients who attempt to change their passwords.  There is no default.
 
-.IP renew_lifetime=\fI36000\fR
-default renewable lifetime.  This specifies how much time you have after
-getting credentials to renew them.
+.IP "renew_lifetime = \fI36000\fR"
+default renewable lifetime, in seconds.  This specifies how much time you have
+after getting credentials to renew them.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBrenew_lifetime\fR directive.
 
-.IP subsequent_prompt=[\fItrue\fR|\fIfalse\fR]
+.IP "subsequent_prompt = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 controls whether or not pam_krb5.so will allow the Kerberos library to ask
 the user for a password or other information, if the previously-entered
 password is somehow insufficient for authenticating the user.
 
-.IP ticket_lifetime=\fI36000\fR
-default credential lifetime.
+.IP "ticket_lifetime = \fI36000\fR"
+default credential lifetime, in seconds.
 
-@MAN_AFS@.IP tokens=[\fItrue\fR|\fIfalse\fR]
-@MAN_AFS@.IP "tokens=\fIimap ftp\fR"
+@MAN_AFS@.IP "tokens = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 @MAN_AFS@signals that pam_krb5.so should create an AFS PAG and obtain tokens
 @MAN_AFS@during authentication in addition to session setup.  This is primarily
 @MAN_AFS@useful in server applications which need to access a user's files but
 @MAN_AFS@which do not open PAM sessions before doing so.  For correctly-written
 @MAN_AFS@applications, this flag is not necessary.
 @MAN_AFS@
-.IP use_shmem=\fItrue\fR
-.IP "use_shmem=\fIsshd\fR \fIftp\fR"
+.IP "use_shmem = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory for specific
 services.  By default, the module is configured with
 "use_shmem = \fI@DEFAULT_USE_SHMEM@\fR".
 
-.IP validate=[\fItrue\fR|\fIfalse\fR]
-.IP "validate=\fIlogin sshd\fR"
+.IP "validate = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 specifies whether or not to attempt validation of the TGT.  The default is
 \fBfalse\fR.
 
