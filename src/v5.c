@@ -135,6 +135,7 @@ v5_alloc_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt **opt)
 	*opt = malloc(sizeof(**opt));
 	if (*opt != NULL) {
 		memset(*opt, 0, sizeof(**opt));
+		krb5_get_init_creds_opt_init(*opt);
 		return 0;
 	} else {
 		return ENOMEM;

@@ -1,3 +1,10 @@
+2007-12-05:
+	* src/v5.c(v5_alloc_get_init_creds_opt): call the library's struct
+	init function for the we-malloc-it case.
+	* src/initopts.c(_pam_krb5_set_init_opts): disable the library's own
+	change-password-during-get_init_creds behavior, if we're building with
+	one which lets us disable it, so that we can handle it ourselves.
+
 2007-12-04:
 	* src/options.c(option_b): take a service name, and a default enable
 	and disable list.  If we have no command-line argument, check for the
