@@ -1,4 +1,10 @@
 2007-12-05:
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: give an example ("no_debug")
+	to make it more clear that you can add exceptions to "true" settings
+	that way.  Stress that no_subsequent_prompt may be needed for apps
+	which do the "PAM_PROMPT_ECHO_OFF" means "what's the current
+	password?" dance, which can really screw us up when we can't disable
+	the change-password-during-get_init_creds behavoir.
 	* src/v5.c(v5_alloc_get_init_creds_opt): call the library's struct
 	init function for the we-malloc-it case.
 	* src/initopts.c(_pam_krb5_set_init_opts): disable the library's own

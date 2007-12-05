@@ -10,6 +10,10 @@ before continuing here.  The module expects its configuration information to be
 in the \fB@PAM_KRB5_APPNAME@\fR subsection of the \fBappdefaults\fR section.
 
 .SH DIRECTIVES
+Directives which take a \fItrue\fR, \fIfalse\fR, or a PAM service name can also
+be selectively disabled for specific PAM services using the related "no_"
+option (exceptions to "debug = true" can be made using "no_debug", for example).
+
 .IP "debug = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 turns on debugging via \fBsyslog\fR(3).  Debug messages are logged with
 priority \fILOG_DEBUG\fR.
@@ -203,7 +207,15 @@ This directive is deprecated in favor of the \fBlibdefaults\fR
 .IP "subsequent_prompt = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 controls whether or not pam_krb5.so will allow the Kerberos library to ask
 the user for a password or other information, if the previously-entered
-password is somehow insufficient for authenticating the user.
+password is somehow insufficient for authenticating the user.  This is
+commonly needed to allow a user to log in when that user's password has
+expired.  The default is \fBtrue\fR.
+
+If the calling application does not properly support PAM conversations
+(possibly due to limitations of a network protocol which it is serving),
+this may be need to be disabled for that application to prevent it
+from supplying the user's current password in a password-changing
+situations when a new password is called for.
 
 .IP "ticket_lifetime = \fI36000\fR"
 default credential lifetime, in seconds.
