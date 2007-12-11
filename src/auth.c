@@ -368,7 +368,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	 * didn't ask for a password (due to the "no_initial_prompt" flag,
 	 * probably), and we can let libkrb5 ask questions (no
 	 * "no_subsequent_prompt"), then let libkrb5 have another go. */
-	if ((retval != PAM_SUCCESS) && use_third_pass) {
+	if ((retval != PAM_SUCCESS) &&
+	    (retval != PAM_USER_UNKNOWN) &&
+	    use_third_pass) {
 		if (options->debug) {
 			debug("not using an entered password for '%s', "
 			      "allowing libkrb5 to prompt for more", user);
