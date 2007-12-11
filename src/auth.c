@@ -279,7 +279,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	/* If that didn't work, and we're allowed to ask for a new password, do
 	 * so in preparation for another attempt. */
 	second_pass = NULL;
-	if ((retval != PAM_SUCCESS) && options->use_second_pass) {
+	if ((retval != PAM_SUCCESS) &&
+	    (retval != PAM_USER_UNKNOWN) &&
+	    options->use_second_pass) {
 		i = _pam_krb5_prompt_for(pamh, "Password: ", &second_pass);
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
