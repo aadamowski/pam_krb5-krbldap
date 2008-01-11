@@ -1,6 +1,6 @@
 Soon:
-- Learn to set up tokens for use by rxk5-enabled cells, once a spec for
-  what the structure we provide to the cache manager should contain exists.
+- Set up tokens for use by rxk5-enabled cells.  Basically it's an XDR-encoded
+  krb5_creds structure, but the code needs to be written.
 
 Later:
 - Figure out how mappings should work with

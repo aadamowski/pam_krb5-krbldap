@@ -63,9 +63,13 @@ int minikafs_ws_cell(char *cell, size_t length);
 int minikafs_unlog(void);
 
 /* Try to get tokens for the named cell using every available mechanism. */
+#define MINIKAFS_METHOD_V4    1
+#define MINIKAFS_METHOD_V5_V4 2
+#define MINIKAFS_METHOD_V5_2B 3
+#define MINIKAFS_METHOD_RXK5  4
 int minikafs_log(krb5_context ctx, krb5_ccache ccache,
 		 struct _pam_krb5_options *options,
 		 const char *cell, const char *hint_principal,
-		 uid_t uid, int try_v5_2b_first);
+		 uid_t uid, const int *methods, int n_methods);
 
 #endif

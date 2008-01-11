@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -432,6 +432,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				v4_save_for_tokens(ctx, stash, userinfo,
 						   options, NULL);
 			}
+			/* FIXME: we create a new PAG here so that we
+			 * can read the file without overwriting tokens in the
+			 * calling application's sessionout, but we shouldn't
+			 * because that throws the calling process into a new
+			 * PAG, even when we're depending on that not happening
+			 * (for the cred refresh case). -> need to use a helper
+			 * here, which will fix NFS with AUTH_SYS while we're
+			 * at it. */
 			tokens_obtain(ctx, stash, options, userinfo, 1);
 		}
 		if (krb5_kuserok(ctx, userinfo->principal_name, user) == 0) {

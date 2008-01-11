@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2004,2005,2006,2007,2008 Red Hat, Inc.
  * Copyright 2004 Kungliga Tekniska Högskolan
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
   * References:
   *   http://grand.central.org/numbers/pioctls.html
   *   http://www.afsig.se/afsig/space/rxgk-client-integration
+  *   auth/afs_token.xg
   */
 
 #include "../config.h"
@@ -162,6 +163,11 @@ enum minikafs_pioctl_fn {
 	minikafs_pioctl_getprop = CIOCTL_FN(10),
 	minikafs_pioctl_setprop = CIOCTL_FN(11),
 };
+
+/* Forward declarations. */
+static int minikafs_5log_rxk5(krb5_context ctx, krb5_ccache ccache,
+			      struct _pam_krb5_options *options,
+			      const char *cell, const char *hint_principal);
 
 /* Call AFS using an ioctl. Might not port to your system. */
 static int
@@ -547,7 +553,7 @@ minikafs_settoken(const void *ticket, uint32_t ticket_size,
 	plain_token.uid = uid;
 	plain_token.start = start;
 	plain_token.end = end;
-	if (((end - start) % 1) == 0) {
+	if (((end - start) % 2) != 0) {
 		plain_token.end--;
 	}
 
@@ -1161,47 +1167,284 @@ int
 minikafs_log(krb5_context ctx, krb5_ccache ccache,
 	     struct _pam_krb5_options *options,
 	     const char *cell, const char *hint_principal,
-	     uid_t uid, int try_v5_2b_first)
+	     uid_t uid, const int *methods, int n_methods)
 {
-	int i;
-	i = minikafs_5log(ctx, ccache, options, cell, hint_principal,
-			  uid, try_v5_2b_first);
-	if (i != 0) {
-		if (options->debug) {
-			debug("v5 afslog (2b=%d) failed to \"%s\"",
-			      try_v5_2b_first, cell);
+	int i, method;
+	if (n_methods == -1) {
+		for (i = 0; methods[i] != 0; i++) {
+			continue;
 		}
+		n_methods = i;
 	}
+	for (method = 0; method < n_methods; method++) {
+		i = -1;
+		switch (methods[method]) {
 #ifdef USE_KRB4
-	if (i != 0) {
-		if (options->debug) {
-			debug("trying with v4 ticket");
-		}
-		i = minikafs_4log(ctx, options, cell, hint_principal, uid);
-		if (i != 0) {
+		case MINIKAFS_METHOD_V4:
 			if (options->debug) {
-				debug("v4 afslog failed to \"%s\"", cell);
+				debug("trying with v4 ticket");
 			}
-		}
-	}
+			i = minikafs_4log(ctx, options, cell,
+					  hint_principal, uid);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v4 afslog failed to \"%s\"",
+					      cell);
+				}
+			}
+			break;
+		case MINIKAFS_METHOD_V5_V4:
+			if (options->debug) {
+				debug("trying with v5 ticket and 524 service");
+			}
+			i = minikafs_5log(ctx, ccache, options, cell,
+					  hint_principal, uid, 0);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v5 with 524 service afslog "
+					      "failed to \"%s\"", cell);
+				}
+			}
+			break;
 #endif
-	if ((i != 0) && (!try_v5_2b_first)) {
-		if (options->debug) {
-			debug("retrying v5 with 2b=1");
-		}
-		i = minikafs_5log(ctx, ccache, options, cell, hint_principal,
-				  uid, 1);
-		if (i != 0) {
+		case MINIKAFS_METHOD_V5_2B:
 			if (options->debug) {
-				debug("v5 afslog (2b=1) failed to \"%s\"",
-				      cell);
+				debug("trying with v5 ticket (2b)");
 			}
+			i = minikafs_5log(ctx, ccache, options, cell,
+					  hint_principal, uid, 1);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v5 afslog (2b) failed to \"%s\"",
+					      cell);
+				}
+			}
+			break;
+		case MINIKAFS_METHOD_RXK5:
+			if (options->debug) {
+				debug("trying with v5 ticket (rxk5)");
+			}
+			i = minikafs_5log_rxk5(ctx, ccache, options,
+					       cell, hint_principal);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v5 afslog (rxk5) failed to \"%s\"",
+					      cell);
+				}
+			}
+			break;
+		default:
+			break;
+		}
+		if (i == 0) {
+			break;
 		}
 	}
-	if (i == 0) {
+	if (method < n_methods) {
 		if (options->debug) {
 			debug("got tokens for cell \"%s\"", cell);
 		}
+		return 0;
+	} else {
+		return -1;
 	}
-	return i;
+}
+
+/* We do the XDR here to avoid deps on what might not be a standard part of
+ * glibc, and we don't need the decode or free functionality. */
+static int
+encode_int32(char *buffer, int32_t num)
+{
+	int32_t net;
+	if (buffer) {
+		net = ntohl(num);
+		memcpy(buffer, &net, 4);
+	}
+	return 4;
+}
+static int
+encode_boolean(char *buffer, krb5_boolean b)
+{
+	return encode_int32(buffer, b ? 1 : 0);
+}
+static int
+encode_uint64(char *buffer, uint64_t num)
+{
+	int32_t net;
+	if (buffer) {
+		net = ntohl(num >> 32);
+		memcpy(buffer + 0, &net, 4);
+		net = ntohl(num & 0xffffffff);
+		memcpy(buffer + 4, &net, 4);
+	}
+	return 8;
+}
+static int
+encode_bytes(char *buffer, char *bytes, int32_t num)
+{
+	int32_t pad;
+	pad = (num % 4) ? (4 - (num % 4)) : 0;
+	if (buffer) {
+		if (bytes && num) {
+			memcpy(buffer, bytes, num);
+			memset(buffer + num, 0, pad);
+		}
+	}
+	return num + pad;
+}
+static int
+encode_ubytes(char *buffer, unsigned char *bytes, int32_t num)
+{
+	int32_t pad;
+	pad = (num % 4) ? (4 - (num % 4)) : 0;
+	if (buffer) {
+		if (bytes && num) {
+			memcpy(buffer, bytes, num);
+			memset(buffer + num, 0, pad);
+		}
+	}
+	return num + pad;
+}
+#define encode_fixed(_op, _buffer, _item) \
+	{ \
+		int _length; \
+		_length = _op(_buffer, _item); \
+		if (_buffer) { \
+			_buffer += _length; \
+		} \
+		total += _length; \
+	}
+#define encode_variable(_op, _buffer, _item, _size) \
+	{ \
+		int _length; \
+		_length = _op(_buffer, _item, _size); \
+		if (_buffer) { \
+			_buffer += _length; \
+		} \
+		total += _length; \
+	}
+static int
+encode_data(char *buffer, krb5_data *data)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, data->length);
+	encode_variable(encode_bytes, buffer, data->data, data->length);
+	return total;
+}
+static int
+encode_keyblock(char *buffer, krb5_keyblock *keyblock)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, keyblock->enctype);
+	encode_fixed(encode_int32, buffer, keyblock->length);
+	encode_variable(encode_ubytes, buffer, keyblock->contents,
+			keyblock->length);
+	return total;
+}
+static int
+encode_address(char *buffer, krb5_address *address)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, address->addrtype);
+	encode_fixed(encode_int32, buffer, address->length);
+	encode_variable(encode_ubytes, buffer, address->contents,
+			address->length);
+	return total;
+}
+static int
+encode_authdata(char *buffer, krb5_authdata *authdata)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, authdata->ad_type);
+	encode_fixed(encode_int32, buffer, authdata->length);
+	encode_variable(encode_ubytes, buffer, authdata->contents,
+			authdata->length);
+	return total;
+}
+static int
+encode_principal(char *buffer, krb5_principal princ)
+{
+	int32_t total = 0;
+	int i;
+	encode_fixed(encode_int32, buffer, krb5_princ_size(NULL, princ));
+	for (i = 0; i < krb5_princ_size(NULL, princ); i++) { /* XXX */
+		encode_fixed(encode_data, buffer, krb5_princ_component(NULL, princ, i));
+	}
+	encode_fixed(encode_data, buffer, krb5_princ_realm(NULL, princ));
+	return total;
+}
+static int
+encode_token_rxk5(char *buffer, krb5_creds *creds)
+{
+	int32_t total = 0;
+	int i, j; 
+	encode_fixed(encode_principal, buffer, creds->client);
+	encode_fixed(encode_principal, buffer, creds->server);
+	encode_fixed(encode_keyblock, buffer, &creds->keyblock);
+	encode_fixed(encode_uint64, buffer, creds->times.authtime);
+	encode_fixed(encode_uint64, buffer, creds->times.starttime);
+	encode_fixed(encode_uint64, buffer, creds->times.endtime);
+	encode_fixed(encode_uint64, buffer, creds->times.renew_till);
+	encode_fixed(encode_boolean, buffer, creds->is_skey);
+	encode_fixed(encode_int32, buffer, creds->ticket_flags);
+
+	for (i = 0;
+	     (creds->addresses != NULL) && (creds->addresses[i] != NULL);
+	     i++) {
+		continue;
+	}
+	encode_fixed(encode_int32, buffer, i);
+	for (j = 0; j < i; j++) {
+		encode_fixed(encode_address, buffer, creds->addresses[i]);
+	}
+
+	encode_fixed(encode_data, buffer, &creds->ticket);
+	encode_fixed(encode_data, buffer, &creds->second_ticket);
+
+	for (i = 0;
+	     (creds->authdata != NULL) && (creds->authdata[i] != NULL);
+	     i++) {
+		continue;
+	}
+	encode_fixed(encode_int32, buffer, i);
+	for (j = 0; j < i; j++) {
+		encode_fixed(encode_authdata, buffer, creds->authdata[i]);
+	}
+	return total;
+}
+#define SOLITON_NONE  0
+#define SOLITON_RXKAD 2
+#define SOLITON_RXGK  4
+#define SOLITON_RXK5  5
+static int
+encode_soliton(char *buffer, krb5_creds *creds, int soliton_type)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, soliton_type);
+	switch (soliton_type) {
+	case SOLITON_RXK5:
+		encode_fixed(encode_token_rxk5, buffer, creds);
+		break;
+	default:
+		break;
+	}
+	return total;
+}
+static int
+minikafs_5log_rxk5(krb5_context ctx, krb5_ccache ccache,
+		   struct _pam_krb5_options *options,
+		   const char *cell, const char *hint_principal)
+{
+	krb5_creds *creds = NULL;
+	char *buffer = NULL;
+	int bufsize;
+	if (creds != NULL) {
+		bufsize = encode_soliton(NULL, creds, SOLITON_RXK5);
+		buffer = malloc(bufsize);
+		if (buffer != NULL) {
+			encode_soliton(buffer, creds, SOLITON_RXK5);
+			free(buffer);
+		}
+	}
+	return -1;
 }

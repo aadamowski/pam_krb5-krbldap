@@ -1,10 +1,10 @@
-.TH afs5log 8 2005/09/22 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH afs5log 8 2007/12/18 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 afs5log \- AFS token initializer
 
 .SH SYNOPSIS
-afs5log [ [-v] [-5] [-p \fIpath\fP] [cell[=principal] ] ] [...]
+afs5log [ [-v] [-5] [-k] [-p \fIpath\fP] [cell[=principal] ] ] [...]
 
 .SH DESCRIPTION
 The \fIafs5log\fP command uses Kerberos to obtain AFS tokens for the named
@@ -27,6 +27,10 @@ that cell.
 -5
 Skip attempts to use Kerberos IV and just use \fI2b\fP-style tokens, which are
 only supported by OpenAFS 1.2.8 and later.
+.TP
+-k
+Skip attempts to use Kerberos IV and use \fIrxk5\fP-style tokens, which are
+only supported by OpenAFS 1.6 and later.
 
 .SH "SEE ALSO"
 .BR pam_krb5 (5)

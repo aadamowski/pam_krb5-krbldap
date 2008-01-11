@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -101,6 +101,14 @@ tokens_obtain(krb5_context context,
 	struct stat st;
 	krb5_ccache ccache;
 	uid_t uid;
+	const int methods_2b_first[] = {MINIKAFS_METHOD_V5_2B,
+					MINIKAFS_METHOD_V5_V4,
+					MINIKAFS_METHOD_V4,
+					0};
+	const int methods_v4_first[] = {MINIKAFS_METHOD_V5_V4,
+					MINIKAFS_METHOD_V4,
+					MINIKAFS_METHOD_V5_2B,
+					0};
 
 	if (options->debug) {
 		debug("obtaining afs tokens");
@@ -162,7 +170,9 @@ tokens_obtain(krb5_context context,
 			      localcell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   localcell, NULL, uid, use_2b);
+				   localcell, NULL, uid,
+				   use_2b ? methods_2b_first : methods_v4_first,
+				   -1);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -211,7 +221,9 @@ tokens_obtain(krb5_context context,
 			debug("obtaining tokens for home cell '%s'", homecell);
 		}
 		ret = minikafs_log(context, ccache, options,
-				   homecell, NULL, uid, use_2b);
+				   homecell, NULL, uid,
+				   use_2b ? methods_2b_first : methods_v4_first,
+				   -1);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -250,8 +262,9 @@ tokens_obtain(krb5_context context,
 		}
 		ret = minikafs_log(context, ccache, options,
 				   options->afs_cells[i].cell,
-				   options->afs_cells[i].principal_name,
-				   uid, use_2b);
+				   options->afs_cells[i].principal_name, uid,
+				   use_2b ? methods_2b_first : methods_v4_first,
+				   -1);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "

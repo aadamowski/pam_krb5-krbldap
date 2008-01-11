@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005,2006 Red Hat, Inc.
+ * Copyright 2004,2005,2006,2007,2008 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,22 +61,52 @@
 
 extern char *log_progname;
 
+static void
+set_methods(int *methods, int max_methods,
+	    int try_v5_2b_only, int try_rxk5_only)
+{
+	int i = 0;
+	memset(methods, 0, sizeof(methods[0]) * max_methods);
+	if (try_rxk5_only) {
+		methods[i++] = MINIKAFS_METHOD_RXK5;
+	} else {
+		if (try_v5_2b_only) {
+			methods[i++] = MINIKAFS_METHOD_V5_2B;
+		} else {
+			if (i < max_methods) {
+				methods[i++] = MINIKAFS_METHOD_V4;
+			}
+			if (i < max_methods) {
+				methods[i++] = MINIKAFS_METHOD_V5_V4;
+			}
+			if (i < max_methods) {
+				methods[i++] = MINIKAFS_METHOD_V5_2B;
+			}
+			if (i < max_methods) {
+				methods[i++] = MINIKAFS_METHOD_RXK5;
+			}
+		}
+	}
+}
+
 int
 main(int argc, char **argv)
 {
 	char local[PATH_MAX], home[PATH_MAX], path[PATH_MAX];
 	char *homedir, *cell, *principal, *pathdir;
-	int i, j, try_v5_2b, cells, process_options;
+	int i, j, try_v5_2b_only, try_rxk5_only, cells, process_options;
+	int methods[5];
 	krb5_context ctx;
 	krb5_ccache ccache;
 	uid_t uid;
 
 	/* Iterate through every parameter, assuming they're names of cells. */
 #ifdef USE_KRB4
-	try_v5_2b = 0;
+	try_v5_2b_only = 0;
 #else
-	try_v5_2b = 1;
+	try_v5_2b_only = 1;
 #endif
+	try_rxk5_only = 0;
 	cells = 0;
 	log_progname = "afs5log";
 	uid = getuid();
@@ -122,7 +152,10 @@ main(int argc, char **argv)
 				process_options = 0;
 				break;
 			case '5':
-				try_v5_2b = !try_v5_2b;
+				try_v5_2b_only = !try_v5_2b_only;
+				break;
+			case 'k':
+				try_rxk5_only = !try_rxk5_only;
 				break;
 			case 'v':
 				break;
@@ -138,10 +171,15 @@ main(int argc, char **argv)
 						debug("cell of \"%s\" is "
 						      "\"%s\"", pathdir, path);
 					}
+					set_methods(methods,
+						    sizeof(methods) /
+						    sizeof(methods[0]),
+						    try_v5_2b_only,
+						    try_rxk5_only);
 					j = minikafs_log(NULL, ccache,
 							 &log_options,
 							 path, NULL,
-							 uid, try_v5_2b);
+							 uid, methods, -1);
 					if (j != 0) {
 						fprintf(stderr,
 							"%s: %d\n", path, j);
@@ -149,7 +187,7 @@ main(int argc, char **argv)
 				}
 				break;
 			default:
-				printf("%s: [ [-v] [-5] [-p path] "
+				printf("%s: [ [-v] [-5] [-k] [-p path] "
 				       "[cell[=principal]] ] [...]\n", argv[0]);
 				krb5_free_context(ctx);
 				exit(0);
@@ -163,8 +201,11 @@ main(int argc, char **argv)
 				*principal = '\0';
 				principal++;
 			}
+			set_methods(methods,
+				    sizeof(methods) / sizeof(methods[0]),
+				    try_v5_2b_only, try_rxk5_only);
 			j = minikafs_log(NULL, ccache, &log_options,
-					 cell, principal, uid, try_v5_2b);
+					 cell, principal, uid, methods, -1);
 			if (j != 0) {
 				fprintf(stderr, "%s: %d\n", argv[i], j);
 			}
@@ -180,8 +221,11 @@ main(int argc, char **argv)
 			if (log_options.debug) {
 				debug("local cell is \"%s\"", local);
 			}
+			set_methods(methods,
+				    sizeof(methods) / sizeof(methods[0]),
+				    try_v5_2b_only, try_rxk5_only);
 			j = minikafs_log(NULL, ccache, &log_options,
-					 local, NULL, uid, try_v5_2b);
+					 local, NULL, uid, methods, -1);
 			if (j != 0) {
 				fprintf(stderr, "%s: %d\n", local, j);
 			}
@@ -200,9 +244,14 @@ main(int argc, char **argv)
 				if (log_options.debug) {
 					debug("home cell is \"%s\"", home);
 				}
+				set_methods(methods,
+					    sizeof(methods) /
+					    sizeof(methods[0]),
+					    try_v5_2b_only, try_rxk5_only);
 				j = minikafs_log(NULL, ccache,
 						 &log_options,
-						 home, NULL, uid, try_v5_2b);
+						 home, NULL, uid,
+						 methods, -1);
 				if (j != 0) {
 					fprintf(stderr, "%s: %d\n", home, j);
 				}
