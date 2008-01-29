@@ -588,6 +588,8 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		}
 		if (options->use_third_pass == 1) {
 			debug("will let libkrb5 ask questions");
+		} else {
+			debug("will not let libkrb5 ask questions");
 		}
 	}
 

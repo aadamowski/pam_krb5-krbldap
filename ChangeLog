@@ -1,3 +1,7 @@
+2008-01-29:
+	* src/options.c: log a debug message when we disable prompting
+	on behalf of libkrb5
+
 2007-12-11:
 	* src/auth.c: don't ask for another password when we've already
 	gotten an unknown-user error, since there's no point then (Paul
