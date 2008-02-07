@@ -28,6 +28,8 @@ libpam_krb5_la_SOURCES = \
 	init.h \
 	items.c \
 	items.h \
+	kuserok.c \
+	kuserok.h \
 	minikafs.h \
 	prompter.c \
 	prompter.h \
