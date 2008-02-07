@@ -1,3 +1,18 @@
+2008-02-07:
+	* configure.ac: get the sense of --enable-keyutils right, so that we
+	warn when it's not requested, and error when it's requested, instead
+	of the other way around.
+	* src/afs5log.c: reorder the default list of methods, close the ccache
+	properly, and free the temporary homedir string for debugging use.
+	* src/minikafs.c(minikafs_5settoken2): add, to set a v5 cred.
+	* src/minikafs.c(minikafs_5log,minikafs_5log_with_principal): take a
+	flag to signal that we should try rxk5, and use it and the 2b flag to
+	designate which method we want to use (no longer trying more than one
+	during a single invocation).
+	* src/minikafs.c(encode_bytes,encode_ubytes): take const input.
+	* src/minikafs.c(encode_string): add.
+	* src/tokens.c: add rxk5 to the default method lists.
+
 2008-01-29:
 	* src/options.c: log a debug message when we disable prompting
 	on behalf of libkrb5

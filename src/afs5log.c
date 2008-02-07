@@ -74,16 +74,16 @@ set_methods(int *methods, int max_methods,
 			methods[i++] = MINIKAFS_METHOD_V5_2B;
 		} else {
 			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_V4;
+				methods[i++] = MINIKAFS_METHOD_V5_2B;
+			}
+			if (i < max_methods) {
+				methods[i++] = MINIKAFS_METHOD_RXK5;
 			}
 			if (i < max_methods) {
 				methods[i++] = MINIKAFS_METHOD_V5_V4;
 			}
 			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_V5_2B;
-			}
-			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_RXK5;
+				methods[i++] = MINIKAFS_METHOD_V4;
 			}
 		}
 	}
@@ -256,8 +256,10 @@ main(int argc, char **argv)
 					fprintf(stderr, "%s: %d\n", home, j);
 				}
 			}
+			xstrfree(homedir);
 		}
 	}
+	krb5_cc_close(ctx, ccache);
 	krb5_free_context(ctx);
 	return 0;
 }
