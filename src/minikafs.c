@@ -95,6 +95,12 @@
 #define KRB_TICKET_GRANTING_TICKET "krbtgt"
 #endif
 
+#ifdef NI_MAXHOST
+#define HOSTNAME_SIZE NI_MAXHOST
+#else
+#define HOSTNAME_SIZE 2048
+#endif
+
 #define OPENAFS_AFS_IOCTL_FILE  "/proc/fs/openafs/afs_ioctl"
 #define ARLA_AFS_IOCTL_FILE     "/proc/fs/nnpfs/afs_ioctl"
 
@@ -330,7 +336,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	struct sockaddr_in sin;
 	in_addr_t *address;
 	krb5_context use_ctx;
-	char *path, host[NI_MAXHOST], **realms;
+	char *path, host[HOSTNAME_SIZE], **realms;
 	int i, n_addresses, ret;
 
 	if (cell) {
