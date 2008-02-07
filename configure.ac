@@ -325,9 +325,9 @@ if test x$keyutils != xno ; then
 		AC_DEFINE(HAVE_KEYUTILS,1,[Define if you have libkeyutils.])
 	else
 		if test x$keyutils = xyes ; then
-			AC_MSG_WARN(keyutils library not found)
-		else
 			AC_MSG_ERROR(keyutils library not found)
+		else
+			AC_MSG_WARN(keyutils library not found)
 		fi
 	fi
 	KEYUTILS_LIBS="$LIBS"
