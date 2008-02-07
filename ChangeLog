@@ -21,6 +21,19 @@
 	* src/minikafs.c(encode_string): add.
 	* src/tokens.c: add rxk5 to the default method lists.
 
+2008-02-07:
+	* src/kuserok.c(_pam_krb5_kuserok): add a function which wraps
+	krb5_kuserok() in a subprocess which can create a new PAG, get tokens,
+	and drop privileges to the user's account, all so that we can attempt
+	to read the user's .k5login if we need to, and without disturbing any
+	AFS creds the calling process might have.
+	* src/auth.c(pam_sm_authenticate),src/acct.c(pam_sm_acct_mgmt): use
+	_pam_krb5_kuserok() instead of trying to get tokens, call
+	krb5_kuserok(), and clear tokens
+
+2008-02-07:
+	* src/minikafs.c: don't barf on compile if NI_MAXHOST isn't defined.
+
 2008-01-29:
 	* src/options.c: log a debug message when we disable prompting
 	on behalf of libkrb5

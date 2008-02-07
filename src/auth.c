@@ -60,6 +60,7 @@
 #include "init.h"
 #include "initopts.h"
 #include "items.h"
+#include "kuserok.h"
 #include "log.h"
 #include "options.h"
 #include "prompter.h"
@@ -71,7 +72,7 @@
 #include "v4.h"
 #include "xstr.h"
 
-#ident "$Id$"
+#ident "$Id$
 
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags,
@@ -423,26 +424,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	/* If we got this far, check the target user's .k5login file. */
 	if ((retval == PAM_SUCCESS) && options->user_check) {
-		if ((options->tokens != 1) &&
-		    (options->ignore_afs == 0) &&
-		    tokens_useful()) {
-			v5_save_for_tokens(ctx, stash, user, userinfo,
-					   options, NULL);
-			if (stash->v4present) {
-				v4_save_for_tokens(ctx, stash, userinfo,
-						   options, NULL);
-			}
-			/* FIXME: we create a new PAG here so that we
-			 * can read the file without overwriting tokens in the
-			 * calling application's sessionout, but we shouldn't
-			 * because that throws the calling process into a new
-			 * PAG, even when we're depending on that not happening
-			 * (for the cred refresh case). -> need to use a helper
-			 * here, which will fix NFS with AUTH_SYS while we're
-			 * at it. */
-			tokens_obtain(ctx, stash, options, userinfo, 1);
-		}
-		if (krb5_kuserok(ctx, userinfo->principal_name, user) == 0) {
+		if (_pam_krb5_kuserok(ctx, stash, options, userinfo, user,
+				      userinfo->uid, userinfo->gid) != TRUE) {
 			notice("account checks fail for '%s': user disallowed "
 			       "by .k5login file for '%s'",
 			       userinfo->unparsed_name, user);
@@ -452,14 +435,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				debug("'%s' passes .k5login check for '%s'",
 				      userinfo->unparsed_name, user);
 			}
-		}
-		if ((options->tokens != 1) &&
-		    (options->ignore_afs == 0) &&
-		    tokens_useful()) {
-			if (stash->v4present) {
-				v4_destroy(ctx, stash, options);
-			}
-			v5_destroy(ctx, stash, options);
 		}
 	}
 
