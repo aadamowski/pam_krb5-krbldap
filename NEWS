@@ -1,4 +1,6 @@
-- 2.2.22: * all options which took true/false before ("debug", "tokens", and
+- 2.2.22: * moved .k5login checks to a subprocess to avoid screwing with the
+	    parent process's tokens and PAG (fallout from #371761)
+	  * all options which took true/false before ("debug", "tokens", and
 	    so on) can now take service names
 - 2.2.21: * fix permissions problems on keyring ccaches, so that users can write
 	    to them after we've set them up, and we can still do the cleanup
