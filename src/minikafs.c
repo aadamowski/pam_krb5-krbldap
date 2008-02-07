@@ -93,7 +93,17 @@
 #ident "$Id$"
 
 #ifndef KRB_TICKET_GRANTING_TICKET
+#ifdef KRB5_TGS_NAME
+#define KRB_TICKET_GRANTING_TICKET KRB5_TGS_NAME
+#else
 #define KRB_TICKET_GRANTING_TICKET "krbtgt"
+#endif
+#endif
+
+#ifdef NI_MAXHOST
+#define HOSTNAME_SIZE NI_MAXHOST
+#else
+#define HOSTNAME_SIZE 2048
 #endif
 
 #define OPENAFS_AFS_IOCTL_FILE  "/proc/fs/openafs/afs_ioctl"
@@ -165,9 +175,7 @@ enum minikafs_pioctl_fn {
 };
 
 /* Forward declarations. */
-static int minikafs_5log_rxk5(krb5_context ctx, krb5_ccache ccache,
-			      struct _pam_krb5_options *options,
-			      const char *cell, const char *hint_principal);
+static int minikafs_5settoken2(const char *cell, krb5_creds *creds);
 
 /* Call AFS using an ioctl. Might not port to your system. */
 static int
@@ -336,7 +344,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	struct sockaddr_in sin;
 	in_addr_t *address;
 	krb5_context use_ctx;
-	char *path, host[NI_MAXHOST], **realms;
+	char *path, host[HOSTNAME_SIZE], **realms;
 	int i, n_addresses, ret;
 
 	if (cell) {
@@ -673,22 +681,33 @@ static int
 minikafs_5log_with_principal(krb5_context ctx,
 			     struct _pam_krb5_options *options,
 			     krb5_ccache ccache,
-			     const char *cell, const char *principal,
-			     uid_t uid, int try_v5_2b)
+			     const char *cell,
+			     const char *principal,
+			     uid_t uid,
+			     int use_rxk5,
+			     int use_v5_2b)
 {
 	krb5_principal server, client;
 	krb5_creds mcreds, creds, *new_creds;
 	char *unparsed_client;
-	int etypes[] = {
+	int v5_2b_etypes[] = {
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD4,
 		ENCTYPE_DES_CBC_MD5,
 	};
-	unsigned int i;
+	int *etypes;
+	unsigned int i, n_etypes;
 	int tmp;
 
 	memset(&client, 0, sizeof(client));
 	memset(&server, 0, sizeof(server));
+	if (use_rxk5) {
+		etypes = NULL;
+		n_etypes = 1; /* hack: we want to try at least once */
+	} else {
+		etypes = v5_2b_etypes;
+		n_etypes = sizeof(v5_2b_etypes) / sizeof(v5_2b_etypes[0]);
+	}
 
 	if (krb5_cc_get_principal(ctx, ccache, &client) != 0) {
 		if (options->debug) {
@@ -711,22 +730,32 @@ minikafs_5log_with_principal(krb5_context ctx,
 	}
 
 	/* Check if we already have a suitable credential. */
-	for (i = 0; i < sizeof(etypes) / sizeof(etypes[0]); i++) {
+	for (i = 0; i < n_etypes; i++) {
 		memset(&mcreds, 0, sizeof(mcreds));
 		memset(&creds, 0, sizeof(creds));
 		mcreds.client = client;
 		mcreds.server = server;
-		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		if (etypes != NULL) {
+			v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		}
 		if (krb5_cc_retrieve_cred(ctx, ccache, v5_cc_retrieve_match(),
 					  &mcreds, &creds) == 0) {
-			if (try_v5_2b &&
+			if (use_rxk5 &&
+			    (minikafs_5settoken2(cell, &creds) == 0)) {
+				krb5_free_cred_contents(ctx, &creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
+				krb5_free_principal(ctx, client);
+				krb5_free_principal(ctx, server);
+				return 0;
+			} else
+			if (use_v5_2b &&
 			    (minikafs_5settoken(cell, &creds, uid) == 0)) {
 				krb5_free_cred_contents(ctx, &creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
-			}
+			} else
 			if (options->v4_use_524 &&
 			    minikafs_5convert_and_log(ctx, options, cell,
 						      &creds, uid) == 0) {
@@ -741,23 +770,33 @@ minikafs_5log_with_principal(krb5_context ctx,
 	}
 
 	/* Try to obtain a suitable credential. */
-	for (i = 0; i < sizeof(etypes) / sizeof(etypes[0]); i++) {
+	for (i = 0; i < n_etypes; i++) {
 		memset(&mcreds, 0, sizeof(mcreds));
 		mcreds.client = client;
 		mcreds.server = server;
-		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		if (etypes != NULL) {
+			v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		}
 		new_creds = NULL;
 		tmp = krb5_get_credentials(ctx, 0, ccache,
 					   &mcreds, &new_creds);
 		if (tmp == 0) {
-			if (try_v5_2b &&
+			if (use_rxk5 &&
+			    (minikafs_5settoken2(cell, new_creds) == 0)) {
+				krb5_free_creds(ctx, new_creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
+				krb5_free_principal(ctx, client);
+				krb5_free_principal(ctx, server);
+				return 0;
+			} else
+			if (use_v5_2b &&
 			    (minikafs_5settoken(cell, new_creds, uid) == 0)) {
 				krb5_free_creds(ctx, new_creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
-			}
+			} else
 			if (options->v4_use_524 &&
 			    minikafs_5convert_and_log(ctx, options, cell,
 						      new_creds, uid) == 0) {
@@ -770,10 +809,21 @@ minikafs_5log_with_principal(krb5_context ctx,
 			krb5_free_creds(ctx, new_creds);
 		} else {
 			if (options->debug) {
-				debug("error obtaining credentials for '%s'"
-				      "(enctype=%d) on behalf of '%s': %s",
-				      principal, etypes[i],
-				      unparsed_client, v5_error_message(tmp));
+				if (etypes != NULL) {
+					debug("error obtaining credentials for "
+					      "'%s' (enctype=%d) on behalf of "
+					      "'%s': %s",
+					      principal, etypes[i],
+					      unparsed_client,
+					      v5_error_message(tmp));
+				} else {
+					debug("error obtaining credentials for "
+					      "'%s' on behalf of "
+					      "'%s': %s",
+					      principal,
+					      unparsed_client,
+					      v5_error_message(tmp));
+				}
 			}
 		}
 	}
@@ -791,15 +841,17 @@ static int
 minikafs_5log(krb5_context context, krb5_ccache ccache,
 	      struct _pam_krb5_options *options,
 	      const char *cell, const char *hint_principal,
-	      uid_t uid, int try_v5_2b)
+	      uid_t uid, int use_rxk5, int use_v5_2b)
 {
 	krb5_context ctx;
 	krb5_ccache use_ccache;
 	int ret;
 	unsigned int i;
 	char *principal, *defaultrealm, realm[PATH_MAX];
-	size_t principal_size;
-	const char *base[] = {"afs", "afsx"};
+	size_t principal_size, base_size;
+	const char *base_rxkad[] = {"afs", "afsx"};
+	const char *base_rxk5[] = {"afs-k5"};
+	const char **base;
 
 	if (context == NULL) {
 		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != 0) {
@@ -807,6 +859,14 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		}
 	} else {
 		ctx = context;
+	}
+
+	if (use_rxk5) {
+		base = base_rxk5;
+		base_size = sizeof(base_rxk5) / sizeof(base_rxk5[0]);
+	} else {
+		base = base_rxkad;
+		base_size = sizeof(base_rxkad) / sizeof(base_rxkad[0]);
 	}
 
 	memset(&use_ccache, 0, sizeof(use_ccache));
@@ -830,7 +890,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		}
 		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
 						   cell, hint_principal, uid,
-						   try_v5_2b);
+						   use_rxk5, use_v5_2b);
 		if (ret == 0) {
 			if (use_ccache != ccache) {
 				krb5_cc_close(ctx, use_ccache);
@@ -858,7 +918,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 
 	principal_size = strlen("/@") + 1;
 	ret = -1;
-	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
+	for (i = 0; (ret != 0) && (i < base_size); i++) {
 		principal_size += strlen(base[i]);
 	}
 	principal_size += strlen(cell);
@@ -880,7 +940,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		return -1;
 	}
 
-	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
+	for (i = 0; (ret != 0) && (i < base_size); i++) {
 		/* Try the cell instance in the cell's realm. */
 		snprintf(principal, principal_size, "%s/%s@%s",
 			 base[i], cell, realm);
@@ -890,7 +950,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		}
 		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
 						   cell, principal, uid,
-						   try_v5_2b);
+						   use_rxk5, use_v5_2b);
 		if (ret == 0) {
 			break;
 		}
@@ -906,7 +966,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 			ret = minikafs_5log_with_principal(ctx, options,
 							   use_ccache,
 							   cell, principal, uid,
-							   try_v5_2b);
+							   use_rxk5, use_v5_2b);
 		}
 		if (ret == 0) {
 			break;
@@ -924,7 +984,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 			ret = minikafs_5log_with_principal(ctx, options,
 							   use_ccache,
 							   cell, principal, uid,
-							   try_v5_2b);
+							   use_rxk5, use_v5_2b);
 			if (ret == 0) {
 				break;
 			}
@@ -943,7 +1003,8 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 								   cell,
 								   principal,
 								   uid,
-								   try_v5_2b);
+								   use_rxk5,
+								   use_v5_2b);
 			}
 			if (ret == 0) {
 				break;
@@ -1198,7 +1259,7 @@ minikafs_log(krb5_context ctx, krb5_ccache ccache,
 				debug("trying with v5 ticket and 524 service");
 			}
 			i = minikafs_5log(ctx, ccache, options, cell,
-					  hint_principal, uid, 0);
+					  hint_principal, uid, 0, 0);
 			if (i != 0) {
 				if (options->debug) {
 					debug("v5 with 524 service afslog "
@@ -1212,7 +1273,7 @@ minikafs_log(krb5_context ctx, krb5_ccache ccache,
 				debug("trying with v5 ticket (2b)");
 			}
 			i = minikafs_5log(ctx, ccache, options, cell,
-					  hint_principal, uid, 1);
+					  hint_principal, uid, 0, 1);
 			if (i != 0) {
 				if (options->debug) {
 					debug("v5 afslog (2b) failed to \"%s\"",
@@ -1224,8 +1285,8 @@ minikafs_log(krb5_context ctx, krb5_ccache ccache,
 			if (options->debug) {
 				debug("trying with v5 ticket (rxk5)");
 			}
-			i = minikafs_5log_rxk5(ctx, ccache, options,
-					       cell, hint_principal);
+			i = minikafs_5log(ctx, ccache, options, cell,
+					  hint_principal, uid, 1, 0);
 			if (i != 0) {
 				if (options->debug) {
 					debug("v5 afslog (rxk5) failed to \"%s\"",
@@ -1280,7 +1341,7 @@ encode_uint64(char *buffer, uint64_t num)
 	return 8;
 }
 static int
-encode_bytes(char *buffer, char *bytes, int32_t num)
+encode_bytes(char *buffer, const char *bytes, int32_t num)
 {
 	int32_t pad;
 	pad = (num % 4) ? (4 - (num % 4)) : 0;
@@ -1293,7 +1354,7 @@ encode_bytes(char *buffer, char *bytes, int32_t num)
 	return num + pad;
 }
 static int
-encode_ubytes(char *buffer, unsigned char *bytes, int32_t num)
+encode_ubytes(char *buffer, const unsigned char *bytes, int32_t num)
 {
 	int32_t pad;
 	pad = (num % 4) ? (4 - (num % 4)) : 0;
@@ -1329,6 +1390,17 @@ encode_data(char *buffer, krb5_data *data)
 	int32_t total = 0;
 	encode_fixed(encode_int32, buffer, data->length);
 	encode_variable(encode_bytes, buffer, data->data, data->length);
+	return total;
+}
+static int
+encode_string(char *buffer, const char *string, ssize_t length)
+{
+	int32_t total = 0;
+	if (length == -1) {
+		length = strlen(string);
+	}
+	encode_fixed(encode_int32, buffer, length);
+	encode_variable(encode_bytes, buffer, string, length);
 	return total;
 }
 static int
@@ -1378,6 +1450,7 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 {
 	int32_t total = 0;
 	int i, j; 
+
 	encode_fixed(encode_principal, buffer, creds->client);
 	encode_fixed(encode_principal, buffer, creds->server);
 	encode_fixed(encode_keyblock, buffer, &creds->keyblock);
@@ -1430,21 +1503,36 @@ encode_soliton(char *buffer, krb5_creds *creds, int soliton_type)
 	}
 	return total;
 }
+
+/* Stuff a ticket and keyblock into the kernel. */
 static int
-minikafs_5log_rxk5(krb5_context ctx, krb5_ccache ccache,
-		   struct _pam_krb5_options *options,
-		   const char *cell, const char *hint_principal)
+minikafs_5settoken2(const char *cell, krb5_creds *creds)
 {
-	krb5_creds *creds = NULL;
-	char *buffer = NULL;
-	int bufsize;
-	if (creds != NULL) {
-		bufsize = encode_soliton(NULL, creds, SOLITON_RXK5);
-		buffer = malloc(bufsize);
-		if (buffer != NULL) {
-			encode_soliton(buffer, creds, SOLITON_RXK5);
-			free(buffer);
-		}
+	struct minikafs_ioblock iob;
+	int i, bufsize, soliton_size;
+	char *buffer, *bufptr;
+
+	soliton_size = encode_soliton(NULL, creds, SOLITON_RXK5);
+	bufsize = encode_int32(NULL, 0) +
+		  encode_string(NULL, cell, -1) +
+		  encode_int32(NULL, 1) +
+		  encode_int32(NULL, soliton_size) +
+		  soliton_size;
+	buffer = malloc(bufsize);
+	i = -1;
+	if (buffer != NULL) {
+		bufptr = buffer;
+		bufptr += encode_int32(bufptr, 0); /* flags */
+		bufptr += encode_string(bufptr, cell, -1); /* cell */
+		bufptr += encode_int32(bufptr, 1); /* number of tokens */
+		bufptr += encode_int32(bufptr, soliton_size); /* size of tok */
+		bufptr += encode_soliton(bufptr, creds, SOLITON_RXK5); /* tok */
+		iob.in = buffer;
+		iob.insize = bufptr - buffer;
+		iob.out = NULL;
+		iob.outsize = 0;
+		i = minikafs_pioctl(NULL, minikafs_pioctl_settoken2, &iob);
+		free(buffer);
 	}
-	return -1;
+	return i;
 }
