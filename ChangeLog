@@ -1,4 +1,12 @@
 2008-02-07:
+	* README,configure.ac,src/options.c,src/tokens.c,src/afs5log.c,
+	src/afs5log.1.in,src/pam_krb5.5.in: add a "token_strategy" option
+	to pam_krb5, and a matching "-s" option to afs5log.  That, in
+	combination being able to specify the best guess at the principal name
+	for a cell, should really let people cut down on what's getting to be
+	a large set of round trips to the KDC.
+
+2008-02-07:
 	* configure.ac: get the sense of --enable-keyutils right, so that we
 	warn when it's not requested, and error when it's requested, instead
 	of the other way around.

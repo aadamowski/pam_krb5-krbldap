@@ -1,3 +1,6 @@
+- 2.2.23: * added the ability to set up tokens in the rxk5 format
+	  * added the "token_strategy" option to control which methods we'll
+	    try to use for setting tokens
 - 2.2.22: * all options which took true/false before ("debug", "tokens", and
 	    so on) can now take service names
 - 2.2.21: * fix permissions problems on keyring ccaches, so that users can write

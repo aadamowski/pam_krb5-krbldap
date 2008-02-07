@@ -34,7 +34,8 @@ o ccname_template=FILE:%d/krb5cc_%U_XXXXXX
 o existing_ticket
   Use the presence of a TGT for the user's realm in the default ccache as
   sufficient proof of the user's identity.  If you're not also validating
-  credentials, then THIS IS VERY DANGEROUS.
+  credentials every time and in every way they are obtained, then THIS IS VERY
+  DANGEROUS.
 o external
   external = service1 service2
   Attempt to reuse credentials stored in a ccache pointed to by the KRB5CCNAME
@@ -87,7 +88,8 @@ o mappings = regex regex [regex regex...]
   Note that this will frequently require the reverse to be configured by
   setting up an auth_to_local rule elsewhere in krb5.conf.
 o minimum_uid=NUMBER
-  Default keytab to use when validating initial credentials.
+  Minimum UID which the user must have before pam_krb5.so will attempt to
+  authenticate that user, otherwise it will ignore the user.
 o no_user_check
   Go ahead and authenticate users for whom getpwnam() returns no information.
   Credential cache and ticket files will be created and owned by the current
@@ -115,9 +117,21 @@ o ticket_lifetime
   3) the configured maximum ticket life for your user principal, and 4) the
   maximum allowable lifetime specified in your KDC's configuration.
 o tokens
+  tokens = service1 service2
   Create a new AFS PAG and obtain AFS tokens during the authentication phase.
   By default, tokens are obtained for the local cell (and the cell which
   contains the user's home directory, if they're not the same).
+o tokens_strategy
+  Override how the module attempts to get credentials and set AFS tokens.
+  By default, the module supports these methods:
+    v4    Get krb4 credentials and use the traditional rxkad token format.
+    524   Convert krb5 credentials to krb4 credentials with the help of a
+          running 524 service, and use the traditional rxkad token format.
+    2b    Get krb5 credentials, and use the "2b" rxkad token format, which
+          is only supported in OpenAFS 1.2.8 and later.
+    rxk5  Get krb5 credentials, and use the rxk5 token format, which may be
+          supported in OpenAFS 1.6 and later.
+  The default list of methods, and their order, is noted in the manual pages.
 o use_shmem
   use_shmem = service1 service2
   Pass credentials from authentication to session management using shared
@@ -128,7 +142,8 @@ o use_shmem
 o validate
   validate = service1 service2
   Validate initial credentials.  By default, credentials are validated if
-  the specified keytab file can be read.
+  the specified keytab file can be read, using the first service for which
+  a key is found.
 
 Configuration file only:
 o afs_cells = cell1 cell2 cell3 cell4=afs/cell4@EXAMPLE.COM

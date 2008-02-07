@@ -24,6 +24,15 @@ does its work.  Use more than once to get more detail.
 Determine which cell the specified \fIpath\fP resides in, and obtain tokens for
 that cell.
 .TP
+-s \fIstrategy\fP
+Overrides the default token-setting strategy
+("\fI@DEFAULT_TOKEN_STRATEGY@\fP") with
+the named strategy.  Recognized strategy names include:
+ \fIrxk5\fP  rxk5 (requires OpenAFS 1.6 or later)
+ \fI2b\fP    rxkad "2b" (requires OpenAFS 1.2.8 or later)
+@MAN_KRB4@ \fI524\fP   Kerberos 524 service + traditional Kerberos IV
+@MAN_KRB4@ \fIv4\fP    traditional Kerberos IV
+.TP
 -5
 Skip attempts to use Kerberos IV and just use \fI2b\fP-style tokens, which are
 only supported by OpenAFS 1.2.8 and later.

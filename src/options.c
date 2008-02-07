@@ -741,6 +741,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		debug("pwhelp: %s", options->pwhelp);
 	}
 
+	options->token_strategy = option_s(argc, argv,
+					   ctx, options->realm,
+					   "token_strategy", "");
+	if (strlen(options->token_strategy) == 0) {
+		xstrfree(options->token_strategy);
+		options->token_strategy = xstrdup(DEFAULT_TOKEN_STRATEGY);
+	}
+	if (options->debug && options->token_strategy) {
+		debug("token strategy: %s", options->token_strategy);
+	}
+
 	options->hosts = option_l(argc, argv,
 				  ctx, options->realm, "hosts", "");
 	if (options->hosts) {

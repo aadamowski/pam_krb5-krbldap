@@ -70,6 +70,7 @@ struct _pam_krb5_options {
 	char *keytab;
 	char *pwhelp;
 	char *realm;
+	char *token_strategy;
 	char **hosts;
 
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT

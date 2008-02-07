@@ -62,10 +62,20 @@
 extern char *log_progname;
 
 static void
-set_methods(int *methods, int max_methods,
+set_methods(const char *strategy, int *methods, int max_methods,
 	    int try_v5_2b_only, int try_rxk5_only)
 {
-	int i = 0;
+	int i = 0, j;
+	struct {
+		const char *name; int method;
+	} method_names[] = {
+		{"v4", MINIKAFS_METHOD_V4},
+		{"524", MINIKAFS_METHOD_V5_V4},
+		{"2b", MINIKAFS_METHOD_V5_2B},
+		{"rxk5", MINIKAFS_METHOD_RXK5}
+	};
+	const char *p, *q;
+
 	memset(methods, 0, sizeof(methods[0]) * max_methods);
 	if (try_rxk5_only) {
 		methods[i++] = MINIKAFS_METHOD_RXK5;
@@ -73,17 +83,20 @@ set_methods(int *methods, int max_methods,
 		if (try_v5_2b_only) {
 			methods[i++] = MINIKAFS_METHOD_V5_2B;
 		} else {
-			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_V5_2B;
-			}
-			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_RXK5;
-			}
-			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_V5_V4;
-			}
-			if (i < max_methods) {
-				methods[i++] = MINIKAFS_METHOD_V4;
+			p = strategy;
+			while (strlen(p) > 0) {
+				q = p + strcspn(p, ",");
+				for (j = 0;
+				     j < sizeof(method_names) /
+				         sizeof(method_names[0]);
+				     j++) {
+					if (strncmp(p,
+						    method_names[j].name,
+						    strlen(method_names[j].name)) == 0) {
+						methods[i++] = method_names[j].method;
+					}
+				}
+				p = q + strspn(q, ",");
 			}
 		}
 	}
@@ -93,9 +106,9 @@ int
 main(int argc, char **argv)
 {
 	char local[PATH_MAX], home[PATH_MAX], path[PATH_MAX];
-	char *homedir, *cell, *principal, *pathdir;
+	char *homedir, *cell, *principal, *pathdir, *strategy;
 	int i, j, try_v5_2b_only, try_rxk5_only, cells, process_options;
-	int methods[5];
+	int methods[8];
 	krb5_context ctx;
 	krb5_ccache ccache;
 	uid_t uid;
@@ -109,6 +122,7 @@ main(int argc, char **argv)
 	try_rxk5_only = 0;
 	cells = 0;
 	log_progname = "afs5log";
+	strategy = DEFAULT_TOKEN_STRATEGY;
 	uid = getuid();
 	memset(&log_options, 0, sizeof(log_options));
 	memset(&ccache, 0, sizeof(ccache));
@@ -171,7 +185,7 @@ main(int argc, char **argv)
 						debug("cell of \"%s\" is "
 						      "\"%s\"", pathdir, path);
 					}
-					set_methods(methods,
+					set_methods(strategy, methods,
 						    sizeof(methods) /
 						    sizeof(methods[0]),
 						    try_v5_2b_only,
@@ -186,9 +200,14 @@ main(int argc, char **argv)
 					}
 				}
 				break;
+			case 's':
+				i++;
+				strategy = argv[i];
+				break;
 			default:
-				printf("%s: [ [-v] [-5] [-k] [-p path] "
-				       "[cell[=principal]] ] [...]\n", argv[0]);
+				printf("%s: [ [-v] [-5] [-k] [-s strategy] "
+				       "[-p path] [cell[=principal]] ] [...]\n",
+				       argv[0]);
 				krb5_free_context(ctx);
 				exit(0);
 				break;
@@ -201,7 +220,7 @@ main(int argc, char **argv)
 				*principal = '\0';
 				principal++;
 			}
-			set_methods(methods,
+			set_methods(strategy, methods,
 				    sizeof(methods) / sizeof(methods[0]),
 				    try_v5_2b_only, try_rxk5_only);
 			j = minikafs_log(NULL, ccache, &log_options,
@@ -221,7 +240,7 @@ main(int argc, char **argv)
 			if (log_options.debug) {
 				debug("local cell is \"%s\"", local);
 			}
-			set_methods(methods,
+			set_methods(strategy, methods,
 				    sizeof(methods) / sizeof(methods[0]),
 				    try_v5_2b_only, try_rxk5_only);
 			j = minikafs_log(NULL, ccache, &log_options,
@@ -244,7 +263,7 @@ main(int argc, char **argv)
 				if (log_options.debug) {
 					debug("home cell is \"%s\"", home);
 				}
-				set_methods(methods,
+				set_methods(strategy, methods,
 					    sizeof(methods) /
 					    sizeof(methods[0]),
 					    try_v5_2b_only, try_rxk5_only);

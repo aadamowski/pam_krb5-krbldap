@@ -337,18 +337,23 @@ fi
 
 AC_ARG_ENABLE(default-realm,AC_HELP_STRING([--enable-default-realm=REALM],[last-ditch fallback realm (default is EXAMPLE.COM)]),default_realm=$enableval,default_realm=EXAMPLE.COM)
 AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name which will be used if no realm is given as a parameter and none is given in krb5.conf.])
-AC_MSG_RESULT([Using "$default_realm" as the default realm])
+AC_MSG_RESULT([Using "$default_realm" as the default realm.])
 AC_ARG_ENABLE(default-ccache-dir,AC_HELP_STRING([--enable-default-ccache-dir=DIRECTORY],[default directory in which ccache files will be stored (default is /tmp)]),default_ccache_dir=$enableval,default_ccache_dir=/tmp)
 AC_DEFINE_UNQUOTED(DEFAULT_CCACHE_DIR,"$default_ccache_dir",[Define to the name of the directory in which ccache files will be stored by default.])
 AC_ARG_ENABLE(default-ccname-template,AC_HELP_STRING([--enable-default-ccname-template=TEMPLATE],[default location to store the user's session-specific credentials (default is CCACHE_DIR/krb5cc_%U_XXXXXX)]),default_ccname_template=$enableval,default_ccname_template=FILE:%d/krb5cc_%U_XXXXXX)
 AC_DEFINE_UNQUOTED(DEFAULT_CCNAME_TEMPLATE,"$default_ccname_template",[Define to the template used to generate name of the user's ccache.])
-AC_MSG_RESULT([Using "$default_ccache_dir" to store ccache files])
-AC_MSG_RESULT([Using "$default_ccname_template" to store the user's ccache])
+AC_MSG_RESULT([Using "$default_ccache_dir" to store ccache files.])
+AC_MSG_RESULT([Using "$default_ccname_template" to store the user's ccache.])
 AC_ARG_ENABLE(default-keytab-location,AC_HELP_STRING([--enable-default-keytab-location=FILE:/etc/krb5.keytab],[default location for local keys used for verifying TGTs (default is FILE:/etc/krb5.keytab)]),default_keytab=$enableval,default_keytab=FILE:/etc/krb5.keytab)
 AC_DEFINE_UNQUOTED(DEFAULT_KEYTAB_LOCATION,"$default_keytab",[Define to the default location for your keytab file, which will be used for verifying TGTs.])
 DEFAULT_KEYTAB="$default_keytab"
 AC_SUBST(DEFAULT_KEYTAB)
-AC_MSG_RESULT([Using "$default_keytab" as the default keytab])
+AC_MSG_RESULT([Using "$default_keytab" as the default keytab.])
+AC_ARG_ENABLE(default-token-strategy,AC_HELP_STRING([--enable-default-token-strategy=STRATEGY],[default list of methods pam_krb5 should attempt to use to set AFS tokens (default is v4,524,2b,rxk5)]),default_token_strategy=$enableval,default_token_strategy=[v4,524,2b,rxk5])
+AC_DEFINE_UNQUOTED(DEFAULT_TOKEN_STRATEGY,"$default_token_strategy",[Define to the ordered list of methods which should be used when attempting to set AFS tokens.])
+DEFAULT_TOKEN_STRATEGY="$default_token_strategy"
+AC_SUBST(DEFAULT_TOKEN_STRATEGY)
+AC_MSG_RESULT([Using "$default_token_strategy" as the default token-setting strategy.])
 
 PAM_KRB5_APPNAME=pam
 AC_DEFINE_UNQUOTED(PAM_KRB5_APPNAME,"$PAM_KRB5_APPNAME",[Define to the application name, which defines which appdefaults section will be expected to hold this module's configuration in krb5.conf.])

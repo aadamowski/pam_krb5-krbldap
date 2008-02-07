@@ -101,16 +101,16 @@ tokens_obtain(krb5_context context,
 	struct stat st;
 	krb5_ccache ccache;
 	uid_t uid;
-	const int methods_2b_first[] = {MINIKAFS_METHOD_V5_2B,
-					MINIKAFS_METHOD_RXK5,
-					MINIKAFS_METHOD_V5_V4,
-					MINIKAFS_METHOD_V4,
-					0};
-	const int methods_v4_first[] = {MINIKAFS_METHOD_V5_V4,
-					MINIKAFS_METHOD_V4,
-					MINIKAFS_METHOD_V5_2B,
-					MINIKAFS_METHOD_RXK5,
-					0};
+	const struct {
+		const char *name; int method;
+	} method_names[] = {
+		{"v4", MINIKAFS_METHOD_V4},
+		{"524", MINIKAFS_METHOD_V5_V4},
+		{"2b", MINIKAFS_METHOD_V5_2B},
+		{"rxk5", MINIKAFS_METHOD_RXK5}
+	};
+	int *methods, n_methods;
+	const char *p, *q;
 
 	if (options->debug) {
 		debug("obtaining afs tokens");
@@ -146,6 +146,26 @@ tokens_obtain(krb5_context context,
 #ifndef USE_KRB4
 	use_2b = 1;
 #endif
+	/* Parse the token_strategy option. */
+	methods = malloc((strlen(options->token_strategy) + 1) * sizeof(int));
+	if (methods == NULL) {
+		return PAM_BUF_ERR;
+	}
+	memset(methods, 0, (strlen(options->token_strategy) + 1) * sizeof(int));
+	n_methods = 0;
+	p = options->token_strategy;
+	while (strlen(p) > 0) {
+		q = p + strcspn(p, ",");
+		for (i = 0;
+		     i < sizeof(method_names) / sizeof(method_names[0]);
+		     i++) {
+			if (strncmp(p, method_names[i].name,
+				    strlen(method_names[i].name)) == 0) {
+				methods[n_methods++] = method_names[i].method;
+			}
+		}
+		p = q + strspn(q, ",");
+	}
 
 	/* Open the ccache. */
 	memset(&ccache, 0, sizeof(ccache));
@@ -173,8 +193,7 @@ tokens_obtain(krb5_context context,
 		}
 		ret = minikafs_log(context, ccache, options,
 				   localcell, NULL, uid,
-				   use_2b ? methods_2b_first : methods_v4_first,
-				   -1);
+				   methods, n_methods);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -224,8 +243,7 @@ tokens_obtain(krb5_context context,
 		}
 		ret = minikafs_log(context, ccache, options,
 				   homecell, NULL, uid,
-				   use_2b ? methods_2b_first : methods_v4_first,
-				   -1);
+				   methods, n_methods);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
@@ -265,8 +283,7 @@ tokens_obtain(krb5_context context,
 		ret = minikafs_log(context, ccache, options,
 				   options->afs_cells[i].cell,
 				   options->afs_cells[i].principal_name, uid,
-				   use_2b ? methods_2b_first : methods_v4_first,
-				   -1);
+				   methods, n_methods);
 		if (ret != 0) {
 			if (stash->v5attempted != 0) {
 				warn("got error %d (%s) while obtaining "
