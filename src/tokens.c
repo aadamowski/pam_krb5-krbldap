@@ -102,12 +102,14 @@ tokens_obtain(krb5_context context,
 	krb5_ccache ccache;
 	uid_t uid;
 	const int methods_2b_first[] = {MINIKAFS_METHOD_V5_2B,
+					MINIKAFS_METHOD_RXK5,
 					MINIKAFS_METHOD_V5_V4,
 					MINIKAFS_METHOD_V4,
 					0};
 	const int methods_v4_first[] = {MINIKAFS_METHOD_V5_V4,
 					MINIKAFS_METHOD_V4,
 					MINIKAFS_METHOD_V5_2B,
+					MINIKAFS_METHOD_RXK5,
 					0};
 
 	if (options->debug) {
