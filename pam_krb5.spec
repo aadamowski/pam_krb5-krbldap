@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.21
+Version: 2.2.22
 Release: 1
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPL+
@@ -48,6 +48,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Fri Feb  8 2008 Nalin Dahyabhai <nalin@redhat.com> - 2.2.22-1
+- make sure we don't fall out of the calling process's PAG when we check
+  the .k5login (fallout from #371761)
+- make most boolean options controllable on a per-service basis
+
 * Fri Nov  9 2007 Nalin Dahyabhai <nalin@redhat.com> - 2.2.21-1
 - make sure that we have tokens when checking the user's .k5login (#371761)
 
