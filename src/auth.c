@@ -72,7 +72,7 @@
 #include "v4.h"
 #include "xstr.h"
 
-#ident "$Id$
+#ident "$Id$"
 
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags,
