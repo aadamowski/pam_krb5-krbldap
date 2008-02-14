@@ -576,7 +576,7 @@ v4_get_creds(krb5_context ctx,
 #ifdef HAVE_KRB5_524_CONVERT_CREDS
 		if (options->debug) {
 			debug("converting v5 creds to v4 creds (etype = %d)",
-			      in_creds ? v5_creds_get_etype(ctx, in_creds) : 0);
+			      in_creds ? v5_creds_get_etype(in_creds) : 0);
 		}
 		if ((in_creds != NULL) &&
 		    (v5_creds_check_initialized(ctx, in_creds) == 0)) {
@@ -603,7 +603,7 @@ v4_get_creds(krb5_context ctx,
 #ifdef HAVE_KRB524_CONVERT_CREDS_KDC
 		if (options->debug) {
 			debug("converting v5 creds to v4 creds (etype = %d)",
-			      in_creds ? v5_creds_get_etype(ctx, in_creds) : 0);
+			      in_creds ? v5_creds_get_etype(in_creds) : 0);
 		}
 		if ((in_creds != NULL) &&
 		    (v5_creds_check_initialized(ctx, in_creds) == 0)) {

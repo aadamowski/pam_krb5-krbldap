@@ -352,53 +352,94 @@ v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 }
 #endif
 
-#if defined(HAVE_STRUCT_KRB5_PRINCIPAL_DATA_DATA)
+#if defined(HAVE_KRB5_PRINCIPAL_DATA) && defined(HAVE_KRB5_PRINCIPAL_DATA_REALM_LENGTH) && defined(HAVE_KRB5_PRINCIPAL_DATA_REALM_DATA) && defined(HAVE_KRB5_PRINCIPAL_DATA_LENGTH) && defined(HAVE_KRB5_PRINCIPAL_DATA_DATA)
+int
+v5_princ_component_count(krb5_principal princ)
+{
+	return princ->length;
+}
+int
+v5_princ_component_length(krb5_principal princ, int i)
+{
+	return princ->data[i].length;
+}
+const char *
+v5_princ_component_contents(krb5_principal princ, int i)
+{
+	return princ->data[i].data;
+}
+int
+v5_princ_realm_length(krb5_principal princ)
+{
+	return princ->realm.length;
+}
+const char *
+v5_princ_realm_contents(krb5_principal princ)
+{
+	return princ->realm.data;
+}
+#elif defined(HAVE_KRB5_PRINCIPAL_DATA) && defined(HAVE_KRB5_PRINCIPAL_DATA_REALM) && defined(HAVE_KRB5_PRINCIPAL_DATA_NAME_NAME_STRING_LEN) && defined(HAVE_KRB5_PRINCIPAL_DATA_NAME_NAME_STRING_VAL)
+int
+v5_princ_component_count(krb5_principal princ)
+{
+	return princ->name.name_string.len;
+}
+int
+v5_princ_component_length(krb5_principal princ, int i)
+{
+	return strlen(princ->name.name_string.val[i]);
+}
+const char *
+v5_princ_component_contents(krb5_principal princ, int i)
+{
+	return princ->name.name_string.val[i];
+}
+int
+v5_princ_realm_length(krb5_principal princ)
+{
+	return strlen(princ->realm);
+}
+const char *
+v5_princ_realm_contents(krb5_principal princ)
+{
+	return princ->realm;
+}
+#else
+#error "Don't know how to read principal name components!"
+#endif
+
 static int
 v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 {
 	int i;
 	krb5_principal temp;
-	krb5_data *c1, *c2;
 	temp = NULL;
 	if ((i = krb5_parse_name(ctx, name, &temp)) != 0) {
 		return i;
 	}
-	if (krb5_princ_size(ctx, princ) != krb5_princ_size(ctx, temp)) {
+	if (v5_princ_component_count(princ) != v5_princ_component_count(temp)) {
 		krb5_free_principal(ctx, temp);
 		return 1;
 	}
-	for (i = 0; i < krb5_princ_size(ctx, princ); i++) {
-		c1 = krb5_princ_component(ctx, princ, i);
-		c2 = krb5_princ_component(ctx, temp, i);
-		if ((c1->length != c2->length) ||
-		    (memcmp(c1->data, c2->data, c1->length) != 0)) {
+	for (i = 0; i < v5_princ_component_count(princ); i++) {
+		if ((v5_princ_component_length(princ, i) !=
+		     v5_princ_component_length(temp, i)) ||
+		    (memcmp(v5_princ_component_contents(princ, i),
+		            v5_princ_component_contents(temp, i),
+			    v5_princ_component_length(princ, i)) != 0)) {
 			break;
 		}
 	}
 	krb5_free_principal(ctx, temp);
-	if (i == krb5_princ_size(ctx, princ)) {
+	if (i == v5_princ_component_count(princ)) {
 		return 0;
 	}
 	return 1;
 }
-#elif defined(HAVE_STRUCT_PRINCIPAL_NAME)
-static int
-v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
-{
-	if (princ->name.name_string.len != strlen(name)) {
-		return 1;
-	}
-	if (memcmp(princ->name.name_string.val, name,
-		   princ->name.name_string.len) != 0) {
-		return 1;
-	}
-	return 0;
-}
-#endif
 
-#if defined(HAVE_KRB5_CREDS_KEYBLOCK) && defined(HAVE_KRB5_KEYBLOCK_ENCTYPE)
+#if defined(HAVE_KRB5_CREDS_KEYBLOCK) && defined(HAVE_KRB5_KEYBLOCK_ENCTYPE) && defined(HAVE_KRB5_KEYBLOCK_LENGTH) && defined(HAVE_KRB5_KEYBLOCK_CONTENTS)
 int
-v5_creds_get_etype(krb5_context ctx, krb5_creds *creds)
+v5_creds_get_etype(krb5_creds *creds)
 {
 	return creds->keyblock.enctype;
 }
@@ -431,14 +472,14 @@ v5_creds_key_length(krb5_creds *creds)
 {
 	return creds->keyblock.length;
 }
-unsigned char *
+const unsigned char *
 v5_creds_key_contents(krb5_creds *creds)
 {
 	return creds->keyblock.contents;
 }
-#elif defined(HAVE_KRB5_CREDS_SESSION) && defined(HAVE_KRB5_KEYBLOCK_KEYTYPE)
+#elif defined(HAVE_KRB5_CREDS_SESSION) && defined(HAVE_KRB5_KEYBLOCK_KEYTYPE) && defined(HAVE_KRB5_KEYBLOCK_KEYVALUE)
 int
-v5_creds_get_etype(krb5_context ctx, krb5_creds *creds)
+v5_creds_get_etype(krb5_creds *creds)
 {
 	return creds->session.keytype;
 }
@@ -464,13 +505,147 @@ v5_creds_key_length(krb5_creds *creds)
 {
 	return creds->session.keyvalue.length;
 }
-unsigned char *
+const unsigned char *
 v5_creds_key_contents(krb5_creds *creds)
 {
 	return creds->session.keyvalue.data;
 }
 #else
 #error "Don't know how to read/write key types for your Kerberos implementation!"
+#endif
+
+#if defined(HAVE_KRB5_ADDRESSES) && defined(HAVE_KRB5_ADDRESS_ADDR_TYPE) && defined(HAVE_KRB5_ADDRESS_ADDRESS)
+int
+v5_creds_address_count(krb5_creds *creds)
+{
+	return creds->addresses.len;
+}
+int
+v5_creds_address_type(krb5_creds *creds, int i)
+{
+	return creds->addresses.val[i].addr_type;
+}
+int
+v5_creds_address_length(krb5_creds *creds, int i)
+{
+	return creds->addresses.val[i].address.length;
+}
+const unsigned char *
+v5_creds_address_contents(krb5_creds *creds, int i)
+{
+	return creds->addresses.val[i].address.data;
+}
+#elif defined(HAVE_KRB5_ADDRESS_ADDRTYPE) && defined(HAVE_KRB5_ADDRESS_LENGTH) && defined(HAVE_KRB5_ADDRESS_CONTENTS)
+int
+v5_creds_address_count(krb5_creds *creds)
+{
+	int i;
+	for (i = 0;
+	     (creds->addresses != NULL) && (creds->addresses[i] != NULL);
+	     i++) {
+		continue;
+	}
+	return i;
+}
+int
+v5_creds_address_type(krb5_creds *creds, int i)
+{
+	return creds->addresses ? creds->addresses[i]->addrtype : 0;
+}
+int
+v5_creds_address_length(krb5_creds *creds, int i)
+{
+	return creds->addresses ? creds->addresses[i]->length : 0;
+}
+const unsigned char *
+v5_creds_address_contents(krb5_creds *creds, int i)
+{
+	return creds->addresses ? creds->addresses[i]->contents : NULL;
+}
+#else
+#error "Don't know how to read addresses for your Kerberos implementation!"
+#endif
+
+#if defined(HAVE_KRB5_AUTHDATA_VAL__AD_TYPE) && defined(HAVE_KRB5_AUTHDATA_VAL__AD_DATA_LENGTH) && defined(HAVE_KRB5_AUTHDATA_VAL__AD_DATA_DATA)
+int
+v5_creds_authdata_count(krb5_creds *creds)
+{
+	return creds->authdata.len;
+}
+int
+v5_creds_authdata_type(krb5_creds *creds, int i)
+{
+	return creds->authdata.val[i].ad_type;
+}
+int
+v5_creds_authdata_length(krb5_creds *creds, int i)
+{
+	return creds->authdata.val[i].ad_data.length;
+}
+const unsigned char *
+v5_creds_authdata_contents(krb5_creds *creds, int i)
+{
+	return creds->authdata.val[i].ad_data.data;
+}
+#elif defined(HAVE_KRB5_AUTHDATA_AD_TYPE) && defined(HAVE_KRB5_AUTHDATA_LENGTH) && defined(HAVE_KRB5_AUTHDATA_CONTENTS)
+int
+v5_creds_authdata_count(krb5_creds *creds)
+{
+	int i;
+	for (i = 0;
+	     (creds->authdata != NULL) && (creds->authdata[i] != NULL);
+	     i++) {
+		continue;
+	}
+	return i;
+}
+int
+v5_creds_authdata_type(krb5_creds *creds, int i)
+{
+	return creds->authdata ? creds->authdata[i]->ad_type : 0;
+}
+int
+v5_creds_authdata_length(krb5_creds *creds, int i)
+{
+	return creds->authdata ? creds->authdata[i]->length : 0;
+}
+const unsigned char *
+v5_creds_authdata_contents(krb5_creds *creds, int i)
+{
+	return creds->authdata ? creds->authdata[i]->contents : NULL;
+}
+#else
+#error "Don't know how to read authdata for your Kerberos implementation!"
+#endif
+
+#if defined(HAVE_KRB5_CREDS_IS_SKEY)
+krb5_boolean
+v5_creds_get_is_skey(krb5_creds *creds)
+{
+	return creds->is_skey;
+}
+#else
+krb5_boolean
+v5_creds_get_is_skey(krb5_creds *creds)
+{
+	return 0;
+}
+#endif
+
+#if defined(HAVE_KRB5_CREDS_FLAGS)
+krb5_flags
+v5_creds_get_flags(krb5_creds *creds)
+{
+	return creds->flags.i;
+}
+#elif defined(HAVE_KRB5_CREDS_TICKET_FLAGS)
+krb5_flags
+v5_creds_get_flags(krb5_creds *creds)
+{
+	return creds->ticket_flags;
+}
+#else
+#error "Don't know how to read ticket flags for your Kerberos implementation!"
 #endif
 
 #ifdef HAVE_KRB5_CONST_REALM
@@ -771,7 +946,7 @@ v5_get_creds(krb5_context ctx,
 			}
 			free(opt);
 		} else {
-			warn("error resolving pkinit identity template \"%s\" ",
+			warn("error resolving pkinit identity template \"%s\" "
 			     "to a useful value", options->pkinit_identity);
 		}
 #endif
@@ -1042,7 +1217,7 @@ v5_get_creds_etype(krb5_context ctx,
 	}
 
 	/* Check for the simple case -- do we already have such creds? */
-	if (v5_creds_get_etype(ctx, current_creds) == wanted_etype) {
+	if (v5_creds_get_etype(current_creds) == wanted_etype) {
 		return krb5_copy_creds(ctx, current_creds, target_creds);
 	}
 

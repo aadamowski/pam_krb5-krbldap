@@ -1,4 +1,13 @@
 2008-02-14:
+	* src/v5.c,src/v5.h(v5_creds_get_etype): remove the need for the
+	context pointer.
+	* src/v5.c,src/v5.h(v5_creds_key_contents): return const data.
+	* src/v5.c,src/v5.h: add functions for picking out principal name
+	components and addresses and authdata from creds structures.
+	* src/v5.c(v5_principal_compare): rewrite to use these new functions.
+	* src/v5.c(v5_get_creds): correctly log the pkinit identity template.
+
+2008-02-14:
 	* src/tokens.c,src/afs5log.c: only recognize "v4" and "524" strategies
 	if we're building with krb4 support.
 

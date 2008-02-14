@@ -80,7 +80,7 @@ void v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 
 int v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds);
 int v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds);
-int v5_creds_get_etype(krb5_context ctx, krb5_creds *creds);
+int v5_creds_get_etype(krb5_creds *creds);
 void v5_creds_set_etype(krb5_context ctx, krb5_creds *creds, int etype);
 
 void v5_free_unparsed_name(krb5_context ctx, char *name);
@@ -105,7 +105,23 @@ int v5_set_principal_realm(krb5_context ctx, krb5_principal *principal,
 int v5_cc_retrieve_match(void);
 
 int v5_creds_key_length(krb5_creds *creds);
-unsigned char *v5_creds_key_contents(krb5_creds *creds);
+const unsigned char *v5_creds_key_contents(krb5_creds *creds);
+krb5_flags v5_creds_get_flags(krb5_creds *creds);
+krb5_boolean v5_creds_get_is_skey(krb5_creds *creds);
+int v5_creds_address_count(krb5_creds *creds);
+int v5_creds_address_type(krb5_creds *creds, int i);
+int v5_creds_address_length(krb5_creds *creds, int i);
+const unsigned char *v5_creds_address_contents(krb5_creds *creds, int i);
+int v5_creds_authdata_count(krb5_creds *creds);
+int v5_creds_authdata_type(krb5_creds *creds, int i);
+int v5_creds_authdata_length(krb5_creds *creds, int i);
+const unsigned char *v5_creds_authdata_contents(krb5_creds *creds, int i);
+int v5_princ_component_count(krb5_principal princ);
+int v5_princ_component_type(krb5_principal princ, int i);
+int v5_princ_component_length(krb5_principal princ, int i);
+const char *v5_princ_component_contents(krb5_principal princ, int i);
+int v5_princ_realm_length(krb5_principal princ);
+const char *v5_princ_realm_contents(krb5_principal princ);
 
 krb5_error_code v5_alloc_get_init_creds_opt(krb5_context ctx,
 					    krb5_get_init_creds_opt **opt);
