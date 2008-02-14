@@ -149,7 +149,7 @@ struct minikafs_ioblock {
 };
 
 /* The portion of a token which includes our own key and other bookkeeping
- * stuff.  Along with a magic blob used by rxkad, the guts of tokens. */
+ * stuff.  Along with a magic blob used by rxkad, the guts of rxkad tokens. */
 struct minikafs_plain_token {
 	uint32_t kvno;
 	char key[8];
@@ -1410,33 +1410,13 @@ encode_string(char *buffer, const char *string, ssize_t length)
 	return total;
 }
 static int
-encode_keyblock(char *buffer, krb5_keyblock *keyblock)
+encode_creds_keyblock(char *buffer, krb5_creds *creds)
 {
 	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, keyblock->enctype);
-	encode_fixed(encode_int32, buffer, keyblock->length);
-	encode_variable(encode_ubytes, buffer, keyblock->contents,
-			keyblock->length);
-	return total;
-}
-static int
-encode_address(char *buffer, krb5_address *address)
-{
-	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, address->addrtype);
-	encode_fixed(encode_int32, buffer, address->length);
-	encode_variable(encode_ubytes, buffer, address->contents,
-			address->length);
-	return total;
-}
-static int
-encode_authdata(char *buffer, krb5_authdata *authdata)
-{
-	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, authdata->ad_type);
-	encode_fixed(encode_int32, buffer, authdata->length);
-	encode_variable(encode_ubytes, buffer, authdata->contents,
-			authdata->length);
+	encode_fixed(encode_int32, buffer, v5_creds_get_etype(creds));
+	encode_fixed(encode_int32, buffer, v5_creds_key_length(creds));
+	encode_variable(encode_ubytes, buffer, v5_creds_key_contents(creds),
+			v5_creds_key_length(creds));
 	return total;
 }
 static int
@@ -1444,50 +1424,59 @@ encode_principal(char *buffer, krb5_principal princ)
 {
 	int32_t total = 0;
 	int i;
-	encode_fixed(encode_int32, buffer, krb5_princ_size(NULL, princ));
-	for (i = 0; i < krb5_princ_size(NULL, princ); i++) { /* XXX */
-		encode_fixed(encode_data, buffer, krb5_princ_component(NULL, princ, i));
+	encode_fixed(encode_int32, buffer, v5_princ_component_count(princ));
+	for (i = 0; i < v5_princ_component_count(princ); i++) {
+		encode_fixed(encode_int32, buffer,
+			     v5_princ_component_length(princ, i));
+		encode_variable(encode_bytes, buffer,
+				v5_princ_component_contents(princ, i),
+				v5_princ_component_length(princ, i));
 	}
-	encode_fixed(encode_data, buffer, krb5_princ_realm(NULL, princ));
+	encode_fixed(encode_int32, buffer, v5_princ_realm_length(princ));
+	encode_variable(encode_bytes, buffer,
+			v5_princ_realm_contents(princ),
+			v5_princ_realm_length(princ));
 	return total;
 }
 static int
 encode_token_rxk5(char *buffer, krb5_creds *creds)
 {
 	int32_t total = 0;
-	int i, j; 
+	int i; 
 
 	encode_fixed(encode_principal, buffer, creds->client);
 	encode_fixed(encode_principal, buffer, creds->server);
-	encode_fixed(encode_keyblock, buffer, &creds->keyblock);
+	encode_fixed(encode_creds_keyblock, buffer, creds);
 	encode_fixed(encode_uint64, buffer, creds->times.authtime);
 	encode_fixed(encode_uint64, buffer, creds->times.starttime);
 	encode_fixed(encode_uint64, buffer, creds->times.endtime);
 	encode_fixed(encode_uint64, buffer, creds->times.renew_till);
-	encode_fixed(encode_boolean, buffer, creds->is_skey);
-	encode_fixed(encode_int32, buffer, creds->ticket_flags);
+	encode_fixed(encode_boolean, buffer, v5_creds_get_is_skey(creds));
+	encode_fixed(encode_int32, buffer, v5_creds_get_flags(creds));
 
-	for (i = 0;
-	     (creds->addresses != NULL) && (creds->addresses[i] != NULL);
-	     i++) {
-		continue;
-	}
-	encode_fixed(encode_int32, buffer, i);
-	for (j = 0; j < i; j++) {
-		encode_fixed(encode_address, buffer, creds->addresses[i]);
+	encode_fixed(encode_int32, buffer, v5_creds_address_count(creds));
+	for (i = 0; i < v5_creds_address_count(creds); i++) {
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_address_type(creds, i));
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_address_length(creds, i));
+		encode_variable(encode_ubytes, buffer,
+				v5_creds_address_contents(creds, i),
+				v5_creds_address_length(creds, i));
 	}
 
 	encode_fixed(encode_data, buffer, &creds->ticket);
 	encode_fixed(encode_data, buffer, &creds->second_ticket);
 
-	for (i = 0;
-	     (creds->authdata != NULL) && (creds->authdata[i] != NULL);
-	     i++) {
-		continue;
-	}
-	encode_fixed(encode_int32, buffer, i);
-	for (j = 0; j < i; j++) {
-		encode_fixed(encode_authdata, buffer, creds->authdata[i]);
+	encode_fixed(encode_int32, buffer, v5_creds_authdata_count(creds));
+	for (i = 0; i < v5_creds_authdata_count(creds); i++) {
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_authdata_type(creds, i));
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_authdata_length(creds, i));
+		encode_variable(encode_ubytes, buffer,
+				v5_creds_authdata_contents(creds, i),
+				v5_creds_authdata_length(creds, i));
 	}
 	return total;
 }

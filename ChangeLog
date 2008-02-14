@@ -1,4 +1,8 @@
 2008-02-14:
+	* src/minikafs.c: rework formatting of tokens to use indirections
+	provided by v5.c instead of poking at creds structures directly
+
+2008-02-14:
 	* src/v5.c,src/v5.h(v5_creds_get_etype): remove the need for the
 	context pointer.
 	* src/v5.c,src/v5.h(v5_creds_key_contents): return const data.
