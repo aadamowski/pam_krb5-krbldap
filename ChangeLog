@@ -1,5 +1,9 @@
 2008-02-14:
-	* src/sly.c: suppress a compiler warning.
+	* src/password.c,src/prompter.c: suppress compiler warnings about how
+	we use prompter callback data.
+
+2008-02-14:
+	* src/sly.c: suppress a compiler warning calling tf_init().
 
 2008-02-14:
 	* src/minikafs.c: rework formatting of tokens to use indirections
