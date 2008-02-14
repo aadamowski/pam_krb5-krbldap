@@ -1,3 +1,7 @@
+2008-02-14:
+	* src/options.c: when we're debug-logging lifetimes, also log a
+	days/hours/minutes/seconds breakdown.
+
 2008-02-07:
 	* README,configure.ac,src/options.c,src/tokens.c,src/afs5log.c,
 	src/afs5log.1.in,src/pam_krb5.5.in: add a "token_strategy" option
