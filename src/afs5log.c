@@ -69,8 +69,10 @@ set_methods(const char *strategy, int *methods, int max_methods,
 	struct {
 		const char *name; int method;
 	} method_names[] = {
+#ifdef USE_KRB4
 		{"v4", MINIKAFS_METHOD_V4},
 		{"524", MINIKAFS_METHOD_V5_V4},
+#endif
 		{"2b", MINIKAFS_METHOD_V5_2B},
 		{"rxk5", MINIKAFS_METHOD_RXK5}
 	};

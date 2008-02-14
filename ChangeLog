@@ -1,4 +1,8 @@
 2008-02-14:
+	* src/tokens.c,src/afs5log.c: only recognize "v4" and "524" strategies
+	if we're building with krb4 support.
+
+2008-02-14:
 	* src/options.c: when we're debug-logging lifetimes, also log a
 	days/hours/minutes/seconds breakdown.
 
