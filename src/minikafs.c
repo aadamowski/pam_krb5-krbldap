@@ -684,9 +684,57 @@ minikafs_5convert_and_log(krb5_context ctx, struct _pam_krb5_options *options,
 
 /* Ask the kernel which ciphers it supports for use with rxk5. */
 static int
-minikafs_get_rxk5_enctypes(uint32_t *etypes, int n_etypes)
+minikafs_get_property(const char *property, char *value, int length)
 {
-	return -1;
+	struct minikafs_ioblock iob;
+	int i;
+
+	iob.in = property ? (char *) property : "*";
+	iob.insize = strlen(property) + 1;
+	iob.out = value;
+	iob.outsize = length;
+	i = minikafs_pioctl(NULL, minikafs_pioctl_getprop, &iob);
+	return i;
+}
+
+static int
+minikafs_get_rxk5_enctypes(krb5_enctype *etypes, int n_etypes)
+{
+	int n;
+	uint32_t i;
+	long l;
+	const char *property = "rxk5.enctypes", *p, *v;
+	char enctypes[1024], *q;
+	n = -1;
+	memset(enctypes, '\0', sizeof(enctypes));
+	if (minikafs_get_property(property,
+				  enctypes, sizeof(enctypes) - 1) == 0) {
+		p = enctypes;
+		n = 0;
+		while ((p != NULL) && (*p != '\0') && (n < n_etypes)) {
+			v = p + strlen(p) + 1;
+			if (strcmp(p, property) == 0) {
+				p = v;
+				while ((p != NULL) && (*p != '\0') &&
+				       (n < n_etypes)) {
+					l = strtol(p, &q, 10);
+					if ((q != NULL) &&
+					    ((*q == ' ') || (*q == '\0'))) {
+						i = l & 0xffffffff;
+						if (i != 0) {
+							etypes[n++] = i;
+						}
+						p = q + strcspn(q,
+								"0123456789");
+					} else {
+						break;
+					}
+				}
+			}
+			p = v + strlen(v) + 1;
+		}
+	}
+	return n;
 }
 
 /* Try to set a token for the given cell using creds for the named principal. */
@@ -703,13 +751,13 @@ minikafs_5log_with_principal(krb5_context ctx,
 	krb5_principal server, client;
 	krb5_creds mcreds, creds, *new_creds;
 	char *unparsed_client;
-	uint32_t v5_2b_etypes[] = {
+	krb5_enctype v5_2b_etypes[] = {
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD4,
 		ENCTYPE_DES_CBC_MD5,
 	};
-	uint32_t rxk5_enctypes[16];
-	uint32_t *etypes;
+	krb5_enctype rxk5_enctypes[16];
+	krb5_enctype *etypes;
 	unsigned int i;
 	int n_etypes;
 	int tmp;
@@ -719,9 +767,14 @@ minikafs_5log_with_principal(krb5_context ctx,
 	if (use_rxk5) {
 		n_etypes = minikafs_get_rxk5_enctypes(rxk5_enctypes,
 						      sizeof(rxk5_enctypes) /
-						      sizeof(rxk5_enctypes[0]));
+						      sizeof(rxk5_enctypes[0]) -
+						      1);
+#if 1
+		n_etypes = 0;
+#endif
 		if (n_etypes > 0) {
 			etypes = rxk5_enctypes;
+			rxk5_enctypes[n_etypes] = 0;
 		} else {
 			etypes = NULL;
 			n_etypes = 1; /* hack: we want to try at least once */

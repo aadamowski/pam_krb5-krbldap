@@ -1,4 +1,8 @@
 2008-02-18:
+	* src/minikafs.c: flesh out some getprop bits, but don't use them
+	because the number of KDC round trips would go _way_ up
+
+2008-02-18:
 	* src/minikafs.c: stub out the routines to use the cache manager's
 	rxk5.enctypes property, if it reports one
 
