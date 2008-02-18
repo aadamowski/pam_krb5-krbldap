@@ -1,3 +1,7 @@
+2008-02-18:
+	* src/minikafs.c: stub out the routines to use the cache manager's
+	rxk5.enctypes property, if it reports one
+
 2008-02-14:
 	* src/password.c,src/prompter.c: suppress compiler warnings about how
 	we use prompter callback data.

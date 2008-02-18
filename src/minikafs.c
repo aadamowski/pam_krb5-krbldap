@@ -682,6 +682,13 @@ minikafs_5convert_and_log(krb5_context ctx, struct _pam_krb5_options *options,
 }
 #endif
 
+/* Ask the kernel which ciphers it supports for use with rxk5. */
+static int
+minikafs_get_rxk5_enctypes(uint32_t *etypes, int n_etypes)
+{
+	return -1;
+}
+
 /* Try to set a token for the given cell using creds for the named principal. */
 static int
 minikafs_5log_with_principal(krb5_context ctx,
@@ -696,20 +703,29 @@ minikafs_5log_with_principal(krb5_context ctx,
 	krb5_principal server, client;
 	krb5_creds mcreds, creds, *new_creds;
 	char *unparsed_client;
-	int v5_2b_etypes[] = {
+	uint32_t v5_2b_etypes[] = {
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD4,
 		ENCTYPE_DES_CBC_MD5,
 	};
-	int *etypes;
-	unsigned int i, n_etypes;
+	uint32_t rxk5_enctypes[16];
+	uint32_t *etypes;
+	unsigned int i;
+	int n_etypes;
 	int tmp;
 
 	memset(&client, 0, sizeof(client));
 	memset(&server, 0, sizeof(server));
 	if (use_rxk5) {
-		etypes = NULL;
-		n_etypes = 1; /* hack: we want to try at least once */
+		n_etypes = minikafs_get_rxk5_enctypes(rxk5_enctypes,
+						      sizeof(rxk5_enctypes) /
+						      sizeof(rxk5_enctypes[0]));
+		if (n_etypes > 0) {
+			etypes = rxk5_enctypes;
+		} else {
+			etypes = NULL;
+			n_etypes = 1; /* hack: we want to try at least once */
+		}
 	} else {
 		etypes = v5_2b_etypes;
 		n_etypes = sizeof(v5_2b_etypes) / sizeof(v5_2b_etypes[0]);
