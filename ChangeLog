@@ -1,3 +1,6 @@
+2008-03-03:
+	* src/noafs.c: fix signature of stub version of minikafs_log().
+
 2008-02-18:
 	* src/minikafs.c: flesh out some getprop bits, but don't use them
 	because the number of KDC round trips would go _way_ up
