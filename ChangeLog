@@ -1,4 +1,7 @@
 2008-03-03:
+	* src/options.c: update copyright date for token_strategy stuff.
+
+2008-03-03:
 	* src/noafs.c: fix signature of stub version of minikafs_log().
 
 2008-02-18:
