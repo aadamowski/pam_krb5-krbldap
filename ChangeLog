@@ -70,6 +70,7 @@
 	_pam_krb5_kuserok() instead of trying to get tokens, call
 	krb5_kuserok(), and clear tokens
 
+<<<<<<< HEAD:ChangeLog
 2008-02-07:
 	* src/minikafs.c: don't barf on compile if NI_MAXHOST isn't defined.
 
@@ -77,6 +78,8 @@
 	* src/options.c: log a debug message when we disable prompting
 	on behalf of libkrb5
 
+=======
+>>>>>>> master:ChangeLog
 2007-12-11:
 	* src/auth.c: don't ask for another password when we've already
 	gotten an unknown-user error, since there's no point then (Paul
