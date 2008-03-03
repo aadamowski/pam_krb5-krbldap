@@ -148,7 +148,5 @@ o validate
 Configuration file only:
 o afs_cells = cell1 cell2 cell3 cell4=afs/cell4@EXAMPLE.COM
 
-This module's CVS repository is hosted on rhlinux.redhat.com.  To check the
-current sources out of CVS, use the anoncvs access method.
-    cvs -d :pserver:anoncvs@rhlinux.redhat.com:/usr/local/CVS login
-    cvs -d :pserver:anoncvs@rhlinux.redhat.com:/usr/local/CVS co pam_krb5
+This module lives in a git repository; for more information, point a
+browser at http://git.fedorahosted.org/git/pam_krb5.git/.
