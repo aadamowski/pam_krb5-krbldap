@@ -83,7 +83,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
 	krb5_get_init_creds_opt *gic_options;
-	int tmp_result;
+	int tmp_result, prelim_attempted;
 	int i, retval;
 	char *pwhelp;
 	struct stat st;
@@ -167,6 +167,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	if (flags & PAM_PRELIM_CHECK) {
 		retval = PAM_AUTH_ERR;
 		password = NULL;
+		prelim_attempted = 0;
 
 		/* Display password help text. */
 		if ((options->pwhelp != NULL) && (options->pwhelp[0] != '\0')) {
@@ -241,6 +242,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 password, NULL,
 					 _pam_krb5_normal_prompter,
 					 &tmp_result);
+			prelim_attempted = 1;
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s: %s.",
@@ -269,14 +271,18 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 		/* We have a password, so try to obtain initial credentials
 		 * using the password. */
-		if ((password != NULL) && (i == PAM_SUCCESS)) {
+		if (((password != NULL) && (i == PAM_SUCCESS)) ||
+		    (prelim_attempted == 0)) {
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, user, userinfo,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, NULL,
-					 _pam_krb5_normal_prompter,
+					 password ?
+					 _pam_krb5_normal_prompter :
+					 _pam_krb5_always_fail_prompter,
 					 &tmp_result);
+			prelim_attempted = 1;
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",

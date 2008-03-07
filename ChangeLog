@@ -1,4 +1,7 @@
 2008-03-07:
+	* src/password.c: force at least one attempt to authenticate using
+	the KDC, even in the pathological case where there's no previously-
+	entered password and we were told not to ask for one (#400611)
 	* src/options.c,src/minikafs.c,src/afs5log.c: merge Jan Iven's changes
 	to add a "nullafs" option, so that when we're guessing the principal
 	name for an AFS service we'll try the no-instance version first
