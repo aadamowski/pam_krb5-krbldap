@@ -40,6 +40,10 @@ only supported by OpenAFS 1.2.8 and later.
 -k
 Skip attempts to use Kerberos IV and use \fIrxk5\fP-style tokens, which are
 only supported by OpenAFS 1.6 and later.
+.TP
+-n
+Assume that, if a cell name and a realm name differ only by case, that the
+name of the AFS service's principal name doesn't include an instance.
 
 .SH "SEE ALSO"
 .BR pam_krb5 (5)

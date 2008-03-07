@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2007/12/04 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2008/03/03 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -194,6 +194,13 @@ are.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBproxiable\fR directive.
 
+@MAN_AFS@.IP "null_afs=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+@MAN_AFS@tells pam_krb5.so, when it attempts to set tokens, to try to get
+@MAN_AFS@credentials for services with names which resemble afs@\fIREALM\fR
+@MAN_AFS@before attempting to get credentials for services with names resembling
+@MAN_AFS@afs/\fIcell\fR@\fIREALM\fR.  The default is to assume that the cell's
+@MAN_AFS@name is the instance in the AFS service's Kerberos principal name.
+@MAN_AFS@
 .IP "pwhelp = \fIfilename\fR"
 specifies the name of a text file whose contents will be displayed to
 clients who attempt to change their passwords.  There is no default.

@@ -1,3 +1,12 @@
+2008-03-07:
+	* src/options.c,src/minikafs.c,src/afs5log.c: merge Jan Iven's changes
+	to add a "nullafs" option, so that when we're guessing the principal
+	name for an AFS service we'll try the no-instance version first
+	(#249558)
+	* src/minikafs.c: if we're going to guess the realm name because
+	the whereis pioctl failed, guess the far-more-likely-to-be-correct
+	upper cased version of the cell's name than the cell's name.
+
 2008-03-03:
 	* src/options.c: update copyright date for token_strategy stuff.
 
@@ -73,7 +82,6 @@
 	_pam_krb5_kuserok() instead of trying to get tokens, call
 	krb5_kuserok(), and clear tokens
 
-<<<<<<< HEAD:ChangeLog
 2008-02-07:
 	* src/minikafs.c: don't barf on compile if NI_MAXHOST isn't defined.
 
@@ -81,8 +89,6 @@
 	* src/options.c: log a debug message when we disable prompting
 	on behalf of libkrb5
 
-=======
->>>>>>> master:ChangeLog
 2007-12-11:
 	* src/auth.c: don't ask for another password when we've already
 	gotten an unknown-user error, since there's no point then (Paul

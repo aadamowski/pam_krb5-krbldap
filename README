@@ -94,6 +94,10 @@ o no_user_check
   Go ahead and authenticate users for whom getpwnam() returns no information.
   Credential cache and ticket files will be created and owned by the current
   user and group ID instead of the user's.
+o null_afs
+  Attempt to get credentials for AFS by guessing a service name of the form
+  afs@REALM first, and then one of the form afs/cell@REALM, rather than
+  proceeding in the opposite order.
 o pkinit_identity=LOCATION (Heimdal-specific)
   Specify the location of the user's private key and certificate information,
   in the same format which would be passed to kinit as an argument for its

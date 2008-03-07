@@ -454,6 +454,23 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* private option */
+	options->null_afs_first = option_b(argc, argv,
+					   ctx, options->realm,
+					   service, NULL, NULL, "null_afs", -1);
+	if (options->null_afs_first == -1) {
+		options->null_afs_first = option_b(argc, argv,
+						   ctx, options->realm,
+						   service, NULL, NULL,
+						   "nullafs", 0);
+	}
+	if (options->debug && (options->null_afs_first == 1)) {
+		debug("flag: null_afs");
+	}
+	if (options->debug && (options->null_afs_first == 0)) {
+		debug("flag: no null_afs");
+	}
+
+	/* private option */
 	options->tokens = option_b(argc, argv, ctx, options->realm,
 				   service, NULL, NULL, "tokens", 0);
 	if (options->debug && options->tokens) {

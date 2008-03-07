@@ -50,6 +50,7 @@
 #ifdef HAVE_SYS_IOCCOM_H
 #include <sys/ioccom.h>
 #endif
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifdef HAVE_INTTYPES_H
@@ -995,6 +996,9 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
+		for (i = 0; i < sizeof(realm); i++) {
+			realm[i] = toupper(realm[i]);
+		}
 	}
 
 	principal_size = strlen("/@") + 1;
@@ -1022,6 +1026,23 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 	}
 
 	for (i = 0; (ret != 0) && (i < base_size); i++) {
+		/* If the realm name and cell name are similar, and null_afs
+		 * is set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) && options->null_afs_first) {
+			snprintf(principal, principal_size, "%s@%s",
+				 base[i], realm);
+			if (options->debug) {
+				debug("attempting to obtain tokens for \"%s\" "
+				      "(\"%s\")", cell, principal);
+			}
+			ret = minikafs_5log_with_principal(ctx, options,
+							   use_ccache,
+							   cell, principal, uid,
+							   use_rxk5, use_v5_2b);
+		}
+		if (ret == 0) {
+			break;
+		}
 		/* Try the cell instance in the cell's realm. */
 		snprintf(principal, principal_size, "%s/%s@%s",
 			 base[i], cell, realm);
@@ -1035,9 +1056,10 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		if (ret == 0) {
 			break;
 		}
-		/* If the realm name and cell name are similar, try the NULL
-		   instance. */
-		if (strcasecmp(realm, cell) == 0) {
+		/* If the realm name and cell name are similar, and null_afs
+		 * is not set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) &&
+		    !options->null_afs_first) {
 			snprintf(principal, principal_size, "%s@%s",
 				 base[i], realm);
 			if (options->debug) {
@@ -1055,6 +1077,28 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		/* Repeat the last two attempts, but using the default realm. */
 		if ((defaultrealm != NULL) &&
 		    (strcmp(defaultrealm, realm) != 0)) {
+			/* If the default realm name and cell name are similar,
+			 * and null_afs is set, try the NULL instance. */
+			if ((strcasecmp(defaultrealm, cell) == 0) &&
+			    options->null_afs_first) {
+				snprintf(principal, principal_size, "%s@%s",
+					 base[i], defaultrealm);
+				if (options->debug) {
+					debug("attempting to obtain tokens for "
+					      "\"%s\" (\"%s\")",
+					      cell, principal);
+				}
+				ret = minikafs_5log_with_principal(ctx, options,
+								   use_ccache,
+								   cell,
+								   principal,
+								   uid,
+								   use_rxk5,
+								   use_v5_2b);
+			}
+			if (ret == 0) {
+				break;
+			}
 			/* Try the cell instance in the default realm. */
 			snprintf(principal, principal_size, "%s/%s@%s",
 				 base[i], cell, defaultrealm);
@@ -1070,8 +1114,9 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 				break;
 			}
 			/* If the default realm name and cell name are similar,
-			 * try the NULL instance. */
-			if (strcasecmp(defaultrealm, cell) == 0) {
+			 * and null_afs isn't set, try the NULL instance. */
+			if ((strcasecmp(defaultrealm, cell) == 0) &&
+			    !options->null_afs_first) {
 				snprintf(principal, principal_size, "%s@%s",
 					 base[i], defaultrealm);
 				if (options->debug) {
@@ -1229,6 +1274,9 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
+		for (i = 0; i < sizeof(realm); i++) {
+			realm[i] = toupper(realm[i]);
+		}
 	}
 	wcell = xstrdup(cell);
 	if (wcell == NULL) {
@@ -1237,6 +1285,21 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 
 	ret = -1;
 	for (i = 0; i < sizeof(base) / sizeof(base[0]); i++) {
+		/* If the realm name and cell name are similar, and use_null
+		 * was set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) &&
+		    options->null_afs_first) {
+			if (options->debug) {
+				debug("attempting to obtain tokens for \"%s\" "
+				      "(\"%s@%s\")", cell, base[i], realm);
+			}
+			ret = minikafs_4log_with_principal(options, cell,
+							   base[i], "", realm,
+							   uid);
+		}
+		if (ret == 0) {
+			break;
+		}
 		/* Try the cell instance in its own realm. */
 		if (options->debug) {
 			debug("attempting to obtain tokens for \"%s\" "
@@ -1249,9 +1312,10 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		if (ret == 0) {
 			break;
 		}
-		/* If the realm name and cell name are similar, try the NULL
-		   instance. */
-		if (strcasecmp(realm, cell) == 0) {
+		/* If the realm name and cell name are similar, and use_null
+		 * was not set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) &&
+		    !options->null_afs_first) {
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
 				      "(\"%s@%s\")", cell, base[i], realm);
@@ -1265,6 +1329,24 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		}
 		/* Repeat with the local realm. */
 		if (strcmp(realm, localrealm) != 0) {
+			/* If the realm name and cell name are similar, and
+			 * null_afs was set, try the NULL instance. */
+			if ((strcasecmp(localrealm, cell) == 0) &&
+			    options->null_afs_first) {
+				if (options->debug) {
+					debug("attempting to obtain tokens for "
+					      "\"%s\" (\"%s@%s\")",
+					      cell, base[i], localrealm);
+				}
+				ret = minikafs_4log_with_principal(options,
+								   cell,
+								   base[i], "",
+								   localrealm,
+								   uid);
+			}
+			if (ret == 0) {
+				break;
+			}
 			/* Try the cell instance in its own realm. */
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
@@ -1278,9 +1360,10 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 			if (ret == 0) {
 				break;
 			}
-			/* If the realm name and cell name are similar, try the
-			 * NULL instance. */
-			if (strcasecmp(localrealm, cell) == 0) {
+			/* If the realm name and cell name are similar, and
+			 * null_afs was not set, try the NULL instance. */
+			if ((strcasecmp(localrealm, cell) == 0) &&
+			    !options->null_afs_first) {
 				if (options->debug) {
 					debug("attempting to obtain tokens for "
 					      "\"%s\" (\"%s@%s\")",

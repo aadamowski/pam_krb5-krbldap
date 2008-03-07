@@ -1,6 +1,7 @@
 - 2.3.0: * added the ability to set up tokens in the rxk5 format
 	 * added the "token_strategy" option to control which methods we'll
 	   try to use for setting tokens
+	 * merge "null_afs" functionality from Jan Iven
 - 2.2.22: * moved .k5login checks to a subprocess to avoid screwing with the
 	    parent process's tokens and PAG (fallout from #371761)
 	  * all options which took true/false before ("debug", "tokens", and
