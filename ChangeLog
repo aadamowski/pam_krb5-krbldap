@@ -1,3 +1,8 @@
+2008-03-07:
+	* src/password.c: force at least one attempt to authenticate using
+	the KDC, even in the pathological case where there's no previously-
+	entered password and we were told not to ask for one (#400611)
+
 2008-02-07:
 	* src/minikafs.c: don't barf on compile if NI_MAXHOST isn't defined.
 
