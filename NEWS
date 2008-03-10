@@ -1,3 +1,7 @@
+- 2.2.23: * when we're changing passwords, force at least one attempt to
+	    authenticate using the KDC, even in the pathological case where
+	    there's no previously- entered password and we were told not to ask
+	    for one (#400611)
 - 2.2.22: * moved .k5login checks to a subprocess to avoid screwing with the
 	    parent process's tokens and PAG (fallout from #371761)
 	  * all options which took true/false before ("debug", "tokens", and
