@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2004,2005,2006,2007,2008 Red Hat, Inc.
  * Copyright 2004 Kungliga Tekniska Högskolan
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
   * References:
   *   http://grand.central.org/numbers/pioctls.html
   *   http://www.afsig.se/afsig/space/rxgk-client-integration
+  *   auth/afs_token.xg
   */
 
 #include "../config.h"
@@ -49,6 +50,7 @@
 #ifdef HAVE_SYS_IOCCOM_H
 #include <sys/ioccom.h>
 #endif
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifdef HAVE_INTTYPES_H
@@ -92,14 +94,14 @@
 #ident "$Id$"
 
 #ifndef KRB_TICKET_GRANTING_TICKET
+#ifdef KRB5_TGS_NAME
+#define KRB_TICKET_GRANTING_TICKET KRB5_TGS_NAME
+#else
 #define KRB_TICKET_GRANTING_TICKET "krbtgt"
 #endif
-
-#ifdef NI_MAXHOST
-#define HOSTNAME_SIZE NI_MAXHOST
-#else
-#define HOSTNAME_SIZE 2048
 #endif
+
+#define HOSTNAME_SIZE NI_MAXHOST
 
 #define OPENAFS_AFS_IOCTL_FILE  "/proc/fs/openafs/afs_ioctl"
 #define ARLA_AFS_IOCTL_FILE     "/proc/fs/nnpfs/afs_ioctl"
@@ -138,7 +140,7 @@ struct minikafs_ioblock {
 };
 
 /* The portion of a token which includes our own key and other bookkeeping
- * stuff.  Along with a magic blob used by rxkad, the guts of tokens. */
+ * stuff.  Along with a magic blob used by rxkad, the guts of rxkad tokens. */
 struct minikafs_plain_token {
 	uint32_t kvno;
 	char key[8];
@@ -168,6 +170,9 @@ enum minikafs_pioctl_fn {
 	minikafs_pioctl_getprop = CIOCTL_FN(10),
 	minikafs_pioctl_setprop = CIOCTL_FN(11),
 };
+
+/* Forward declarations. */
+static int minikafs_5settoken2(const char *cell, krb5_creds *creds);
 
 /* Call AFS using an ioctl. Might not port to your system. */
 static int
@@ -553,7 +558,7 @@ minikafs_settoken(const void *ticket, uint32_t ticket_size,
 	plain_token.uid = uid;
 	plain_token.start = start;
 	plain_token.end = end;
-	if (((end - start) % 1) == 0) {
+	if (((end - start) % 2) != 0) {
 		plain_token.end--;
 	}
 
@@ -668,27 +673,107 @@ minikafs_5convert_and_log(krb5_context ctx, struct _pam_krb5_options *options,
 }
 #endif
 
+/* Ask the kernel which ciphers it supports for use with rxk5. */
+static int
+minikafs_get_property(const char *property, char *value, int length)
+{
+	struct minikafs_ioblock iob;
+	int i;
+
+	iob.in = property ? (char *) property : "*";
+	iob.insize = strlen(property) + 1;
+	iob.out = value;
+	iob.outsize = length;
+	i = minikafs_pioctl(NULL, minikafs_pioctl_getprop, &iob);
+	return i;
+}
+
+static int
+minikafs_get_rxk5_enctypes(krb5_enctype *etypes, int n_etypes)
+{
+	int n;
+	uint32_t i;
+	long l;
+	const char *property = "rxk5.enctypes", *p, *v;
+	char enctypes[1024], *q;
+	n = -1;
+	memset(enctypes, '\0', sizeof(enctypes));
+	if (minikafs_get_property(property,
+				  enctypes, sizeof(enctypes) - 1) == 0) {
+		p = enctypes;
+		n = 0;
+		while ((p != NULL) && (*p != '\0') && (n < n_etypes)) {
+			v = p + strlen(p) + 1;
+			if (strcmp(p, property) == 0) {
+				p = v;
+				while ((p != NULL) && (*p != '\0') &&
+				       (n < n_etypes)) {
+					l = strtol(p, &q, 10);
+					if ((q != NULL) &&
+					    ((*q == ' ') || (*q == '\0'))) {
+						i = l & 0xffffffff;
+						if (i != 0) {
+							etypes[n++] = i;
+						}
+						p = q + strcspn(q,
+								"0123456789");
+					} else {
+						break;
+					}
+				}
+			}
+			p = v + strlen(v) + 1;
+		}
+	}
+	return n;
+}
+
 /* Try to set a token for the given cell using creds for the named principal. */
 static int
 minikafs_5log_with_principal(krb5_context ctx,
 			     struct _pam_krb5_options *options,
 			     krb5_ccache ccache,
-			     const char *cell, const char *principal,
-			     uid_t uid, int try_v5_2b)
+			     const char *cell,
+			     const char *principal,
+			     uid_t uid,
+			     int use_rxk5,
+			     int use_v5_2b)
 {
 	krb5_principal server, client;
 	krb5_creds mcreds, creds, *new_creds;
 	char *unparsed_client;
-	int etypes[] = {
+	krb5_enctype v5_2b_etypes[] = {
 		ENCTYPE_DES_CBC_CRC,
 		ENCTYPE_DES_CBC_MD4,
 		ENCTYPE_DES_CBC_MD5,
 	};
+	krb5_enctype rxk5_enctypes[16];
+	krb5_enctype *etypes;
 	unsigned int i;
+	int n_etypes;
 	int tmp;
 
 	memset(&client, 0, sizeof(client));
 	memset(&server, 0, sizeof(server));
+	if (use_rxk5) {
+		n_etypes = minikafs_get_rxk5_enctypes(rxk5_enctypes,
+						      sizeof(rxk5_enctypes) /
+						      sizeof(rxk5_enctypes[0]) -
+						      1);
+#if 1
+		n_etypes = 0;
+#endif
+		if (n_etypes > 0) {
+			etypes = rxk5_enctypes;
+			rxk5_enctypes[n_etypes] = 0;
+		} else {
+			etypes = NULL;
+			n_etypes = 1; /* hack: we want to try at least once */
+		}
+	} else {
+		etypes = v5_2b_etypes;
+		n_etypes = sizeof(v5_2b_etypes) / sizeof(v5_2b_etypes[0]);
+	}
 
 	if (krb5_cc_get_principal(ctx, ccache, &client) != 0) {
 		if (options->debug) {
@@ -711,22 +796,32 @@ minikafs_5log_with_principal(krb5_context ctx,
 	}
 
 	/* Check if we already have a suitable credential. */
-	for (i = 0; i < sizeof(etypes) / sizeof(etypes[0]); i++) {
+	for (i = 0; i < n_etypes; i++) {
 		memset(&mcreds, 0, sizeof(mcreds));
 		memset(&creds, 0, sizeof(creds));
 		mcreds.client = client;
 		mcreds.server = server;
-		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		if (etypes != NULL) {
+			v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		}
 		if (krb5_cc_retrieve_cred(ctx, ccache, v5_cc_retrieve_match(),
 					  &mcreds, &creds) == 0) {
-			if (try_v5_2b &&
+			if (use_rxk5 &&
+			    (minikafs_5settoken2(cell, &creds) == 0)) {
+				krb5_free_cred_contents(ctx, &creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
+				krb5_free_principal(ctx, client);
+				krb5_free_principal(ctx, server);
+				return 0;
+			} else
+			if (use_v5_2b &&
 			    (minikafs_5settoken(cell, &creds, uid) == 0)) {
 				krb5_free_cred_contents(ctx, &creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
-			}
+			} else
 			if (options->v4_use_524 &&
 			    minikafs_5convert_and_log(ctx, options, cell,
 						      &creds, uid) == 0) {
@@ -741,23 +836,33 @@ minikafs_5log_with_principal(krb5_context ctx,
 	}
 
 	/* Try to obtain a suitable credential. */
-	for (i = 0; i < sizeof(etypes) / sizeof(etypes[0]); i++) {
+	for (i = 0; i < n_etypes; i++) {
 		memset(&mcreds, 0, sizeof(mcreds));
 		mcreds.client = client;
 		mcreds.server = server;
-		v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		if (etypes != NULL) {
+			v5_creds_set_etype(ctx, &mcreds, etypes[i]);
+		}
 		new_creds = NULL;
 		tmp = krb5_get_credentials(ctx, 0, ccache,
 					   &mcreds, &new_creds);
 		if (tmp == 0) {
-			if (try_v5_2b &&
+			if (use_rxk5 &&
+			    (minikafs_5settoken2(cell, new_creds) == 0)) {
+				krb5_free_creds(ctx, new_creds);
+				v5_free_unparsed_name(ctx, unparsed_client);
+				krb5_free_principal(ctx, client);
+				krb5_free_principal(ctx, server);
+				return 0;
+			} else
+			if (use_v5_2b &&
 			    (minikafs_5settoken(cell, new_creds, uid) == 0)) {
 				krb5_free_creds(ctx, new_creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
 				krb5_free_principal(ctx, server);
 				return 0;
-			}
+			} else
 			if (options->v4_use_524 &&
 			    minikafs_5convert_and_log(ctx, options, cell,
 						      new_creds, uid) == 0) {
@@ -770,10 +875,21 @@ minikafs_5log_with_principal(krb5_context ctx,
 			krb5_free_creds(ctx, new_creds);
 		} else {
 			if (options->debug) {
-				debug("error obtaining credentials for '%s'"
-				      "(enctype=%d) on behalf of '%s': %s",
-				      principal, etypes[i],
-				      unparsed_client, v5_error_message(tmp));
+				if (etypes != NULL) {
+					debug("error obtaining credentials for "
+					      "'%s' (enctype=%d) on behalf of "
+					      "'%s': %s",
+					      principal, etypes[i],
+					      unparsed_client,
+					      v5_error_message(tmp));
+				} else {
+					debug("error obtaining credentials for "
+					      "'%s' on behalf of "
+					      "'%s': %s",
+					      principal,
+					      unparsed_client,
+					      v5_error_message(tmp));
+				}
 			}
 		}
 	}
@@ -791,15 +907,17 @@ static int
 minikafs_5log(krb5_context context, krb5_ccache ccache,
 	      struct _pam_krb5_options *options,
 	      const char *cell, const char *hint_principal,
-	      uid_t uid, int try_v5_2b)
+	      uid_t uid, int use_rxk5, int use_v5_2b)
 {
 	krb5_context ctx;
 	krb5_ccache use_ccache;
 	int ret;
 	unsigned int i;
 	char *principal, *defaultrealm, realm[PATH_MAX];
-	size_t principal_size;
-	const char *base[] = {"afs", "afsx"};
+	size_t principal_size, base_size;
+	const char *base_rxkad[] = {"afs", "afsx"};
+	const char *base_rxk5[] = {"afs-k5"};
+	const char **base;
 
 	if (context == NULL) {
 		if (_pam_krb5_init_ctx(&ctx, 0, NULL) != 0) {
@@ -807,6 +925,14 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		}
 	} else {
 		ctx = context;
+	}
+
+	if (use_rxk5) {
+		base = base_rxk5;
+		base_size = sizeof(base_rxk5) / sizeof(base_rxk5[0]);
+	} else {
+		base = base_rxkad;
+		base_size = sizeof(base_rxkad) / sizeof(base_rxkad[0]);
 	}
 
 	memset(&use_ccache, 0, sizeof(use_ccache));
@@ -830,7 +956,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		}
 		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
 						   cell, hint_principal, uid,
-						   try_v5_2b);
+						   use_rxk5, use_v5_2b);
 		if (ret == 0) {
 			if (use_ccache != ccache) {
 				krb5_cc_close(ctx, use_ccache);
@@ -854,11 +980,14 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
+		for (i = 0; i < sizeof(realm); i++) {
+			realm[i] = toupper(realm[i]);
+		}
 	}
 
 	principal_size = strlen("/@") + 1;
 	ret = -1;
-	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
+	for (i = 0; (ret != 0) && (i < base_size); i++) {
 		principal_size += strlen(base[i]);
 	}
 	principal_size += strlen(cell);
@@ -880,23 +1009,10 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		return -1;
 	}
 
-	for (i = 0; (ret != 0) && (i < sizeof(base) / sizeof(base[0])); i++) {
-		/* Try the cell instance in the cell's realm. */
-		snprintf(principal, principal_size, "%s/%s@%s",
-			 base[i], cell, realm);
-		if (options->debug) {
-			debug("attempting to obtain tokens for \"%s\" (\"%s\")",
-			      cell, principal);
-		}
-		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
-						   cell, principal, uid,
-						   try_v5_2b);
-		if (ret == 0) {
-			break;
-		}
-		/* If the realm name and cell name are similar, try the NULL
-		   instance. */
-		if (strcasecmp(realm, cell) == 0) {
+	for (i = 0; (ret != 0) && (i < base_size); i++) {
+		/* If the realm name and cell name are similar, and null_afs
+		 * is set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) && options->null_afs_first) {
 			snprintf(principal, principal_size, "%s@%s",
 				 base[i], realm);
 			if (options->debug) {
@@ -906,17 +1022,30 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 			ret = minikafs_5log_with_principal(ctx, options,
 							   use_ccache,
 							   cell, principal, uid,
-							   try_v5_2b);
+							   use_rxk5, use_v5_2b);
 		}
 		if (ret == 0) {
 			break;
 		}
-		/* Repeat the last two attempts, but using the default realm. */
-		if ((defaultrealm != NULL) &&
-		    (strcmp(defaultrealm, realm) != 0)) {
-			/* Try the cell instance in the default realm. */
-			snprintf(principal, principal_size, "%s/%s@%s",
-				 base[i], cell, defaultrealm);
+		/* Try the cell instance in the cell's realm. */
+		snprintf(principal, principal_size, "%s/%s@%s",
+			 base[i], cell, realm);
+		if (options->debug) {
+			debug("attempting to obtain tokens for \"%s\" (\"%s\")",
+			      cell, principal);
+		}
+		ret = minikafs_5log_with_principal(ctx, options, use_ccache,
+						   cell, principal, uid,
+						   use_rxk5, use_v5_2b);
+		if (ret == 0) {
+			break;
+		}
+		/* If the realm name and cell name are similar, and null_afs
+		 * is not set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) &&
+		    !options->null_afs_first) {
+			snprintf(principal, principal_size, "%s@%s",
+				 base[i], realm);
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
 				      "(\"%s\")", cell, principal);
@@ -924,13 +1053,18 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 			ret = minikafs_5log_with_principal(ctx, options,
 							   use_ccache,
 							   cell, principal, uid,
-							   try_v5_2b);
-			if (ret == 0) {
-				break;
-			}
+							   use_rxk5, use_v5_2b);
+		}
+		if (ret == 0) {
+			break;
+		}
+		/* Repeat the last two attempts, but using the default realm. */
+		if ((defaultrealm != NULL) &&
+		    (strcmp(defaultrealm, realm) != 0)) {
 			/* If the default realm name and cell name are similar,
-			 * try the NULL instance. */
-			if (strcasecmp(defaultrealm, cell) == 0) {
+			 * and null_afs is set, try the NULL instance. */
+			if ((strcasecmp(defaultrealm, cell) == 0) &&
+			    options->null_afs_first) {
 				snprintf(principal, principal_size, "%s@%s",
 					 base[i], defaultrealm);
 				if (options->debug) {
@@ -943,7 +1077,44 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 								   cell,
 								   principal,
 								   uid,
-								   try_v5_2b);
+								   use_rxk5,
+								   use_v5_2b);
+			}
+			if (ret == 0) {
+				break;
+			}
+			/* Try the cell instance in the default realm. */
+			snprintf(principal, principal_size, "%s/%s@%s",
+				 base[i], cell, defaultrealm);
+			if (options->debug) {
+				debug("attempting to obtain tokens for \"%s\" "
+				      "(\"%s\")", cell, principal);
+			}
+			ret = minikafs_5log_with_principal(ctx, options,
+							   use_ccache,
+							   cell, principal, uid,
+							   use_rxk5, use_v5_2b);
+			if (ret == 0) {
+				break;
+			}
+			/* If the default realm name and cell name are similar,
+			 * and null_afs isn't set, try the NULL instance. */
+			if ((strcasecmp(defaultrealm, cell) == 0) &&
+			    !options->null_afs_first) {
+				snprintf(principal, principal_size, "%s@%s",
+					 base[i], defaultrealm);
+				if (options->debug) {
+					debug("attempting to obtain tokens for "
+					      "\"%s\" (\"%s\")",
+					      cell, principal);
+				}
+				ret = minikafs_5log_with_principal(ctx, options,
+								   use_ccache,
+								   cell,
+								   principal,
+								   uid,
+								   use_rxk5,
+								   use_v5_2b);
 			}
 			if (ret == 0) {
 				break;
@@ -1087,6 +1258,9 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
+		for (i = 0; i < sizeof(realm); i++) {
+			realm[i] = toupper(realm[i]);
+		}
 	}
 	wcell = xstrdup(cell);
 	if (wcell == NULL) {
@@ -1095,6 +1269,21 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 
 	ret = -1;
 	for (i = 0; i < sizeof(base) / sizeof(base[0]); i++) {
+		/* If the realm name and cell name are similar, and use_null
+		 * was set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) &&
+		    options->null_afs_first) {
+			if (options->debug) {
+				debug("attempting to obtain tokens for \"%s\" "
+				      "(\"%s@%s\")", cell, base[i], realm);
+			}
+			ret = minikafs_4log_with_principal(options, cell,
+							   base[i], "", realm,
+							   uid);
+		}
+		if (ret == 0) {
+			break;
+		}
 		/* Try the cell instance in its own realm. */
 		if (options->debug) {
 			debug("attempting to obtain tokens for \"%s\" "
@@ -1107,9 +1296,10 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		if (ret == 0) {
 			break;
 		}
-		/* If the realm name and cell name are similar, try the NULL
-		   instance. */
-		if (strcasecmp(realm, cell) == 0) {
+		/* If the realm name and cell name are similar, and use_null
+		 * was not set, try the NULL instance. */
+		if ((strcasecmp(realm, cell) == 0) &&
+		    !options->null_afs_first) {
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
 				      "(\"%s@%s\")", cell, base[i], realm);
@@ -1123,6 +1313,24 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 		}
 		/* Repeat with the local realm. */
 		if (strcmp(realm, localrealm) != 0) {
+			/* If the realm name and cell name are similar, and
+			 * null_afs was set, try the NULL instance. */
+			if ((strcasecmp(localrealm, cell) == 0) &&
+			    options->null_afs_first) {
+				if (options->debug) {
+					debug("attempting to obtain tokens for "
+					      "\"%s\" (\"%s@%s\")",
+					      cell, base[i], localrealm);
+				}
+				ret = minikafs_4log_with_principal(options,
+								   cell,
+								   base[i], "",
+								   localrealm,
+								   uid);
+			}
+			if (ret == 0) {
+				break;
+			}
 			/* Try the cell instance in its own realm. */
 			if (options->debug) {
 				debug("attempting to obtain tokens for \"%s\" "
@@ -1136,9 +1344,10 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 			if (ret == 0) {
 				break;
 			}
-			/* If the realm name and cell name are similar, try the
-			 * NULL instance. */
-			if (strcasecmp(localrealm, cell) == 0) {
+			/* If the realm name and cell name are similar, and
+			 * null_afs was not set, try the NULL instance. */
+			if ((strcasecmp(localrealm, cell) == 0) &&
+			    !options->null_afs_first) {
 				if (options->debug) {
 					debug("attempting to obtain tokens for "
 					      "\"%s\" (\"%s@%s\")",
@@ -1167,47 +1376,300 @@ int
 minikafs_log(krb5_context ctx, krb5_ccache ccache,
 	     struct _pam_krb5_options *options,
 	     const char *cell, const char *hint_principal,
-	     uid_t uid, int try_v5_2b_first)
+	     uid_t uid, const int *methods, int n_methods)
 {
-	int i;
-	i = minikafs_5log(ctx, ccache, options, cell, hint_principal,
-			  uid, try_v5_2b_first);
-	if (i != 0) {
-		if (options->debug) {
-			debug("v5 afslog (2b=%d) failed to \"%s\"",
-			      try_v5_2b_first, cell);
+	int i, method;
+	if (n_methods == -1) {
+		for (i = 0; methods[i] != 0; i++) {
+			continue;
 		}
+		n_methods = i;
 	}
+	for (method = 0; method < n_methods; method++) {
+		i = -1;
+		switch (methods[method]) {
 #ifdef USE_KRB4
-	if (i != 0) {
-		if (options->debug) {
-			debug("trying with v4 ticket");
-		}
-		i = minikafs_4log(ctx, options, cell, hint_principal, uid);
-		if (i != 0) {
+		case MINIKAFS_METHOD_V4:
 			if (options->debug) {
-				debug("v4 afslog failed to \"%s\"", cell);
+				debug("trying with v4 ticket");
 			}
-		}
-	}
+			i = minikafs_4log(ctx, options, cell,
+					  hint_principal, uid);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v4 afslog failed to \"%s\"",
+					      cell);
+				}
+			}
+			break;
+		case MINIKAFS_METHOD_V5_V4:
+			if (options->debug) {
+				debug("trying with v5 ticket and 524 service");
+			}
+			i = minikafs_5log(ctx, ccache, options, cell,
+					  hint_principal, uid, 0, 0);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v5 with 524 service afslog "
+					      "failed to \"%s\"", cell);
+				}
+			}
+			break;
 #endif
-	if ((i != 0) && (!try_v5_2b_first)) {
-		if (options->debug) {
-			debug("retrying v5 with 2b=1");
-		}
-		i = minikafs_5log(ctx, ccache, options, cell, hint_principal,
-				  uid, 1);
-		if (i != 0) {
+		case MINIKAFS_METHOD_V5_2B:
 			if (options->debug) {
-				debug("v5 afslog (2b=1) failed to \"%s\"",
-				      cell);
+				debug("trying with v5 ticket (2b)");
 			}
+			i = minikafs_5log(ctx, ccache, options, cell,
+					  hint_principal, uid, 0, 1);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v5 afslog (2b) failed to \"%s\"",
+					      cell);
+				}
+			}
+			break;
+		case MINIKAFS_METHOD_RXK5:
+			if (options->debug) {
+				debug("trying with v5 ticket (rxk5)");
+			}
+			i = minikafs_5log(ctx, ccache, options, cell,
+					  hint_principal, uid, 1, 0);
+			if (i != 0) {
+				if (options->debug) {
+					debug("v5 afslog (rxk5) failed to \"%s\"",
+					      cell);
+				}
+			}
+			break;
+		default:
+			break;
+		}
+		if (i == 0) {
+			break;
 		}
 	}
-	if (i == 0) {
+	if (method < n_methods) {
 		if (options->debug) {
 			debug("got tokens for cell \"%s\"", cell);
 		}
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+/* We do the XDR here to avoid deps on what might not be a standard part of
+ * glibc, and we don't need the decode or free functionality. */
+static int
+encode_int32(char *buffer, int32_t num)
+{
+	int32_t net;
+	if (buffer) {
+		net = ntohl(num);
+		memcpy(buffer, &net, 4);
+	}
+	return 4;
+}
+static int
+encode_boolean(char *buffer, krb5_boolean b)
+{
+	return encode_int32(buffer, b ? 1 : 0);
+}
+static int
+encode_uint64(char *buffer, uint64_t num)
+{
+	int32_t net;
+	if (buffer) {
+		net = ntohl(num >> 32);
+		memcpy(buffer + 0, &net, 4);
+		net = ntohl(num & 0xffffffff);
+		memcpy(buffer + 4, &net, 4);
+	}
+	return 8;
+}
+static int
+encode_bytes(char *buffer, const char *bytes, int32_t num)
+{
+	int32_t pad;
+	pad = (num % 4) ? (4 - (num % 4)) : 0;
+	if (buffer) {
+		if (bytes && num) {
+			memcpy(buffer, bytes, num);
+			memset(buffer + num, 0, pad);
+		}
+	}
+	return num + pad;
+}
+static int
+encode_ubytes(char *buffer, const unsigned char *bytes, int32_t num)
+{
+	int32_t pad;
+	pad = (num % 4) ? (4 - (num % 4)) : 0;
+	if (buffer) {
+		if (bytes && num) {
+			memcpy(buffer, bytes, num);
+			memset(buffer + num, 0, pad);
+		}
+	}
+	return num + pad;
+}
+#define encode_fixed(_op, _buffer, _item) \
+	{ \
+		int _length; \
+		_length = _op(_buffer, _item); \
+		if (_buffer) { \
+			_buffer += _length; \
+		} \
+		total += _length; \
+	}
+#define encode_variable(_op, _buffer, _item, _size) \
+	{ \
+		int _length; \
+		_length = _op(_buffer, _item, _size); \
+		if (_buffer) { \
+			_buffer += _length; \
+		} \
+		total += _length; \
+	}
+static int
+encode_data(char *buffer, krb5_data *data)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, data->length);
+	encode_variable(encode_bytes, buffer, data->data, data->length);
+	return total;
+}
+static int
+encode_string(char *buffer, const char *string, ssize_t length)
+{
+	int32_t total = 0;
+	if (length == -1) {
+		length = strlen(string);
+	}
+	encode_fixed(encode_int32, buffer, length);
+	encode_variable(encode_bytes, buffer, string, length);
+	return total;
+}
+static int
+encode_creds_keyblock(char *buffer, krb5_creds *creds)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, v5_creds_get_etype(creds));
+	encode_fixed(encode_int32, buffer, v5_creds_key_length(creds));
+	encode_variable(encode_ubytes, buffer, v5_creds_key_contents(creds),
+			v5_creds_key_length(creds));
+	return total;
+}
+static int
+encode_principal(char *buffer, krb5_principal princ)
+{
+	int32_t total = 0;
+	int i;
+	encode_fixed(encode_int32, buffer, v5_princ_component_count(princ));
+	for (i = 0; i < v5_princ_component_count(princ); i++) {
+		encode_fixed(encode_int32, buffer,
+			     v5_princ_component_length(princ, i));
+		encode_variable(encode_bytes, buffer,
+				v5_princ_component_contents(princ, i),
+				v5_princ_component_length(princ, i));
+	}
+	encode_fixed(encode_int32, buffer, v5_princ_realm_length(princ));
+	encode_variable(encode_bytes, buffer,
+			v5_princ_realm_contents(princ),
+			v5_princ_realm_length(princ));
+	return total;
+}
+static int
+encode_token_rxk5(char *buffer, krb5_creds *creds)
+{
+	int32_t total = 0;
+	int i; 
+
+	encode_fixed(encode_principal, buffer, creds->client);
+	encode_fixed(encode_principal, buffer, creds->server);
+	encode_fixed(encode_creds_keyblock, buffer, creds);
+	encode_fixed(encode_uint64, buffer, creds->times.authtime);
+	encode_fixed(encode_uint64, buffer, creds->times.starttime);
+	encode_fixed(encode_uint64, buffer, creds->times.endtime);
+	encode_fixed(encode_uint64, buffer, creds->times.renew_till);
+	encode_fixed(encode_boolean, buffer, v5_creds_get_is_skey(creds));
+	encode_fixed(encode_int32, buffer, v5_creds_get_flags(creds));
+
+	encode_fixed(encode_int32, buffer, v5_creds_address_count(creds));
+	for (i = 0; i < v5_creds_address_count(creds); i++) {
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_address_type(creds, i));
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_address_length(creds, i));
+		encode_variable(encode_ubytes, buffer,
+				v5_creds_address_contents(creds, i),
+				v5_creds_address_length(creds, i));
+	}
+
+	encode_fixed(encode_data, buffer, &creds->ticket);
+	encode_fixed(encode_data, buffer, &creds->second_ticket);
+
+	encode_fixed(encode_int32, buffer, v5_creds_authdata_count(creds));
+	for (i = 0; i < v5_creds_authdata_count(creds); i++) {
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_authdata_type(creds, i));
+		encode_fixed(encode_int32, buffer,
+			     v5_creds_authdata_length(creds, i));
+		encode_variable(encode_ubytes, buffer,
+				v5_creds_authdata_contents(creds, i),
+				v5_creds_authdata_length(creds, i));
+	}
+	return total;
+}
+#define SOLITON_NONE  0
+#define SOLITON_RXKAD 2
+#define SOLITON_RXGK  4
+#define SOLITON_RXK5  5
+static int
+encode_soliton(char *buffer, krb5_creds *creds, int soliton_type)
+{
+	int32_t total = 0;
+	encode_fixed(encode_int32, buffer, soliton_type);
+	switch (soliton_type) {
+	case SOLITON_RXK5:
+		encode_fixed(encode_token_rxk5, buffer, creds);
+		break;
+	default:
+		break;
+	}
+	return total;
+}
+
+/* Stuff a ticket and keyblock into the kernel. */
+static int
+minikafs_5settoken2(const char *cell, krb5_creds *creds)
+{
+	struct minikafs_ioblock iob;
+	int i, bufsize, soliton_size;
+	char *buffer, *bufptr;
+
+	soliton_size = encode_soliton(NULL, creds, SOLITON_RXK5);
+	bufsize = encode_int32(NULL, 0) +
+		  encode_string(NULL, cell, -1) +
+		  encode_int32(NULL, 1) +
+		  encode_int32(NULL, soliton_size) +
+		  soliton_size;
+	buffer = malloc(bufsize);
+	i = -1;
+	if (buffer != NULL) {
+		bufptr = buffer;
+		bufptr += encode_int32(bufptr, 0); /* flags */
+		bufptr += encode_string(bufptr, cell, -1); /* cell */
+		bufptr += encode_int32(bufptr, 1); /* number of tokens */
+		bufptr += encode_int32(bufptr, soliton_size); /* size of tok */
+		bufptr += encode_soliton(bufptr, creds, SOLITON_RXK5); /* tok */
+		iob.in = buffer;
+		iob.insize = bufptr - buffer;
+		iob.out = NULL;
+		iob.outsize = 0;
+		i = minikafs_pioctl(NULL, minikafs_pioctl_settoken2, &iob);
+		free(buffer);
 	}
 	return i;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -405,7 +405,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 				  service, NULL, NULL,
 				  "debug", 0);
 	if (options->debug) {
-		debug("configured realm '%s'", options->realm);
+		debug("flag: debug");
 	}
 
 	/* private option */
@@ -451,6 +451,23 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 	if (options->debug && (options->ignore_afs == 0)) {
 		debug("flag: no ignore_afs");
+	}
+
+	/* private option */
+	options->null_afs_first = option_b(argc, argv,
+					   ctx, options->realm,
+					   service, NULL, NULL, "null_afs", -1);
+	if (options->null_afs_first == -1) {
+		options->null_afs_first = option_b(argc, argv,
+						   ctx, options->realm,
+						   service, NULL, NULL,
+						   "nullafs", 0);
+	}
+	if (options->debug && (options->null_afs_first == 1)) {
+		debug("flag: null_afs");
+	}
+	if (options->debug && (options->null_afs_first == 0)) {
+		debug("flag: no null_afs");
 	}
 
 	/* private option */
@@ -588,6 +605,8 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		}
 		if (options->use_third_pass == 1) {
 			debug("will let libkrb5 ask questions");
+		} else {
+			debug("will not let libkrb5 ask questions");
 		}
 	}
 
@@ -647,7 +666,12 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->ticket_lifetime = 0;
 	}
 	if (options->debug) {
-		debug("ticket lifetime: %d", options->ticket_lifetime);
+		debug("ticket lifetime: %ds (%dd,%dh,%dm,%ds)",
+		      (int) options->ticket_lifetime,
+		      (int) options->ticket_lifetime / (24 * 60 * 60),
+		      (int) (options->ticket_lifetime / (60 * 60)) % 24,
+		      (int) (options->ticket_lifetime / (60)) % 60,
+		      (int) options->ticket_lifetime  % 60);
 	}
 
 	/* library option */
@@ -660,7 +684,12 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->renewable = 1;
 	}
 	if (options->debug) {
-		debug("renewable lifetime: %d", options->renew_lifetime);
+		debug("renewable lifetime: %ds (%dd,%dh,%dm,%ds)",
+		      (int) options->renew_lifetime,
+		      (int) options->renew_lifetime / (24 * 60 * 60),
+		      (int) (options->renew_lifetime / (60 * 60)) % 24,
+		      (int) (options->renew_lifetime / (60)) % 60,
+		      (int) options->renew_lifetime  % 60);
 	}
 
 	/* private option */
@@ -737,6 +766,17 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 	if (options->debug && options->pwhelp) {
 		debug("pwhelp: %s", options->pwhelp);
+	}
+
+	options->token_strategy = option_s(argc, argv,
+					   ctx, options->realm,
+					   "token_strategy", "");
+	if (strlen(options->token_strategy) == 0) {
+		xstrfree(options->token_strategy);
+		options->token_strategy = xstrdup(DEFAULT_TOKEN_STRATEGY);
+	}
+	if (options->debug && options->token_strategy) {
+		debug("token strategy: %s", options->token_strategy);
 	}
 
 	options->hosts = option_l(argc, argv,

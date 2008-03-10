@@ -111,10 +111,12 @@ _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 				debug("libkrb5 asked for \"%s\", "
 				      "default value \"%.*s\", skipping",
 				      prompts[i].prompt,
-				      prompts[i].reply ?
-				      prompts[i].reply->length : 0,
-				      prompts[i].reply ?
-				      prompts[i].reply->data : "");
+				      (int)
+				      (prompts[i].reply ?
+				       prompts[i].reply->length : 0),
+				      (const char *)
+				      (prompts[i].reply ?
+				       prompts[i].reply->data : ""));
 			}
 			continue;
 		}
@@ -122,8 +124,10 @@ _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 			debug("libkrb5 asked for \"%s\", "
 			      "default value \"%.*s\"",
 			      prompts[i].prompt,
-			      prompts[i].reply ? prompts[i].reply->length : 0,
-			      prompts[i].reply ? prompts[i].reply->data : "");
+			      (int)
+			      (prompts[i].reply ? prompts[i].reply->length : 0),
+			      (const char *)
+			      (prompts[i].reply ? prompts[i].reply->data : ""));
 			debug("returning password-reading error to libkrb5");
 		}
 		ret = KRB5_LIBOS_CANTREADPWD;
@@ -155,10 +159,12 @@ _pam_krb5_previous_prompter(krb5_context context, void *data,
 				debug("libkrb5 asked for \"%s\", "
 				      "default value \"%.*s\", skipping",
 				      prompts[i].prompt,
-				      prompts[i].reply ?
-				      prompts[i].reply->length : 0,
-				      prompts[i].reply ?
-				      prompts[i].reply->data : "");
+				      (int)
+				      (prompts[i].reply ?
+				       prompts[i].reply->length : 0),
+				      (const char *)
+				      (prompts[i].reply ?
+				       prompts[i].reply->data : ""));
 			}
 			continue;
 		}
@@ -170,8 +176,10 @@ _pam_krb5_previous_prompter(krb5_context context, void *data,
 			debug("libkrb5 asked for \"%s\", "
 			      "default value \"%.*s\"",
 			      prompts[i].prompt,
-			      prompts[i].reply ? prompts[i].reply->length : 0,
-			      prompts[i].reply ? prompts[i].reply->data : "");
+			      (int)
+			      (prompts[i].reply ? prompts[i].reply->length : 0),
+			      (const char *)
+			      (prompts[i].reply ? prompts[i].reply->data : ""));
 			debug("returning \"%s\"", pdata->previous_password);
 		}
 		strcpy(prompts[i].reply->data, pdata->previous_password);
@@ -236,10 +244,12 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 				debug("libkrb5 asked for \"%s\", "
 				      "default value \"%.*s\", skipping",
 				      prompts[i].prompt,
-				      prompts[i].reply ?
-				      prompts[i].reply->length : 0,
-				      prompts[i].reply ?
-				      prompts[i].reply->data : "");
+				      (int)
+				      (prompts[i].reply ?
+				       prompts[i].reply->length : 0),
+				      (const char *)
+				      (prompts[i].reply ?
+				       prompts[i].reply->data : ""));
 			}
 			continue;
 		}
@@ -316,8 +326,10 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 			debug("libkrb5 asked for \"%s\", default was \"%.*s\", "
 			      "returning \"%s\"",
 			      prompts[i].prompt,
-			      prompts[i].reply ?  prompts[i].reply->length : 0,
-			      prompts[i].reply ?  prompts[i].reply->data : "",
+			      (int)
+			      (prompts[i].reply ?  prompts[i].reply->length : 0),
+			      (const char *)
+			      (prompts[i].reply ?  prompts[i].reply->data : ""),
 			      responses[j + headers].resp);
 		}
 		strcpy(prompts[i].reply->data, responses[j + headers].resp);

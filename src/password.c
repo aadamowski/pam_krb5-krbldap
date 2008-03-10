@@ -407,10 +407,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					       "%s: %s: %.*s %s%.*s%s",
 					       userinfo->unparsed_name,
 					       v5_passwd_error_message(result_code),
-					       result_code_string.length,
+					       (int) result_code_string.length,
 					       (char *) result_code_string.data,
 					       result_string.length ? "(" : "",
-					       result_string.length,
+					       (int) result_string.length,
 					       (char *) result_string.data,
 					       result_string.length ? ")" : "");
 				}
@@ -418,12 +418,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				    (result_code_string.length > 0)) {
 					notice_user(pamh, "%s: %.*s %s%.*s%s\n",
 						    v5_passwd_error_message(result_code),
-						    result_code_string.length,
-						    result_code_string.data,
+						    (int) result_code_string.length,
+						    (const char *) result_code_string.data,
 						    result_string.length ?
 						    "(" : "",
-						    result_string.length,
-						    result_string.data,
+						    (int) result_string.length,
+						    (const char *) result_string.data,
 						    result_string.length ?
 						    ")" : "");
 				}

@@ -82,7 +82,7 @@ sly_v4(krb5_context ctx, const char *v4tktfile,
 		return;
 	}
 
-	tf_init(v4tktfile, W_TKT_FIL);
+	tf_init((char *) v4tktfile, W_TKT_FIL);
 	v4_in_tkt(name, instance, realm);
 	v4_save_credentials(KRB5_TGS_NAME, realm, realm,
 			    stash->v4creds.session,

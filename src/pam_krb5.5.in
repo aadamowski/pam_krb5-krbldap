@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2007/12/04 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2008/03/03 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -194,6 +194,13 @@ are.
 This directive is deprecated in favor of the \fBlibdefaults\fR
 \fBproxiable\fR directive.
 
+@MAN_AFS@.IP "null_afs=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+@MAN_AFS@tells pam_krb5.so, when it attempts to set tokens, to try to get
+@MAN_AFS@credentials for services with names which resemble afs@\fIREALM\fR
+@MAN_AFS@before attempting to get credentials for services with names resembling
+@MAN_AFS@afs/\fIcell\fR@\fIREALM\fR.  The default is to assume that the cell's
+@MAN_AFS@name is the instance in the AFS service's Kerberos principal name.
+@MAN_AFS@
 .IP "pwhelp = \fIfilename\fR"
 specifies the name of a text file whose contents will be displayed to
 clients who attempt to change their passwords.  There is no default.
@@ -226,6 +233,17 @@ default credential lifetime, in seconds.
 @MAN_AFS@useful in server applications which need to access a user's files but
 @MAN_AFS@which do not open PAM sessions before doing so.  For correctly-written
 @MAN_AFS@applications, this flag is not necessary.
+@MAN_AFS@
+@MAN_AFS@.IP "token_strategy = \fIrxk5,2b[,...]\fR"
+@MAN_AFS@controls how, and using which format, pam_krb5.so should attept to
+@MAN_AFS@set AFS tokens for the user's session.
+@MAN_AFS@By default, the module is configured with
+@MAN_AFS@"token_strategy = \fI@DEFAULT_TOKEN_STRATEGY@\fR".
+@MAN_AFS@Recognized strategy names include:
+@MAN_AFS@ \fIrxk5\fP  rxk5 (requires OpenAFS 1.6 or later)
+@MAN_AFS@ \fI2b\fP    rxkad "2b" (requires OpenAFS 1.2.8 or later)
+@MAN_AFS@@MAN_KRB4@ \fI524\fP   Kerberos 524 service + traditional Kerberos IV
+@MAN_AFS@@MAN_KRB4@ \fIv4\fP    traditional Kerberos IV
 @MAN_AFS@
 .IP "use_shmem = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 tells pam_krb5.so to pass credentials from the authentication service function

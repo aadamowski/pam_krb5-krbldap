@@ -23,7 +23,8 @@ local-archive:
 	$(MAKE) archive ORIGIN=$(ARCHIVEOUTDIR)
 
 archive:
-	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`;\
+	repo=`pwd`; \
+	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`; \
 	if test -d "$$tmpdir" ; then \
 		git clone $(ORIGIN) $$tmpdir/pam_krb5;\
 		cd $$tmpdir/pam_krb5;\

@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.2.23
+Version: 2.3.0
 Release: 1
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPL+
@@ -48,6 +48,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Mon Mar 10 2008 Nalin Dahyabhai <nalin@redhat.com> - 2.3.0-1
+- add a "null_afs" option
+- add a "token_strategy" option
+
 * Mon Mar 10 2008 Nalin Dahyabhai <nalin@redhat.com> - 2.2.23-1
 - when we're changing passwords, force at least one attempt to authenticate
   using the KDC, even in the pathological case where there's no previously-

@@ -1,3 +1,7 @@
+- 2.3.0: * added the ability to set up tokens in the rxk5 format
+	 * added the "token_strategy" option to control which methods we'll
+	   try to use for setting tokens
+	 * merge "null_afs" functionality from Jan Iven
 - 2.2.23: * when we're changing passwords, force at least one attempt to
 	    authenticate using the KDC, even in the pathological case where
 	    there's no previously- entered password and we were told not to ask

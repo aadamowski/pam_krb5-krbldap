@@ -1,14 +1,85 @@
 2008-03-10:
 	* NEWS, pam_krb5.spec: update version, note last changes
 	* README: note the new SCM location
+	* src/minikafs.c: remove workaround for NI_MAXHOST not being defined,
+	because it's noise until we need it somewhere.
 
 2008-03-07:
 	* src/password.c: force at least one attempt to authenticate using
 	the KDC, even in the pathological case where there's no previously-
 	entered password and we were told not to ask for one (#400611)
+	* src/options.c,src/minikafs.c,src/afs5log.c: merge Jan Iven's changes
+	to add a "nullafs" option, so that when we're guessing the principal
+	name for an AFS service we'll try the no-instance version first
+	(#249558)
+	* src/minikafs.c: if we're going to guess the realm name because
+	the whereis pioctl failed, guess the far-more-likely-to-be-correct
+	upper cased version of the cell's name than the cell's name.
+
+2008-03-03:
+	* src/options.c: update copyright date for token_strategy stuff.
+
+2008-03-03:
+	* src/noafs.c: fix signature of stub version of minikafs_log().
+
+2008-02-18:
+	* src/minikafs.c: flesh out some getprop bits, but don't use them
+	because the number of KDC round trips would go _way_ up
+
+2008-02-18:
+	* src/minikafs.c: stub out the routines to use the cache manager's
+	rxk5.enctypes property, if it reports one
+
+2008-02-14:
+	* src/password.c,src/prompter.c: suppress compiler warnings about how
+	we use prompter callback data.
+
+2008-02-14:
+	* src/sly.c: suppress a compiler warning calling tf_init().
+
+2008-02-14:
+	* src/minikafs.c: rework formatting of tokens to use indirections
+	provided by v5.c instead of poking at creds structures directly
+
+2008-02-14:
+	* src/v5.c,src/v5.h(v5_creds_get_etype): remove the need for the
+	context pointer.
+	* src/v5.c,src/v5.h(v5_creds_key_contents): return const data.
+	* src/v5.c,src/v5.h: add functions for picking out principal name
+	components and addresses and authdata from creds structures.
+	* src/v5.c(v5_principal_compare): rewrite to use these new functions.
+	* src/v5.c(v5_get_creds): correctly log the pkinit identity template.
+
+2008-02-14:
+	* src/tokens.c,src/afs5log.c: only recognize "v4" and "524" strategies
+	if we're building with krb4 support.
+
+2008-02-14:
+	* src/options.c: when we're debug-logging lifetimes, also log a
+	days/hours/minutes/seconds breakdown.
 
 2008-02-07:
-	* src/minikafs.c: don't barf on compile if NI_MAXHOST isn't defined.
+	* README,configure.ac,src/options.c,src/tokens.c,src/afs5log.c,
+	src/afs5log.1.in,src/pam_krb5.5.in: add a "token_strategy" option
+	to pam_krb5, and a matching "-s" option to afs5log.  That, in
+	combination being able to specify the best guess at the principal name
+	for a cell, should really let people cut down on what's getting to be
+	a large set of round trips to the KDC.
+
+2008-02-07:
+	* configure.ac: get the sense of --enable-keyutils right, so that we
+	warn when it's not requested, and error when it's requested, instead
+	of the other way around.
+	* src/afs5log.c: reorder the default list of methods, close the ccache
+	properly, and free the temporary homedir string for debugging use.
+	* src/minikafs.c(minikafs_5settoken2): add, to set a v5 cred.
+	* src/minikafs.c(minikafs_5log,minikafs_5log_with_principal): take a
+	flag to signal that we should try rxk5, and use it and the 2b flag to
+	designate which method we want to use (no longer trying more than one
+	during a single invocation).
+	* src/minikafs.c(encode_bytes,encode_ubytes): take const input.
+	* src/minikafs.c(encode_string): add.
+	* src/tokens.c: add rxk5 to the default method lists.
 
 2008-02-07:
 	* src/kuserok.c(_pam_krb5_kuserok): add a function which wraps
@@ -19,6 +90,13 @@
 	* src/auth.c(pam_sm_authenticate),src/acct.c(pam_sm_acct_mgmt): use
 	_pam_krb5_kuserok() instead of trying to get tokens, call
 	krb5_kuserok(), and clear tokens
+
+2008-02-07:
+	* src/minikafs.c: don't barf on compile if NI_MAXHOST isn't defined.
+
+2008-01-29:
+	* src/options.c: log a debug message when we disable prompting
+	on behalf of libkrb5
 
 2007-12-11:
 	* src/auth.c: don't ask for another password when we've already
