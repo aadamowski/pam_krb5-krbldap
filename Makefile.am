@@ -16,15 +16,18 @@ tag:
 force-tag:
 	git tag -f $(GITTAG)
 
-# ORIGIN=$(shell git config remote.origin.url 2> /dev/null || /bin/pwd)
-ORIGIN=$(top_srcdir)
+ORIGIN=$(shell git config remote.origin.url 2> /dev/null || /bin/pwd)
 ARCHIVEOUTDIR=$(shell cd $(top_srcdir) && pwd)
+
+local-archive:
+	$(MAKE) archive ORIGIN=$(ARCHIVEOUTDIR)
 
 archive:
 	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`;\
 	if test -d "$$tmpdir" ; then \
 		cd $$tmpdir;\
-		git clone $(ORIGIN);\
+		git clone $(ORIGIN) pam_krb5;\
+		cd pam_krb5;\
 		git checkout $(GITTAG);\
 		./autogen;\
 		make dist;\
