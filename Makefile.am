@@ -25,9 +25,8 @@ local-archive:
 archive:
 	tmpdir=`mktemp -d /tmp/make_archive_XXXXXX`;\
 	if test -d "$$tmpdir" ; then \
-		cd $$tmpdir;\
-		git clone $(ORIGIN) pam_krb5;\
-		cd pam_krb5;\
+		git clone $(ORIGIN) $$tmpdir/pam_krb5;\
+		cd $$tmpdir/pam_krb5;\
 		git checkout $(GITTAG);\
 		./autogen;\
 		make dist;\
