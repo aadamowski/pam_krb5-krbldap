@@ -1,3 +1,10 @@
+2008-03-17
+	* src/auth.c,src/password.c: mark user-visible strings for
+	translation (Michael Calmer).
+	* configure.ac: call macros to set up for gettext (Michael Calmer)
+	* po/POTFILES.in: add (Michael Calmer)
+	* po/Makevars: add
+
 2008-03-10:
 	* NEWS, pam_krb5.spec: update version, note last changes
 	* README: note the new SCM location

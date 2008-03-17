@@ -2,7 +2,7 @@ EXTRA_DIST = pam_krb5.spec TODO README README.heimdal-pkinit README.mit-pkinit R
 
 CONFIGURE_DEPENDENCIES = $(top_srcdir)/pam_krb5.spec
 
-SUBDIRS = src tests
+SUBDIRS = src tests po
 
 VERSION=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1)
 RELEASE=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1)
@@ -44,3 +44,5 @@ archive:
 		cp -v $(distdir).tar.gz $(ARCHIVEOUTDIR)/;\
 		rm -fr $$tmpdir;\
 	fi
+
+ACLOCAL_AMFLAGS = -I m4

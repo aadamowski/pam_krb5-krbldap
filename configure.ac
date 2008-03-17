@@ -474,6 +474,24 @@ AC_SUBST(TESTHOST)
 AC_SUBST(default_ccache_dir)
 AC_SUBST(default_ccname_template)
 
+AC_PATH_PROG(XGETTEXT, xgettext)
+if test -z "$XGETTEXT" ; then
+    AC_MSG_ERROR(xgettext is missing; please install gettext.)
+fi
+
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.17])
+
+AH_VERBATIM([_ZZENABLE_NLS],
+	    [#ifdef ENABLE_NLS
+	     #include <libintl.h>
+	     #define _(msgid) dgettext(PACKAGE, msgid)
+	     #define N_(msgid) msgid
+	     #else
+	     #define _(msgid) (msgid)
+	     #define N_(msgid) msgid
+	     #endif /* ENABLE_NLS */])
+
 AC_CONFIG_HEADER(config.h)
 AC_OUTPUT([
 Makefile
@@ -497,4 +515,5 @@ tests/tools/klist_f
 tests/tools/klist_c
 tests/tools/klist_a
 tests/tools/klist_4
+po/Makefile.in
 ])

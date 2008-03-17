@@ -18,5 +18,6 @@ else
 fi
 set -x -e
 rm -fr autom4te.cache
+autopoint
 autoreconf -i -f
 ./configure --libdir=$libdir --sysconfdir=/etc --mandir=$mandir $flags "$@" --enable-maintainer-mode
