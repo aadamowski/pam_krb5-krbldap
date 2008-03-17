@@ -32,10 +32,12 @@ rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 # Make the paths jive to avoid conflicts on multilib systems.
 sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
+%find_lang %{name}
+
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root)
 %{_bindir}/*
 /%{_lib}/security/pam_krb5.so
