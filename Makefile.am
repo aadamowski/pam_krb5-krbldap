@@ -19,8 +19,8 @@ force-tag:
 ORIGIN=$(shell git config remote.origin.url 2> /dev/null || /bin/pwd)
 ARCHIVEOUTDIR=$(shell cd $(top_srcdir) && pwd)
 
-test-archive:
-	$(MAKE) archive ORIGIN=$(ARCHIVEOUTDIR) GITTAG=master
+local-archive:
+	$(MAKE) archive ORIGIN=$(ARCHIVEOUTDIR)
 
 archive:
 	repo=`pwd`; \
