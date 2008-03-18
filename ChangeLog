@@ -1,3 +1,7 @@
+2008-03-18
+	* src/afs5log.c(main): actually hook up the '-n' flag to the
+	null_afs_first option, so that it does something useful.
+
 2008-03-17
 	* src/auth.c,src/password.c: mark user-visible strings for
 	translation (Michael Calmer).
