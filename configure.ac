@@ -483,14 +483,18 @@ AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.17])
 
 AH_VERBATIM([_ZZENABLE_NLS],
-	    [#ifdef ENABLE_NLS
-	     #include <libintl.h>
-	     #define _(msgid) dgettext(PACKAGE, msgid)
-	     #define N_(msgid) msgid
-	     #else
-	     #define _(msgid) (msgid)
-	     #define N_(msgid) msgid
-	     #endif /* ENABLE_NLS */])
+[
+ /* Why Y_? Because if we somehow pull in OpenSSL's <des_old.h>, it'll
+    undefine _ out from under us. */
+ #ifdef ENABLE_NLS
+ #include <libintl.h>
+ #define Y_(msgid) dgettext(PACKAGE, msgid)
+ #define N_(msgid) msgid
+ #else
+ #define Y_(msgid) (msgid)
+ #define N_(msgid) msgid
+ #endif /* ENABLE_NLS */
+])
 
 AC_CONFIG_HEADER(config.h)
 AC_OUTPUT([

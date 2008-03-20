@@ -259,7 +259,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 		if ((password == NULL) && (options->use_second_pass)) {
 			/* Ask the user for a password. */
-			sprintf(prompt, _("%s%sPassword: "),
+			sprintf(prompt, Y_("%s%sPassword: "),
 				options->banner,
 				strlen(options->banner) > 0 ? " " : "");
 			i = _pam_krb5_prompt_for(pamh, prompt, &password);
@@ -351,10 +351,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 * okay with that, ask for one. */
 		if ((password == NULL) && (retval == PAM_AUTHTOK_ERR)) {
 			/* Ask for the new password twice. */
-			sprintf(prompt, _("New %s%sPassword: "),
+			sprintf(prompt, Y_("New %s%sPassword: "),
 				options->banner,
 				strlen(options->banner) > 0 ? " " : "");
-			sprintf(prompt2, _("Repeat New %s%sPassword: "),
+			sprintf(prompt2, Y_("Repeat New %s%sPassword: "),
 				options->banner,
 				strlen(options->banner) > 0 ? " " : "");
 			i = _pam_krb5_prompt_for_2(pamh, prompt, &password,

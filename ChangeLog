@@ -1,3 +1,9 @@
+2008-03-20
+	* configure.ac,src/auth.c,src/password.c: use Y_ as a macro
+	for dgettext rather than _, because <openssl/des_old.h> will
+	undefine _, and we end up including it indirectly when building with
+	Heimdal with v4 compatibility enabled.
+
 2008-03-18
 	* src/afs5log.c(main): actually hook up the '-n' flag to the
 	null_afs_first option, so that it does something useful.

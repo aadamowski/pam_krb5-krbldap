@@ -283,7 +283,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	if ((retval != PAM_SUCCESS) &&
 	    (retval != PAM_USER_UNKNOWN) &&
 	    options->use_second_pass) {
-		i = _pam_krb5_prompt_for(pamh, _("Password: "), &second_pass);
+		i = _pam_krb5_prompt_for(pamh, Y_("Password: "),
+					 &second_pass);
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
 		    (second_pass != NULL) &&
