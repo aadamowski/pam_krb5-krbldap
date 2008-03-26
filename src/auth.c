@@ -297,14 +297,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		    (second_pass != NULL) &&
 		    (strlen(second_pass) > 0)) {
 			/* Save the password for the next module. */
-			if (!_pam_krb5_has_item(pamh, PAM_AUTHTOK)) {
-				if (options->debug) {
-					debug("saving newly-entered "
-					      "password for use by "
-					      "other modules");
-				}
-				pam_set_item(pamh, PAM_AUTHTOK, second_pass);
+			if (options->debug) {
+				debug("saving newly-entered "
+				      "password for use by "
+				      "other modules");
 			}
+			pam_set_item(pamh, PAM_AUTHTOK, second_pass);
 			if (options->debug) {
 				if (use_third_pass) {
 					debug("trying newly-entered "

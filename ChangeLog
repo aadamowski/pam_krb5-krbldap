@@ -1,3 +1,7 @@
+2008-03-26
+	* src/auth.c(pam_sm_authenticate): unconditionally set PAM_AUTHTOK
+	when we prompt the user for a password (#437179)
+
 2008-03-20
 	* configure.ac,src/auth.c,src/password.c: use Y_ as a macro
 	for dgettext rather than _, because <openssl/des_old.h> will
