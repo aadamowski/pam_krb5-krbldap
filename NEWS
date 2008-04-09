@@ -1,3 +1,5 @@
+- 2.3.1: * make afs5log's -n option actually work the "null_afs" option
+	 * translations for messages!
 - 2.3.0: * added the ability to set up tokens in the rxk5 format
 	 * added the "token_strategy" option to control which methods we'll
 	   try to use for setting tokens
