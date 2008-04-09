@@ -1,3 +1,8 @@
+2008-04-09
+	* src/session.c(pam_sm_open_session): when setting up creds to use
+	for obtaining tokens, don't bother trying to save v4 creds if we
+	don't have any.
+
 2008-03-26
 	* src/auth.c(pam_sm_authenticate): unconditionally set PAM_AUTHTOK
 	when we prompt the user for a password (#437179)

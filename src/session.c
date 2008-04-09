@@ -218,11 +218,15 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	    (options->ignore_afs == 0) &&
 	    tokens_useful()) {
 		v5_save_for_tokens(ctx, stash, user, userinfo, options, NULL);
-		v4_save_for_tokens(ctx, stash, userinfo, options, NULL);
+		if (stash->v4present) {
+			v4_save_for_tokens(ctx, stash, userinfo, options, NULL);
+		}
 		
 		tokens_obtain(ctx, stash, options, userinfo, 1);
 
-		v4_destroy(ctx, stash, options);
+		if (stash->v4present) {
+			v4_destroy(ctx, stash, options);
+		}
 		v5_destroy(ctx, stash, options);
 	}
 
