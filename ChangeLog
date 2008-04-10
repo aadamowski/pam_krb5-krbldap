@@ -1,3 +1,8 @@
+2008-04-10
+	* po/Makevars: extract text strings correctly (#441858).
+	* po/POTFILES.in: note that input strings are planned to be UTF-8
+	(#441858).
+
 2008-04-09
 	* src/session.c(pam_sm_open_session): when setting up creds to use
 	for obtaining tokens, don't bother trying to save v4 creds if we

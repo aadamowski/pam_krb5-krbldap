@@ -7,8 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: el\n"
-"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;f=AUTHORS;hb=HEAD\n"
-"POT-Creation-Date: 2008-03-17 13:26-0400\n"
+"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
+"f=AUTHORS;hb=HEAD\n"
+"POT-Creation-Date: 2008-04-10 15:27-0400\n"
 "PO-Revision-Date: 2008-04-10 22:03+0300\n"
 "Last-Translator: Dimitris Glezos <dimitris@glezos.com>\n"
 "Language-Team: Greek Fedora team <fedora-trans-el@redhat.com>\n"
@@ -18,22 +19,23 @@ msgstr ""
 "X-Generator: KBabel 1.11.4\n"
 "Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
-#: src/auth.c:286
+#: ../src/auth.c:286
 msgid "Password: "
 msgstr "Συνθηματικό: "
 
-#: src/password.c:262
+#. Ask the user for a password.
+#: ../src/password.c:262
 #, c-format
 msgid "%s%sPassword: "
 msgstr "%s%sΣυνθηματικό: "
 
-#: src/password.c:354
+#. Ask for the new password twice.
+#: ../src/password.c:354
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "Νέο %s%sσυνθηματικό: "
 
-#: src/password.c:357
+#: ../src/password.c:357
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Επανάληψη νέου %s%sσυνθηματικού: "
-
