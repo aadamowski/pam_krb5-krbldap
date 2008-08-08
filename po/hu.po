@@ -1,8 +1,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pam_krb5\n"
-"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git\n"
-"POT-Creation-Date: 2008-04-30 02:50+0000\n"
+"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
+"f=AUTHORS;hb=HEAD\n"
+"POT-Creation-Date: 2008-08-08 14:03-0400\n"
 "PO-Revision-Date: 2008-04-30 07:23+0100\n"
 "Last-Translator: Sulyok Péter <peti@sulyok.hu>\n"
 "Language-Team: Hungarian <fedora-trans-hu@redhat.com>\n"
@@ -14,24 +15,21 @@ msgstr ""
 "X-Poedit-Country: HUNGARY\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: ../src/auth.c:286
+#: src/auth.c:286
 msgid "Password: "
 msgstr "Jelszó: "
 
-#. Ask the user for a password.
-#: ../src/password.c:262
+#: src/password.c:262
 #, c-format
 msgid "%s%sPassword: "
 msgstr "%s%sjelszó: "
 
-#. Ask for the new password twice.
-#: ../src/password.c:354
+#: src/password.c:354
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "Új %s%sjelszó: "
 
-#: ../src/password.c:357
+#: src/password.c:357
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Ismét az új %s%sjelszó: "
-

@@ -7,8 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: system-config-firewall.master\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-06-03 11:15+0200\n"
+"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
+"f=AUTHORS;hb=HEAD\n"
+"POT-Creation-Date: 2008-08-08 14:03-0400\n"
 "PO-Revision-Date: 2008-06-08 20:58+0200\n"
 "Last-Translator: Miloslav Trmač <mitr@volny.cz>\n"
 "Language-Team: Czech <fedora-cs-list@redhat.com>\n"
@@ -16,1608 +17,1314 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.4\n"
-"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../src/fw_compat.py:27
-#, python-format
-msgid "Converting %s"
-msgstr "Konvertuji %s"
-
-#: ../src/fw_config.py:49
-msgid ""
-"This program is free software; you can redistribute it and/or modify it "
-"under the terms of the GNU General Public License as published by the Free "
-"Software Foundation; either version 2 of the License, or (at your option) "
-"any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful, but WITHOUT "
-"ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
-"FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for "
-"more details.\n"
-"\n"
-"You should have received a copy of the GNU General Public License along with "
-"this program.  If not, see <http://www.gnu.org/licenses/>."
+#: src/auth.c:286
+msgid "Password: "
 msgstr ""
-"Tento program je svobodný software; můžete jej libovolně kopírovat a "
-"upravovat pokud zachováte podmínky GNU General Public Licence jak jsou "
-"publikovány na stránkách nadace Svobodného Softwrare (FSF); buď ve verzi 2 "
-"nebo (podle vašeho zvážení) jakákoli pozdější.\n"
-"\n"
-"Tento program je distribuován v dobré víře, že bude užitečný, ale bez "
-"VEŠKERÝCH ZÁRUK; Pro detaily si přečtete licenci GNU General Public "
-"License.\n"
-"\n"
-"S tímto programem byste měli obdržet kopii GNU General Public License. Pokud "
-"nepodívete se na <http://www.gnu.org/licenses/>."
 
-#: ../src/fw_gui.py:60
-msgid "Firewall"
-msgstr "Firewall"
-
-#: ../src/fw_gui.py:61
-msgid "Configure firewall rules"
-msgstr "Nastavit pravidla firewallu"
-
-#: ../src/fw_gui.py:62
-msgid ""
-"A firewall allows other computers to access selected services on your "
-"computer and helps to prevent unauthorized access beyond these selections. "
-"Select the services to which the firewall should allow access."
+#: src/password.c:262
+#, c-format
+msgid "%s%sPassword: "
 msgstr ""
-"Firewall slouží k povolení přístupu ke konkrétním službám na vašem počítači "
-"z jiných počítačů a pro zabránění neautorizovanému přistupu. Vyberte služby "
-"ke kterým má firewall povolit přístup."
 
-#: ../src/fw_gui.py:79 ../src/fw_gui.py:1416
-msgid "local"
-msgstr "lokální"
-
-#: ../src/fw_gui.py:244 ../src/fw_gui.py:271 ../src/fw_gui.py:333
-msgid "Service"
-msgstr "Služba"
-
-#: ../src/fw_gui.py:248
-msgid "Port/Protocol"
-msgstr "Port/Protokol"
-
-#: ../src/fw_gui.py:262 ../src/fw_gui.py:324 ../src/fw_gui.py:536
-msgid "Port"
-msgstr "Port"
-
-#: ../src/fw_gui.py:267 ../src/fw_gui.py:329 ../src/fw_gui.py:533
-msgid "Protocol"
-msgstr "Protokol"
-
-#: ../src/fw_gui.py:386 ../src/fw_gui.py:417 ../src/fw_gui.py:443
-#: ../src/fw_gui.py:528 ../src/system-config-firewall.glade:4581
-msgid "Interface"
-msgstr "Rozhraní"
-
-#: ../src/fw_gui.py:393 ../src/fw_gui.py:423 ../src/fw_gui.py:447
-msgid "Description"
-msgstr "Popis"
-
-#: ../src/fw_gui.py:469 ../src/fw_gui.py:478 ../src/fw_gui.py:503
-msgid "Select"
-msgstr "Vyberte"
-
-#: ../src/fw_gui.py:539
-msgid "To Address"
-msgstr "Cílová adresy:"
-
-#: ../src/fw_gui.py:543
-msgid "To Port"
-msgstr "Cílový Port"
-
-#: ../src/fw_gui.py:565
-msgid "ICMP Type"
-msgstr "ICMP Typ"
-
-#: ../src/fw_gui.py:588
-msgid "Type"
-msgstr "Typ"
-
-#: ../src/fw_gui.py:594
-msgid "Table"
-msgstr "Tabulka"
-
-#: ../src/fw_gui.py:599
-msgid "Filename"
-msgstr "Jméno souboru"
-
-#: ../src/fw_gui.py:735 ../src/fw_tui.py:62
-#: ../src/system-config-firewall.glade:664
-msgid "Trusted Services"
-msgstr "Důvěryhodné služby"
-
-#: ../src/fw_gui.py:776
-msgid "(modified)"
-msgstr "(upraven)"
-
-#: ../src/fw_gui.py:795
-msgid "The firewall is enabled."
-msgstr "Firewall je povolen"
-
-#: ../src/fw_gui.py:806 ../src/fw_tui.py:733
-msgid "The firewall is disabled."
-msgstr "Firewall je zakázán"
-
-#: ../src/fw_gui.py:836
-msgid "Helper modules:"
-msgstr "Pomocné moduly:"
-
-#: ../src/fw_gui.py:862
-msgid "Key:"
-msgstr "Klíč:"
-
-#: ../src/fw_gui.py:864
-msgid "Default:"
-msgstr "Výchozí:"
-
-#: ../src/fw_gui.py:1026 ../src/fw_tui.py:342
-#, python-format
-msgid "Port or port range '%s' is not valid."
-msgstr "Port nebo rozsah %s není platný."
-
-#: ../src/fw_gui.py:1028
-msgid "Please enter a valid port number, service name or range."
-msgstr " Zadejte prosím platné číslo portu, název služby nebo rozsah."
-
-#: ../src/fw_gui.py:1447
-msgid "There are unapplied changes, do you really want to quit?"
-msgstr "Některé změny nejsou použity, skutečně chcete skončit?"
-
-#: ../src/fw_gui.py:1510
-#, python-format
-msgid "All %s devices"
-msgstr "Všechna %s zařízení"
-
-#: ../src/fw_gui.py:1512
-msgid "Not configured"
-msgstr "Nenastaven"
-
-#: ../src/fw_gui.py:1678
-msgid "Parse error in config file"
-msgstr "Chyba zpracování konfiguračního souboru"
-
-#: ../src/fw_gui.py:1680
-msgid "Ignore"
-msgstr "Ignorovat"
-
-#: ../src/fw_gui.py:1681
-msgid "Ignore All"
-msgstr "Ingnorovat všechny"
-
-#: ../src/fw_gui.py:1730 ../src/fw_tui.py:700
-msgid "The firewall configuration is not consistent."
-msgstr "Nastavení firewallu není konzistentní."
-
-#: ../src/fw_gui.py:1731 ../src/fw_tui.py:701
-#, python-format
-msgid ""
-"The following files are missing or unusable:\n"
-"\t%s\n"
-"\n"
-"Apply your firewall configuration now to correct this problem."
+#: src/password.c:354
+#, c-format
+msgid "New %s%sPassword: "
 msgstr ""
-"Následující soubory chybí nebo jsou nepoužitelné:\n"
-"\t%s\n"
-"\n"
-"Aplikujte vaše nastavení firewallu pro napravení problému."
 
-#: ../src/fw_gui.py:1739 ../src/fw_tui.py:707
-msgid "Old firewall configuration."
-msgstr "Staré nastavení firewallu"
-
-#: ../src/fw_gui.py:1740 ../src/fw_tui.py:708
-msgid ""
-"Your firewall configuration was converted from an old version. Please verify "
-"the configuration and apply."
+#: src/password.c:357
+#, c-format
+msgid "Repeat New %s%sPassword: "
 msgstr ""
-"Konfigurace firewallu byla převedena ze staré verze. Prosím zkontrolujte "
-"nastavení a aplikujte ho."
-
-#: ../src/fw_gui.py:1785 ../src/system-config-firewall.glade:259
-msgid "Server"
-msgstr "Server"
-
-#: ../src/fw_gui.py:1792 ../src/system-config-firewall.glade:213
-msgid "Beginner"
-msgstr "Začátečník"
-
-#: ../src/fw_gui.py:1997 ../src/fw_tui.py:627
-msgid ""
-"Clicking the 'Yes' button will override any existing firewall configuration. "
-"Are you sure that you want to do this?"
-msgstr ""
-"Kliknutím na tlačítko 'Ano' přepíšete stávající nastavení firewallu. Chcete "
-"pokračovat?"
-
-#: ../src/fw_gui.py:2000 ../src/fw_tui.py:630
-msgid ""
-"Please remember to check if the services iptables and ip6tables are enabled."
-msgstr "Nezapomeňte prosím zkontrolovat, jestli jsou služby iptables a ip6tables povoleny."
-
-#: ../src/fw_gui.py:2041 ../src/fw_tui.py:669
-msgid "Configuration failed"
-msgstr "Nastavení selhalo"
-
-#: ../src/fw_icmp.py:29
-msgid "Echo Request (ping)"
-msgstr "Žádost o odpověď (ping)"
-
-#: ../src/fw_icmp.py:30
-msgid ""
-"This message is used to test if a host is reachable mostly with the <i>ping</"
-"i> utility."
-msgstr ""
-"Tato zpráva je používána k testování dosažitelnosti počítače, většinou "
-"nástrojem <i>ping</i>."
-
-#: ../src/fw_icmp.py:32
-msgid "Echo Reply (pong)"
-msgstr "Zpětná odpověď (pong)"
-
-#: ../src/fw_icmp.py:33
-msgid "This message is the aswer to a <i>Echo Request</i>."
-msgstr "Tato zpráva je odezva na <i>'Žádost o odpověď</i>."
-
-#: ../src/fw_icmp.py:34
-msgid "Destination Unreachable"
-msgstr "Cíl nedosažitelný"
-
-#: ../src/fw_icmp.py:35
-msgid ""
-"This error message is generated by a host or gateway if the destination is "
-"not reachable."
-msgstr ""
-"Tato chybová zpráva je vygenerována počítačem nebo bránou pokud cíl není "
-"dosažitelný."
-
-#: ../src/fw_icmp.py:37
-msgid "Redirect"
-msgstr "Přesměrování"
-
-#: ../src/fw_icmp.py:38
-msgid "This error message informs a host to send packets on another route."
-msgstr ""
-"Tato chybová zpráva informuje počítač, že má paket poslat jinou cestou."
-
-#: ../src/fw_icmp.py:40
-msgid "Router Advertisement"
-msgstr "Oznámení směrovače"
-
-#: ../src/fw_icmp.py:41
-msgid ""
-"This message is used by routers to periodically announce the IP address of a "
-"multicast interface."
-msgstr ""
-"Tato zpráva je používána směrovači k pravidelnému oznamování IP adres "
-"všesměrových rozhranní (multicast)."
-
-#: ../src/fw_icmp.py:43
-msgid "Router Solicitation"
-msgstr "Požadavky směrovače"
-
-#: ../src/fw_icmp.py:44
-msgid ""
-"This is message is used by a host attached to a ulticast link to request a "
-"<i>Router Advertisement</i>"
-msgstr ""
-"Tato zpráva je používána počítačem připojeným k všeměrové (multicast) lince "
-"k vyvolání žádosti o <i>Oznámení směrovače</i>."
-
-#: ../src/fw_icmp.py:46
-msgid "Time Exceeded"
-msgstr "Časový limit překročen"
-
-#: ../src/fw_icmp.py:47
-msgid ""
-"This error message is generated if the time-to-live was exceeded either of a "
-"packet or of the reassembling of a fragmented packet."
-msgstr ""
-"Tato chybová zpráva je vyvolána pokud byl čas života (ttl) paketu, nebo čas "
-"znovu sestavení fragmentovaného paketu, překročen."
-
-#: ../src/fw_icmp.py:50
-msgid "Parameter Problem"
-msgstr "Problém s parametrem"
-
-#: ../src/fw_icmp.py:51
-msgid ""
-"This error message is generated if the IP header is bad, either by a missing "
-"option or bad length."
-msgstr ""
-"Tato chybová zpráva je generována pokud je IP hlavička chybná, chybí jí "
-"některá volba nebo má špatnou délku."
-
-#: ../src/fw_iptables.py:41
-msgid "Unload modules on restart and stop"
-msgstr "Uvolnit moduly při restartu a ukončení"
-
-#: ../src/fw_iptables.py:42
-msgid ""
-"To ensure a sane state, the kernel firewall modules must be unloaded when "
-"the firewall is restarted or stopped."
-msgstr ""
-"Abychom se dostali do smysluplného stavu musí být moduly firewallu v jádru "
-"při restartu a ukončení uvolněny."
-
-#: ../src/fw_iptables.py:45
-msgid "Save on stop"
-msgstr "Uložit při ukončení"
-
-#: ../src/fw_iptables.py:46
-msgid ""
-"Save the active firewall configuration with all changes since the last start "
-"before stopping the firewall. Only do this if you need to preserve the "
-"active state for the next start."
-msgstr ""
-"Uložit aktuální nastavení firewallu se všemi změnami od posledního startu, "
-"předtím, než bude firewall ukončen. Použijte pouze pokud chcete zachovat "
-"aktivní stav do dalšího startu."
-
-#: ../src/fw_iptables.py:49
-msgid "Save on restart"
-msgstr "Uložit při restartu"
-
-#: ../src/fw_iptables.py:50
-msgid ""
-"Save the active firewall configuration with all changes since the last start "
-"before restarting the firewall. Only do this if you need to preserve the "
-"active state for the next start."
-msgstr ""
-"Uložit aktuální nastavení firewallu se všemi změnami od posledního startu, "
-"předtím, než bude firewall ukončen. Použijte pouze pokud chcete zachovat "
-"aktivní stav do dalšího startu."
-
-#: ../src/fw_iptables.py:53
-msgid "Save and restore counter"
-msgstr "Uložit a obnovit počítadla"
-
-#: ../src/fw_iptables.py:54
-msgid ""
-"<i>Save on stop</i> and <i>Save on restart</i> additionally save rule and "
-"chain counter."
-msgstr ""
-"<i>Uložit při ukončení</i> a <i>Uložit při restartu</i> uloží pravidla i "
-"počítadla řetězců."
-
-#: ../src/fw_iptables.py:56
-msgid "Numeric status output"
-msgstr "Numerický výstup"
-
-#: ../src/fw_iptables.py:57
-msgid "Print addresses and ports in numeric format for the status output."
-msgstr "Tisknout adresy a porty v numerickém formátu."
-
-#: ../src/fw_iptables.py:60
-msgid "Verbose status"
-msgstr "Detailní stav"
-
-#: ../src/fw_iptables.py:61
-msgid ""
-"Print information about the number of packets and bytes plus the <i>input-</"
-"i> and <i>outputdevice</i> in the status output."
-msgstr ""
-"Ve výpisu stavu vypíše informace o počtu paketů a bajtů včetně <i>vstupních</"
-"i> a <i>výstupních</i> zařízení."
-
-#: ../src/fw_iptables.py:64
-msgid "Status line numbers"
-msgstr "Čísla řádek"
-
-#: ../src/fw_iptables.py:65
-msgid "Print a counter/number for every rule in the status output."
-msgstr "Ve výpisu stavu vypíše počítadla/čísla řádků každého pravidla."
-
-#: ../src/fw_parser.py:42
-#, python-format
-msgid "port range %s is not unique."
-msgstr "rozsah portů %s není jednoznačný."
-
-#: ../src/fw_parser.py:44
-#, python-format
-msgid "%s is not a valid range (start port >= end port)."
-msgstr "%s není platný rozsah (počáteční port >= konečný port)."
-
-#: ../src/fw_parser.py:49
-#, python-format
-msgid "%s is not a valid protocol."
-msgstr "%s není platný protokol."
-
-#: ../src/fw_parser.py:51
-#, python-format
-msgid "invalid port definition %s."
-msgstr "Neplatná definice portu %s."
-
-#: ../src/fw_parser.py:67
-msgid "ipv6 has no nat support."
-msgstr "ipv6 nemá podporu NATu."
-
-#: ../src/fw_parser.py:73
-#, python-format
-msgid "invalid service '%s'."
-msgstr "neplatná služba '%s'."
-
-#: ../src/fw_parser.py:79
-#, python-format
-msgid "option %(option)s: invalid icmp type '%(value)s'."
-msgstr "volba %(option)s: neplatný icmp typ '%(value)s'."
-
-#: ../src/fw_parser.py:90 ../src/fw_parser.py:100
-#, python-format
-msgid "Invalid argument %s"
-msgstr "Neplatný argument %s"
-
-#: ../src/fw_parser.py:114
-#, python-format
-msgid "option %(option)s: invalid forward_port '%(value)s': %(error)s."
-msgstr "volba %(option)s: neplatný forward_port '%(value)s': %(error)s."
-
-#: ../src/fw_parser.py:125
-#, python-format
-msgid "option %(option)s: invalid forward_port '%(value)s'."
-msgstr "volba %(option)s: neplatný forward_port '%(value)s'."
-
-#: ../src/fw_parser.py:149
-msgid "Enable firewall (default)"
-msgstr "Povolit firewall (implicitní)"
-
-#: ../src/fw_parser.py:152 ../src/system-config-firewall.glade:435
-msgid "Disable firewall"
-msgstr "Zakázat firewall"
-
-#: ../src/fw_parser.py:155 ../src/fw_parser.py:159
-msgid "<module>"
-msgstr "<modul>"
-
-#: ../src/fw_parser.py:156
-msgid "Enable an iptables module"
-msgstr "Povolit modul iptables"
-
-#: ../src/fw_parser.py:160
-msgid "Disable an iptables module"
-msgstr "Zakázat modul iptables"
-
-#: ../src/fw_parser.py:164
-msgid "<service>"
-msgstr "<service>"
-
-#: ../src/fw_parser.py:165
-msgid "Open the firewall for a service (e.g, ssh)"
-msgstr "Propustit firewallem službu (např. ssh)"
-
-#: ../src/fw_parser.py:168
-msgid "<port>[-<port>]:<protocol>"
-msgstr "<port>[-<port>]:<protokol>"
-
-#: ../src/fw_parser.py:170
-msgid "Open specific ports in the firewall (e.g, ssh:tcp)"
-msgstr "Propustit firewallem konkrétní porty (např. ssh:tcp)"
-
-#: ../src/fw_parser.py:174 ../src/fw_parser.py:178
-msgid "<interface>"
-msgstr "<interface>"
-
-#: ../src/fw_parser.py:175
-msgid "Allow all traffic on the specified device"
-msgstr "Povolit všechen provoz na zadaném zařízení"
-
-#: ../src/fw_parser.py:179
-msgid "Masquerades traffic from the specified device. This is IPv4 only."
-msgstr "Maškaráduje provoz ze zadaného zařízení. Pouze pro IPv4."
-
-#: ../src/fw_parser.py:183
-msgid "Backwards compatibilty, aliased to --enabled"
-msgstr "Zpětná kompatibilita, alias pro --enabled"
-
-#: ../src/fw_parser.py:186
-msgid "[<type>:][<table>:]<filename>"
-msgstr "[<typ>:][<tabulka>:]<jméno_souboru>"
-
-#: ../src/fw_parser.py:188
-msgid ""
-"Specify a custom rules file for inclusion in the firewall, after the default "
-"rules. Default protocol type: ipv4, default table: filter. (Example: ipv4:"
-"filter:/etc/sysconfig/ipv4_filter_addon)"
-msgstr "Určete soubor s vlastními pravidly pro přidání do firewallu. Bude zařazen za výchozí pravidla. Výchozí typ protokolu: ipv4, výchozí tabulka: filter. (Např.: ipv4:filter:/etc/sysconfig/ipv4_filter_addon)"
-
-#: ../src/fw_parser.py:197
-msgid ""
-"if=<interface>:port=<port>:proto=<protocol>[:toport=<destination port>][:"
-"toaddr=<destination address>]"
-msgstr ""
-"if=<interface>:port=<port>:proto=<protocol>[:toport=<destination port>][:"
-"toaddr=<destination address>]"
-
-#: ../src/fw_parser.py:201
-msgid ""
-"Forward the port with protocol for the interface to either another local "
-"destination port (no destination address given) or to an other destination "
-"address with an optional destination port. This is IPv4 only."
-msgstr ""
-"Přesměruj port s protokolem pro dané rozhraní buď na jiný lokální port  (bez "
-"cílové adresy) nebo na jinou adresu s možností uvést i cílový port. Pouze "
-"pro IPv4."
-
-#: ../src/fw_parser.py:210
-msgid "<icmp type>"
-msgstr "<icmp type>"
-
-#: ../src/fw_parser.py:211
-msgid "Block this ICMP type. The default is to accecpt all ICMP types."
-msgstr "Blokovat ten typ ICMP. Implicitně se přijímají všechny typy ICMP."
-
-#: ../src/fw_parser.py:217
-msgid "Disable Internet Protocol Security (IPsec)"
-msgstr "Zakázat internetový bezpečnostní protokol (IPsec)"
-
-#: ../src/fw_parser.py:220
-msgid "Disable Internet Printing Protocol (IPP)"
-msgstr "Zakázat internetový tiskový protokol (IPP)"
-
-#: ../src/fw_parser.py:223
-msgid "Disable Multicast DNS (mDNS)"
-msgstr "Zakázat Multicast DNS (mDNS)"
-
-#: ../src/fw_parser.py:228
-msgid "<mode>"
-msgstr "<mód>"
-
-#: ../src/fw_parser.py:229
-#, python-format
-msgid "Configure SELinux mode: %s"
-msgstr "Nastavte mód SELinuxu: %s"
-
-#: ../src/fw_parser.py:233 ../src/fw_parser.py:391
-msgid "<type>"
-msgstr "<typ>"
-
-#: ../src/fw_parser.py:234
-msgid "Configure SELinux type: Usually targeted or strict Policy"
-msgstr "Nastavte typ SELinuxu: Obvykle cílená nebo striktní politika"
-
-#: ../src/fw_parser.py:246
-#, python-format
-msgid "no such option: %s"
-msgstr "neexistuje volba: %s"
-
-#: ../src/fw_parser.py:320
-#, python-format
-msgid "%s option requires an argument"
-msgstr "%s volba vyžaduje argument"
-
-#: ../src/fw_parser.py:323
-#, python-format
-msgid "%(option)s option requires %(count)s arguments"
-msgstr "volba %(option)s vyžaduje %(count)s parametrů"
-
-#: ../src/fw_parser.py:337
-#, python-format
-msgid "%s option does not take a value"
-msgstr "%s volba nepřijímá hodnotu"
-
-#: ../src/fw_parser.py:365
-msgid "Show this help message"
-msgstr "Ukázat tuto nápovědu"
-
-#: ../src/fw_parser.py:368
-msgid "Run noninteractively; process only command-line arguments"
-msgstr "Spustit neinteraktivně; zpracovat jen argumenty na příkazovém řádku"
-
-#: ../src/fw_parser.py:372
-msgid "Be more verbose"
-msgstr "Více podrobností"
-
-#: ../src/fw_parser.py:375
-msgid "Show version"
-msgstr "Ukázat verzi"
-
-#: ../src/fw_parser.py:378
-msgid "Configure firewall but do not activate the new configuration"
-msgstr "Nastavit firewall, ale neaktivovat nové nastavení"
-
-#: ../src/fw_parser.py:382
-msgid "Ignore actual settings"
-msgstr "Ignorovat součastné nastavení"
-
-#: ../src/fw_parser.py:385
-msgid ""
-"Update firewall non-interactively if the firewall is enabled. This will also "
-"restart the firewall. The -n and -f options will be ignored."
-msgstr ""
-"Pokud je firewall aktivován, aktualizuj jej neinteraktivně. Vyžaduje restart "
-"firewallu. Volby -n a -f budou ignorovány."
-
-#: ../src/fw_parser.py:392
-#, python-format
-msgid ""
-"Set firewall default type: %s. This overwrites any existing configuration."
-msgstr ""
-"Nastav výchozí typ firewallu: %s. Přepíše všechny existující nastavení."
-
-#: ../src/fw_parser.py:397
-msgid "List predefined services."
-msgstr "Vypsat všechny předdefinované služby."
-
-#: ../src/fw_parser.py:400
-msgid "List the supported icmp types."
-msgstr "Vypsat všechny podporované ICMP typy."
-
-#: ../src/fw_services.py:35
-msgid "Network Printing Client (IPP)"
-msgstr "Klient síťového tisku (IPP)"
-
-#: ../src/fw_services.py:37
-msgid ""
-"The Internet Printing Protocol (IPP) is used for distributed printing. IPP "
-"(over udp) provides the ability to get information about a printer (e.g. "
-"capability and status) and to control printer jobs. If you plan to use a "
-"remote network printer via cups, do not disable this option."
-msgstr "Internetový tiskový protokol (IPP) se používá pro distribuovaný tisk. IPP (přes udp) umožňuje získávat informace o tiskárně (např. její schopnosti a stav) a spravovat tiskové úlohy. Pokud chcete používat síťovou tiskárnu přes CUPS, nezakazujte tuto volbu."
-
-#: ../src/fw_services.py:43
-msgid "Network Printing Server (IPP)"
-msgstr "Server síťového tisku (IPP)"
-
-#: ../src/fw_services.py:45
-msgid ""
-"The Internet Printing Protocol (IPP) is used for distributed printing. IPP "
-"(over tcp) provides the ability to share printers over the network. Enable "
-"this option if you plan to share printers via cups over the network."
-msgstr "Internetový tiskový protokol (IPP) se používá pro distribuovaný tisk. IPP (přes tcp) umožňuje sdílet tiskárny v síti. Pokud chcete sdílet tiskárny v síti přes CUPS, povolte tuto volbu."
-
-#: ../src/fw_services.py:49
-msgid "Multicast DNS (mDNS)"
-msgstr "Multicast DNS (mDNS)"
-
-#: ../src/fw_services.py:50
-msgid ""
-"mDNS provides the ability to use DNS programming interfaces, packet formats "
-"and operating semantics in a small network without a conventional DNS "
-"server. If you plan to use Avahi, do not disable this option."
-msgstr ""
-"mDNS dává možnost nastavovat rozhranní, formát paketů a operační sémantiku v "
-"malých sítích bez použití běžného DNS serveru. Pokud chcete používat Avahi, "
-"nezakazujte tuto volbu."
-
-#: ../src/fw_services.py:56
-msgid "IPsec"
-msgstr "IPSec"
-
-#: ../src/fw_services.py:57
-msgid ""
-"Internet Protocol Security (IPsec) incorporates security for network "
-"transmissions directly into the Internet Protocol (IP). IPsec provides "
-"methods for both encrypting data and authentication for the host or network "
-"it sends to. If you plan to use a vpnc server or FreeS/WAN, do not disable "
-"this option."
-msgstr ""
-"Internetový zabezpečovací protokol (IPSec) zabezpečuje síťové vysílání přímo "
-"na úrovni internetového protokolu (IP). IPSec nabízí metody pro šifrování "
-"jak dat, tak autentizace hosta nebo sítě, do které jsou údaje odesílány. "
-"Pokud chcete používat vpnc server nebo FreeS/WAN, nezakazujte tuto volbu."
-
-#: ../src/fw_services.py:65
-msgid "SSH"
-msgstr "SSH"
-
-#: ../src/fw_services.py:66
-msgid ""
-"Secure Shell (SSH) is a protocol for logging into and executing commands on "
-"remote machines. It provides secure encrypted communications. If you plan on "
-"accessing your machine remotely via SSH over a firewalled interface, enable "
-"this option. You need the openssh-server package installed for this option "
-"to be useful."
-msgstr ""
-"Secure Shell (SSH) je protokol pro přihlašování se k vzdáleným strojům a "
-"spouštění příkazů na nich. Poskytuje bezpečnou šifrovanou komunikaci. Pokud "
-"hodláte přistupovat ke svému počítači vzdáleně přes SSH přes rozhraní "
-"chráněné firewallem, povolte tuto volbu. Aby bylo SSH funkční, musíte mít "
-"nainstalován balíček openssh-server."
-
-#: ../src/fw_services.py:79
-msgid "WWW (HTTP)"
-msgstr "WWW (HTTP)"
-
-#: ../src/fw_services.py:80
-msgid ""
-"HTTP is the protocol used to serve Web pages. If you plan to make your Web "
-"server publicly available, enable this option. This option is not required "
-"for viewing pages locally or developing Web pages."
-msgstr ""
-"HTTP je protokol používaný pro poskytování WWW stránek. Pokud hodláte "
-"veřejně zpřístupnit svůj WWW server, povolte tuto volbu. Tato volba není "
-"potřeba pro prohlížení stránek lokálně nebo pro vývoj WWW stránek."
-
-#: ../src/fw_services.py:84
-msgid "FTP"
-msgstr "FTP"
-
-#: ../src/fw_services.py:85
-msgid ""
-"FTP is a protocol used for remote file transfer. If you plan to make your "
-"FTP server publicly available, enable this option. You need the vsftpd "
-"package installed for this option to be useful."
-msgstr ""
-"FTP je protokol používaný pro vzdálený přenos souborů. Pokud hodláte veřejně "
-"zpřístupnit svůj FTP server, povolte tuto volbu. Aby bylo FTP dostupné, "
-"musíte mít nainstalován balíček vsftpd."
-
-#: ../src/fw_services.py:90
-msgid "NFS4"
-msgstr "NFS4"
-
-#: ../src/fw_services.py:91
-msgid ""
-"The NFS4 protocol is used to share files via TCP networking. You will need "
-"to have the NFS tools installed and properly configure your NFS server for "
-"this option to be useful."
-msgstr ""
-"Tato volba umožňuje použít protokol NFS verze 4 prostřednictvím TCP ke "
-"sdílení souborů., Pokud má NFS fungovat, potřebujete mít nainstalovány NFS "
-"nástroje a správně nastaven NFS server."
-
-#: ../src/fw_services.py:95
-msgid "Secure WWW (HTTPS)"
-msgstr "Zabezpečené WWW (HTTPS)"
-
-#: ../src/fw_services.py:96
-msgid ""
-"HTTPS is a modified HTTP used to serve Web pages when security is important. "
-"Examples are sites that require logins like stores or web mail. This option "
-"is not required for viewing pages locally or developing Web pages. You need "
-"the httpd package installed for this option to be useful."
-msgstr ""
-"HTTPS je upravený HTTP používaný pro poskytování zabezpečených WWW stránek. "
-"Příkladem jsou servery, které vyžadují přihlášení, například obchody nebo "
-"pošta přes WWW. Tato volba není potřeba pro prohlížení stránek lokálně nebo "
-"pro vývoj WWW stránek. Aby byla tato volba užitečná, musíte mít nainstalován "
-"balíček httpd."
-
-#: ../src/fw_services.py:101
-msgid "Mail (SMTP)"
-msgstr "Pošta (SMTP)"
-
-#: ../src/fw_services.py:102
-msgid ""
-"This option allows incoming SMTP mail delivery. If you need to allow remote "
-"hosts to connect directly to your machine to deliver mail, enable this "
-"option. You do not need to enable this if you collect your mail from your "
-"ISP's server by POP3 or IMAP, or if you use a tool such as fetchmail. Note "
-"that an improperly configured SMTP server can allow remote machines to use "
-"your server to send spam."
-msgstr ""
-"Tato volba povoluje doručování příchozí pošty přes SMTP. Pokud potřebujete "
-"povolit vzdáleným počítačům připojovat se přímo k vašemu počítači pro "
-"doručení pošty, povolte tuto volbu. Nepotřebujete ji povolit, pokud poštu "
-"vybíráte ze serveru svého posktytovatele pomocí POP3 nebo IMAP nebo pokud "
-"používáte nástroj jako fetchmail. Upozornění: nesprávně nastavený SMTP "
-"server může sloužít vzdáleným počítačům k rozesílání nevyžádané pošty přes "
-"váš počítač."
-
-#: ../src/fw_services.py:110
-msgid "Samba Client"
-msgstr "Klient samba"
-
-#: ../src/fw_services.py:112
-msgid ""
-"This option allows you to access Windows file and printer sharing networks. "
-"You need the samba-client package installed for this option to be useful."
-msgstr "Tato volba vám umožní přistupovat ke sdílení souborů a tiskáren Windows. Aby byla tato volba užitečná, musíte mít nainstalován balíček samba-client."
-
-#: ../src/fw_services.py:117
-msgid "Samba"
-msgstr "Samba"
-
-#: ../src/fw_services.py:119
-msgid ""
-"This option allows you to access and participate in Windows file and printer "
-"sharing networks. You need the samba package installed for this option to be "
-"useful."
-msgstr ""
-"Tato volba vám umožňí přistupovat ke sdílení souborů a tiskáren nabízených "
-"systémy Windows. Aby Samba fungovala musíte mít nainstalován balíček samba."
-
-#: ../src/fw_services.py:123
-msgid "DNS"
-msgstr "DNS"
-
-#: ../src/fw_services.py:124
-msgid ""
-"The Domain Name System (DNS) is used to provide and request host and domain "
-"names. Enable this option, if you plan to provide a domain name service (e."
-"g. with bind)."
-msgstr ""
-"Systém doménových jmen (DNS) je používán k poskytování a získávání jmeno "
-"počítačů a domén. Povolte DNS pokud chcete poskytovat službu překladu "
-"doménových jmen (např. přes bind)."
-
-#: ../src/fw_services.py:127
-msgid "IMAP over SSL"
-msgstr "IMAP přes SSL"
-
-#: ../src/fw_services.py:128
-msgid ""
-"The Internet Message Access Protocol over SSL (IMAPs) allows a local client "
-"to access e-mail on a remote server in a secure way. If you plan to provide "
-"a IMAP over SSL service (e.g. with dovecot), enable this option."
-msgstr ""
-"Internetový protokol pro přístup ke zprávám přes SSL (IMAPs) dovoluje "
-"lokálním klientům bezpečně přistupovat k emailům na vzáleném serveru. Pokud "
-"chcete provozovat IMAP přes SSL (např. přes dovecot), povolte tuto volbu."
-
-#: ../src/fw_services.py:132
-msgid "POP-3 over SSL"
-msgstr "POP3 přes SSL"
-
-#: ../src/fw_services.py:133
-msgid ""
-"The Post Office Protocol version 3 (POP3) is a protocol to retrieve e-mail "
-"from a remote server over a TCP/IP connection. Enable this option, if you "
-"plan to provide a POP3 service (e.g. with dovecot)."
-msgstr ""
-"Kancelářský poštovní protokol verze 3 (POP3) slouží k příjmu pošty ze "
-"vzdáleného serveru přes připojení TCP/IP. Pokud chcete poskytovat službu "
-"POP3 (např. přes dovecot), povolte tuto volbu."
-
-#: ../src/fw_services.py:137
-msgid "RADIUS"
-msgstr "RADIUS"
-
-#: ../src/fw_services.py:138
-msgid ""
-"The Remote Authentication Dial In User Service (RADIUS) is a protocol for "
-"user authentication over networks. It is mostly used for modem, DSL or "
-"wireless user authentication. If you plan to provide a RADIUS service (e.g. "
-"with freeradius), enable this option."
-msgstr ""
-"Služba vzálená autentizace uživatellů vytáčeného připojeni (RADIUS) je "
-"protokol pro ověřování identitý uživatelů přes síť. Nejčastěji se používá "
-"pro modemy, DSL nebo bezdrátové sítě. Pokud chcete poskytovat služby RADIUS "
-"serveru (např. přes freeradius), povolte tuto volbu."
-
-#: ../src/fw_services.py:143
-msgid "OpenVPN"
-msgstr "OpenVPN"
-
-#: ../src/fw_services.py:144
-msgid ""
-"OpenVPN is a virtual private network (VPN) solution. It is used to create "
-"encrypted point-to-point tunnles between computers. If you plan to provide a "
-"VPN service, enable this option."
-msgstr ""
-"OpenVPN je řešení pro virtuální privátní síť (VPN). Používá se k vytvoření "
-"šifrovaných spojení typu bod-bod mezi počítači. Ppokud se chystáte "
-"poskytovat služby VPN, povolte tuto volbu."
-
-#: ../src/fw_tui.py:39 ../src/system-config-firewall.glade:10
-msgid "Firewall Configuration"
-msgstr "Nastavení firewallu"
-
-#: ../src/fw_tui.py:42
-msgid ""
-"A firewall protects against unauthorized network intrusions. Enabling a "
-"firewall blocks all incoming connections. Disabling a firewall allows all "
-"connections and is not recommended. "
-msgstr ""
-"Firewall chrání před neautorizovaným průnikem po síti. Povolení firewallu "
-"blokuje všechna příchozí spojení. Zakázání firewallu umožňuje všechna "
-"spojení a nedoporučuje se."
-
-#: ../src/fw_tui.py:46
-msgid "Firewall:"
-msgstr "Firewall:"
-
-#: ../src/fw_tui.py:47
-msgid "Enabled"
-msgstr "Povolen"
-
-#: ../src/fw_tui.py:53 ../src/fw_tui.py:322 ../src/fw_tui.py:335
-#: ../src/fw_tui.py:338 ../src/fw_tui.py:360 ../src/fw_tui.py:447
-#: ../src/fw_tui.py:519
-msgid "OK"
-msgstr "OK"
-
-#: ../src/fw_tui.py:54
-msgid "Customize"
-msgstr "Upravit"
-
-#: ../src/fw_tui.py:55 ../src/fw_tui.py:360 ../src/fw_tui.py:447
-#: ../src/fw_tui.py:519
-msgid "Cancel"
-msgstr "Zrušit"
-
-#: ../src/fw_tui.py:66 ../src/system-config-firewall.glade:550
-msgid ""
-"Here you can define which services are trusted. Trusted services are "
-"accessible from all hosts and networks."
-msgstr ""
-"Zde můžete definovat které služby jsou důvěryhodné. Všechny tyto služby "
-"budou dostupné ze všech počítačů a sítí."
-
-#: ../src/fw_tui.py:78 ../src/system-config-firewall.glade:864
-msgid "Other Ports"
-msgstr "Ostatní porty"
-
-#: ../src/fw_tui.py:82 ../src/system-config-firewall.glade:694
-msgid ""
-"Add additional ports or port ranges, which need to be accessible for all "
-"hosts or networks."
-msgstr ""
-"Přidejte dalsí porty nebo rozsah portů, které jsou potřeba ponechat "
-"přístupné pro všechny počítače a sítě."
-
-#: ../src/fw_tui.py:87 ../src/fw_tui.py:133 ../src/fw_tui.py:170
-msgid "Add"
-msgstr "Přidat"
-
-#: ../src/fw_tui.py:88 ../src/fw_tui.py:134 ../src/fw_tui.py:171
-msgid "Edit"
-msgstr "Upravit"
-
-#: ../src/fw_tui.py:89 ../src/fw_tui.py:135 ../src/fw_tui.py:172
-msgid "Remove"
-msgstr "Odstranit"
-
-#: ../src/fw_tui.py:99 ../src/system-config-firewall.glade:1044
-msgid "Trusted Interfaces"
-msgstr "Důvěryhodná rozhraní"
-
-#: ../src/fw_tui.py:103 ../src/system-config-firewall.glade:894
-msgid ""
-"Mark all interfaces as trusted which should have full access to the system."
-msgstr "Rozhraní označená jako důvěryhodná, budou mít plný přístup k systému."
-
-#: ../src/fw_tui.py:111 ../src/system-config-firewall.glade:1249
-msgid "Masquerading"
-msgstr "Maškarádování"
-
-#: ../src/fw_tui.py:115 ../src/system-config-firewall.glade:1099
-msgid "Mark the interfaces to be masqueraded."
-msgstr "Označit rozhraní pro maškarádování."
-
-#: ../src/fw_tui.py:123 ../src/fw_tui.py:395
-#: ../src/system-config-firewall.glade:1396
-#: ../src/system-config-firewall.glade:3783
-msgid "Port Forwarding"
-msgstr "Přesměrování portů"
-
-#: ../src/fw_tui.py:127 ../src/system-config-firewall.glade:1279
-msgid ""
-"Add entries to forward ports either from one port to another on the local "
-"system or from the local system to another system. Forwarding to another "
-"system is only useful if the interface is masqueraded. Port forwarding is "
-"IPv4 only."
-msgstr ""
-"Přidejte záznamy pro přeposílání portů buď z jednoho portů na druhý na "
-"lokálním systému nebo z lokálního systému do jiného systému. Přeposílání na "
-"jiný systém je užitečné pouze pokud je rozhranní maškarádované. Funguje "
-"pouze na IPv4."
-
-#: ../src/fw_tui.py:146 ../src/system-config-firewall.glade:1510
-msgid "ICMP Filter"
-msgstr "ICMP filtr"
-
-#: ../src/fw_tui.py:150 ../src/system-config-firewall.glade:1451
-msgid ""
-"Mark the ICMP types in the list, which should be rejected. All other ICMP "
-"types are allowed to pass the firewall. The default is no limitation."
-msgstr ""
-"Označte v seznamu typy ICMP zpráv, které mají být odmítnuty. Všechny ostatní "
-"ICMP typy budou moci projít firewallem. Implicitně bez omezení."
-
-#: ../src/fw_tui.py:159 ../src/system-config-firewall.glade:1712
-msgid "Custom Rules"
-msgstr "Vlastní pravidla"
-
-#: ../src/fw_tui.py:163 ../src/system-config-firewall.glade:1540
-msgid ""
-"Use custom rules files to add additional rules to the firewall. The custom "
-"rules are added after the default rules. The files must have the iptables-"
-"save format."
-msgstr ""
-"Použít soubor vlastních pravidel pro přidání pravidel do firewallu. Pravidla "
-"budou přidána za výchozí pravidla. Soubor musí mít formát iptables-save."
-
-#: ../src/fw_tui.py:189
-msgid "Forward"
-msgstr "Vpřed"
-
-#: ../src/fw_tui.py:191
-msgid "Back"
-msgstr "Zpět"
-
-#: ../src/fw_tui.py:192
-msgid "Close"
-msgstr "Zavřít"
-
-#: ../src/fw_tui.py:336
-msgid "Error"
-msgstr "Chyba"
-
-#: ../src/fw_tui.py:339
-msgid "Warning"
-msgstr "Varování"
-
-#: ../src/fw_tui.py:343
-msgid ""
-"Valid values: <port>[-<port>], where port is either a number [0..65535] or a "
-"service name."
-msgstr "Platné hodnoty: <port>[-<port>], kde port je buď číslo [0..65535] nebo název služby."
-
-#: ../src/fw_tui.py:348
-#, python-format
-msgid "Protocol '%s' is not valid."
-msgstr "Protokol '%s' není platný."
-
-#: ../src/fw_tui.py:349
-msgid "Valid values: tcp, udp"
-msgstr "Platné hodnoty: tcp, udp"
-
-#: ../src/fw_tui.py:357
-msgid "Please enter a port or port range and protocol."
-msgstr "Zadejte prosím port nebo rozsah portů a protokol."
-
-#: ../src/fw_tui.py:358 ../src/fw_tui.py:418 ../src/fw_tui.py:439
-#: ../src/system-config-firewall.glade:2014
-msgid "Port / Port Range:"
-msgstr "Port/Rozsah portů:"
-
-#: ../src/fw_tui.py:359 ../src/fw_tui.py:412
-#: ../src/system-config-firewall.glade:2042
-#: ../src/system-config-firewall.glade:4223
-msgid "Protocol:"
-msgstr "Protokol:"
-
-#: ../src/fw_tui.py:396 ../src/system-config-firewall.glade:3856
-msgid ""
-"Please select the source and destination options according to your needs."
-msgstr "Prosím zvolte zdrojové a cílové volby podle vašich potřeb."
-
-#: ../src/fw_tui.py:401
-msgid "Source (all needed)"
-msgstr "Zdroj (vše vyžadování)"
-
-#: ../src/fw_tui.py:406 ../src/system-config-firewall.glade:4251
-#: ../src/system-config-firewall.glade:4749
-msgid "Interface:"
-msgstr "Rozhraní:"
-
-#: ../src/fw_tui.py:426
-msgid "Destination (at least one needed)"
-msgstr "Cíl (alespoň jedno vyžadováno)"
-
-#: ../src/fw_tui.py:433 ../src/system-config-firewall.glade:4167
-msgid "IP address:"
-msgstr "IP adresa:"
-
-#: ../src/fw_tui.py:460
-#, python-format
-msgid "Interface '%s' is not valid."
-msgstr "Rozhraní '%s' není platné."
-
-#: ../src/fw_tui.py:482
-#, python-format
-msgid "Address '%s' is not valid."
-msgstr "Adresa '%s' není platná."
-
-#: ../src/fw_tui.py:515 ../src/system-config-firewall.glade:2211
-msgid ""
-"Please select the protocol type, the firewall table and the file containing "
-"the rules."
-msgstr "Zvolte prosím typ protokolu, tabulku firewallu a soubor s pravidly."
-
-#: ../src/fw_tui.py:517
-msgid "Protocol Type"
-msgstr "Typ protokolu"
-
-#: ../src/fw_tui.py:517
-msgid "Firewall Table"
-msgstr "Tabulka firewallu"
-
-#: ../src/fw_tui.py:518
-msgid "File"
-msgstr "Soubor"
-
-#: ../src/fw_tui.py:527
-#, python-format
-msgid "The protocol type '%s' is not valid."
-msgstr "Typ protokolu '%s' není platný."
-
-#: ../src/fw_tui.py:529 ../src/fw_tui.py:539
-#, python-format
-msgid "Valid values: %s"
-msgstr "Platné hodnoty: %s"
-
-#: ../src/fw_tui.py:537
-#, python-format
-msgid "The firewall table '%s' is not valid."
-msgstr "Tabulka firewallu '%s' není platná."
-
-#: ../src/fw_tui.py:549
-#, python-format
-msgid "The file '%s' does not exist."
-msgstr "Soubor '%s' neexistuje."
-
-#: ../src/fw_tui.py:556
-msgid "IPv6 has no nat support."
-msgstr "IPv6 nemá podporu NATu."
-
-#: ../src/fw_tui.py:632
-msgid "Yes"
-msgstr "Ano"
-
-#: ../src/fw_tui.py:632
-msgid "No"
-msgstr "Ne"
-
-#: ../src/fw_tui.py:672
-msgid "Hit enter to continue."
-msgstr "Pokračujte stisknutím enter."
-
-#: ../src/lokkit:42
-#, python-format
-msgid ""
-"\n"
-"ERROR - You must be root to run %s."
-msgstr ""
-"\n"
-"CHYBA - Pro spuštění %s musíte být root."
-
-#: ../src/lokkit:59
-msgid "Predefined Services with Default Environment:"
-msgstr "Předdefinované služby s výchozím prostředím:"
-
-#: ../src/lokkit:68
-msgid "Supported icmp types:"
-msgstr "Podporované ICMP typy:"
-
-#: ../src/lokkit:132
-msgid "Failed to write selinux configuration."
-msgstr "Selhal zápis nastavení SELinuxu."
-
-#: ../src/lokkit:140
-#, python-format
-msgid "Failed to write %s."
-msgstr "Selhal zápis %s."
-
-#: ../src/lokkit:200 ../src/lokkit:203
-#, python-format
-msgid "Failed to stop %s."
-msgstr "Selhalo ukončení %s."
-
-#: ../src/lokkit:226 ../src/lokkit:232
-#, python-format
-msgid "Failed to start %s."
-msgstr "Selhal start %s."
-
-#: ../src/lokkit:239 ../src/lokkit:246
-#, python-format
-msgid "Failed to remove %s."
-msgstr "Selhalo odstranění %s."
-
-#: ../src/system-config-firewall.glade:40
-msgid "_File"
-msgstr "_Soubor"
-
-#: ../src/system-config-firewall.glade:49
-#: ../src/system-config-firewall.glade:373
-msgid "Apply changes"
-msgstr "Aplikovat změny"
-
-#: ../src/system-config-firewall.glade:50
-msgid "Apply"
-msgstr "Použít"
-
-#: ../src/system-config-firewall.glade:71
-#: ../src/system-config-firewall.glade:388
-msgid "Reload current configuration"
-msgstr "Obnovit součastnou konfiguraci"
-
-#: ../src/system-config-firewall.glade:72
-#: ../src/system-config-firewall.glade:389
-msgid "Reload"
-msgstr "Obnovit"
-
-#: ../src/system-config-firewall.glade:99
-msgid "_Quit"
-msgstr "_Ukončit"
-
-#: ../src/system-config-firewall.glade:124
-msgid "_Options"
-msgstr "M_ožnosti"
-
-#: ../src/system-config-firewall.glade:133
-msgid "_Start Configuration Wizard"
-msgstr "_Spustit průvodce nastavením"
-
-#: ../src/system-config-firewall.glade:158
-msgid "Enable Firewall"
-msgstr "Povolit firewall"
-
-#: ../src/system-config-firewall.glade:178
-msgid "Disable Firewall"
-msgstr "Zakázat firewall"
-
-#: ../src/system-config-firewall.glade:204
-msgid "User Skill Level"
-msgstr "Úroveň schopností uživatele"
-
-#: ../src/system-config-firewall.glade:222
-msgid "Expert"
-msgstr "Pokročilý"
-
-#: ../src/system-config-firewall.glade:242
-msgid "Load _Default Configuration"
-msgstr "Nahraj _výchozí konfiguraci"
-
-#: ../src/system-config-firewall.glade:251
-msgid "Desktop"
-msgstr "Desktop"
-
-#: ../src/system-config-firewall.glade:271
-msgid "Configure Service Settings"
-msgstr "Nastavení služeb"
-
-#: ../src/system-config-firewall.glade:289
-msgid "_Help"
-msgstr "_Nápověda"
-
-#: ../src/system-config-firewall.glade:298
-msgid "_About"
-msgstr "_O ..."
-
-#: ../src/system-config-firewall.glade:343
-msgid "Start configuration wizard"
-msgstr "Spustit průvodce nastavením"
-
-#: ../src/system-config-firewall.glade:344
-msgid "Wizard"
-msgstr "Průvodce"
-
-#: ../src/system-config-firewall.glade:418
-msgid "Enable firewall"
-msgstr "Povolit firewall"
-
-#: ../src/system-config-firewall.glade:419
-msgid "Enable"
-msgstr "Povolit"
-
-#: ../src/system-config-firewall.glade:436
-msgid "Disable"
-msgstr "Zakázat"
-
-#: ../src/system-config-firewall.glade:626
-msgid "Allow access to necessary services, only."
-msgstr "Povolit přístup jen k nezbytným službám."
-
-#: ../src/system-config-firewall.glade:826
-msgid "Allow access to necessary ports or port ranges, only."
-msgstr "Povolit přístup jen k nezbytným portům a rozsahům."
-
-#: ../src/system-config-firewall.glade:1006
-msgid ""
-"Only mark interfaces if you can trust all participants on that network "
-"interface."
-msgstr ""
-"Označte rozhraní pouze pokud můžete skutečně důvěřovat všem účastníkům na "
-"daném síťovém rozhraní."
-
-#: ../src/system-config-firewall.glade:1074
-msgid ""
-"Masquerading allows you to set up a host or router that connects your local "
-"network to the internet. Your local network will not be visible and the "
-"hosts appear as a single address on the internet. Masquerading is IPv4 only."
-msgstr ""
-"Maškarádování je užitečné pokud nastavujete počítač nebo směrovač, který "
-"spojuje vaši lokální síť s internetem. Vaše lokální síť nebude z internetu "
-"viditelná a celá bude reprezentována pouze jedním počítačem. Maškarádování "
-"funguje pouze pro IPv4."
-
-#: ../src/system-config-firewall.glade:1211
-msgid ""
-"If you enable masquerading, IP forwarding will also be enabled for your IPv4 "
-"networks."
-msgstr ""
-"Pokud povolíte maškarádování, bude povoleno též přesměrování paketů v sítích "
-"IPv4."
-
-#: ../src/system-config-firewall.glade:1426
-msgid ""
-"The Internet Control Message Protocol (ICMP) is mainly used to send error "
-"messages between networked computers, but additionally for informational "
-"messages like ping requests and replies."
-msgstr ""
-"Protokol internetových kontrolních zpráv (ICMP) je používán především k "
-"zasílání chybových zpráv mezi počítači v síti, ale také pro informační "
-"zprávy typ ping."
-
-#: ../src/system-config-firewall.glade:1674
-msgid "Please check your firewall settings after applying custom rules."
-msgstr ""
-"Prosím zkontrolujte nastavení firewallu po aplikaci vlastních pravidel."
-
-#: ../src/system-config-firewall.glade:1811
-msgid "modified label"
-msgstr "upravená jmenovka"
-
-#: ../src/system-config-firewall.glade:1846
-msgid "Port and Protocol"
-msgstr "Port a protokol"
-
-#: ../src/system-config-firewall.glade:1919
-msgid ""
-"Please select an entry from the list or enter a port and protocol further "
-"down."
-msgstr "Prosím vyberte záznam ze seznamu nebo zadejte port a protokol níže."
-
-#: ../src/system-config-firewall.glade:1974
-#: ../src/system-config-firewall.glade:4709
-msgid "User Defined"
-msgstr "Uživatelem definované"
-
-#: ../src/system-config-firewall.glade:2126
-msgid "system-config-firewall"
-msgstr "system-config-firewall"
-
-#: ../src/system-config-firewall.glade:2133
-msgid "translator-credits"
-msgstr "překladatelé"
-
-#: ../src/system-config-firewall.glade:2139
-msgid "Custom Rules File"
-msgstr "Soubor vlastních pravidel"
-
-#: ../src/system-config-firewall.glade:2262
-msgid "Protocol Type:"
-msgstr "Typ protokolu:"
-
-#: ../src/system-config-firewall.glade:2308
-msgid "Firewall Table:"
-msgstr "Tabulka firewallu:"
-
-#: ../src/system-config-firewall.glade:2349
-msgid "File:"
-msgstr "Soubor:"
-
-#: ../src/system-config-firewall.glade:2374
-msgid "Select A File"
-msgstr "Vyberte soubor"
-
-#: ../src/system-config-firewall.glade:2406
-msgid "Firewall Configuration Wizard"
-msgstr "Průvodce nastavením firewallu"
-
-#: ../src/system-config-firewall.glade:2549
-msgid "<big><b>Firewall Configuration Wizard</b></big>"
-msgstr "<big><b>Průvodce nastavením firewallu</b></big>"
-
-#: ../src/system-config-firewall.glade:2602
-msgid "<b>Information</b>"
-msgstr "<b>Informace</b>"
-
-#: ../src/system-config-firewall.glade:2628
-msgid ""
-"This wizard helps you to set up a clean firewall configuration for your "
-"system."
-msgstr "Tento průvodce vám pomůže nastavit firewall vášeho systému."
-
-#: ../src/system-config-firewall.glade:2654
-msgid ""
-"Please answer the questions in the following configuration steps. The wizard "
-"leads you back to the main application and hides all unnecessary "
-"configuration options."
-msgstr ""
-"Prosím odpovězte na otázky v následujícíh krocích. Průvodce vás pak zavede "
-"zpět do hlavní aplikace, ale ukáže vám pouze položky, které jsou pro vaše "
-"nastavení nutné."
-
-#: ../src/system-config-firewall.glade:2680
-msgid "You can change the settings in the <i>Options</i> menu afterwards."
-msgstr "Později můžete zmenit nastavení v menu <i>Možnosti</i>."
-
-#: ../src/system-config-firewall.glade:2740
-msgid "<b>Basic Firewall Settings</b>"
-msgstr "<b>Základní nastavení firewallu</b>"
-
-#: ../src/system-config-firewall.glade:2765
-msgid "What kind of system do you have?"
-msgstr "Jaký druh systému máte?"
-
-#: ../src/system-config-firewall.glade:2808
-msgid ""
-"System without network access\n"
-"System with network access"
-msgstr ""
-"Systém bez přístupu k síti\n"
-"Systém s přístupem k síti"
-
-#: ../src/system-config-firewall.glade:2832
-msgid ""
-"A <i>\"System without network access\"</i> does not need a firewall at all. "
-"This selection disables the firewall. Otherwise, choose <i>\"System with "
-"network access\"</i>."
-msgstr ""
-"<i>\"Systém bez přístupu k síti\"</i> nepotřebuje firewall. Tato volba "
-"kompletně vypne firewall. Jinak vyberte <i>\"System with network access\"</"
-"i>."
-
-#: ../src/system-config-firewall.glade:2892
-msgid "<b>User Skill Level</b>"
-msgstr "<b>Úroveň schopností uživatele</b>"
-
-#: ../src/system-config-firewall.glade:2917
-msgid "Please specify your firewall skills."
-msgstr "Prosím vymezte vaše schopnosti konfigurace firewallu."
-
-#: ../src/system-config-firewall.glade:2960
-msgid ""
-"Beginner\n"
-"Expert"
-msgstr ""
-"Začátečník\n"
-"Pokročilý"
-
-#: ../src/system-config-firewall.glade:2984
-msgid ""
-"Select <i>\"Expert\"</i> if you are familiar with firewall configurations or "
-"if you need to add user customized rules. Otherwise, choose <i>\"Beginner\"</"
-"i>."
-msgstr ""
-"Vyberte <i>\"Pokročilý\"</i> pokud jste obeznámeni s nastavováním firewallu "
-"a pokud potřebujete přidat vlastní pravidla. Jinak vyberte <i>\"Začátečník"
-"\"</i>."
-
-#: ../src/system-config-firewall.glade:3044
-msgid "<b>Configuration</b>"
-msgstr "<b>Konfigurace</b>"
-
-#: ../src/system-config-firewall.glade:3069
-msgid ""
-"Please select keep configuration or choose to load a default configuration."
-msgstr ""
-"Prosím vyberte ponechat nastavení nebo vyberte nahrát výchozí nastavení."
-
-#: ../src/system-config-firewall.glade:3113
-msgid "Keep Configuration"
-msgstr "Ponechat nastavení"
-
-#: ../src/system-config-firewall.glade:3158
-msgid "Load"
-msgstr "Nahrát"
-
-#: ../src/system-config-firewall.glade:3183
-msgid ""
-"Desktop\n"
-"Server"
-msgstr ""
-"Desktop\n"
-"Server"
-
-#: ../src/system-config-firewall.glade:3198
-msgid "configuration"
-msgstr "Konfigurace"
-
-#: ../src/system-config-firewall.glade:3232
-msgid ""
-"If you clear the <i>keep configuration</i> button, the actual firewall "
-"configuration will be overwritten."
-msgstr ""
-"Pokud vymažete tlačitko <i>ponechat nastavení</i>, bude aktuální nastavení "
-"firewallu přepsáno."
-
-#: ../src/system-config-firewall.glade:3295
-msgid "Firewall Configuration Startup"
-msgstr "Začátek nastavení firewallu"
-
-#: ../src/system-config-firewall.glade:3353
-msgid "This program will help you to set up a basic firewall for your system."
-msgstr "Tento program vám pomůže nastavit základní firewall pro váš systém."
-
-#: ../src/system-config-firewall.glade:3379
-msgid ""
-"If you need further firewall settings, please modify your configuration by "
-"hand, but keep in mind, that this tool is not able to load your custom "
-"configuration. If you are using this tool, all your manual changes will be "
-"lost. If you do not want to lose your manual configuration changes, leave "
-"this program without applying."
-msgstr ""
-"Pokud potřebujete další nastavení firewallu, můžete ručně modifikovat jeho "
-"konfiguraci. Pamatujte ale, že tento nástroj není schopen vaše úpravy "
-"nahrát. Pokud používáte tento nástroj, všechny vaše ruční úpravy budou "
-"ztraceny. Pokud nechcete přijít o vaše ruční úpravy, opusťte tento program "
-"bez aplikování nastavení."
-
-#: ../src/system-config-firewall.glade:3438
-msgid "Please remember to check your firewall configuration before using it."
-msgstr ""
-"Prosím nezapomeňte zkontrolovat vaše nastavení firewallu, před použitím "
-"tohoto nástroje."
-
-#: ../src/system-config-firewall.glade:3480
-msgid "Service Settings"
-msgstr "Nastavení služeb"
-
-#: ../src/system-config-firewall.glade:3552
-msgid "Configure the iptables and ip6tables service settings."
-msgstr "Nastavení služeb iptables a ip6tables."
-
-#: ../src/system-config-firewall.glade:3605
-msgid ""
-"Hit <i>OK</i> to apply your changes. You do not need to restart the "
-"firewall, the changes are effective as soon as they are applied."
-msgstr ""
-"Stisněte <i>OK</i> pro aplikování změn. Není potřeba firewall restartovat. "
-"Změny se projeví hned při aplikování."
-
-#: ../src/system-config-firewall.glade:3638
-msgid "TODO"
-msgstr "TODO"
-
-#: ../src/system-config-firewall.glade:3666
-msgid "Configure firewall helper modules for connection tracking"
-msgstr "Přidat pomocné moduly firewallu pro sledování spojení."
-
-#: ../src/system-config-firewall.glade:4139
-#: ../src/system-config-firewall.glade:4195
-msgid "Port:"
-msgstr "Port:"
-
-#: ../src/system-config-firewall.glade:4370
-msgid "<b>Destination</b>"
-msgstr "<b>Cíl</b>"
-
-#: ../src/system-config-firewall.glade:4398
-msgid "<b>Source</b>"
-msgstr "<b>Zdroj</b>"
-
-#: ../src/system-config-firewall.glade:4426
-msgid ""
-"If you enable local forwarding, you have to specify a port. This port has to "
-"be different to the source port."
-msgstr ""
-"Pokud povolíte lokální přeposílání, musíte určit port. Tento port musí být "
-"jiný nez zdrojový port."
-
-#: ../src/system-config-firewall.glade:4454
-msgid "Make sure to open the destination port on the remote system."
-msgstr "Ujistěte se, že cílový port je na vzdáleném systému dostupný."
-
-#: ../src/system-config-firewall.glade:4489
-msgid "Forward to another port"
-msgstr "Přeposlat na jiný port"
-
-#: ../src/system-config-firewall.glade:4523
-msgid "Local forwarding"
-msgstr "Místní přesměrování"
-
-#: ../src/system-config-firewall.glade:4654
-msgid "Please select an entry from the list or enter a interface further down."
-msgstr "Prosím vyberte záznam ze seznamu nebo zadejte rozhraní níže."
-
-#: ../src/system-config-firewall.glade:4814
-msgid "No configuration"
-msgstr "Žádná konfigurace"
-
-#: ../src/system-config-firewall.glade:4886
-msgid "Start Wizard"
-msgstr "Spustit průvodce"
-
-#: ../src/system-config-firewall.glade:4969
-msgid ""
-"<b>Your current configuration is empty, all traffic will be blocked.</b>"
-msgstr ""
-"<b>Vaše součastná konfigurace je prázná, všechen provoz bude blokován.</b>"
-
-#: ../src/system-config-firewall.glade:4994
-msgid ""
-"Please load a default configuration from the <i>Options</i> menu or use the "
-"wizard."
-msgstr ""
-"Prosím nahrajte výchozí nastavení z menu <i>Možnosti</i>, nebo použijte "
-"průvodce."
+
+#~ msgid "Converting %s"
+#~ msgstr "Konvertuji %s"
+
+#~ msgid ""
+#~ "This program is free software; you can redistribute it and/or modify it "
+#~ "under the terms of the GNU General Public License as published by the "
+#~ "Free Software Foundation; either version 2 of the License, or (at your "
+#~ "option) any later version.\n"
+#~ "\n"
+#~ "This program is distributed in the hope that it will be useful, but "
+#~ "WITHOUT ANY WARRANTY; without even the implied warranty of "
+#~ "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General "
+#~ "Public License for more details.\n"
+#~ "\n"
+#~ "You should have received a copy of the GNU General Public License along "
+#~ "with this program.  If not, see <http://www.gnu.org/licenses/>."
+#~ msgstr ""
+#~ "Tento program je svobodný software; můžete jej libovolně kopírovat a "
+#~ "upravovat pokud zachováte podmínky GNU General Public Licence jak jsou "
+#~ "publikovány na stránkách nadace Svobodného Softwrare (FSF); buď ve verzi "
+#~ "2 nebo (podle vašeho zvážení) jakákoli pozdější.\n"
+#~ "\n"
+#~ "Tento program je distribuován v dobré víře, že bude užitečný, ale bez "
+#~ "VEŠKERÝCH ZÁRUK; Pro detaily si přečtete licenci GNU General Public "
+#~ "License.\n"
+#~ "\n"
+#~ "S tímto programem byste měli obdržet kopii GNU General Public License. "
+#~ "Pokud nepodívete se na <http://www.gnu.org/licenses/>."
+
+#~ msgid "Firewall"
+#~ msgstr "Firewall"
+
+#~ msgid "Configure firewall rules"
+#~ msgstr "Nastavit pravidla firewallu"
+
+#~ msgid ""
+#~ "A firewall allows other computers to access selected services on your "
+#~ "computer and helps to prevent unauthorized access beyond these "
+#~ "selections. Select the services to which the firewall should allow access."
+#~ msgstr ""
+#~ "Firewall slouží k povolení přístupu ke konkrétním službám na vašem "
+#~ "počítači z jiných počítačů a pro zabránění neautorizovanému přistupu. "
+#~ "Vyberte služby ke kterým má firewall povolit přístup."
+
+#~ msgid "local"
+#~ msgstr "lokální"
+
+#~ msgid "Service"
+#~ msgstr "Služba"
+
+#~ msgid "Port/Protocol"
+#~ msgstr "Port/Protokol"
+
+#~ msgid "Port"
+#~ msgstr "Port"
+
+#~ msgid "Protocol"
+#~ msgstr "Protokol"
+
+#~ msgid "Interface"
+#~ msgstr "Rozhraní"
+
+#~ msgid "Description"
+#~ msgstr "Popis"
+
+#~ msgid "Select"
+#~ msgstr "Vyberte"
+
+#~ msgid "To Address"
+#~ msgstr "Cílová adresy:"
+
+#~ msgid "To Port"
+#~ msgstr "Cílový Port"
+
+#~ msgid "ICMP Type"
+#~ msgstr "ICMP Typ"
+
+#~ msgid "Type"
+#~ msgstr "Typ"
+
+#~ msgid "Table"
+#~ msgstr "Tabulka"
+
+#~ msgid "Filename"
+#~ msgstr "Jméno souboru"
+
+#~ msgid "Trusted Services"
+#~ msgstr "Důvěryhodné služby"
+
+#~ msgid "(modified)"
+#~ msgstr "(upraven)"
+
+#~ msgid "The firewall is enabled."
+#~ msgstr "Firewall je povolen"
+
+#~ msgid "The firewall is disabled."
+#~ msgstr "Firewall je zakázán"
+
+#~ msgid "Helper modules:"
+#~ msgstr "Pomocné moduly:"
+
+#~ msgid "Key:"
+#~ msgstr "Klíč:"
+
+#~ msgid "Default:"
+#~ msgstr "Výchozí:"
+
+#~ msgid "Port or port range '%s' is not valid."
+#~ msgstr "Port nebo rozsah %s není platný."
+
+#~ msgid "Please enter a valid port number, service name or range."
+#~ msgstr " Zadejte prosím platné číslo portu, název služby nebo rozsah."
+
+#~ msgid "There are unapplied changes, do you really want to quit?"
+#~ msgstr "Některé změny nejsou použity, skutečně chcete skončit?"
+
+#~ msgid "All %s devices"
+#~ msgstr "Všechna %s zařízení"
+
+#~ msgid "Not configured"
+#~ msgstr "Nenastaven"
+
+#~ msgid "Parse error in config file"
+#~ msgstr "Chyba zpracování konfiguračního souboru"
+
+#~ msgid "Ignore"
+#~ msgstr "Ignorovat"
+
+#~ msgid "Ignore All"
+#~ msgstr "Ingnorovat všechny"
+
+#~ msgid "The firewall configuration is not consistent."
+#~ msgstr "Nastavení firewallu není konzistentní."
+
+#~ msgid ""
+#~ "The following files are missing or unusable:\n"
+#~ "\t%s\n"
+#~ "\n"
+#~ "Apply your firewall configuration now to correct this problem."
+#~ msgstr ""
+#~ "Následující soubory chybí nebo jsou nepoužitelné:\n"
+#~ "\t%s\n"
+#~ "\n"
+#~ "Aplikujte vaše nastavení firewallu pro napravení problému."
+
+#~ msgid "Old firewall configuration."
+#~ msgstr "Staré nastavení firewallu"
+
+#~ msgid ""
+#~ "Your firewall configuration was converted from an old version. Please "
+#~ "verify the configuration and apply."
+#~ msgstr ""
+#~ "Konfigurace firewallu byla převedena ze staré verze. Prosím zkontrolujte "
+#~ "nastavení a aplikujte ho."
+
+#~ msgid "Server"
+#~ msgstr "Server"
+
+#~ msgid "Beginner"
+#~ msgstr "Začátečník"
+
+#~ msgid ""
+#~ "Clicking the 'Yes' button will override any existing firewall "
+#~ "configuration. Are you sure that you want to do this?"
+#~ msgstr ""
+#~ "Kliknutím na tlačítko 'Ano' přepíšete stávající nastavení firewallu. "
+#~ "Chcete pokračovat?"
+
+#~ msgid ""
+#~ "Please remember to check if the services iptables and ip6tables are "
+#~ "enabled."
+#~ msgstr ""
+#~ "Nezapomeňte prosím zkontrolovat, jestli jsou služby iptables a ip6tables "
+#~ "povoleny."
+
+#~ msgid "Configuration failed"
+#~ msgstr "Nastavení selhalo"
+
+#~ msgid "Echo Request (ping)"
+#~ msgstr "Žádost o odpověď (ping)"
+
+#~ msgid ""
+#~ "This message is used to test if a host is reachable mostly with the "
+#~ "<i>ping</i> utility."
+#~ msgstr ""
+#~ "Tato zpráva je používána k testování dosažitelnosti počítače, většinou "
+#~ "nástrojem <i>ping</i>."
+
+#~ msgid "Echo Reply (pong)"
+#~ msgstr "Zpětná odpověď (pong)"
+
+#~ msgid "This message is the aswer to a <i>Echo Request</i>."
+#~ msgstr "Tato zpráva je odezva na <i>'Žádost o odpověď</i>."
+
+#~ msgid "Destination Unreachable"
+#~ msgstr "Cíl nedosažitelný"
+
+#~ msgid ""
+#~ "This error message is generated by a host or gateway if the destination "
+#~ "is not reachable."
+#~ msgstr ""
+#~ "Tato chybová zpráva je vygenerována počítačem nebo bránou pokud cíl není "
+#~ "dosažitelný."
+
+#~ msgid "Redirect"
+#~ msgstr "Přesměrování"
+
+#~ msgid "This error message informs a host to send packets on another route."
+#~ msgstr ""
+#~ "Tato chybová zpráva informuje počítač, že má paket poslat jinou cestou."
+
+#~ msgid "Router Advertisement"
+#~ msgstr "Oznámení směrovače"
+
+#~ msgid ""
+#~ "This message is used by routers to periodically announce the IP address "
+#~ "of a multicast interface."
+#~ msgstr ""
+#~ "Tato zpráva je používána směrovači k pravidelnému oznamování IP adres "
+#~ "všesměrových rozhranní (multicast)."
+
+#~ msgid "Router Solicitation"
+#~ msgstr "Požadavky směrovače"
+
+#~ msgid ""
+#~ "This is message is used by a host attached to a ulticast link to request "
+#~ "a <i>Router Advertisement</i>"
+#~ msgstr ""
+#~ "Tato zpráva je používána počítačem připojeným k všeměrové (multicast) "
+#~ "lince k vyvolání žádosti o <i>Oznámení směrovače</i>."
+
+#~ msgid "Time Exceeded"
+#~ msgstr "Časový limit překročen"
+
+#~ msgid ""
+#~ "This error message is generated if the time-to-live was exceeded either "
+#~ "of a packet or of the reassembling of a fragmented packet."
+#~ msgstr ""
+#~ "Tato chybová zpráva je vyvolána pokud byl čas života (ttl) paketu, nebo "
+#~ "čas znovu sestavení fragmentovaného paketu, překročen."
+
+#~ msgid "Parameter Problem"
+#~ msgstr "Problém s parametrem"
+
+#~ msgid ""
+#~ "This error message is generated if the IP header is bad, either by a "
+#~ "missing option or bad length."
+#~ msgstr ""
+#~ "Tato chybová zpráva je generována pokud je IP hlavička chybná, chybí jí "
+#~ "některá volba nebo má špatnou délku."
+
+#~ msgid "Unload modules on restart and stop"
+#~ msgstr "Uvolnit moduly při restartu a ukončení"
+
+#~ msgid ""
+#~ "To ensure a sane state, the kernel firewall modules must be unloaded when "
+#~ "the firewall is restarted or stopped."
+#~ msgstr ""
+#~ "Abychom se dostali do smysluplného stavu musí být moduly firewallu v "
+#~ "jádru při restartu a ukončení uvolněny."
+
+#~ msgid "Save on stop"
+#~ msgstr "Uložit při ukončení"
+
+#~ msgid ""
+#~ "Save the active firewall configuration with all changes since the last "
+#~ "start before stopping the firewall. Only do this if you need to preserve "
+#~ "the active state for the next start."
+#~ msgstr ""
+#~ "Uložit aktuální nastavení firewallu se všemi změnami od posledního "
+#~ "startu, předtím, než bude firewall ukončen. Použijte pouze pokud chcete "
+#~ "zachovat aktivní stav do dalšího startu."
+
+#~ msgid "Save on restart"
+#~ msgstr "Uložit při restartu"
+
+#~ msgid ""
+#~ "Save the active firewall configuration with all changes since the last "
+#~ "start before restarting the firewall. Only do this if you need to "
+#~ "preserve the active state for the next start."
+#~ msgstr ""
+#~ "Uložit aktuální nastavení firewallu se všemi změnami od posledního "
+#~ "startu, předtím, než bude firewall ukončen. Použijte pouze pokud chcete "
+#~ "zachovat aktivní stav do dalšího startu."
+
+#~ msgid "Save and restore counter"
+#~ msgstr "Uložit a obnovit počítadla"
+
+#~ msgid ""
+#~ "<i>Save on stop</i> and <i>Save on restart</i> additionally save rule and "
+#~ "chain counter."
+#~ msgstr ""
+#~ "<i>Uložit při ukončení</i> a <i>Uložit při restartu</i> uloží pravidla i "
+#~ "počítadla řetězců."
+
+#~ msgid "Numeric status output"
+#~ msgstr "Numerický výstup"
+
+#~ msgid "Print addresses and ports in numeric format for the status output."
+#~ msgstr "Tisknout adresy a porty v numerickém formátu."
+
+#~ msgid "Verbose status"
+#~ msgstr "Detailní stav"
+
+#~ msgid ""
+#~ "Print information about the number of packets and bytes plus the <i>input-"
+#~ "</i> and <i>outputdevice</i> in the status output."
+#~ msgstr ""
+#~ "Ve výpisu stavu vypíše informace o počtu paketů a bajtů včetně "
+#~ "<i>vstupních</i> a <i>výstupních</i> zařízení."
+
+#~ msgid "Status line numbers"
+#~ msgstr "Čísla řádek"
+
+#~ msgid "Print a counter/number for every rule in the status output."
+#~ msgstr "Ve výpisu stavu vypíše počítadla/čísla řádků každého pravidla."
+
+#~ msgid "port range %s is not unique."
+#~ msgstr "rozsah portů %s není jednoznačný."
+
+#~ msgid "%s is not a valid range (start port >= end port)."
+#~ msgstr "%s není platný rozsah (počáteční port >= konečný port)."
+
+#~ msgid "%s is not a valid protocol."
+#~ msgstr "%s není platný protokol."
+
+#~ msgid "invalid port definition %s."
+#~ msgstr "Neplatná definice portu %s."
+
+#~ msgid "ipv6 has no nat support."
+#~ msgstr "ipv6 nemá podporu NATu."
+
+#~ msgid "invalid service '%s'."
+#~ msgstr "neplatná služba '%s'."
+
+#~ msgid "option %(option)s: invalid icmp type '%(value)s'."
+#~ msgstr "volba %(option)s: neplatný icmp typ '%(value)s'."
+
+#~ msgid "Invalid argument %s"
+#~ msgstr "Neplatný argument %s"
+
+#~ msgid "option %(option)s: invalid forward_port '%(value)s': %(error)s."
+#~ msgstr "volba %(option)s: neplatný forward_port '%(value)s': %(error)s."
+
+#~ msgid "option %(option)s: invalid forward_port '%(value)s'."
+#~ msgstr "volba %(option)s: neplatný forward_port '%(value)s'."
+
+#~ msgid "Enable firewall (default)"
+#~ msgstr "Povolit firewall (implicitní)"
+
+#~ msgid "Disable firewall"
+#~ msgstr "Zakázat firewall"
+
+#~ msgid "<module>"
+#~ msgstr "<modul>"
+
+#~ msgid "Enable an iptables module"
+#~ msgstr "Povolit modul iptables"
+
+#~ msgid "Disable an iptables module"
+#~ msgstr "Zakázat modul iptables"
+
+#~ msgid "<service>"
+#~ msgstr "<service>"
+
+#~ msgid "Open the firewall for a service (e.g, ssh)"
+#~ msgstr "Propustit firewallem službu (např. ssh)"
+
+#~ msgid "<port>[-<port>]:<protocol>"
+#~ msgstr "<port>[-<port>]:<protokol>"
+
+#~ msgid "Open specific ports in the firewall (e.g, ssh:tcp)"
+#~ msgstr "Propustit firewallem konkrétní porty (např. ssh:tcp)"
+
+#~ msgid "<interface>"
+#~ msgstr "<interface>"
+
+#~ msgid "Allow all traffic on the specified device"
+#~ msgstr "Povolit všechen provoz na zadaném zařízení"
+
+#~ msgid "Masquerades traffic from the specified device. This is IPv4 only."
+#~ msgstr "Maškaráduje provoz ze zadaného zařízení. Pouze pro IPv4."
+
+#~ msgid "Backwards compatibilty, aliased to --enabled"
+#~ msgstr "Zpětná kompatibilita, alias pro --enabled"
+
+#~ msgid "[<type>:][<table>:]<filename>"
+#~ msgstr "[<typ>:][<tabulka>:]<jméno_souboru>"
+
+#~ msgid ""
+#~ "Specify a custom rules file for inclusion in the firewall, after the "
+#~ "default rules. Default protocol type: ipv4, default table: filter. "
+#~ "(Example: ipv4:filter:/etc/sysconfig/ipv4_filter_addon)"
+#~ msgstr ""
+#~ "Určete soubor s vlastními pravidly pro přidání do firewallu. Bude zařazen "
+#~ "za výchozí pravidla. Výchozí typ protokolu: ipv4, výchozí tabulka: "
+#~ "filter. (Např.: ipv4:filter:/etc/sysconfig/ipv4_filter_addon)"
+
+#~ msgid ""
+#~ "if=<interface>:port=<port>:proto=<protocol>[:toport=<destination port>][:"
+#~ "toaddr=<destination address>]"
+#~ msgstr ""
+#~ "if=<interface>:port=<port>:proto=<protocol>[:toport=<destination port>][:"
+#~ "toaddr=<destination address>]"
+
+#~ msgid ""
+#~ "Forward the port with protocol for the interface to either another local "
+#~ "destination port (no destination address given) or to an other "
+#~ "destination address with an optional destination port. This is IPv4 only."
+#~ msgstr ""
+#~ "Přesměruj port s protokolem pro dané rozhraní buď na jiný lokální port  "
+#~ "(bez cílové adresy) nebo na jinou adresu s možností uvést i cílový port. "
+#~ "Pouze pro IPv4."
+
+#~ msgid "<icmp type>"
+#~ msgstr "<icmp type>"
+
+#~ msgid "Block this ICMP type. The default is to accecpt all ICMP types."
+#~ msgstr "Blokovat ten typ ICMP. Implicitně se přijímají všechny typy ICMP."
+
+#~ msgid "Disable Internet Protocol Security (IPsec)"
+#~ msgstr "Zakázat internetový bezpečnostní protokol (IPsec)"
+
+#~ msgid "Disable Internet Printing Protocol (IPP)"
+#~ msgstr "Zakázat internetový tiskový protokol (IPP)"
+
+#~ msgid "Disable Multicast DNS (mDNS)"
+#~ msgstr "Zakázat Multicast DNS (mDNS)"
+
+#~ msgid "<mode>"
+#~ msgstr "<mód>"
+
+#~ msgid "Configure SELinux mode: %s"
+#~ msgstr "Nastavte mód SELinuxu: %s"
+
+#~ msgid "<type>"
+#~ msgstr "<typ>"
+
+#~ msgid "Configure SELinux type: Usually targeted or strict Policy"
+#~ msgstr "Nastavte typ SELinuxu: Obvykle cílená nebo striktní politika"
+
+#~ msgid "no such option: %s"
+#~ msgstr "neexistuje volba: %s"
+
+#~ msgid "%s option requires an argument"
+#~ msgstr "%s volba vyžaduje argument"
+
+#~ msgid "%(option)s option requires %(count)s arguments"
+#~ msgstr "volba %(option)s vyžaduje %(count)s parametrů"
+
+#~ msgid "%s option does not take a value"
+#~ msgstr "%s volba nepřijímá hodnotu"
+
+#~ msgid "Show this help message"
+#~ msgstr "Ukázat tuto nápovědu"
+
+#~ msgid "Run noninteractively; process only command-line arguments"
+#~ msgstr "Spustit neinteraktivně; zpracovat jen argumenty na příkazovém řádku"
+
+#~ msgid "Be more verbose"
+#~ msgstr "Více podrobností"
+
+#~ msgid "Show version"
+#~ msgstr "Ukázat verzi"
+
+#~ msgid "Configure firewall but do not activate the new configuration"
+#~ msgstr "Nastavit firewall, ale neaktivovat nové nastavení"
+
+#~ msgid "Ignore actual settings"
+#~ msgstr "Ignorovat součastné nastavení"
+
+#~ msgid ""
+#~ "Update firewall non-interactively if the firewall is enabled. This will "
+#~ "also restart the firewall. The -n and -f options will be ignored."
+#~ msgstr ""
+#~ "Pokud je firewall aktivován, aktualizuj jej neinteraktivně. Vyžaduje "
+#~ "restart firewallu. Volby -n a -f budou ignorovány."
+
+#~ msgid ""
+#~ "Set firewall default type: %s. This overwrites any existing configuration."
+#~ msgstr ""
+#~ "Nastav výchozí typ firewallu: %s. Přepíše všechny existující nastavení."
+
+#~ msgid "List predefined services."
+#~ msgstr "Vypsat všechny předdefinované služby."
+
+#~ msgid "List the supported icmp types."
+#~ msgstr "Vypsat všechny podporované ICMP typy."
+
+#~ msgid "Network Printing Client (IPP)"
+#~ msgstr "Klient síťového tisku (IPP)"
+
+#~ msgid ""
+#~ "The Internet Printing Protocol (IPP) is used for distributed printing. "
+#~ "IPP (over udp) provides the ability to get information about a printer (e."
+#~ "g. capability and status) and to control printer jobs. If you plan to use "
+#~ "a remote network printer via cups, do not disable this option."
+#~ msgstr ""
+#~ "Internetový tiskový protokol (IPP) se používá pro distribuovaný tisk. IPP "
+#~ "(přes udp) umožňuje získávat informace o tiskárně (např. její schopnosti "
+#~ "a stav) a spravovat tiskové úlohy. Pokud chcete používat síťovou tiskárnu "
+#~ "přes CUPS, nezakazujte tuto volbu."
+
+#~ msgid "Network Printing Server (IPP)"
+#~ msgstr "Server síťového tisku (IPP)"
+
+#~ msgid ""
+#~ "The Internet Printing Protocol (IPP) is used for distributed printing. "
+#~ "IPP (over tcp) provides the ability to share printers over the network. "
+#~ "Enable this option if you plan to share printers via cups over the "
+#~ "network."
+#~ msgstr ""
+#~ "Internetový tiskový protokol (IPP) se používá pro distribuovaný tisk. IPP "
+#~ "(přes tcp) umožňuje sdílet tiskárny v síti. Pokud chcete sdílet tiskárny "
+#~ "v síti přes CUPS, povolte tuto volbu."
+
+#~ msgid "Multicast DNS (mDNS)"
+#~ msgstr "Multicast DNS (mDNS)"
+
+#~ msgid ""
+#~ "mDNS provides the ability to use DNS programming interfaces, packet "
+#~ "formats and operating semantics in a small network without a conventional "
+#~ "DNS server. If you plan to use Avahi, do not disable this option."
+#~ msgstr ""
+#~ "mDNS dává možnost nastavovat rozhranní, formát paketů a operační "
+#~ "sémantiku v malých sítích bez použití běžného DNS serveru. Pokud chcete "
+#~ "používat Avahi, nezakazujte tuto volbu."
+
+#~ msgid "IPsec"
+#~ msgstr "IPSec"
+
+#~ msgid ""
+#~ "Internet Protocol Security (IPsec) incorporates security for network "
+#~ "transmissions directly into the Internet Protocol (IP). IPsec provides "
+#~ "methods for both encrypting data and authentication for the host or "
+#~ "network it sends to. If you plan to use a vpnc server or FreeS/WAN, do "
+#~ "not disable this option."
+#~ msgstr ""
+#~ "Internetový zabezpečovací protokol (IPSec) zabezpečuje síťové vysílání "
+#~ "přímo na úrovni internetového protokolu (IP). IPSec nabízí metody pro "
+#~ "šifrování jak dat, tak autentizace hosta nebo sítě, do které jsou údaje "
+#~ "odesílány. Pokud chcete používat vpnc server nebo FreeS/WAN, nezakazujte "
+#~ "tuto volbu."
+
+#~ msgid "SSH"
+#~ msgstr "SSH"
+
+#~ msgid ""
+#~ "Secure Shell (SSH) is a protocol for logging into and executing commands "
+#~ "on remote machines. It provides secure encrypted communications. If you "
+#~ "plan on accessing your machine remotely via SSH over a firewalled "
+#~ "interface, enable this option. You need the openssh-server package "
+#~ "installed for this option to be useful."
+#~ msgstr ""
+#~ "Secure Shell (SSH) je protokol pro přihlašování se k vzdáleným strojům a "
+#~ "spouštění příkazů na nich. Poskytuje bezpečnou šifrovanou komunikaci. "
+#~ "Pokud hodláte přistupovat ke svému počítači vzdáleně přes SSH přes "
+#~ "rozhraní chráněné firewallem, povolte tuto volbu. Aby bylo SSH funkční, "
+#~ "musíte mít nainstalován balíček openssh-server."
+
+#~ msgid "WWW (HTTP)"
+#~ msgstr "WWW (HTTP)"
+
+#~ msgid ""
+#~ "HTTP is the protocol used to serve Web pages. If you plan to make your "
+#~ "Web server publicly available, enable this option. This option is not "
+#~ "required for viewing pages locally or developing Web pages."
+#~ msgstr ""
+#~ "HTTP je protokol používaný pro poskytování WWW stránek. Pokud hodláte "
+#~ "veřejně zpřístupnit svůj WWW server, povolte tuto volbu. Tato volba není "
+#~ "potřeba pro prohlížení stránek lokálně nebo pro vývoj WWW stránek."
+
+#~ msgid "FTP"
+#~ msgstr "FTP"
+
+#~ msgid ""
+#~ "FTP is a protocol used for remote file transfer. If you plan to make your "
+#~ "FTP server publicly available, enable this option. You need the vsftpd "
+#~ "package installed for this option to be useful."
+#~ msgstr ""
+#~ "FTP je protokol používaný pro vzdálený přenos souborů. Pokud hodláte "
+#~ "veřejně zpřístupnit svůj FTP server, povolte tuto volbu. Aby bylo FTP "
+#~ "dostupné, musíte mít nainstalován balíček vsftpd."
+
+#~ msgid "NFS4"
+#~ msgstr "NFS4"
+
+#~ msgid ""
+#~ "The NFS4 protocol is used to share files via TCP networking. You will "
+#~ "need to have the NFS tools installed and properly configure your NFS "
+#~ "server for this option to be useful."
+#~ msgstr ""
+#~ "Tato volba umožňuje použít protokol NFS verze 4 prostřednictvím TCP ke "
+#~ "sdílení souborů., Pokud má NFS fungovat, potřebujete mít nainstalovány "
+#~ "NFS nástroje a správně nastaven NFS server."
+
+#~ msgid "Secure WWW (HTTPS)"
+#~ msgstr "Zabezpečené WWW (HTTPS)"
+
+#~ msgid ""
+#~ "HTTPS is a modified HTTP used to serve Web pages when security is "
+#~ "important. Examples are sites that require logins like stores or web "
+#~ "mail. This option is not required for viewing pages locally or developing "
+#~ "Web pages. You need the httpd package installed for this option to be "
+#~ "useful."
+#~ msgstr ""
+#~ "HTTPS je upravený HTTP používaný pro poskytování zabezpečených WWW "
+#~ "stránek. Příkladem jsou servery, které vyžadují přihlášení, například "
+#~ "obchody nebo pošta přes WWW. Tato volba není potřeba pro prohlížení "
+#~ "stránek lokálně nebo pro vývoj WWW stránek. Aby byla tato volba užitečná, "
+#~ "musíte mít nainstalován balíček httpd."
+
+#~ msgid "Mail (SMTP)"
+#~ msgstr "Pošta (SMTP)"
+
+#~ msgid ""
+#~ "This option allows incoming SMTP mail delivery. If you need to allow "
+#~ "remote hosts to connect directly to your machine to deliver mail, enable "
+#~ "this option. You do not need to enable this if you collect your mail from "
+#~ "your ISP's server by POP3 or IMAP, or if you use a tool such as "
+#~ "fetchmail. Note that an improperly configured SMTP server can allow "
+#~ "remote machines to use your server to send spam."
+#~ msgstr ""
+#~ "Tato volba povoluje doručování příchozí pošty přes SMTP. Pokud "
+#~ "potřebujete povolit vzdáleným počítačům připojovat se přímo k vašemu "
+#~ "počítači pro doručení pošty, povolte tuto volbu. Nepotřebujete ji "
+#~ "povolit, pokud poštu vybíráte ze serveru svého posktytovatele pomocí POP3 "
+#~ "nebo IMAP nebo pokud používáte nástroj jako fetchmail. Upozornění: "
+#~ "nesprávně nastavený SMTP server může sloužít vzdáleným počítačům k "
+#~ "rozesílání nevyžádané pošty přes váš počítač."
+
+#~ msgid "Samba Client"
+#~ msgstr "Klient samba"
+
+#~ msgid ""
+#~ "This option allows you to access Windows file and printer sharing "
+#~ "networks. You need the samba-client package installed for this option to "
+#~ "be useful."
+#~ msgstr ""
+#~ "Tato volba vám umožní přistupovat ke sdílení souborů a tiskáren Windows. "
+#~ "Aby byla tato volba užitečná, musíte mít nainstalován balíček samba-"
+#~ "client."
+
+#~ msgid "Samba"
+#~ msgstr "Samba"
+
+#~ msgid ""
+#~ "This option allows you to access and participate in Windows file and "
+#~ "printer sharing networks. You need the samba package installed for this "
+#~ "option to be useful."
+#~ msgstr ""
+#~ "Tato volba vám umožňí přistupovat ke sdílení souborů a tiskáren "
+#~ "nabízených systémy Windows. Aby Samba fungovala musíte mít nainstalován "
+#~ "balíček samba."
+
+#~ msgid "DNS"
+#~ msgstr "DNS"
+
+#~ msgid ""
+#~ "The Domain Name System (DNS) is used to provide and request host and "
+#~ "domain names. Enable this option, if you plan to provide a domain name "
+#~ "service (e.g. with bind)."
+#~ msgstr ""
+#~ "Systém doménových jmen (DNS) je používán k poskytování a získávání jmeno "
+#~ "počítačů a domén. Povolte DNS pokud chcete poskytovat službu překladu "
+#~ "doménových jmen (např. přes bind)."
+
+#~ msgid "IMAP over SSL"
+#~ msgstr "IMAP přes SSL"
+
+#~ msgid ""
+#~ "The Internet Message Access Protocol over SSL (IMAPs) allows a local "
+#~ "client to access e-mail on a remote server in a secure way. If you plan "
+#~ "to provide a IMAP over SSL service (e.g. with dovecot), enable this "
+#~ "option."
+#~ msgstr ""
+#~ "Internetový protokol pro přístup ke zprávám přes SSL (IMAPs) dovoluje "
+#~ "lokálním klientům bezpečně přistupovat k emailům na vzáleném serveru. "
+#~ "Pokud chcete provozovat IMAP přes SSL (např. přes dovecot), povolte tuto "
+#~ "volbu."
+
+#~ msgid "POP-3 over SSL"
+#~ msgstr "POP3 přes SSL"
+
+#~ msgid ""
+#~ "The Post Office Protocol version 3 (POP3) is a protocol to retrieve e-"
+#~ "mail from a remote server over a TCP/IP connection. Enable this option, "
+#~ "if you plan to provide a POP3 service (e.g. with dovecot)."
+#~ msgstr ""
+#~ "Kancelářský poštovní protokol verze 3 (POP3) slouží k příjmu pošty ze "
+#~ "vzdáleného serveru přes připojení TCP/IP. Pokud chcete poskytovat službu "
+#~ "POP3 (např. přes dovecot), povolte tuto volbu."
+
+#~ msgid "RADIUS"
+#~ msgstr "RADIUS"
+
+#~ msgid ""
+#~ "The Remote Authentication Dial In User Service (RADIUS) is a protocol for "
+#~ "user authentication over networks. It is mostly used for modem, DSL or "
+#~ "wireless user authentication. If you plan to provide a RADIUS service (e."
+#~ "g. with freeradius), enable this option."
+#~ msgstr ""
+#~ "Služba vzálená autentizace uživatellů vytáčeného připojeni (RADIUS) je "
+#~ "protokol pro ověřování identitý uživatelů přes síť. Nejčastěji se používá "
+#~ "pro modemy, DSL nebo bezdrátové sítě. Pokud chcete poskytovat služby "
+#~ "RADIUS serveru (např. přes freeradius), povolte tuto volbu."
+
+#~ msgid "OpenVPN"
+#~ msgstr "OpenVPN"
+
+#~ msgid ""
+#~ "OpenVPN is a virtual private network (VPN) solution. It is used to create "
+#~ "encrypted point-to-point tunnles between computers. If you plan to "
+#~ "provide a VPN service, enable this option."
+#~ msgstr ""
+#~ "OpenVPN je řešení pro virtuální privátní síť (VPN). Používá se k "
+#~ "vytvoření šifrovaných spojení typu bod-bod mezi počítači. Ppokud se "
+#~ "chystáte poskytovat služby VPN, povolte tuto volbu."
+
+#~ msgid "Firewall Configuration"
+#~ msgstr "Nastavení firewallu"
+
+#~ msgid ""
+#~ "A firewall protects against unauthorized network intrusions. Enabling a "
+#~ "firewall blocks all incoming connections. Disabling a firewall allows all "
+#~ "connections and is not recommended. "
+#~ msgstr ""
+#~ "Firewall chrání před neautorizovaným průnikem po síti. Povolení firewallu "
+#~ "blokuje všechna příchozí spojení. Zakázání firewallu umožňuje všechna "
+#~ "spojení a nedoporučuje se."
+
+#~ msgid "Firewall:"
+#~ msgstr "Firewall:"
+
+#~ msgid "Enabled"
+#~ msgstr "Povolen"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "Customize"
+#~ msgstr "Upravit"
+
+#~ msgid "Cancel"
+#~ msgstr "Zrušit"
+
+#~ msgid ""
+#~ "Here you can define which services are trusted. Trusted services are "
+#~ "accessible from all hosts and networks."
+#~ msgstr ""
+#~ "Zde můžete definovat které služby jsou důvěryhodné. Všechny tyto služby "
+#~ "budou dostupné ze všech počítačů a sítí."
+
+#~ msgid "Other Ports"
+#~ msgstr "Ostatní porty"
+
+#~ msgid ""
+#~ "Add additional ports or port ranges, which need to be accessible for all "
+#~ "hosts or networks."
+#~ msgstr ""
+#~ "Přidejte dalsí porty nebo rozsah portů, které jsou potřeba ponechat "
+#~ "přístupné pro všechny počítače a sítě."
+
+#~ msgid "Add"
+#~ msgstr "Přidat"
+
+#~ msgid "Edit"
+#~ msgstr "Upravit"
+
+#~ msgid "Remove"
+#~ msgstr "Odstranit"
+
+#~ msgid "Trusted Interfaces"
+#~ msgstr "Důvěryhodná rozhraní"
+
+#~ msgid ""
+#~ "Mark all interfaces as trusted which should have full access to the "
+#~ "system."
+#~ msgstr ""
+#~ "Rozhraní označená jako důvěryhodná, budou mít plný přístup k systému."
+
+#~ msgid "Masquerading"
+#~ msgstr "Maškarádování"
+
+#~ msgid "Mark the interfaces to be masqueraded."
+#~ msgstr "Označit rozhraní pro maškarádování."
+
+#~ msgid "Port Forwarding"
+#~ msgstr "Přesměrování portů"
+
+#~ msgid ""
+#~ "Add entries to forward ports either from one port to another on the local "
+#~ "system or from the local system to another system. Forwarding to another "
+#~ "system is only useful if the interface is masqueraded. Port forwarding is "
+#~ "IPv4 only."
+#~ msgstr ""
+#~ "Přidejte záznamy pro přeposílání portů buď z jednoho portů na druhý na "
+#~ "lokálním systému nebo z lokálního systému do jiného systému. Přeposílání "
+#~ "na jiný systém je užitečné pouze pokud je rozhranní maškarádované. "
+#~ "Funguje pouze na IPv4."
+
+#~ msgid "ICMP Filter"
+#~ msgstr "ICMP filtr"
+
+#~ msgid ""
+#~ "Mark the ICMP types in the list, which should be rejected. All other ICMP "
+#~ "types are allowed to pass the firewall. The default is no limitation."
+#~ msgstr ""
+#~ "Označte v seznamu typy ICMP zpráv, které mají být odmítnuty. Všechny "
+#~ "ostatní ICMP typy budou moci projít firewallem. Implicitně bez omezení."
+
+#~ msgid "Custom Rules"
+#~ msgstr "Vlastní pravidla"
+
+#~ msgid ""
+#~ "Use custom rules files to add additional rules to the firewall. The "
+#~ "custom rules are added after the default rules. The files must have the "
+#~ "iptables-save format."
+#~ msgstr ""
+#~ "Použít soubor vlastních pravidel pro přidání pravidel do firewallu. "
+#~ "Pravidla budou přidána za výchozí pravidla. Soubor musí mít formát "
+#~ "iptables-save."
+
+#~ msgid "Forward"
+#~ msgstr "Vpřed"
+
+#~ msgid "Back"
+#~ msgstr "Zpět"
+
+#~ msgid "Close"
+#~ msgstr "Zavřít"
+
+#~ msgid "Error"
+#~ msgstr "Chyba"
+
+#~ msgid "Warning"
+#~ msgstr "Varování"
+
+#~ msgid ""
+#~ "Valid values: <port>[-<port>], where port is either a number [0..65535] "
+#~ "or a service name."
+#~ msgstr ""
+#~ "Platné hodnoty: <port>[-<port>], kde port je buď číslo [0..65535] nebo "
+#~ "název služby."
+
+#~ msgid "Protocol '%s' is not valid."
+#~ msgstr "Protokol '%s' není platný."
+
+#~ msgid "Valid values: tcp, udp"
+#~ msgstr "Platné hodnoty: tcp, udp"
+
+#~ msgid "Please enter a port or port range and protocol."
+#~ msgstr "Zadejte prosím port nebo rozsah portů a protokol."
+
+#~ msgid "Port / Port Range:"
+#~ msgstr "Port/Rozsah portů:"
+
+#~ msgid "Protocol:"
+#~ msgstr "Protokol:"
+
+#~ msgid ""
+#~ "Please select the source and destination options according to your needs."
+#~ msgstr "Prosím zvolte zdrojové a cílové volby podle vašich potřeb."
+
+#~ msgid "Source (all needed)"
+#~ msgstr "Zdroj (vše vyžadování)"
+
+#~ msgid "Interface:"
+#~ msgstr "Rozhraní:"
+
+#~ msgid "Destination (at least one needed)"
+#~ msgstr "Cíl (alespoň jedno vyžadováno)"
+
+#~ msgid "IP address:"
+#~ msgstr "IP adresa:"
+
+#~ msgid "Interface '%s' is not valid."
+#~ msgstr "Rozhraní '%s' není platné."
+
+#~ msgid "Address '%s' is not valid."
+#~ msgstr "Adresa '%s' není platná."
+
+#~ msgid ""
+#~ "Please select the protocol type, the firewall table and the file "
+#~ "containing the rules."
+#~ msgstr "Zvolte prosím typ protokolu, tabulku firewallu a soubor s pravidly."
+
+#~ msgid "Protocol Type"
+#~ msgstr "Typ protokolu"
+
+#~ msgid "Firewall Table"
+#~ msgstr "Tabulka firewallu"
+
+#~ msgid "File"
+#~ msgstr "Soubor"
+
+#~ msgid "The protocol type '%s' is not valid."
+#~ msgstr "Typ protokolu '%s' není platný."
+
+#~ msgid "Valid values: %s"
+#~ msgstr "Platné hodnoty: %s"
+
+#~ msgid "The firewall table '%s' is not valid."
+#~ msgstr "Tabulka firewallu '%s' není platná."
+
+#~ msgid "The file '%s' does not exist."
+#~ msgstr "Soubor '%s' neexistuje."
+
+#~ msgid "IPv6 has no nat support."
+#~ msgstr "IPv6 nemá podporu NATu."
+
+#~ msgid "Yes"
+#~ msgstr "Ano"
+
+#~ msgid "No"
+#~ msgstr "Ne"
+
+#~ msgid "Hit enter to continue."
+#~ msgstr "Pokračujte stisknutím enter."
+
+#~ msgid ""
+#~ "\n"
+#~ "ERROR - You must be root to run %s."
+#~ msgstr ""
+#~ "\n"
+#~ "CHYBA - Pro spuštění %s musíte být root."
+
+#~ msgid "Predefined Services with Default Environment:"
+#~ msgstr "Předdefinované služby s výchozím prostředím:"
+
+#~ msgid "Supported icmp types:"
+#~ msgstr "Podporované ICMP typy:"
+
+#~ msgid "Failed to write selinux configuration."
+#~ msgstr "Selhal zápis nastavení SELinuxu."
+
+#~ msgid "Failed to write %s."
+#~ msgstr "Selhal zápis %s."
+
+#~ msgid "Failed to stop %s."
+#~ msgstr "Selhalo ukončení %s."
+
+#~ msgid "Failed to start %s."
+#~ msgstr "Selhal start %s."
+
+#~ msgid "Failed to remove %s."
+#~ msgstr "Selhalo odstranění %s."
+
+#~ msgid "_File"
+#~ msgstr "_Soubor"
+
+#~ msgid "Apply changes"
+#~ msgstr "Aplikovat změny"
+
+#~ msgid "Apply"
+#~ msgstr "Použít"
+
+#~ msgid "Reload current configuration"
+#~ msgstr "Obnovit součastnou konfiguraci"
+
+#~ msgid "Reload"
+#~ msgstr "Obnovit"
+
+#~ msgid "_Quit"
+#~ msgstr "_Ukončit"
+
+#~ msgid "_Options"
+#~ msgstr "M_ožnosti"
+
+#~ msgid "_Start Configuration Wizard"
+#~ msgstr "_Spustit průvodce nastavením"
+
+#~ msgid "Enable Firewall"
+#~ msgstr "Povolit firewall"
+
+#~ msgid "Disable Firewall"
+#~ msgstr "Zakázat firewall"
+
+#~ msgid "User Skill Level"
+#~ msgstr "Úroveň schopností uživatele"
+
+#~ msgid "Expert"
+#~ msgstr "Pokročilý"
+
+#~ msgid "Load _Default Configuration"
+#~ msgstr "Nahraj _výchozí konfiguraci"
+
+#~ msgid "Desktop"
+#~ msgstr "Desktop"
+
+#~ msgid "Configure Service Settings"
+#~ msgstr "Nastavení služeb"
+
+#~ msgid "_Help"
+#~ msgstr "_Nápověda"
+
+#~ msgid "_About"
+#~ msgstr "_O ..."
+
+#~ msgid "Start configuration wizard"
+#~ msgstr "Spustit průvodce nastavením"
+
+#~ msgid "Wizard"
+#~ msgstr "Průvodce"
+
+#~ msgid "Enable firewall"
+#~ msgstr "Povolit firewall"
+
+#~ msgid "Enable"
+#~ msgstr "Povolit"
+
+#~ msgid "Disable"
+#~ msgstr "Zakázat"
+
+#~ msgid "Allow access to necessary services, only."
+#~ msgstr "Povolit přístup jen k nezbytným službám."
+
+#~ msgid "Allow access to necessary ports or port ranges, only."
+#~ msgstr "Povolit přístup jen k nezbytným portům a rozsahům."
+
+#~ msgid ""
+#~ "Only mark interfaces if you can trust all participants on that network "
+#~ "interface."
+#~ msgstr ""
+#~ "Označte rozhraní pouze pokud můžete skutečně důvěřovat všem účastníkům na "
+#~ "daném síťovém rozhraní."
+
+#~ msgid ""
+#~ "Masquerading allows you to set up a host or router that connects your "
+#~ "local network to the internet. Your local network will not be visible and "
+#~ "the hosts appear as a single address on the internet. Masquerading is "
+#~ "IPv4 only."
+#~ msgstr ""
+#~ "Maškarádování je užitečné pokud nastavujete počítač nebo směrovač, který "
+#~ "spojuje vaši lokální síť s internetem. Vaše lokální síť nebude z "
+#~ "internetu viditelná a celá bude reprezentována pouze jedním počítačem. "
+#~ "Maškarádování funguje pouze pro IPv4."
+
+#~ msgid ""
+#~ "If you enable masquerading, IP forwarding will also be enabled for your "
+#~ "IPv4 networks."
+#~ msgstr ""
+#~ "Pokud povolíte maškarádování, bude povoleno též přesměrování paketů v "
+#~ "sítích IPv4."
+
+#~ msgid ""
+#~ "The Internet Control Message Protocol (ICMP) is mainly used to send error "
+#~ "messages between networked computers, but additionally for informational "
+#~ "messages like ping requests and replies."
+#~ msgstr ""
+#~ "Protokol internetových kontrolních zpráv (ICMP) je používán především k "
+#~ "zasílání chybových zpráv mezi počítači v síti, ale také pro informační "
+#~ "zprávy typ ping."
+
+#~ msgid "Please check your firewall settings after applying custom rules."
+#~ msgstr ""
+#~ "Prosím zkontrolujte nastavení firewallu po aplikaci vlastních pravidel."
+
+#~ msgid "modified label"
+#~ msgstr "upravená jmenovka"
+
+#~ msgid "Port and Protocol"
+#~ msgstr "Port a protokol"
+
+#~ msgid ""
+#~ "Please select an entry from the list or enter a port and protocol further "
+#~ "down."
+#~ msgstr "Prosím vyberte záznam ze seznamu nebo zadejte port a protokol níže."
+
+#~ msgid "User Defined"
+#~ msgstr "Uživatelem definované"
+
+#~ msgid "system-config-firewall"
+#~ msgstr "system-config-firewall"
+
+#~ msgid "translator-credits"
+#~ msgstr "překladatelé"
+
+#~ msgid "Custom Rules File"
+#~ msgstr "Soubor vlastních pravidel"
+
+#~ msgid "Protocol Type:"
+#~ msgstr "Typ protokolu:"
+
+#~ msgid "Firewall Table:"
+#~ msgstr "Tabulka firewallu:"
+
+#~ msgid "File:"
+#~ msgstr "Soubor:"
+
+#~ msgid "Select A File"
+#~ msgstr "Vyberte soubor"
+
+#~ msgid "Firewall Configuration Wizard"
+#~ msgstr "Průvodce nastavením firewallu"
+
+#~ msgid "<big><b>Firewall Configuration Wizard</b></big>"
+#~ msgstr "<big><b>Průvodce nastavením firewallu</b></big>"
+
+#~ msgid "<b>Information</b>"
+#~ msgstr "<b>Informace</b>"
+
+#~ msgid ""
+#~ "This wizard helps you to set up a clean firewall configuration for your "
+#~ "system."
+#~ msgstr "Tento průvodce vám pomůže nastavit firewall vášeho systému."
+
+#~ msgid ""
+#~ "Please answer the questions in the following configuration steps. The "
+#~ "wizard leads you back to the main application and hides all unnecessary "
+#~ "configuration options."
+#~ msgstr ""
+#~ "Prosím odpovězte na otázky v následujícíh krocích. Průvodce vás pak "
+#~ "zavede zpět do hlavní aplikace, ale ukáže vám pouze položky, které jsou "
+#~ "pro vaše nastavení nutné."
+
+#~ msgid "You can change the settings in the <i>Options</i> menu afterwards."
+#~ msgstr "Později můžete zmenit nastavení v menu <i>Možnosti</i>."
+
+#~ msgid "<b>Basic Firewall Settings</b>"
+#~ msgstr "<b>Základní nastavení firewallu</b>"
+
+#~ msgid "What kind of system do you have?"
+#~ msgstr "Jaký druh systému máte?"
+
+#~ msgid ""
+#~ "System without network access\n"
+#~ "System with network access"
+#~ msgstr ""
+#~ "Systém bez přístupu k síti\n"
+#~ "Systém s přístupem k síti"
+
+#~ msgid ""
+#~ "A <i>\"System without network access\"</i> does not need a firewall at "
+#~ "all. This selection disables the firewall. Otherwise, choose <i>\"System "
+#~ "with network access\"</i>."
+#~ msgstr ""
+#~ "<i>\"Systém bez přístupu k síti\"</i> nepotřebuje firewall. Tato volba "
+#~ "kompletně vypne firewall. Jinak vyberte <i>\"System with network access"
+#~ "\"</i>."
+
+#~ msgid "<b>User Skill Level</b>"
+#~ msgstr "<b>Úroveň schopností uživatele</b>"
+
+#~ msgid "Please specify your firewall skills."
+#~ msgstr "Prosím vymezte vaše schopnosti konfigurace firewallu."
+
+#~ msgid ""
+#~ "Beginner\n"
+#~ "Expert"
+#~ msgstr ""
+#~ "Začátečník\n"
+#~ "Pokročilý"
+
+#~ msgid ""
+#~ "Select <i>\"Expert\"</i> if you are familiar with firewall configurations "
+#~ "or if you need to add user customized rules. Otherwise, choose <i>"
+#~ "\"Beginner\"</i>."
+#~ msgstr ""
+#~ "Vyberte <i>\"Pokročilý\"</i> pokud jste obeznámeni s nastavováním "
+#~ "firewallu a pokud potřebujete přidat vlastní pravidla. Jinak vyberte <i>"
+#~ "\"Začátečník\"</i>."
+
+#~ msgid "<b>Configuration</b>"
+#~ msgstr "<b>Konfigurace</b>"
+
+#~ msgid ""
+#~ "Please select keep configuration or choose to load a default "
+#~ "configuration."
+#~ msgstr ""
+#~ "Prosím vyberte ponechat nastavení nebo vyberte nahrát výchozí nastavení."
+
+#~ msgid "Keep Configuration"
+#~ msgstr "Ponechat nastavení"
+
+#~ msgid "Load"
+#~ msgstr "Nahrát"
+
+#~ msgid ""
+#~ "Desktop\n"
+#~ "Server"
+#~ msgstr ""
+#~ "Desktop\n"
+#~ "Server"
+
+#~ msgid "configuration"
+#~ msgstr "Konfigurace"
+
+#~ msgid ""
+#~ "If you clear the <i>keep configuration</i> button, the actual firewall "
+#~ "configuration will be overwritten."
+#~ msgstr ""
+#~ "Pokud vymažete tlačitko <i>ponechat nastavení</i>, bude aktuální "
+#~ "nastavení firewallu přepsáno."
+
+#~ msgid "Firewall Configuration Startup"
+#~ msgstr "Začátek nastavení firewallu"
+
+#~ msgid ""
+#~ "This program will help you to set up a basic firewall for your system."
+#~ msgstr "Tento program vám pomůže nastavit základní firewall pro váš systém."
+
+#~ msgid ""
+#~ "If you need further firewall settings, please modify your configuration "
+#~ "by hand, but keep in mind, that this tool is not able to load your custom "
+#~ "configuration. If you are using this tool, all your manual changes will "
+#~ "be lost. If you do not want to lose your manual configuration changes, "
+#~ "leave this program without applying."
+#~ msgstr ""
+#~ "Pokud potřebujete další nastavení firewallu, můžete ručně modifikovat "
+#~ "jeho konfiguraci. Pamatujte ale, že tento nástroj není schopen vaše "
+#~ "úpravy nahrát. Pokud používáte tento nástroj, všechny vaše ruční úpravy "
+#~ "budou ztraceny. Pokud nechcete přijít o vaše ruční úpravy, opusťte tento "
+#~ "program bez aplikování nastavení."
+
+#~ msgid ""
+#~ "Please remember to check your firewall configuration before using it."
+#~ msgstr ""
+#~ "Prosím nezapomeňte zkontrolovat vaše nastavení firewallu, před použitím "
+#~ "tohoto nástroje."
+
+#~ msgid "Service Settings"
+#~ msgstr "Nastavení služeb"
+
+#~ msgid "Configure the iptables and ip6tables service settings."
+#~ msgstr "Nastavení služeb iptables a ip6tables."
+
+#~ msgid ""
+#~ "Hit <i>OK</i> to apply your changes. You do not need to restart the "
+#~ "firewall, the changes are effective as soon as they are applied."
+#~ msgstr ""
+#~ "Stisněte <i>OK</i> pro aplikování změn. Není potřeba firewall "
+#~ "restartovat. Změny se projeví hned při aplikování."
+
+#~ msgid "TODO"
+#~ msgstr "TODO"
+
+#~ msgid "Configure firewall helper modules for connection tracking"
+#~ msgstr "Přidat pomocné moduly firewallu pro sledování spojení."
+
+#~ msgid "Port:"
+#~ msgstr "Port:"
+
+#~ msgid "<b>Destination</b>"
+#~ msgstr "<b>Cíl</b>"
+
+#~ msgid "<b>Source</b>"
+#~ msgstr "<b>Zdroj</b>"
+
+#~ msgid ""
+#~ "If you enable local forwarding, you have to specify a port. This port has "
+#~ "to be different to the source port."
+#~ msgstr ""
+#~ "Pokud povolíte lokální přeposílání, musíte určit port. Tento port musí "
+#~ "být jiný nez zdrojový port."
+
+#~ msgid "Make sure to open the destination port on the remote system."
+#~ msgstr "Ujistěte se, že cílový port je na vzdáleném systému dostupný."
+
+#~ msgid "Forward to another port"
+#~ msgstr "Přeposlat na jiný port"
+
+#~ msgid "Local forwarding"
+#~ msgstr "Místní přesměrování"
+
+#~ msgid ""
+#~ "Please select an entry from the list or enter a interface further down."
+#~ msgstr "Prosím vyberte záznam ze seznamu nebo zadejte rozhraní níže."
+
+#~ msgid "No configuration"
+#~ msgstr "Žádná konfigurace"
+
+#~ msgid "Start Wizard"
+#~ msgstr "Spustit průvodce"
+
+#~ msgid ""
+#~ "<b>Your current configuration is empty, all traffic will be blocked.</b>"
+#~ msgstr ""
+#~ "<b>Vaše součastná konfigurace je prázná, všechen provoz bude blokován.</b>"
+
+#~ msgid ""
+#~ "Please load a default configuration from the <i>Options</i> menu or use "
+#~ "the wizard."
+#~ msgstr ""
+#~ "Prosím nahrajte výchozí nastavení z menu <i>Možnosti</i>, nebo použijte "
+#~ "průvodce."
 
 #~ msgid "Disabled"
 #~ msgstr "Zakázán"
