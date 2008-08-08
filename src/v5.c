@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -889,11 +889,19 @@ v5_get_creds(krb5_context ctx,
 				tmpcreds.server = service_principal;
 				i = krb5_cc_retrieve_cred(ctx, ccache, 0,
 							  &tmpcreds, creds);
-				/* FIXME: check if the creds are expired?
-				 * What's the right error code if we check, and
-				 * they are? */
 				memset(&tmpcreds, 0, sizeof(tmpcreds));
 				krb5_cc_close(ctx, ccache);
+				switch (v5_validate(ctx, creds, options)) {
+				case 0:
+					/* we're fine */
+					break;
+				default:
+					/* something (anything) went wrong --
+					 * discard them */
+					krb5_free_cred_contents(ctx, creds);
+					i = KRB5KRB_ERR_GENERIC;
+					break;
+				}
 			} else {
 				warn("error opening default ccache");
 				i = KRB5_CC_NOTFOUND;
