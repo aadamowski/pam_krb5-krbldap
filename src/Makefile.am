@@ -87,14 +87,14 @@ afs5log_SOURCES = \
 	logstdio.c \
 	logstdio.h \
 	log.h
-afs5log_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
+afs5log_LDADD = libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 pagsh_SOURCES = \
 	pagsh.c \
 	logstdio.c \
 	logstdio.h \
 	log.h
-pagsh_LDADD = @PAM_LIBS@ libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
+pagsh_LDADD = libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 harness_SOURCES = harness.c
 harness_LDADD = \

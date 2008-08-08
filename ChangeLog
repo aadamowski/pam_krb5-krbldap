@@ -1,3 +1,8 @@
+2008-08-08
+	* src/Makefile.am: reverse the order of libpam_krb5.la and PAM_LIBS
+	so that people adding things like -Wl,--as-needed -Wl,--no-undefined
+	will be able to (patch from Guillaume Rousse)
+
 2008-04-10
 	* po/Makevars: extract text strings correctly (#441858).
 	* po/POTFILES.in: note that input strings are planned to be UTF-8
