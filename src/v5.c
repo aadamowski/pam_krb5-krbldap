@@ -72,8 +72,6 @@
 #include "v5.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 #ifndef KRB5_KPASSWD_ACCESSDENIED
 #define KRB5_KPASSWD_ACCESSDENIED 5
 #endif
