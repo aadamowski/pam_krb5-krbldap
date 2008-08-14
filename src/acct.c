@@ -64,8 +64,6 @@
 #include "v5.h"
 #include "v4.h"
 
-#ident "$Id$"
-
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		 int argc, PAM_KRB5_MAYBE_CONST char **argv)
