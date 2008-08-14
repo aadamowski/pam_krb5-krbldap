@@ -64,8 +64,6 @@
 #include "v5.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 #if defined(HAVE_GETPWNAM_R) || defined(HAVE___POSIX_GETPWNAM_R)
 #define CHUNK_SIZE 128
 /* Convert a name to a UID/GID pair. */

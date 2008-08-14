@@ -68,8 +68,6 @@
 #include "v4.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 static int
 maybe_setpag(const char *fn, pam_handle_t *pamh, int flags,
 	     int argc, PAM_KRB5_MAYBE_CONST char **argv)

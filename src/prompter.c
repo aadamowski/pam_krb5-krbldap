@@ -51,8 +51,6 @@
 #include "prompter.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 void
 _pam_krb5_maybe_free_responses(struct pam_response *responses, int n_responses)
 {

@@ -57,8 +57,6 @@
 #include "minikafs.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 extern char *log_progname;
 
 static void

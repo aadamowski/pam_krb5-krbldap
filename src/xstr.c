@@ -36,8 +36,6 @@
 #include <string.h>
 #include "xstr.h"
 
-#ident "$Id$"
-
 int
 xstrlen(const char *s)
 {

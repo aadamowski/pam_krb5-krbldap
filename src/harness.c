@@ -72,8 +72,6 @@
 #include "options.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 extern char *log_progname;
 
 struct linux_pam_handle {

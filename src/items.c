@@ -45,8 +45,6 @@
 
 #include "items.h"
 
-#ident "$Id$"
-
 int
 _pam_krb5_has_item(pam_handle_t *pamh, int item)
 {

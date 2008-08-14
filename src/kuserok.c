@@ -73,8 +73,6 @@
 
 #include "kuserok.h"
 
-#ident "$Id$"
-
 /* Use a helper to store the given data in a new file with a name which is
  * based on the given pattern. */
 krb5_boolean

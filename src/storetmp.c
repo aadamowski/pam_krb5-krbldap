@@ -46,8 +46,6 @@
 
 #include "storetmp.h"
 
-#ident "$Id$"
-
 ssize_t
 _pam_krb5_write_with_retry(int fd, const unsigned char *buffer, ssize_t len)
 {

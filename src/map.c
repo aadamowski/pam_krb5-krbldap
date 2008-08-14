@@ -59,8 +59,6 @@
 #include "map.h"
 #include "options.h"
 
-#ident "$Id$"
-
 #define SEPARATOR '$'
 
 static int

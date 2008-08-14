@@ -49,8 +49,6 @@
 #include "log.h"
 #include "options.h"
 
-#ident "$Id$"
-
 #if defined(HAVE_KRB5_OS_LOCALADDR) && \
     defined(HAVE_KRB5_OS_HOSTADDR) && \
     defined(HAVE_KRB5_COPY_ADDR)

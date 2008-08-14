@@ -73,8 +73,6 @@
 #include "v5.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 #ifdef USE_KRB4
 
 int

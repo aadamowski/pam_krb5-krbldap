@@ -67,8 +67,6 @@
 #include "userinfo.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 /* A record of a shared memory segment's key, and the name under which the
  * structure was saved by libpam. */
 struct _pam_krb5_shm_rec {

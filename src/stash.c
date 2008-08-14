@@ -70,8 +70,6 @@
 #include "v5.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 static int
 _pam_krb5_get_data_stash(pam_handle_t *pamh, const char *key,
 			 struct _pam_krb5_stash **stash)

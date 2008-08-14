@@ -51,8 +51,6 @@
 #include "conv.h"
 #include "log.h"
 
-#ident "$Id$"
-
 #ifndef PACKAGE
 #ifdef PACKAGE_NAME
 #define PACKAGE PACKAGE_NAME

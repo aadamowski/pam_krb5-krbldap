@@ -55,8 +55,6 @@
 #include "minikafs.h"
 #include "tokens.h"
 
-#ident "$Id$"
-
 int
 minikafs_has_afs(void)
 {

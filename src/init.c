@@ -57,8 +57,6 @@
 #include "log.h"
 #include "v5.h"
 
-#ident "$Id$"
-
 static int
 set_realm(krb5_context ctx, int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {

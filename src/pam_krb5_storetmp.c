@@ -42,8 +42,6 @@
 
 #include "xstr.h"
 
-#ident "$Id$"
-
 /* A simple (hopefully) helper which creates a file using mkstemp() and a
  * supplied pattern, attempts to set the ownership of that file, stores
  * whatever it reads from stdin in that file, and then prints the file's name

@@ -65,8 +65,6 @@
 #include "v5.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 #define LIST_SEPARATORS " \t,"
 
 static char **option_l(int argc, PAM_KRB5_MAYBE_CONST char **argv,

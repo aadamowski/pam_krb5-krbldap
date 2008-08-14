@@ -48,8 +48,6 @@
 #include "items.h"
 #include "prompter.h"
 
-#ident "$Id$"
-
 /* A PAM conversation function takes as its input a pointer to a pointer to a
  * message structure.  This adds an ambiguity -- is it a pointer to an array,
  * or an array of pointers?  (Basically, is the second message at

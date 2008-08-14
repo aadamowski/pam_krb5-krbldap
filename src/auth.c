@@ -72,8 +72,6 @@
 #include "v4.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 int
 pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		    int argc, PAM_KRB5_MAYBE_CONST char **argv)

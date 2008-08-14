@@ -55,8 +55,6 @@
 #include "shmem.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 int
 main(int argc, char **argv)
 {

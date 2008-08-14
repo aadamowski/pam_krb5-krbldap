@@ -66,8 +66,6 @@
 #include "v5.h"
 #include "xstr.h"
 
-#ident "$Id$"
-
 int
 tokens_useful(void)
 {

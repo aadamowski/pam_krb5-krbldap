@@ -65,8 +65,6 @@
 #include "v5.h"
 #include "v4.h"
 
-#ident "$Id$"
-
 #ifdef USE_KRB4
 /* Store the v4 TGT in $KRBTKFILE. */
 static void
