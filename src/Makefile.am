@@ -21,6 +21,12 @@ man_MANS += afs5log.1
 noinst_PROGRAMS += pagsh
 endif
 
+if WITH_DIRECT_LIBPAM
+DIRECT_LIBPAM = -lpam
+else
+DIRECT_LIBPAM =
+endif
+
 libpam_krb5_la_SOURCES = \
 	conv.c \
 	conv.h \
@@ -47,7 +53,7 @@ libpam_krb5_la_SOURCES = \
 	v5.h
 	
 pam_krb5_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
-pam_krb5_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
+pam_krb5_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@ $(DIRECT_LIBPAM)
 pam_krb5_la_SOURCES = \
 	initopts.c \
 	initopts.h \

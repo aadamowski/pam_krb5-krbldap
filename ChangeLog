@@ -1,3 +1,13 @@
+2008-09-03
+	* configure.ac,src/Makefile.am: link pam_krb5.so with libpam unless
+	explicitly disabled at compile-time (#227097,#460998)
+
+2008-09-03
+	* src/options.c (option_b): if the realm name given to us is NULL,
+	don't bother consulting the appdefaults
+	* src/options.c (_pam_krb5_options_init): check for the "debug" flag
+	earlier (Simo Sorce)
+
 2008-08-08
 	* src/Makefile.am: reverse the order of libpam_krb5.la and PAM_LIBS
 	so that people adding things like -Wl,--as-needed -Wl,--no-undefined
