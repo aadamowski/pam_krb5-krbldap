@@ -360,6 +360,18 @@ if test x$keyutils != xno ; then
 	AC_SUBST(KEYUTILS_LIBS)
 fi
 
+AC_MSG_CHECKING(whether to link directly with libpam)
+AC_ARG_WITH(libpam,
+[AC_HELP_STRING(--without-libpam,[Refrain from linking directly with libpam.])],
+	    [with_libpam=$withval],
+	    [with_libpam=yes])
+if test "$with_libpam" != no ; then
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL(WITH_DIRECT_LIBPAM,test "$with_libpam" != no)
+
 AC_ARG_ENABLE(default-realm,AC_HELP_STRING([--enable-default-realm=REALM],[last-ditch fallback realm (default is EXAMPLE.COM)]),default_realm=$enableval,default_realm=EXAMPLE.COM)
 AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name which will be used if no realm is given as a parameter and none is given in krb5.conf.])
 AC_MSG_RESULT([Using "$default_realm" as the default realm.])
