@@ -105,7 +105,8 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	ret = -1;
 
 	/* configured service yes */
-	if ((ret == -1) && (service != NULL) && (strlen(service) > 0)) {
+	if ((ret == -1) && (realm != NULL) &&
+	    (service != NULL) && (strlen(service) > 0)) {
 		list = option_l(argc, argv, ctx, realm, s, "");
 		for (i = 0; ((list != NULL) && (list[i] != NULL)); i++) {
 			if (strcmp(list[i], service) == 0) {
@@ -116,7 +117,8 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	}
 
 	/* configured service no */
-	if ((ret == -1) && (service != NULL) && (strlen(service) > 0)) {
+	if ((ret == -1) && (realm != NULL) &&
+	    (service != NULL) && (strlen(service) > 0)) {
 		for (i = 0; i < (sizeof(prefix) / sizeof(prefix[0])); i++) {
 			nots = malloc(strlen(prefix[i]) + strlen(s) + 1);
 			if (nots != NULL) {
@@ -142,7 +144,7 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	}
 
 	/* configured boolean */
-	if (ret == -1) {
+	if ((ret == -1) && (realm != NULL)) {
 		v5_appdefault_boolean(ctx, realm, s, -1, &ret);
 	}
 
@@ -330,6 +332,11 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	if (pamh != NULL) {
 		_pam_krb5_get_item_text(pamh, PAM_SERVICE, &service);
 	}
+
+	/* command-line option */
+	options->debug = option_b(argc, argv, ctx, NULL,
+				  service, NULL, NULL,
+				  "debug", 0);
 
 	for (i = 0; i < argc; i++) {
 		if (strncmp(argv[i], "realm=", 6) == 0) {
