@@ -3,7 +3,7 @@ Name: pam_krb5
 Version: 2.3.1
 Release: 1
 Source0: pam_krb5-%{version}-1.tar.gz
-License: BSD or LGPL+
+License: BSD or LGPLv2+
 Group: System Environment/Base
 BuildPrereq: keyutils-libs-devel, krb5-devel, pam-devel
 BuildRoot: %{_tmppath}/%{name}-root
@@ -50,6 +50,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Wed Aug 27 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.3.0-2
+- fix license tag
+
 * Wed Apr  9 2008 Nalin Dahyabhai <nalin@redhat.com> - 2.3.1-1
 - don't bother trying to set up a temporary v4 ticket file during session open
   unless we obtained v4 creds somewhere
