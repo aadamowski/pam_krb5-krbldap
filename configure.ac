@@ -486,11 +486,6 @@ AC_SUBST(TESTHOST)
 AC_SUBST(default_ccache_dir)
 AC_SUBST(default_ccname_template)
 
-AC_PATH_PROG(XGETTEXT, xgettext)
-if test -z "$XGETTEXT" ; then
-    AC_MSG_ERROR(xgettext is missing; please install gettext.)
-fi
-
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.17])
 
