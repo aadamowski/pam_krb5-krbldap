@@ -5,6 +5,7 @@ Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
 Group: System Environment/Base
+BuildPrereq: gettext
 BuildPrereq: keyutils-libs-devel, krb5-devel, pam-devel
 BuildRoot: %{_tmppath}/%{name}-root
 
