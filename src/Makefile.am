@@ -37,6 +37,8 @@ libpam_krb5_la_SOURCES = \
 	kuserok.c \
 	kuserok.h \
 	minikafs.h \
+	perms.c \
+	perms.h \
 	prompter.c \
 	prompter.h \
 	shmem.c \
@@ -112,6 +114,7 @@ harness_LDADD = \
 	map.lo \
 	initopts.lo \
 	options.lo \
+	perms.lo \
 	userinfo.lo \
 	sly.lo \
 	v4.lo \
@@ -125,6 +128,7 @@ harness_newpag_LDADD = \
 	pam_newpag.lo \
 	logstdio.lo \
 	options.lo \
+	perms.lo \
 	v4.lo \
 	v5.lo
 harness_newpag_LDADD += libpam_krb5.la @PAM_LIBS@ @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@

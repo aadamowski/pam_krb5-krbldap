@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.1
-Release: 1
+Version: 2.3.2
+Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
 Group: System Environment/Base
@@ -50,6 +50,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Wed Oct  1 2008 Nalin Dahyabhai <nalin@redhat.com> - 2.3.2-1
+- fix ccache permissions bypass when the "existing_ticket" option is used
+  (CVE-2008-3825)
+
 * Wed Aug 27 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.3.0-2
 - fix license tag
 

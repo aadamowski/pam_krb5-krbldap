@@ -1,3 +1,9 @@
+2008-10-01
+	* src/perms.c,src/perms.h: add functions for swapping real and
+	effective UID and GID, if they're different
+	* src/v5.c: swap the real and effective UID and GID when reading
+	credentials from an "existing_ticket" ccache
+
 2008-09-03
 	* configure.ac,src/Makefile.am: link pam_krb5.so with libpam unless
 	explicitly disabled at compile-time (#227097,#460998)
