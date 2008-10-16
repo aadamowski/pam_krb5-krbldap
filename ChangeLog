@@ -1,3 +1,8 @@
+2008-10-16
+	* src/acct.c,src/auth.c,src/password.c,src/session.c,src/sly.c: be
+	resistant to libpam returning NULL from pam_get_user() even though it
+	results a successful result code (#467208).
+
 2008-10-01
 	* src/perms.c,src/perms.h: add functions for swapping real and
 	effective UID and GID, if they're different

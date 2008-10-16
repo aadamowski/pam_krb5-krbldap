@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -83,7 +83,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 
 	/* Get the user's name. */
 	i = pam_get_user(pamh, &user, NULL);
-	if (i != PAM_SUCCESS) {
+	if ((i != PAM_SUCCESS) || (user == NULL)) {
 		warn("could not identify user name");
 		krb5_free_context(ctx);
 		return i;
