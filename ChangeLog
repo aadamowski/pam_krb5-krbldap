@@ -1,3 +1,9 @@
+2008-10-29
+	* src/password.c (pam_sm_chauthtok): if the "use_shmem" option is
+	set, stash the credentials which we obtain after a password change
+	in shared memory as well.  Based on patch from and initial report
+	by Michael Calmer.
+
 2008-10-16
 	* src/acct.c,src/auth.c,src/password.c,src/session.c,src/sly.c: be
 	resistant to libpam returning NULL from pam_get_user() even though it
