@@ -1,6 +1,10 @@
 2009-02-05
 	* src/minikafs.c: remove minikafs_realm_of_cell(), which is not
 	used anywhere
+	* src/minikafs.c(minikafs_4log): pass the locally-initialized
+	context to minikafs_realm_of_cell_with_context() rather than the
+	passed-in value, so that minikafs_realm_of_cell_with_context()
+	can skip the init call if we're passed NULL
 
 2008-10-29
 	* src/password.c (pam_sm_chauthtok): if the "use_shmem" option is

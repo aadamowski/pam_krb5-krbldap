@@ -1244,7 +1244,7 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 	if (krb_get_lrealm(localrealm, 1) != 0) {
 		return -1;
 	}
-	if (minikafs_realm_of_cell_with_ctx(context, options, cell,
+	if (minikafs_realm_of_cell_with_ctx(ctx, options, cell,
 					    realm, sizeof(realm)) != 0) {
 		strncpy(realm, cell, sizeof(realm));
 		realm[sizeof(realm) - 1] = '\0';
