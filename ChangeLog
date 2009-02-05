@@ -1,3 +1,7 @@
+2009-02-05
+	* src/minikafs.c: remove minikafs_realm_of_cell(), which is not
+	used anywhere
+
 2008-10-29
 	* src/password.c (pam_sm_chauthtok): if the "use_shmem" option is
 	set, stash the credentials which we obtain after a password change

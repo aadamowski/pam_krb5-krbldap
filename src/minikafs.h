@@ -46,13 +46,6 @@ int minikafs_cell_of_file(const char *file, char *cell, size_t length);
  * can't get an answer.  Returns 0 on success. */
 int minikafs_cell_of_file_walk_up(const char *file, char *cell, size_t length);
 
-/* Determine in which realm a cell exists.  We do this by obtaining the address
- * of the fileserver which holds /afs/cellname (assuming that the root.cell
- * volume from the cell is mounted there), converting the address to a host
- * name, and then asking libkrb5 to tell us to which realm the host belongs. */
-int minikafs_realm_of_cell(struct _pam_krb5_options *options,
-			   const char *cell, char *realm, size_t length);
-
 /* Create a new PAG. */
 int minikafs_setpag(void);
 

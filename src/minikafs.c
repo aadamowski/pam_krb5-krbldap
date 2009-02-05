@@ -467,14 +467,6 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	return i;
 }
 
-int
-minikafs_realm_of_cell(struct _pam_krb5_options *options,
-		       const char *cell, char *realm, size_t length)
-{
-	return minikafs_realm_of_cell_with_ctx(NULL, options, cell,
-					       realm, length);
-}
-
 /* Create a new PAG. */
 int
 minikafs_setpag(void)
