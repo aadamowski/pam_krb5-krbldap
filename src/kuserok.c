@@ -171,6 +171,7 @@ _pam_krb5_kuserok(krb5_context ctx,
 		waitpid(child, NULL, 0);
 		sigaction(SIGCHLD, &saved_sigchld_handler, NULL);
 		sigaction(SIGPIPE, &saved_sigpipe_handler, NULL);
+		close(outpipe[0]);
 		return allowed;
 		break;
 	}

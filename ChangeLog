@@ -1,3 +1,10 @@
+2009-02-06
+	* src/kuserok.c(_pam_krb5_kuserok): close the read end of the
+	pipe that's used to gather the child's result (Dan Walsh)
+	* src/storetmp.c(_pam_krb5_storetmp_data): close the write end
+	of the pipe to the child if we encounter an error writing to it
+	(Dan Walsh)
+
 2009-02-05
 	* src/minikafs.c: remove minikafs_realm_of_cell(), which is not
 	used anywhere

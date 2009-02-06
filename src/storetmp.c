@@ -233,6 +233,7 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 						  outfile_len - 1);
 			outfile[outfile_len - 1] = '\0';
 		} else {
+			close(inpipe[1]);
 			memset(outfile, '\0', outfile_len);
 		}
 		close(outpipe[0]);
