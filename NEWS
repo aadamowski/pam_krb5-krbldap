@@ -1,5 +1,7 @@
+- 2.3.3: * close a couple of open pipes to defunct processes, fix a couple
+	   of debug messages
 - 2.3.2: * fix ccache permissions bypass when the "existing_ticket" option is
-           used (CVE-2008-3825, which affects 2.2.0-2.2.25, 2.3.0, and 2.3.1)
+	   used (CVE-2008-3825, which affects 2.2.0-2.2.25, 2.3.0, and 2.3.1)
 - 2.3.1: * make afs5log's -n option actually work the "null_afs" option
 	 * translations for messages!
 - 2.3.0: * added the ability to set up tokens in the rxk5 format

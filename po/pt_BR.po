@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pam_krb5\n"
 "Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
 "f=AUTHORS;hb=HEAD\n"
-"POT-Creation-Date: 2008-08-08 14:03-0400\n"
+"POT-Creation-Date: 2009-02-06 14:34-0500\n"
 "PO-Revision-Date: 2008-07-17 22:52-0300\n"
 "Last-Translator: Taylon Silmer <taylonsilva@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <fedora-trans-pt_br@redhat.com>\n"
@@ -18,21 +18,21 @@ msgstr ""
 "X-Poedit-Language: Portuguese\n"
 "X-Poedit-Country: BRAZIL\n"
 
-#: src/auth.c:286
+#: src/auth.c:284
 msgid "Password: "
 msgstr "Senha: "
 
-#: src/password.c:262
+#: src/password.c:260
 #, c-format
 msgid "%s%sPassword: "
 msgstr "%s%sSenha: "
 
-#: src/password.c:354
+#: src/password.c:352
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "Nova %s%sSenha: "
 
-#: src/password.c:357
+#: src/password.c:355
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Repita a nova %s%ssenha: "

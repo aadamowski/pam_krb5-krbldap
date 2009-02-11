@@ -1,14 +1,15 @@
 # Dutch translation of pam_krb5.
 # Copyright (C) 2008 Free Software Foundation, Inc.
 # This file is distributed under the same license as the pam_krb5 package.
-# 
+#
 # Peter van Egdom <p.van.egdom@gmail.com>, 2008.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pam_krb5\n"
-"Report-Msgid-Bugs-To: https://bugzilla.redhat.com\n"
-"POT-Creation-Date: 2008-09-04 17:21+0000\n"
+"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
+"f=AUTHORS;hb=HEAD\n"
+"POT-Creation-Date: 2009-02-06 14:34-0500\n"
 "PO-Revision-Date: 2008-09-04 23:14+0200\n"
 "Last-Translator: Peter van Egdom <p.van.egdom@gmail.com>\n"
 "Language-Team: Dutch <fedora-trans-list@redhat.com>\n"
@@ -16,23 +17,21 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../src/auth.c:286
+#: src/auth.c:284
 msgid "Password: "
 msgstr "Wachtwoord: "
 
-#. Ask the user for a password.
-#: ../src/password.c:262
+#: src/password.c:260
 #, c-format
 msgid "%s%sPassword: "
 msgstr "%s%swachtwoord: "
 
-#. Ask for the new password twice.
-#: ../src/password.c:354
+#: src/password.c:352
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "Nieuw %s%swachtwoord: "
 
-#: ../src/password.c:357
+#: src/password.c:355
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Nieuw %s%swachtwoord herhalen: "
