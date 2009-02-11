@@ -671,12 +671,16 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->ticket_lifetime = 0;
 	}
 	if (options->debug) {
-		debug("ticket lifetime: %ds (%dd,%dh,%dm,%ds)",
-		      (int) options->ticket_lifetime,
-		      (int) options->ticket_lifetime / (24 * 60 * 60),
-		      (int) (options->ticket_lifetime / (60 * 60)) % 24,
-		      (int) (options->ticket_lifetime / (60)) % 60,
-		      (int) options->ticket_lifetime  % 60);
+		if (options->ticket_lifetime != 0) {
+			debug("ticket lifetime: %ds (%dd,%dh,%dm,%ds)",
+			      (int) options->ticket_lifetime,
+			      (int) options->ticket_lifetime / (24 * 60 * 60),
+			      (int) (options->ticket_lifetime / (60 * 60)) % 24,
+			      (int) (options->ticket_lifetime / (60)) % 60,
+			      (int) options->ticket_lifetime  % 60);
+		} else {
+			debug("ticket lifetime: default");
+		}
 	}
 
 	/* library option */
@@ -689,12 +693,16 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		options->renewable = 1;
 	}
 	if (options->debug) {
-		debug("renewable lifetime: %ds (%dd,%dh,%dm,%ds)",
-		      (int) options->renew_lifetime,
-		      (int) options->renew_lifetime / (24 * 60 * 60),
-		      (int) (options->renew_lifetime / (60 * 60)) % 24,
-		      (int) (options->renew_lifetime / (60)) % 60,
-		      (int) options->renew_lifetime  % 60);
+		if (options->renew_lifetime != 0) {
+			debug("renewable lifetime: %ds (%dd,%dh,%dm,%ds)",
+			      (int) options->renew_lifetime,
+			      (int) options->renew_lifetime / (24 * 60 * 60),
+			      (int) (options->renew_lifetime / (60 * 60)) % 24,
+			      (int) (options->renew_lifetime / (60)) % 60,
+			      (int) options->renew_lifetime  % 60);
+		} else {
+			debug("renewable lifetime: default");
+		}
 	}
 
 	/* private option */

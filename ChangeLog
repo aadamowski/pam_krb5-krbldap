@@ -1,3 +1,8 @@
+2009-02-11
+	* src/options.c(_pam_krb5_options_init): don't log ticket and
+	renew lifetimes of 0, which we interpret as "let the library use
+	its settings" anyway
+
 2009-02-06
 	* src/kuserok.c(_pam_krb5_kuserok): close the read end of the
 	pipe that's used to gather the child's result (Dan Walsh)
