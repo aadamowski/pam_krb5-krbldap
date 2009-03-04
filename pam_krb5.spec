@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.3
+Version: 2.3.4
 Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -50,6 +50,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 # $Id$
 %changelog
+* Wed Mar  4 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.4-1
+- don't request password-changing credentials with the same options that we
+  use when requesting ticket granting tickets, which might run afoul of KDC
+  policies
+
 * Fri Feb  6 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.3-1
 - clean up a couple of debug messages
 
