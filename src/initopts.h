@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Red Hat, Inc.
+ * Copyright 2003,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,5 +38,8 @@
 void _pam_krb5_set_init_opts(krb5_context ctx,
 			     krb5_get_init_creds_opt *k5_options,
 			     struct _pam_krb5_options *options);
+void _pam_krb5_set_init_opts_for_pwchange(krb5_context ctx,
+					  krb5_get_init_creds_opt *k5_options,
+					  struct _pam_krb5_options *options);
 
 #endif

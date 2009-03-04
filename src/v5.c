@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,7 @@
 #endif
 
 #include "conv.h"
+#include "initopts.h"
 #include "log.h"
 #include "perms.h"
 #include "prompter.h"
@@ -836,6 +837,7 @@ v5_get_creds(krb5_context ctx,
 	krb5_principal service_principal;
 	krb5_creds tmpcreds;
 	krb5_ccache ccache;
+	krb5_get_init_creds_opt *tmp_gicopts;
 
 	/* In case we already have creds, get rid of them. */
 	krb5_free_cred_contents(ctx, creds);
@@ -1087,6 +1089,17 @@ v5_get_creds(krb5_context ctx,
 			      password ? password : "(null)",
 			      password ? "\"" : "");
 		}
+		i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
+		if (i == 0) {
+			/* Set hard-coded defaults for password-changing creds
+			 * which might not match generally-used options. */
+			_pam_krb5_set_init_opts_for_pwchange(ctx,
+							     tmp_gicopts,
+							     options);
+		} else {
+			/* Try library defaults. */
+			tmp_gicopts = NULL;
+		}
 		i = krb5_get_init_creds_password(ctx,
 						 &tmpcreds,
 						 userinfo->principal_name,
@@ -1095,7 +1108,8 @@ v5_get_creds(krb5_context ctx,
 						 &prompter_data,
 						 0,
 						 realm_service,
-						 NULL);
+						 tmp_gicopts);
+		v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 		krb5_free_cred_contents(ctx, &tmpcreds);
 		switch (i) {
 		case 0:
@@ -1106,8 +1120,16 @@ v5_get_creds(krb5_context ctx,
 				message.msg_style = PAM_TEXT_INFO;
 				_pam_krb5_conv_call(pamh, &message, 1, NULL);
 			}
+			if (options->debug) {
+				debug("attempt to obtain credentials for %s "
+				      "succeeded", realm_service);
+			}
 			return PAM_SUCCESS;
 			break;
+		}
+		if (options->debug) {
+			debug("attempt to obtain credentials for %s "
+			      "failed: %s", realm_service, v5_error_message(i));
 		}
 		return PAM_AUTH_ERR;
 		break;

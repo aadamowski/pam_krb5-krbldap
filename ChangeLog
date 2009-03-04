@@ -1,3 +1,14 @@
+2009-03-04
+	* src/initopts.c(_pam_krb5_set_init_opts_for_pwchange): add, for
+	setting options which are appropriate for obtaining password-changing
+	credentials
+	* src/v5.c: use temporary-for-pwchange opts when we try to get
+	password-changing creds as a way to check that an expired password
+	is correct.
+	* src/password.c: use temporary-for-pwchange opts when we try to get
+	password-changing creds as a way to check that an expired password
+	is correct.
+
 2009-02-11
 	* src/options.c(_pam_krb5_options_init): don't log ticket and
 	renew lifetimes of 0, which we interpret as "let the library use

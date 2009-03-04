@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -286,4 +286,12 @@ _pam_krb5_set_init_opts(krb5_context ctx, krb5_get_init_creds_opt *k5_options,
 							 options);
 		}
 	}
+}
+
+void
+_pam_krb5_set_init_opts_for_pwchange(krb5_context ctx,
+				     krb5_get_init_creds_opt *k5_options,
+				     struct _pam_krb5_options *options)
+{
+	krb5_get_init_creds_opt_set_tkt_life(k5_options, 5 * 60);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,7 +80,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_options *options;
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
-	krb5_get_init_creds_opt *gic_options;
+	krb5_get_init_creds_opt *gic_options, *tmp_gicopts;
 	int tmp_result, prelim_attempted;
 	int i, retval;
 	char *pwhelp;
@@ -271,15 +271,28 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 * using the password. */
 		if (((password != NULL) && (i == PAM_SUCCESS)) ||
 		    (prelim_attempted == 0)) {
+			i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
+			if (i == 0) {
+				/* Set hard-coded defaults for
+				 * password-changing creds which might not
+				 * match generally-used options. */
+				_pam_krb5_set_init_opts_for_pwchange(ctx,
+								     tmp_gicopts,
+								     options);
+			} else {
+				/* Try library defaults. */
+				tmp_gicopts = NULL;
+			}
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, user, userinfo,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL,
+					 password, tmp_gicopts,
 					 password ?
 					 _pam_krb5_normal_prompter :
 					 _pam_krb5_always_fail_prompter,
 					 &tmp_result);
+			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
