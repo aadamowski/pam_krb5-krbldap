@@ -294,4 +294,7 @@ _pam_krb5_set_init_opts_for_pwchange(krb5_context ctx,
 				     struct _pam_krb5_options *options)
 {
 	krb5_get_init_creds_opt_set_tkt_life(k5_options, 5 * 60);
+	krb5_get_init_creds_opt_set_renew_life(k5_options, 0);
+	krb5_get_init_creds_opt_set_forwardable(k5_options, 0);
+	krb5_get_init_creds_opt_set_proxiable(k5_options, 0);
 }
