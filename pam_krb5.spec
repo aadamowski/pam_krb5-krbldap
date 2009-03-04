@@ -48,12 +48,14 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %{_mandir}/man8/*
 %doc README* COPYING* ChangeLog NEWS
 
-# $Id$
 %changelog
 * Wed Mar  4 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.4-1
 - don't request password-changing credentials with the same options that we
   use when requesting ticket granting tickets, which might run afoul of KDC
   policies
+
+* Thu Feb 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.3.3-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
 
 * Fri Feb  6 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.3-1
 - clean up a couple of debug messages
