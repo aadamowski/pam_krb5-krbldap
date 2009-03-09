@@ -45,10 +45,7 @@ struct _pam_krb5_user_info {
 
 struct _pam_krb5_user_info *_pam_krb5_user_info_init(krb5_context ctx,
 						     const char *name,
-						     const char *realm,
-						     int check_user,
-						     int num_mappings,
-						     struct name_mapping *mappings);
+						     struct _pam_krb5_options *options);
 
 void _pam_krb5_user_info_free(krb5_context ctx,
 			      struct _pam_krb5_user_info *info);

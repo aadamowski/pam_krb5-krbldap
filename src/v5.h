@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2006,2007,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,6 +123,10 @@ const char *v5_princ_component_contents(krb5_principal princ, int i);
 int v5_princ_realm_length(krb5_principal princ);
 const char *v5_princ_realm_contents(krb5_principal princ);
 
+krb5_error_code v5_parse_name(krb5_context ctx,
+			      struct _pam_krb5_options *options,
+			      const char *name,
+			      krb5_principal *principal);
 krb5_error_code v5_alloc_get_init_creds_opt(krb5_context ctx,
 					    krb5_get_init_creds_opt **opt);
 void v5_free_get_init_creds_opt(krb5_context ctx,

@@ -778,7 +778,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 		krb5_free_principal(ctx, client);
 		return -1;
 	}
-	if (krb5_parse_name(ctx, principal, &server) != 0) {
+	if (v5_parse_name(ctx, options, principal, &server) != 0) {
 		warn("error parsing principal name '%s'", principal);
 		v5_free_unparsed_name(ctx, unparsed_client);
 		krb5_free_principal(ctx, client);
@@ -1205,7 +1205,8 @@ minikafs_4log(krb5_context context, struct _pam_krb5_options *options,
 	/* If we were given a principal name, try it. */
 	if ((hint_principal != NULL) && (strlen(hint_principal) > 0)) {
 		principal = NULL;
-		if (krb5_parse_name(ctx, hint_principal, &principal) != 0) {
+		if (v5_parse_name(ctx, options,
+				  hint_principal, &principal) != 0) {
 			principal = NULL;
 		}
 		if ((principal == NULL) ||

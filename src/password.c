@@ -119,10 +119,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	_pam_krb5_set_init_opts(ctx, gic_options, options);
 
 	/* Get information about the user and the user's principal name. */
-	userinfo = _pam_krb5_user_info_init(ctx, user, options->realm,
-					    options->user_check,
-					    options->n_mappings,
-					    options->mappings);
+	userinfo = _pam_krb5_user_info_init(ctx, user, options);
 	if (userinfo == NULL) {
 		if (options->ignore_unknown_principals) {
 			retval = PAM_IGNORE;

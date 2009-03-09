@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -143,9 +143,8 @@ _get_pw_nam(const char *name, uid_t *uid, gid_t *gid, char **homedir)
 #endif
 
 struct _pam_krb5_user_info *
-_pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
-			 int check_user,
-			 int num_mappings, struct name_mapping *mappings)
+_pam_krb5_user_info_init(krb5_context ctx, const char *name,
+			 struct _pam_krb5_options *options)
 {
 	struct _pam_krb5_user_info *ret = NULL;
 	char local_name[LINE_MAX];
@@ -159,10 +158,10 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 	memset(ret, 0, sizeof(struct _pam_krb5_user_info));
 
 	/* See if we need to map this user name to a principal somehow. */
-	if (map_lname_aname(mappings, num_mappings,
+	if (map_lname_aname(options->mappings, options->n_mappings,
 			    name, mapped_name, sizeof(mapped_name)) == 0) {
 		if (strchr(mapped_name, '@') == NULL) {
-			if (strlen(mapped_name) + 1 + strlen(realm) >=
+			if (strlen(mapped_name) + 1 + strlen(options->realm) >=
 			    sizeof(qualified_name)) {
 				warn("principal name '%s' too long",
 				     mapped_name);
@@ -170,7 +169,7 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 				return NULL;
 			}
 			snprintf(qualified_name, sizeof(qualified_name),
-				 "%s@%s", mapped_name, realm);
+				 "%s@%s", mapped_name, options->realm);
 		} else {
 			if (strlen(mapped_name) >= sizeof(qualified_name)) {
 				warn("principal name '%s' too long",
@@ -183,14 +182,14 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 		}
 	} else {
 		if (strchr(name, '@') == NULL) {
-			if (strlen(name) + 1 + strlen(realm) >=
+			if (strlen(name) + 1 + strlen(options->realm) >=
 			    sizeof(qualified_name)) {
 				warn("principal name '%s' too long", name);
 				free(ret);
 				return NULL;
 			}
 			snprintf(qualified_name, sizeof(qualified_name),
-				 "%s@%s", name, realm);
+				 "%s@%s", name, options->realm);
 		} else {
 			if (strlen(name) >= sizeof(qualified_name)) {
 				warn("principal name '%s' too long", name);
@@ -204,8 +203,8 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 
 	/* Parse the user's determined principal name into a principal
 	 * structure. */
-	if (krb5_parse_name(ctx, qualified_name,
-			    &ret->principal_name) != 0) {
+	if (v5_parse_name(ctx, options, qualified_name,
+			  &ret->principal_name) != 0) {
 		warn("error parsing principal name '%s' derived from "
 		     "user name '%s'", qualified_name, name);
 		free(ret);
@@ -225,7 +224,7 @@ _pam_krb5_user_info_init(krb5_context ctx, const char *name, const char *realm,
 	strncpy(local_name, name, sizeof(local_name) - 1);
 	local_name[sizeof(local_name) - 1] = '\0';
 
-	if (check_user) {
+	if (options->user_check) {
 		/* Look up the user's UID/GID. */
 		if (_get_pw_nam(local_name,
 				&ret->uid, &ret->gid,

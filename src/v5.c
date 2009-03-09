@@ -157,6 +157,22 @@ v5_free_get_init_creds_opt(krb5_context ctx, krb5_get_init_creds_opt *opt)
 #endif
 }
 
+krb5_error_code
+v5_parse_name(krb5_context ctx, struct _pam_krb5_options *options,
+	      const char *name, krb5_principal *principal)
+{
+#ifdef HAVE_KRB5_PARSE_NAME_FLAGS
+	int flags;
+	flags = 0;
+	if (options->canonicalize != -1) {
+		flags |= KRB5_PRINCIPAL_PARSE_ENTERPRISE;
+	}
+	return krb5_parse_name_flags(ctx, name, principal, flags);
+#else
+	return krb5_parse_name(ctx, name, principal);
+#endif
+}
+
 char *
 v5_user_info_subst(krb5_context ctx,
 		   const char *user,
@@ -408,6 +424,7 @@ v5_princ_realm_contents(krb5_principal princ)
 #error "Don't know how to read principal name components!"
 #endif
 
+/* Compare everything except the realms. */
 static int
 v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 {
