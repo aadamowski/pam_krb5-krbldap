@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2005,2006,2008 Red Hat, Inc.
+ * Copyright 2003,2005,2006,2008,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,9 @@ struct _pam_krb5_options {
 	int debug;
 
 	int addressless;
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE
+	int canonicalize;
+#endif
 	int debug_sensitive;
 	int external;
 	int existing_ticket;

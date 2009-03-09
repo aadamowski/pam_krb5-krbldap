@@ -286,6 +286,12 @@ _pam_krb5_set_init_opts(krb5_context ctx, krb5_get_init_creds_opt *k5_options,
 							 options);
 		}
 	}
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE
+	if (options->canonicalize != -1) {
+		krb5_get_init_creds_opt_set_canonicalize(ctx, k5_options,
+							 options->canonicalize);
+	}
+#endif
 }
 
 void

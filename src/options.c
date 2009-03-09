@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -445,6 +445,19 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		      options->renewable == 1 ? " renewable" : "",
 		      options->renewable == 0 ? " not renewable" : "");
 	}
+
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE
+	options->canonicalize = option_b(argc, argv,
+					 ctx, options->realm,
+					 service, NULL, NULL,
+					 "canonicalize", -1);
+	if (options->debug && (options->canonicalize == 1)) {
+		debug("flag: canonicalize");
+	}
+	if (options->debug && (options->canonicalize == 0)) {
+		debug("flag: don't canonicalize");
+	}
+#endif
 
 #ifdef HAVE_AFS
 	/* private option */
