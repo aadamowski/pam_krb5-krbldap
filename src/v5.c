@@ -164,7 +164,7 @@ v5_parse_name(krb5_context ctx, struct _pam_krb5_options *options,
 #ifdef HAVE_KRB5_PARSE_NAME_FLAGS
 	int flags;
 	flags = 0;
-	if (options->canonicalize != -1) {
+	if (options->canonicalize == 1) {
 		flags |= KRB5_PRINCIPAL_PARSE_ENTERPRISE;
 	}
 	return krb5_parse_name_flags(ctx, name, principal, flags);
