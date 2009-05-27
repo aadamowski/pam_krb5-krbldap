@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
 "f=AUTHORS;hb=HEAD\n"
-"POT-Creation-Date: 2009-02-06 14:34-0500\n"
+"POT-Creation-Date: 2009-05-27 18:48-0400\n"
 "PO-Revision-Date: 2008-04-16 20:38+0200\n"
 "Last-Translator: Francesco Tombolini <tombo@adamantio.net>\n"
 "Language-Team: Italiano <fedora-trans-it@redhat.com>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "X-Generator: KBabel 1.11.4\n"
 "Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
-#: src/auth.c:284
+#: src/auth.c:132 src/auth.c:328
 msgid "Password: "
 msgstr "Password: "
 
@@ -27,12 +27,12 @@ msgstr "Password: "
 msgid "%s%sPassword: "
 msgstr "%s%sPassword: "
 
-#: src/password.c:352
+#: src/password.c:365
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "Nuova %s%sPassword: "
 
-#: src/password.c:355
+#: src/password.c:368
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Ripetere la nuova %s%sPassword: "

@@ -6,8 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
-"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git\n"
-"POT-Creation-Date: 2009-03-15 17:30+0000\n"
+"Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
+"f=AUTHORS;hb=HEAD\n"
+"POT-Creation-Date: 2009-05-27 18:48-0400\n"
 "PO-Revision-Date: 2009-03-15 22:59+0330\n"
 "Last-Translator: Mohsen Saeedi <mohsen.saeedi@gmail.com>\n"
 "Language-Team: Persian <mohsen.saeedi@gmail.com>\n"
@@ -15,24 +16,21 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../src/auth.c:284
+#: src/auth.c:132 src/auth.c:328
 msgid "Password: "
 msgstr "گذر واژه:"
 
-#. Ask the user for a password.
-#: ../src/password.c:260
+#: src/password.c:260
 #, c-format
 msgid "%s%sPassword: "
 msgstr "«%s%s» گذرواژه: "
 
-#. Ask for the new password twice.
-#: ../src/password.c:365
+#: src/password.c:365
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "گذر‌واژه «%s%s» جدید:"
 
-#: ../src/password.c:368
+#: src/password.c:368
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "تکرار گذارواژه «%s%s»  جدید:"
-
