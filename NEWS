@@ -1,3 +1,5 @@
+- 2.3.5: * make prompting behavior for non-existent accounts and users who
+	   just press enter match up with those who aren't/don't (CVE-2009-1384)
 - 2.3.4: * don't request password-changing credentials using the same options
 	   we use for ticket-granting tickets
 - 2.3.3: * close a couple of open pipes to defunct processes, fix a couple
