@@ -426,7 +426,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      KRB5_TGS_NAME,
 				      NULL,
 				      gic_options,
-				      _pam_krb5_normal_prompter,
+				      prompted ?
+				      _pam_krb5_normal_prompter :
+				      _pam_krb5_always_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {
