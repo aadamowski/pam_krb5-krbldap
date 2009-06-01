@@ -819,8 +819,8 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		v5_free_unparsed_name(ctx, principal);
 		return PAM_SUCCESS;
 	} else {
-		crit("TGT failed verification using key for '%s'",
-		     principal);
+		crit("TGT failed verification using key for '%s': %s",
+		     principal, v5_error_message(i));
 		v5_free_unparsed_name(ctx, principal);
 		return PAM_AUTH_ERR;
 	}

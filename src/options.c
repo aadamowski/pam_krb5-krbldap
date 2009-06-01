@@ -585,6 +585,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->use_first_pass = 1;
 	options->use_second_pass = 1;
 	options->use_third_pass = 1;
+	options->permit_password_callback = 0;
 	use_first_pass = option_b(argc, argv,
 				  ctx, options->realm,
 				  service, NULL, NULL, "use_first_pass", -1);
@@ -600,6 +601,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 				     "subsequent_prompt", -1);
 	if (initial_prompt != -1) {
 		options->use_second_pass = initial_prompt;
+		options->permit_password_callback = !initial_prompt;
 	}
 	if (subsequent_prompt != -1) {
 		options->use_third_pass = subsequent_prompt;

@@ -42,6 +42,12 @@ struct _pam_krb5_prompter_data {
 
 /* Ask the user. */
 krb5_error_code
+_pam_krb5_always_prompter(krb5_context context, void *data,
+			  const char *name, const char *banner,
+			  int num_prompts, krb5_prompt prompts[]);
+
+/* Ask the user, except for the password. */
+krb5_error_code
 _pam_krb5_normal_prompter(krb5_context context, void *data,
 			  const char *name, const char *banner,
 			  int num_prompts, krb5_prompt prompts[]);

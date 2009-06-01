@@ -82,7 +82,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_user_info *userinfo;
 	struct _pam_krb5_stash *stash;
 	krb5_get_init_creds_opt *gic_options;
-	int i, retval, use_third_pass;
+	int i, retval, use_third_pass, prompted, prompt_result;
 	char *first_pass, *second_pass;
 
 	/* Initialize Kerberos. */
@@ -119,6 +119,22 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 	_pam_krb5_set_init_opts(ctx, gic_options, options);
 
+	/* Prompt for the password, as we might need to. */
+	prompted = 0;
+	prompt_result = PAM_ABORT;
+	second_pass = NULL;
+	if (options->use_second_pass) {
+		first_pass = NULL;
+		i = _pam_krb5_get_item_text(pamh, PAM_AUTHTOK, &first_pass);
+		if ((i != PAM_SUCCESS) || (first_pass == NULL)) {
+			/* Nobody's asked for a password yet. */
+			prompt_result = _pam_krb5_prompt_for(pamh,
+							     Y_("Password: "),
+							     &second_pass);
+			prompted = 1;
+		}
+	}
+
 	/* Get information about the user and the user's principal name. */
 	userinfo = _pam_krb5_user_info_init(ctx, user, options);
 	if (userinfo == NULL) {
@@ -128,6 +144,15 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			warn("error getting information about '%s'", user);
 			retval = PAM_USER_UNKNOWN;
 		}
+		if (prompted && (prompt_result == 0) && (second_pass != NULL)) {
+			if (options->debug) {
+				debug("saving newly-entered "
+				      "password for use by "
+				      "other modules");
+			}
+			pam_set_item(pamh, PAM_AUTHTOK, second_pass);
+		}
+		/* Clean up and return. */
 		_pam_krb5_options_free(pamh, ctx, options);
 		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
@@ -146,6 +171,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			      (unsigned long) options->minimum_uid);
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (prompted && (prompt_result == 0) && (second_pass != NULL)) {
+			if (options->debug) {
+				debug("saving newly-entered "
+				      "password for use by "
+				      "other modules");
+			}
+			pam_set_item(pamh, PAM_AUTHTOK, second_pass);
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
@@ -158,6 +191,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		warn("error retrieving stash for '%s' (shouldn't happen)",
 		     user);
 		_pam_krb5_user_info_free(ctx, userinfo);
+		if (prompted && (prompt_result == 0) && (second_pass != NULL)) {
+			if (options->debug) {
+				debug("saving newly-entered "
+				      "password for use by "
+				      "other modules");
+			}
+			pam_set_item(pamh, PAM_AUTHTOK, second_pass);
+		}
 		_pam_krb5_options_free(pamh, ctx, options);
 		v5_free_get_init_creds_opt(ctx, gic_options);
 		krb5_free_context(ctx);
@@ -274,12 +315,18 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	/* If that didn't work, and we're allowed to ask for a new password, do
 	 * so in preparation for another attempt. */
-	second_pass = NULL;
 	if ((retval != PAM_SUCCESS) &&
 	    (retval != PAM_USER_UNKNOWN) &&
 	    options->use_second_pass) {
-		i = _pam_krb5_prompt_for(pamh, Y_("Password: "),
-					 &second_pass);
+		/* The "second_pass" variable already contains a value if we
+		 * asked for one. */
+		if (!prompted) {
+			prompt_result = _pam_krb5_prompt_for(pamh,
+							     Y_("Password: "),
+							     &second_pass);
+			prompted = 1;
+		}
+		i = prompt_result;
 		if ((i == PAM_SUCCESS) &&
 		    (flags & PAM_DISALLOW_NULL_AUTHTOK) &&
 		    (second_pass != NULL) &&
@@ -376,6 +423,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      KRB5_TGS_NAME,
 				      NULL,
 				      gic_options,
+				      options->permit_password_callback ?
+				      _pam_krb5_always_prompter :
 				      _pam_krb5_normal_prompter,
 				      &stash->v5result);
 		stash->v5attempted = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,7 @@
 #include "log.h"
 #include "options.h"
 #include "prompter.h"
+#include "userinfo.h"
 #include "xstr.h"
 
 void
@@ -69,8 +70,8 @@ _pam_krb5_maybe_free_responses(struct pam_response *responses, int n_responses)
 }
 
 static int
-_pam_krb5_prompt_is_password(krb5_prompt *prompt,
-			     struct _pam_krb5_prompter_data *pdata)
+_pam_krb5_prompt_default_is_password(krb5_prompt *prompt,
+				     struct _pam_krb5_prompter_data *pdata)
 {
 	size_t length;
 	if (pdata == NULL) {
@@ -89,6 +90,60 @@ _pam_krb5_prompt_is_password(krb5_prompt *prompt,
 	return 0;
 }
 
+static int
+_pam_krb5_prompt_is_for_password(krb5_prompt *prompt,
+				 struct _pam_krb5_prompter_data *pdata)
+{
+	char *expected;
+	const char *p;
+	expected = malloc(strlen(pdata->userinfo->unparsed_name) + 32);
+	if (expected != NULL) {
+		/* Simple */
+		sprintf(expected, "Password");
+		if (strcmp(prompt->prompt, expected) == 0) {
+			free(expected);
+			return 1;
+		}
+		if (strncmp(prompt->prompt, expected, strlen(expected)) == 0) {
+			p = prompt->prompt + strlen(expected);
+			if (strspn(p, ": \t\r\n") == strlen(p)) {
+				free(expected);
+				return 1;
+			}
+		}
+		/* MIT */
+		sprintf(expected, "Password for %s",
+			pdata->userinfo->unparsed_name);
+		if (strcmp(prompt->prompt, expected) == 0) {
+			free(expected);
+			return 1;
+		}
+		if (strncmp(prompt->prompt, expected, strlen(expected)) == 0) {
+			p = prompt->prompt + strlen(expected);
+			if (strspn(p, ": \t\r\n") == strlen(p)) {
+				free(expected);
+				return 1;
+			}
+		}
+		/* Heimdal */
+		sprintf(expected, "%s's Password",
+			pdata->userinfo->unparsed_name);
+		if (strcmp(prompt->prompt, expected) == 0) {
+			free(expected);
+			return 1;
+		}
+		if (strncmp(prompt->prompt, expected, strlen(expected)) == 0) {
+			p = prompt->prompt + strlen(expected);
+			if (strspn(p, ": \t\r\n") == strlen(p)) {
+				free(expected);
+				return 1;
+			}
+		}
+		free(expected);
+	}
+	return 0;
+}
+
 krb5_error_code
 _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 			       const char *name, const char *banner,
@@ -103,7 +158,7 @@ _pam_krb5_always_fail_prompter(krb5_context context, void *data,
 		_pam_krb5_normal_prompter(context, data, name, banner, 0, NULL);
 	}
 	for (i = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			if (pdata->options->debug &&
 			    pdata->options->debug_sensitive) {
 				debug("libkrb5 asked for \"%s\", "
@@ -151,7 +206,7 @@ _pam_krb5_previous_prompter(krb5_context context, void *data,
 	}
 	/* Provide it as the answer to every question. */
 	for (i = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			if (pdata->options->debug &&
 			    pdata->options->debug_sensitive) {
 				debug("libkrb5 asked for \"%s\", "
@@ -186,10 +241,11 @@ _pam_krb5_previous_prompter(krb5_context context, void *data,
 	return 0;
 }
 
-krb5_error_code
-_pam_krb5_normal_prompter(krb5_context context, void *data,
-			  const char *name, const char *banner,
-			  int num_prompts, krb5_prompt prompts[])
+static krb5_error_code
+_pam_krb5_generic_prompter(krb5_context context, void *data,
+			   const char *name, const char *banner,
+			   int num_prompts, krb5_prompt prompts[],
+			   int suppress_password_prompts)
 {
 	struct pam_message *messages;
 	struct pam_response *responses;
@@ -236,7 +292,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 		/* Skip any prompt for which the supplied default answer is the
 		 * previously-entered password -- it's just a waste of the
 		 * user's time.  */
-		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			if (pdata->options->debug &&
 			    pdata->options->debug_sensitive) {
 				debug("libkrb5 asked for \"%s\", "
@@ -249,6 +305,12 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 				      (prompts[i].reply ?
 				       prompts[i].reply->data : ""));
 			}
+			continue;
+		}
+		/* If we're just asking for the password again, also skip it,
+		 * if we were told to. */
+		if (suppress_password_prompts &&
+		    _pam_krb5_prompt_is_for_password(&prompts[i], pdata)) {
 			continue;
 		}
 		tmp = malloc(strlen(prompts[i].prompt) + 3);
@@ -269,7 +331,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	/* We can discard the messages now. */
 	for (i = j = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			continue;
 		}
 		free((char*) messages[j + headers].msg);
@@ -287,7 +349,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	/* Check for successfully-read responses. */
 	for (i = j = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			continue;
 		}
 		/* If the conversation function failed to read anything. */
@@ -310,7 +372,7 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	/* Gather up the results. */
 	for (i = j = 0; i < num_prompts; i++) {
-		if (_pam_krb5_prompt_is_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			continue;
 		}
 		/* Double-check for NULL here.  We should have caught it above
@@ -337,6 +399,26 @@ _pam_krb5_normal_prompter(krb5_context context, void *data,
 
 	_pam_krb5_maybe_free_responses(responses, num_msgs);
 	return 0; /* success! */
+}
+
+krb5_error_code
+_pam_krb5_normal_prompter(krb5_context context, void *data,
+			  const char *name, const char *banner,
+			  int num_prompts, krb5_prompt prompts[])
+{
+	return _pam_krb5_generic_prompter(context, data,
+					  name, banner,
+					  num_prompts, prompts, 1);
+}
+
+krb5_error_code
+_pam_krb5_always_prompter(krb5_context context, void *data,
+			  const char *name, const char *banner,
+			  int num_prompts, krb5_prompt prompts[])
+{
+	return _pam_krb5_generic_prompter(context, data,
+					  name, banner,
+					  num_prompts, prompts, 0);
 }
 
 int
