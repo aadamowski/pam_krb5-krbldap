@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pam_krb5\n"
 "Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
 "f=AUTHORS;hb=HEAD\n"
-"POT-Creation-Date: 2009-02-06 14:34-0500\n"
+"POT-Creation-Date: 2009-05-27 18:48-0400\n"
 "PO-Revision-Date: 2008-10-29 22:02+0800\n"
 "Last-Translator: Sharuzzaman Ahmat Raslan <sharuzzaman@myrealbox.com>\n"
 "Language-Team: Malay <translation-team-ms@lists.sourceforge.net>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/auth.c:284
+#: src/auth.c:132 src/auth.c:328
 msgid "Password: "
 msgstr "Katalaluan:"
 
@@ -25,12 +25,12 @@ msgstr "Katalaluan:"
 msgid "%s%sPassword: "
 msgstr "%s%s Katalaluan: "
 
-#: src/password.c:352
+#: src/password.c:365
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "Katalaluan %s%s Baru: "
 
-#: src/password.c:355
+#: src/password.c:368
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Ulang Katalaluan %s%s Baru: "

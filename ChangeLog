@@ -1,3 +1,7 @@
+2009-06-04
+	* src/prompter.c(_pam_krb5_generic_prompter): if the prompt looks
+	like a password prompt, use "Password: " instead
+
 2009-05-27
 	* src/auth.c(pam_sm_authenticate): if we need to be the module that
 	asks for a password, do so before sanity checking things like whether

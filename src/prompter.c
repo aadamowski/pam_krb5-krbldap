@@ -309,13 +309,22 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 		}
 		/* If we're just asking for the password again, also skip it,
 		 * if we were told to. */
-		if (suppress_password_prompts &&
-		    _pam_krb5_prompt_is_for_password(&prompts[i], pdata)) {
-			continue;
-		}
-		tmp = malloc(strlen(prompts[i].prompt) + 3);
-		if (tmp != NULL) {
-			sprintf(tmp, "%s: ", prompts[i].prompt);
+		if (_pam_krb5_prompt_is_for_password(&prompts[i], pdata)) {
+			if (suppress_password_prompts) {
+				continue;
+			} else {
+				if (pdata->options->debug) {
+					debug("libkrb5 asked for long-term "
+					      "password, replacing prompt text "
+					      "with generic prompt");
+				}
+				tmp = strdup("Password: ");
+			}
+		} else {
+			tmp = malloc(strlen(prompts[i].prompt) + 3);
+			if (tmp != NULL) {
+				sprintf(tmp, "%s: ", prompts[i].prompt);
+			}
 		}
 		messages[j + headers].msg = tmp;
 		messages[j + headers].msg_style = prompts[i].hidden ?

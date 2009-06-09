@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.4
+Version: 2.3.5
 Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -50,6 +50,17 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Fri Jun  5 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.5-1
+- when we get asked for the user's long-term key, use a plain Password:
+  prompt value rather than the library-supplied one
+
+* Tue May 26 2009 Nalin Dahyabhai <nalin@redhat.com>
+- catch the case where we pass a NULL initial password into libkrb5 and
+  it uses our callback to ask us for the password for the user using a
+  principal name, and reject that (#502602)
+- always prompt for a password unless we were told not to (#502602,
+  CVE-2009-1384)
+
 * Wed Mar  4 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.4-1
 - don't request password-changing credentials with the same options that we
   use when requesting ticket granting tickets, which might run afoul of KDC
