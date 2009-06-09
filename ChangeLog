@@ -1,3 +1,6 @@
+2009-06-09
+	* src/initopts.c,src/v5.c: compile fixes for krb5 1.7
+
 2009-06-04
 	* src/prompter.c(_pam_krb5_generic_prompter): if the prompt looks
 	like a password prompt, use "Password: " instead
