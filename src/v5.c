@@ -161,7 +161,7 @@ krb5_error_code
 v5_parse_name(krb5_context ctx, struct _pam_krb5_options *options,
 	      const char *name, krb5_principal *principal)
 {
-#ifdef HAVE_KRB5_PARSE_NAME_FLAGS
+#if defined(HAVE_KRB5_PARSE_NAME_FLAGS) && defined(HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE)
 	int flags;
 	flags = 0;
 	if (options->canonicalize == 1) {
@@ -757,6 +757,8 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 {
 	int i;
 	char *principal;
+	krb5_data *comp;
+	krb5_principal princ;
 	krb5_keytab keytab;
 	krb5_kt_cursor cursor;
 	krb5_keytab_entry entry;
@@ -771,46 +773,85 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		return PAM_SERVICE_ERR;
 	}
 
-	/* Read the first key from the file. */
+	/* Set up to walk the keytab. */
 	memset(&cursor, 0, sizeof(cursor));
 	i = krb5_kt_start_seq_get(ctx, keytab, &cursor);
 	if (i != 0) {
-		warn("error reading keytab, not verifying TGT");
-		return PAM_IGNORE;
-	}
-
-	memset(&entry, 0, sizeof(entry));
-	i = krb5_kt_next_entry(ctx, keytab, &entry, &cursor);
-	if (i != 0) {
-		warn("error reading keytab, not verifying TGT");
-		krb5_kt_end_seq_get(ctx, keytab, &cursor);
-		krb5_kt_close(ctx, keytab);
-		return PAM_IGNORE;
-	}
-
-	/* Get the principal to which the key belongs, for logging purposes. */
-	principal = NULL;
-	i = krb5_unparse_name(ctx, entry.principal, &principal);
-	if (i != 0) {
-		warn("internal error parsing principal name, "
-		     "not verifying TGT");
-		krb5_kt_end_seq_get(ctx, keytab, &cursor);
+		warn("error reading keytab '%s', not verifying TGT",
+		     options->keytab);
 		krb5_kt_close(ctx, keytab);
 		return PAM_SERVICE_ERR;
 	}
 
-	/* Close the keytab here.  Even though we're using cursors, the file
+	/* Walk the keytab, looking for a good service key.  Prefer a "host" in
+	 * the client's realm, but try the first one if we don't find a
+	 * suitable host key. */
+	princ = NULL;
+	while ((i = krb5_kt_next_entry(ctx, keytab, &entry, &cursor)) == 0) {
+		/* First entry? */
+		if (princ == NULL) {
+			i = krb5_copy_principal(ctx, entry.principal, &princ);
+			if (i != 0) {
+				warn("internal error copying principal name, "
+				     "not verifying TGT");
+				krb5_kt_end_seq_get(ctx, keytab, &cursor);
+				krb5_kt_close(ctx, keytab);
+				return PAM_SERVICE_ERR;
+			}
+		} else
+		/* Better entry? */
+		if ((v5_princ_component_count(entry.principal) == 2) &&
+		    krb5_realm_compare(ctx, entry.principal, creds->client)) {
+			if ((v5_princ_component_length(entry.principal,
+						       0) == 4) &&
+			    (memcmp(v5_princ_component_contents(entry.principal,
+								0),
+				    "host", 4) == 0)) {
+				if (princ != NULL) {
+					krb5_free_principal(ctx, princ);
+				}
+				i = krb5_copy_principal(ctx, entry.principal,
+							&princ);
+				if (i != 0) {
+					warn("internal error copying "
+					     "principal name, "
+					     "not verifying TGT");
+					krb5_kt_end_seq_get(ctx, keytab,
+							    &cursor);
+					krb5_kt_close(ctx, keytab);
+					return PAM_SERVICE_ERR;
+				}
+			}
+		}
+	}
+
+	/* Close the cursor here.  Even though we're using cursors, the file
 	 * handle is stored in the krb5_keytab structure, and it gets
 	 * overwritten when the verify_init_creds() call below creates its own
 	 * cursor, creating a leak. */
 	krb5_kt_end_seq_get(ctx, keytab, &cursor);
+	if (princ == NULL) {
+		warn("no suitable key found in keytab, not verifying TGT");
+		krb5_kt_close(ctx, keytab);
+		return PAM_SERVICE_ERR;
+	}
+
+	/* Get a text representation of the principal to which the key belongs,
+	 * for logging purposes. */
+	principal = NULL;
+	i = krb5_unparse_name(ctx, princ, &principal);
+	if (i != 0) {
+		warn("internal error unparsing principal name, "
+		     "not verifying TGT");
+		krb5_free_principal(ctx, princ);
+		krb5_kt_close(ctx, keytab);
+		return PAM_SERVICE_ERR;
+	}
 
 	/* Perform the verification checks using the service key. */
 	krb5_verify_init_creds_opt_init(&opt);
-	i = krb5_verify_init_creds(ctx, creds,
-				   entry.principal, keytab,
-				   NULL, &opt);
-
+	i = krb5_verify_init_creds(ctx, creds, princ, keytab, NULL, &opt);
+	krb5_free_principal(ctx, princ);
 	krb5_kt_close(ctx, keytab);
 
 	/* Log success or failure. */
