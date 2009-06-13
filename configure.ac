@@ -230,6 +230,15 @@ if test x$ac_cv_func_krb5_get_init_creds_opt_free = xyes ; then
 	 AC_MSG_RESULT([yes])],
 	AC_MSG_RESULT([no]))
 fi
+if test x$ac_cv_func_krb5_get_init_creds_opt_set_canonicalize = xyes ; then
+	AC_MSG_CHECKING([if krb5_get_init_creds_opt_set_canonicalize() takes a context])
+	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <krb5.h>],[
+					  krb5_get_init_creds_opt_set_canonicalize(NULL, NULL, 0);]),
+	[AC_DEFINE(KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE_TAKES_3_ARGS,1,
+		   [Define if krb5_get_init_creds_opt_set_canonicalize() takes three arguments.])
+	 AC_MSG_RESULT([yes])],
+	AC_MSG_RESULT([no]))
+fi
 if test x$ac_cv_func_krb5_get_init_creds_opt_set_pkinit = xyes ; then
 	AC_MSG_CHECKING([if krb5_get_init_creds_opt_set_pkinit() takes a pool and a CRL])
 	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <krb5.h>],[
