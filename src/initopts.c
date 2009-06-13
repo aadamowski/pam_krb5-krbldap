@@ -311,8 +311,14 @@ _pam_krb5_set_init_opts_for_pwchange(krb5_context ctx,
 	krb5_get_init_creds_opt_set_proxiable(k5_options, 0);
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE
 	if (options->canonicalize != -1) {
+#ifdef KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE_TAKES_3_ARGS
+		krb5_get_init_creds_opt_set_canonicalize(ctx,
+							 k5_options,
+							 options->canonicalize);
+#else
 		krb5_get_init_creds_opt_set_canonicalize(k5_options,
 							 options->canonicalize);
+#endif
 	}
 #endif
 }
