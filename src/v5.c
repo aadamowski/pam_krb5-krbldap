@@ -757,7 +757,6 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 {
 	int i;
 	char *principal;
-	krb5_data *comp;
 	krb5_principal princ;
 	krb5_keytab keytab;
 	krb5_kt_cursor cursor;
