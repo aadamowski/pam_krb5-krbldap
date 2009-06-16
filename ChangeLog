@@ -1,3 +1,7 @@
+2009-06-15
+	* src/v5.c(v5_validate): walk the keytab, looking for a host key,
+	and fall back to just using the first one (#450776)
+
 2009-06-09
 	* src/initopts.c,src/v5.c: compile fixes for krb5 1.7
 

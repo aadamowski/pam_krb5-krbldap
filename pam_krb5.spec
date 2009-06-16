@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.5
+Version: 2.3.6
 Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -50,6 +50,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Mon Jun 15 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.6-1
+- prefer keys for services matching the pattern host/*@clientrealm when
+  validating (#450776)
+
 * Fri Jun  5 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.5-1
 - when we get asked for the user's long-term key, use a plain Password:
   prompt value rather than the library-supplied one
