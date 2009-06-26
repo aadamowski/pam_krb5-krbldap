@@ -1,3 +1,7 @@
+2009-06-26
+	* src/options.c: hang on to a copy of the mappings list, in its
+	original form, for use later
+
 2009-06-15
 	* src/v5.c(v5_validate): walk the keytab, looking for a host key,
 	and fall back to just using the first one (#450776)
