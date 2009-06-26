@@ -34,6 +34,8 @@
 
 #include <sys/stat.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -159,7 +161,10 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	int i, retval, stored;
 	uid_t uid;
 	gid_t gid;
-	char *v5ccname, *v5filename, *v4tktfile;
+	const char *v5ccname, *v5filename, *v4tktfile;
+#ifdef TKT_ROOT
+	char v4tktfilebuf[PATH_MAX];
+#endif
 
 	/* Inexpensive checks. */
 	switch (_pam_krb5_sly_looks_unsafe()) {
@@ -249,15 +254,28 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 
 	retval = PAM_SERVICE_ERR;
 
-	/* Save credentials in the right files. */
-	v5ccname = getenv("KRB5CCNAME");
+	/* Save credentials in the right places. */
+	v5ccname = krb5_cc_default_name(ctx);
 	v5filename = NULL;
 	if (v5ccname == NULL) {
-		/* Ignore us.  We have nothing to do. */
-		retval = PAM_SUCCESS;
-	}
-	if ((v5ccname != NULL) && (strncmp(v5ccname, "FILE:", 5) == 0)) {
-		v5filename = v5ccname + 5;
+		/* This should never happen, but all we can do is tell libpam
+		 * to ignore us.  We have nothing to do. */
+		if (options->debug) {
+			debug("ignoring '%s' -- no default ccache name", user);
+		}
+		retval = PAM_IGNORE;
+	} else {
+		if (strncmp(v5ccname, "FILE:", 5) == 0) {
+			v5filename = v5ccname + 5;
+			if (options->debug) {
+				debug("ccache is a file named '%s'",
+				      v5filename);
+			}
+		} else {
+			if (options->debug) {
+				debug("ccache '%s' is not a file", v5ccname);
+			}
+		}
 	}
 
 	stored = 0;
@@ -297,7 +315,8 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 			}
 		} else {
 			if (v5ccname != NULL) {
-				/* Go ahead and update the current ccache. */
+				/* Go ahead and update the current not-a-file
+				 * ccache. */
 				if (options->debug) {
 					debug("updating ccache '%s' for '%s'",
 					      v5ccname, user);
@@ -306,9 +325,22 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 				stored = (retval == PAM_SUCCESS);
 			}
 		}
+	} else {
+		if (options->debug) {
+			debug("no credentials available to store in '%s'",
+			      v5ccname);
+		}
+		retval = PAM_SUCCESS;
 	}
 
 	v4tktfile = getenv("KRBTKFILE");
+#ifdef TKT_ROOT
+	if ((v4tktfile == NULL) && (options->user_check)) {
+		snprintf(v4tktfilebuf, sizeof(v4tktfilebuf), "%s%ld",
+			 TKT_ROOT, (long) uid);
+		v4tktfile = v4tktfilebuf;
+	}
+#endif
 	if ((stash->v4present) && (v4tktfile != NULL)) {
 		if (access(v4tktfile, R_OK | W_OK) == 0) {
 			if (lstat(v4tktfile, &st) == 0) {
@@ -333,11 +365,19 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 			} else {
 				if (errno == ENOENT) {
 					/* We have nothing to do. */
+					if (options->debug) {
+						debug("no preexisting ticket "
+						      "file found");
+					}
 					retval = PAM_SUCCESS;
 				}
 			}
 		} else {
 			/* Touch nothing. */
+			if (options->debug) {
+				debug("unable to access preexisting ticket "
+				      "file");
+			}
 			retval = PAM_SUCCESS;
 		}
 	}
