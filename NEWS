@@ -1,4 +1,6 @@
-- 2.3.6: * prefer to a "host" key, if one is found, when validating TGTs
+- 2.3.7: * when refreshing credentials, store the new creds in the default
+	   ccache if $KRB5CCNAME isn't set (#507984)
+- 2.3.6: * prefer a "host" key, if one is found, when validating TGTs
 	   (#450776)
 - 2.3.5: * make prompting behavior for non-existent accounts and users who
 	   just press enter match up with those who aren't/don't (#502602,
