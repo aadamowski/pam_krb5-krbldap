@@ -1,4 +1,7 @@
 2009-06-26
+	* src/options.c(option_b): don't leak the list of values
+
+2009-06-26
 	* src/sly.c(_pam_krb5_sly_maybe_refresh): refresh creds in the default
 	ccache location when KRB5CCNAME isn't set in the environment (#507984)
 

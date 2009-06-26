@@ -106,11 +106,16 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	if ((ret == -1) && (realm != NULL) &&
 	    (service != NULL) && (strlen(service) > 0)) {
 		list = option_l(argc, argv, ctx, realm, s, "");
-		for (i = 0; ((list != NULL) && (list[i] != NULL)); i++) {
-			if (strcmp(list[i], service) == 0) {
-				ret = 1;
-				break;
+		if (list != NULL) {
+			for (i = 0;
+			     ((list != NULL) && (list[i] != NULL));
+			     i++) {
+				if (strcmp(list[i], service) == 0) {
+					ret = 1;
+					break;
+				}
 			}
+			free_l(list);
 		}
 	}
 
