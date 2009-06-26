@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.6
+Version: 2.3.7
 Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -50,6 +50,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Fri Jun 26 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.7-1
+- when called to refresh credentials, store the new creds in the default
+  ccache location if $KRB5CCNAME isn't set (#507984)
+
 * Mon Jun 15 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.6-1
 - prefer keys for services matching the pattern host/*@clientrealm when
   validating (#450776)
