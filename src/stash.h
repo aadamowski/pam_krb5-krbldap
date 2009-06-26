@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2007 Red Hat, Inc.
+ * Copyright 2003,2007,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,10 +35,6 @@
 
 #include "userinfo.h"
 
-#define PAM_KRB5_STASH_TEMPLATE		"_pam_krb5_stash_%s"
-#define PAM_KRB5_STASH_SHM5_SUFFIX	"_shm5"
-#define PAM_KRB5_STASH_SHM4_SUFFIX	"_shm4"
-
 struct _pam_krb5_ccname_list {
 	char *name;
 	struct _pam_krb5_ccname_list *next;
@@ -65,6 +61,7 @@ struct _pam_krb5_stash {
 };
 
 struct _pam_krb5_stash *_pam_krb5_stash_get(pam_handle_t *pamh,
+					    const char *user,
 					    struct _pam_krb5_user_info *info,
 					    struct _pam_krb5_options *options);
 void _pam_krb5_stash_clone_v5(krb5_context ctx, struct _pam_krb5_stash *stash,
@@ -87,6 +84,13 @@ void _pam_krb5_stash_shm_read(pam_handle_t *pamh,
 void _pam_krb5_stash_shm_write(pam_handle_t *pamh,
 			       struct _pam_krb5_stash *stash,
 			       struct _pam_krb5_options *options,
+			       const char *user,
 			       struct _pam_krb5_user_info *userinfo);
+void _pam_krb5_stash_name(struct _pam_krb5_options *options,
+			  const char *user, char **name);
+void _pam_krb5_stash_shm5_name(struct _pam_krb5_options *options,
+			       const char *user, char **name);
+void _pam_krb5_stash_shm4_name(struct _pam_krb5_options *options,
+			       const char *user, char **name);
 
 #endif

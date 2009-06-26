@@ -1,4 +1,7 @@
 2009-06-26
+	* src/stash.c: derive the stash name from the user some bits of the
+	configuration rather than the principal name which we end up hopefully
+	deriving using the user and those bits of the configuration.
 	* src/options.c: hang on to a copy of the mappings list, in its
 	original form, for use later
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -126,7 +126,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the stash for this user. */
-	stash = _pam_krb5_stash_get(pamh, userinfo, options);
+	stash = _pam_krb5_stash_get(pamh, user, userinfo, options);
 	if (stash == NULL) {
 		_pam_krb5_user_info_free(ctx, userinfo);
 		_pam_krb5_options_free(pamh, ctx, options);

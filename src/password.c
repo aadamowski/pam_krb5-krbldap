@@ -155,7 +155,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	 * second pass.  It should have a low lifetime, so we needn't free it
 	 * just now. */
 	retval = PAM_AUTH_ERR;
-	stash = _pam_krb5_stash_get(pamh, userinfo, options);
+	stash = _pam_krb5_stash_get(pamh, user, userinfo, options);
 
 	/* If this is the first pass, just check the user's password by
 	 * obtaining a password-changing initial ticket. */
@@ -466,7 +466,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				if (options->use_shmem) {
 					_pam_krb5_stash_shm_write(pamh, stash,
 								  options,
-								  userinfo);
+								  user, userinfo);
 				}
 			}
 		}
