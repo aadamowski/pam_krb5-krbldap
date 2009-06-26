@@ -1,4 +1,8 @@
 2009-06-26
+	* src/sly.c(_pam_krb5_sly_maybe_refresh): refresh creds in the default
+	ccache location when KRB5CCNAME isn't set in the environment (#507984)
+
+2009-06-26
 	* src/stash.c: derive the stash name from the user some bits of the
 	configuration rather than the principal name which we end up hopefully
 	deriving using the user and those bits of the configuration.
