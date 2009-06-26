@@ -902,6 +902,8 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		}
 	}
 
+	options->mappings_s = option_s(argc, argv,
+				       ctx, options->realm, "mappings", "");
 	list = option_l(argc, argv, ctx, options->realm, "mappings", "");
 	for (i = 0; (list != NULL) && (list[i] != NULL); i++) {
 		/* nothing */
@@ -970,5 +972,7 @@ _pam_krb5_options_free(pam_handle_t *pamh, krb5_context ctx,
 	}
 	free(options->mappings);
 	options->mappings = NULL;
+	free(options->mappings_s);
+	options->mappings_s = NULL;
 	free(options);
 };
