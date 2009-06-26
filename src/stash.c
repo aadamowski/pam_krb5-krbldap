@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +69,61 @@
 #include "v4.h"
 #include "v5.h"
 #include "xstr.h"
+
+#define PAM_KRB5_STASH_TEMPLATE		"_pam_krb5_stash_%s_%s_%s_%d"
+#define PAM_KRB5_STASH_SHM5_SUFFIX	"_shm5"
+#define PAM_KRB5_STASH_SHM4_SUFFIX	"_shm4"
+
+static void
+_pam_krb5_stash_name_with_suffix(struct _pam_krb5_options *options,
+				 const char *user, const char *suffix,
+				 char **name)
+{
+	int i;
+	*name = malloc(strlen(PAM_KRB5_STASH_TEMPLATE) +
+		       strlen(user) + strlen(options->realm) +
+		       (options->mappings_s ? strlen(options->mappings_s) : 0) +
+		       3 +
+		       (suffix ? strlen(suffix) : 0) +
+		       1);
+	if (*name != NULL) {
+		sprintf(*name, PAM_KRB5_STASH_TEMPLATE "%s",
+			user, options->realm,
+		        options->mappings_s ? options->mappings_s : NULL,
+			options->user_check,
+			suffix ? suffix : "");
+		for (i = 0; (*name)[i] != '\0'; i++) {
+			if (strchr("= ", (*name)[i]) != NULL) {
+				(*name)[i] = '_';
+			}
+		}
+	}
+}
+
+void
+_pam_krb5_stash_name(struct _pam_krb5_options *options,
+		     const char *user, char **name)
+{
+	_pam_krb5_stash_name_with_suffix(options, user, NULL, name);
+}
+
+void
+_pam_krb5_stash_shm5_name(struct _pam_krb5_options *options,
+			  const char *user, char **name)
+{
+	_pam_krb5_stash_name_with_suffix(options, user,
+					 PAM_KRB5_STASH_SHM5_SUFFIX, name);
+}
+
+#ifdef USE_KRB4
+void
+_pam_krb5_stash_shm4_name(struct _pam_krb5_options *options,
+			  const char *user, char **name)
+{
+	_pam_krb5_stash_name_with_suffix(options, user,
+					 PAM_KRB5_STASH_SHM4_SUFFIX, name);
+}
+#endif
 
 static int
 _pam_krb5_get_data_stash(pam_handle_t *pamh, const char *key,
@@ -215,9 +270,10 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 static void
 _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			     struct _pam_krb5_options *options,
+			     const char *user,
 			     struct _pam_krb5_user_info *userinfo)
 {
-	char variable[PATH_MAX + 6];
+	char variable[PATH_MAX + 6], *segname;
 	void *blob;
 	int *intblob;
 	size_t blob_size;
@@ -261,7 +317,7 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		close(fd);
 		return;
 	}
-	if (krb5_cc_initialize(ctx, ccache, userinfo->principal_name) != 0) {
+	if (krb5_cc_initialize(ctx, ccache, stash->v5creds.client) != 0) {
 		warn("error initializing credential cache file \"%s\"",
 		     variable + 5);
 		krb5_cc_close(ctx, ccache);
@@ -306,19 +362,23 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	close(fd);
 
 	if (key != -1) {
-		snprintf(variable, sizeof(variable),
-			 PAM_KRB5_STASH_TEMPLATE
-			 PAM_KRB5_STASH_SHM5_SUFFIX
-			 "=%d/%ld",
-			 userinfo->unparsed_name, key, (long) getpid());
-		pam_putenv(pamh, variable);
-		if (options->debug) {
-			debug("saved v5 credentials to shared memory "
-			      "segment %d (creator pid %ld)", key,
-			      (long) getpid());
+		segname = NULL;
+		_pam_krb5_stash_shm5_name(options, user, &segname);
+		if (segname != NULL) {
+			snprintf(variable, sizeof(variable),
+				 "%s=%d/%ld",
+				 segname, key, (long) getpid());
+			free(segname);
+			pam_putenv(pamh, variable);
+			if (options->debug) {
+				debug("saved v5 credentials to shared memory "
+				      "segment %d (creator pid %ld)", key,
+				      (long) getpid());
+				debug("set '%s' in environment", variable);
+			}
+			stash->v5shm = key;
+			stash->v5shm_owner = getpid();
 		}
-		stash->v5shm = key;
-		stash->v5shm_owner = getpid();
 	} else {
 		warn("error saving v5 credential state to shared "
 		     "memory segment");
@@ -365,11 +425,12 @@ _pam_krb5_stash_shm_read_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 static void
 _pam_krb5_stash_shm_write_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			     struct _pam_krb5_options *options,
+			     const char *user,
 			     struct _pam_krb5_user_info *userinfo)
 {
 	void *blob;
 	int *intblob, key;
-	char variable[PATH_MAX];
+	char variable[PATH_MAX], *segname;
 	key = _pam_krb5_shm_new_from_blob(pamh, sizeof(int) * 2,
 					  &stash->v4creds,
 					  sizeof(stash->v4creds),
@@ -378,19 +439,22 @@ _pam_krb5_stash_shm_write_v4(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		intblob = blob;
 		intblob[0] = stash->v4present;
 		intblob[1] = sizeof(stash->v4creds);
-		snprintf(variable, sizeof(variable),
-			 PAM_KRB5_STASH_TEMPLATE
-			 PAM_KRB5_STASH_SHM4_SUFFIX
-			 "=%d/%ld",
-			 userinfo->unparsed_name, key, (long) getpid());
-		pam_putenv(pamh, variable);
-		if (options->debug) {
-			debug("saved v4 credential state to shared "
-			      "memory segment %d (creator pid %ld)", key,
-			      (long) getpid());
+		_pam_krb5_stash_shm4_name(options, user, &segname);
+		if (segname != NULL) {
+			snprintf(variable, sizeof(variable),
+				 "%s=%d/%ld",
+				 segname, key, (long) getpid());
+			free(segname);
+			pam_putenv(pamh, variable);
+			if (options->debug) {
+				debug("saved v4 credential state to shared "
+				      "memory segment %d (creator pid %ld)",
+				      key, (long) getpid());
+				debug("set '%s' in environment", variable);
+			}
+			stash->v4shm = key;
+			stash->v4shm_owner = getpid();
 		}
-		stash->v4shm = key;
-		stash->v4shm_owner = getpid();
 	} else {
 		warn("error saving v4 credential state to shared "
 		     "memory segment");
@@ -417,7 +481,8 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 	size_t blob_size;
 
 	/* Construct the name of a variable. */
-	variable = malloc(strlen(partial_key) + 10);
+	variable = malloc(strlen(partial_key) +
+			  2 * strlen(PAM_KRB5_STASH_SHM5_SUFFIX) + 1);
 	if (variable == NULL) {
 		return;
 	}
@@ -511,11 +576,12 @@ _pam_krb5_stash_shm_read(pam_handle_t *pamh, const char *partial_key,
 void
 _pam_krb5_stash_shm_write(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 			  struct _pam_krb5_options *options,
+			  const char *user,
 			  struct _pam_krb5_user_info *userinfo)
 {
-	_pam_krb5_stash_shm_write_v5(pamh, stash, options, userinfo);
+	_pam_krb5_stash_shm_write_v5(pamh, stash, options, user, userinfo);
 #ifdef USE_KRB4
-	_pam_krb5_stash_shm_write_v4(pamh, stash, options, userinfo);
+	_pam_krb5_stash_shm_write_v4(pamh, stash, options, user, userinfo);
 #endif
 }
 
@@ -523,6 +589,7 @@ _pam_krb5_stash_shm_write(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
  * exists, incorporate contents of the named ccache/tktfiles into the stash. */
 static void
 _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
+			      const char *user,
 			      struct _pam_krb5_user_info *userinfo,
 			      struct _pam_krb5_options *options)
 {
@@ -575,7 +642,7 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 					princ = NULL;
 				} else {
 					if (options->debug) {
-						debug("ccache is for a different principal, updating");
+						debug("ccache is for a new or different principal, updating");
 					}
 					/* Unparse the name. */
 					unparsed = NULL;
@@ -693,28 +760,24 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
  * pointer instead of making their own copy of the key, which could lead to
  * crashes if we then deallocated the string. */
 struct _pam_krb5_stash *
-_pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
+_pam_krb5_stash_get(pam_handle_t *pamh, const char *user,
+		    struct _pam_krb5_user_info *info,
 		    struct _pam_krb5_options *options)
 {
 	krb5_context ctx;
 	struct _pam_krb5_stash *stash;
 	char *key;
 
-	key = malloc(strlen(PAM_KRB5_STASH_TEMPLATE) +
-		     strlen(info->unparsed_name) +
-		     1);
-	if (key == NULL) {
-		return NULL;
-	}
-	sprintf(key, PAM_KRB5_STASH_TEMPLATE, info->unparsed_name);
-
+	key = NULL;
 	stash = NULL;
-	if ((_pam_krb5_get_data_stash(pamh, key, &stash) == PAM_SUCCESS) &&
+	_pam_krb5_stash_name(options, user, &key);
+	if ((key != NULL) &&
+	    (_pam_krb5_get_data_stash(pamh, key, &stash) == PAM_SUCCESS) &&
 	    (stash != NULL)) {
 	    	free(key);
 		if (options->external && (stash->v5attempted == 0)) {
 			_pam_krb5_stash_external_read(pamh, stash,
-						      info, options);
+						      user, info, options);
 			if (stash->v5attempted && (stash->v5result == 0)) {
 				if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&
 				    ((options->v4 == 1) || (options->v4_for_afs == 1))) {
@@ -756,7 +819,7 @@ _pam_krb5_stash_get(pam_handle_t *pamh, struct _pam_krb5_user_info *info,
 		_pam_krb5_stash_shm_read(pamh, key, stash, options);
 	}
 	if (options->external && (stash->v5attempted == 0)) {
-		_pam_krb5_stash_external_read(pamh, stash, info, options);
+		_pam_krb5_stash_external_read(pamh, stash, user, info, options);
 		if (stash->v5attempted && (stash->v5result == 0)) {
 			if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&
 			    ((options->v4 == 1) || (options->v4_for_afs == 1))) {

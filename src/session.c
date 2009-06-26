@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,7 +72,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
 	PAM_KRB5_MAYBE_CONST char *user;
-	char envstr[PATH_MAX + 20];
+	char envstr[PATH_MAX + 20], *segname;
 	const char *ccname;
 	krb5_context ctx;
 	struct _pam_krb5_options *options;
@@ -140,7 +140,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the stash for this user. */
-	stash = _pam_krb5_stash_get(pamh, userinfo, options);
+	stash = _pam_krb5_stash_get(pamh, user, userinfo, options);
 	if (stash == NULL) {
 		warn("no stash for '%s' (shouldn't happen)", user);
 		_pam_krb5_user_info_free(ctx, userinfo);
@@ -167,11 +167,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			_pam_krb5_shm_remove(stash->v5shm_owner, stash->v5shm,
 					     options->debug);
 			stash->v5shm = -1;
-			snprintf(envstr, sizeof(envstr),
-			 	 PAM_KRB5_STASH_TEMPLATE
-				 PAM_KRB5_STASH_SHM5_SUFFIX,
-				 userinfo->unparsed_name);
-			pam_putenv(pamh, envstr);
+			_pam_krb5_stash_shm5_name(options, user, &segname);
+			if (segname != NULL) {
+				pam_putenv(pamh, segname);
+				free(segname);
+			}
 		}
 #ifdef USE_KRB4
 		if ((stash->v4shm != -1) && (stash->v4shm_owner != -1)) {
@@ -183,11 +183,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			_pam_krb5_shm_remove(stash->v4shm_owner, stash->v4shm,
 					     options->debug);
 			stash->v4shm = -1;
-			snprintf(envstr, sizeof(envstr),
-			 	 PAM_KRB5_STASH_TEMPLATE
-				 PAM_KRB5_STASH_SHM4_SUFFIX,
-				 userinfo->unparsed_name);
-			pam_putenv(pamh, envstr);
+			_pam_krb5_stash_shm4_name(options, user, &segname);
+			if (segname != NULL) {
+				pam_putenv(pamh, segname);
+				free(segname);
+			}
 		}
 #endif
 	}
@@ -369,7 +369,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 	}
 
 	/* Get the stash for this user. */
-	stash = _pam_krb5_stash_get(pamh, userinfo, options);
+	stash = _pam_krb5_stash_get(pamh, user, userinfo, options);
 	if (stash == NULL) {
 		warn("no stash for user %s (shouldn't happen)", user);
 		_pam_krb5_user_info_free(ctx, userinfo);

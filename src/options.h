@@ -91,6 +91,7 @@ struct _pam_krb5_options {
 	} *afs_cells;
 	int n_afs_cells;
 
+	char *mappings_s;
 	struct name_mapping {
 		char *pattern, *replacement;
 	} *mappings;
