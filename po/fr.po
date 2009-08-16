@@ -1,5 +1,5 @@
 # French translation of pam_krb5
-# Copyright (C) YEAR Red Hat, Inc.
+# Copyright (C) 2009 Red Hat, Inc.
 # This file is distributed under the same license as the pam_krb5 package.
 # Pablo Martin-Gomez <pablo.martin-gomez@laposte.net>, 2009.
 #
@@ -13,7 +13,7 @@ msgstr ""
 "Last-Translator: Pablo Martin-Gomez <pablo.mrtin-gomez@laposte.net>\n"
 "Language-Team: Français <fedora-trans-fr@redhat.com>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: src/auth.c:284
