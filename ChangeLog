@@ -1,3 +1,13 @@
+2009-10-05
+	* src/options.c(_pam_krb5_options_init): parse the "chpw_prompt"
+	flag
+	* src/initopts.c(_pam_krb5_set_init_opts): enable or disable
+	change-expired-password behavior based on the chpw_prompt setting
+	rather than forcing it off all of the time
+	* src/prompter.c(_pam_krb5_generic_prompter): when we're letting the
+	library attempt to change expired passwords, set PAM_AUTHTOK to
+	what the user typed in
+
 2009-06-26
 	* src/options.c(option_b): don't leak the list of values
 

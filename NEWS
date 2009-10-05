@@ -1,3 +1,8 @@
+- 2.3.8: * add a "chpw_prompt" option to allow password changes to happen
+	   during what the calling application thinks is just a password
+	   check, to work around applications that don't handle the case
+	   of an expired password correctly (#509092, based on patch from
+	   Olivier Fourdan)
 - 2.3.7: * when refreshing credentials, store the new creds in the default
 	   ccache if $KRB5CCNAME isn't set (#507984)
 - 2.3.6: * prefer a "host" key, if one is found, when validating TGTs

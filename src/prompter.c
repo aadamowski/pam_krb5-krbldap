@@ -403,6 +403,17 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 		}
 		strcpy(prompts[i].reply->data, responses[j + headers].resp);
 		prompts[i].reply->length = strlen(responses[j + headers].resp);
+		/* In case we were called as part of a password-change
+		 * operation, in which case this is the new password, then we
+		 * need to save the new password as the PAM_AUTHTOK for other
+		 * modules.  We're probably doing this twice because the user
+		 * was asked to confim the new password, but that's okay. */
+		if (pdata->options->debug) {
+			debug("saving newly-entered password for use by "
+			      "other modules");
+		}
+		pam_set_item(pdata->pamh, PAM_AUTHTOK,
+			     responses[j + headers].resp);
 		j++;
 	}
 

@@ -31,6 +31,14 @@ o ccache_dir=/tmp
   Directory in which to store ccache and ticket files.
 o ccname_template=FILE:%d/krb5cc_%U_XXXXXX
   Location of the user's v5 ccache files.
+o chpw_prompt
+  Allow expired passwords to be changed during authentication attempts.  While
+  this is the traditional behavior exhibited by "kinit", it is inconsistent
+  with the behavior expected by PAM, which expects authentication to (appear to)
+  succeed and to have password expiration be flagged by the account management
+  function.  Some applications which don't handle password expiration will fail
+  incorrectly if the user's password is correct but expired, and setting this
+  flag attempts to work around the bug.
 o existing_ticket
   Use the presence of a TGT for the user's realm in the default ccache as
   sufficient proof of the user's identity.  If you're not also validating

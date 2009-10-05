@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2008/03/03 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2009/10/05 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -59,6 +59,17 @@ are substituted:
   %%	literal '%'
 
 The default is \fI@default_ccname_template@\fR".
+
+.IP "chpw_prompt = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+tells pam_krb5.so to allow expired passwords to be changed during
+authentication attempts.  While this is the traditional behavior exhibited by
+"kinit", it is inconsistent with the behavior expected by PAM, which expects
+authentication to (appear to) succeed, only to have password expiration be
+flagged by a subsequent call to the account management function.  Some
+applications which don't handle password expiration correctly will fail
+unconditionally if the user's password is expired, and this flag can be used
+to attempt to work around this bug in those applications.
+The default is \fBfalse\fR.
 
 .IP "existing_ticket = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials

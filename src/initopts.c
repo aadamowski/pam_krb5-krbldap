@@ -249,7 +249,8 @@ _pam_krb5_set_init_opts(krb5_context ctx, krb5_get_init_creds_opt *k5_options,
 {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
 	/* We want to handle password expiration ourselves, if we can. */
-	krb5_get_init_creds_opt_set_change_password_prompt(k5_options, 0);
+	krb5_get_init_creds_opt_set_change_password_prompt(k5_options,
+							   options->chpw_prompt);
 #endif
 	/* Only enable or disable these flags if we were told one way or
 	 * another, to avoid stepping on library-wide configuration. */

@@ -40,6 +40,7 @@ struct _pam_krb5_options {
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CANONICALIZE
 	int canonicalize;
 #endif
+	int chpw_prompt;
 	int debug_sensitive;
 	int external;
 	int existing_ticket;

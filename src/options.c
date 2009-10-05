@@ -535,6 +535,16 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 		}
 	}
 #endif
+#ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_CHANGE_PASSWORD_PROMPT
+	/* library option */
+	options->chpw_prompt = option_b(argc, argv,
+				        ctx, options->realm,
+				        service, NULL, NULL, "chpw_prompt", 0);
+	if (options->debug && options->user_check) {
+		debug("flag: chpw_prompt");
+	}
+#endif
+
 	/* private option */
 	options->user_check = option_b(argc, argv,
 				       ctx, options->realm,
