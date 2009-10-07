@@ -1,3 +1,16 @@
+2009-10-07
+	* src/prompter.c(_pam_krb5_prompt_type): add, abstracting out an
+	API difference.
+	* src/prompter.c(_pam_krb5_generic_prompter): use prompt type
+	information to override prompt text for new passwords.  Change saving
+	of the PAM_AUTHTOK so that we do so only when we've asked for both a
+	new password and confirmation.  Fix what might have been a bug in
+	how we number responses when we're asked for the current password and
+	we're suppressing such requests in unknown cases where libkrb5 could
+	ask both for the current and new passwords.
+	* src/tokens.c,src/minikafs.c,src/afs5log.c,src/options.c: fix some
+	signedness warnings
+
 2009-10-05
 	* src/prompter.c(_pam_krb5_prompt_is_for_password): check the
 	prompt_type first.

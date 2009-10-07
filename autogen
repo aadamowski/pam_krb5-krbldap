@@ -6,7 +6,7 @@ else
 fi
 if test `id -un` = "nalin" ; then
 	flags="--enable-Werror"
-	CFLAGS=`rpm --eval '%{optflags}' 2> /dev/null`
+	CFLAGS=`rpm --eval '%{optflags} -Wall -Wextra -Wno-unused' 2> /dev/null`
 	if test -n "$CFLAGS" ; then
 		export CFLAGS
 	fi

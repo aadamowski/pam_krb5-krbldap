@@ -90,6 +90,23 @@ _pam_krb5_prompt_default_is_password(krb5_prompt *prompt,
 	return 0;
 }
 
+static krb5_prompt_type
+_pam_krb5_prompt_type(krb5_context ctx, krb5_prompt *prompt, int prompt_index)
+{
+#if defined(HAVE_KRB5_GET_PROMPT_TYPES)
+	krb5_prompt_type *prompt_types;
+	prompt_types = krb5_get_prompt_types(ctx);
+	if (prompt_types != NULL) {
+		return prompt_types[prompt_index];
+	}
+#elif defined(HAVE_KRB5_PROMPT_PROMPT_TYPE)
+	if (prompt != NULL) {
+		return prompt[prompt_index].prompt_type;
+	}
+#endif
+	return -1;
+}
+
 static int
 _pam_krb5_prompt_is_for_password(krb5_prompt *prompt,
 				 struct _pam_krb5_prompter_data *pdata,
@@ -97,15 +114,12 @@ _pam_krb5_prompt_is_for_password(krb5_prompt *prompt,
 {
 	char *expected;
 	const char *p;
-#ifdef HAVE_KRB5_GET_PROMPT_TYPES
-	krb5_prompt_type *prompt_types;
-	prompt_types = krb5_get_prompt_types(pdata->ctx);
-	if (prompt_types != NULL) {
-		if (prompt_types[prompt_index] == KRB5_PROMPT_TYPE_PASSWORD) {
-			return 1;
-		}
+	/* The easy way. */
+	if (_pam_krb5_prompt_type(pdata->ctx, prompt, prompt_index) ==
+	    KRB5_PROMPT_TYPE_PASSWORD) {
+		return 1;
 	}
-#endif
+	/* The hard way. */
 	expected = malloc(strlen(pdata->userinfo->unparsed_name) + 32);
 	if (expected != NULL) {
 		/* Simple */
@@ -262,6 +276,7 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 	int headers, i, j, ret, num_msgs;
 	char *tmp;
 	struct _pam_krb5_prompter_data *pdata = data;
+	krb5_data *pw0, *pw1;
 
 	/* If we have a name or banner, we need to make space for it in the
 	 * messages structure, so keep track of the number of non-prompts which
@@ -321,6 +336,7 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 		 * if we were told to. */
 		if (_pam_krb5_prompt_is_for_password(&prompts[i], pdata, i)) {
 			if (suppress_password_prompts) {
+				/* We're told to suppress this prompt. */
 				continue;
 			} else {
 				if (pdata->options->debug) {
@@ -329,6 +345,38 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 					      "with generic prompt");
 				}
 				tmp = strdup("Password: ");
+			}
+		} else
+		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
+		    KRB5_PROMPT_TYPE_NEW_PASSWORD) {
+			if (pdata->options->debug) {
+				debug("libkrb5 asked for a new long-term "
+				      "password, replacing prompt text "
+				      "with generic prompt");
+			}
+			tmp = malloc(strlen(Y_("New %s%sPassword: ")) +
+				     strlen(pdata->options->banner) + 2);
+			if (tmp != NULL) {
+				sprintf(tmp, Y_("New %s%sPassword: "),
+					pdata->options->banner,
+					strlen(pdata->options->banner) > 0 ?
+					" " : "");
+			}
+		} else
+		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
+		    KRB5_PROMPT_TYPE_NEW_PASSWORD_AGAIN) {
+			if (pdata->options->debug) {
+				debug("libkrb5 asked for a new long-term "
+				      "password again, replacing prompt text "
+				      "with generic prompt");
+			}
+			tmp = malloc(strlen(Y_("Repeat New %s%sPassword: ")) +
+				     strlen(pdata->options->banner) + 2);
+			if (tmp != NULL) {
+				sprintf(tmp, Y_("Repeat New %s%sPassword: "),
+					pdata->options->banner,
+					strlen(pdata->options->banner) > 0 ?
+					" " : "");
 			}
 		} else {
 			tmp = malloc(strlen(prompts[i].prompt) + 3);
@@ -390,9 +438,19 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 	}
 
 	/* Gather up the results. */
+	pw0 = NULL;
+	pw1 = NULL;
 	for (i = j = 0; i < num_prompts; i++) {
 		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
+			/* We never prompted for this. */
 			continue;
+		}
+		if (_pam_krb5_prompt_is_for_password(&prompts[i], pdata, i)) {
+			if (suppress_password_prompts) {
+				/* We decided to suppress this prompt, so it
+				 * gets its default answer. */
+				continue;
+			}
 		}
 		/* Double-check for NULL here.  We should have caught it above
 		 * if that was the case, but it doesn't hurt. */
@@ -413,18 +471,27 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 		}
 		strcpy(prompts[i].reply->data, responses[j + headers].resp);
 		prompts[i].reply->length = strlen(responses[j + headers].resp);
-		/* In case we were called as part of a password-change
-		 * operation, in which case this is the new password, then we
-		 * need to save the new password as the PAM_AUTHTOK for other
-		 * modules.  We're probably doing this twice because the user
-		 * was asked to confim the new password, but that's okay. */
+		/* If it's a prompt for a new password, make note of it. */
+		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
+		    KRB5_PROMPT_TYPE_NEW_PASSWORD) {
+			pw0 = prompts[i].reply;
+		}
+		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
+		    KRB5_PROMPT_TYPE_NEW_PASSWORD_AGAIN) {
+			pw1 = prompts[i].reply;
+		}
+		j++;
+	}
+	/* If we were called as part of a password-change operation, then
+	 * we've captured both the new password and its confirmation.  Save the
+	 * new password as the PAM_AUTHTOK for other modules. */
+	if ((pw0 != NULL) && (pw1 != NULL) &&
+	    (strcmp(pw0->data, pw1->data) == 0)) {
 		if (pdata->options->debug) {
 			debug("saving newly-entered password for use by "
 			      "other modules");
 		}
-		pam_set_item(pdata->pamh, PAM_AUTHTOK,
-			     responses[j + headers].resp);
-		j++;
+		pam_set_item(pdata->pamh, PAM_AUTHTOK, pw0->data);
 	}
 
 	_pam_krb5_maybe_free_responses(responses, num_msgs);
