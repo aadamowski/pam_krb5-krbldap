@@ -34,6 +34,7 @@
 #define pam_krb5_prompter_h
 
 struct _pam_krb5_prompter_data {
+	krb5_context ctx;
 	pam_handle_t *pamh;
 	const char *previous_password;
 	struct _pam_krb5_user_info *userinfo;

@@ -1,4 +1,8 @@
 2009-10-05
+	* src/prompter.c(_pam_krb5_prompt_is_for_password): check the
+	prompt_type first.
+
+2009-10-05
 	* src/options.c(_pam_krb5_options_init): parse the "chpw_prompt"
 	flag
 	* src/initopts.c(_pam_krb5_set_init_opts): enable or disable

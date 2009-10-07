@@ -991,6 +991,7 @@ v5_get_creds(krb5_context ctx,
 		}
 	} else {
 		/* Contact the KDC. */
+		prompter_data.ctx = ctx;
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
 		prompter_data.options = options;
@@ -1135,6 +1136,7 @@ v5_get_creds(krb5_context ctx,
 			debug("key is expired. attempting to verify password "
 			      "by obtaining credentials for %s", realm_service);
 		}
+		prompter_data.ctx = ctx;
 		prompter_data.pamh = pamh;
 		prompter_data.previous_password = password;
 		prompter_data.options = options;

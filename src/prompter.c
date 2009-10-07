@@ -92,10 +92,20 @@ _pam_krb5_prompt_default_is_password(krb5_prompt *prompt,
 
 static int
 _pam_krb5_prompt_is_for_password(krb5_prompt *prompt,
-				 struct _pam_krb5_prompter_data *pdata)
+				 struct _pam_krb5_prompter_data *pdata,
+				 int prompt_index)
 {
 	char *expected;
 	const char *p;
+#ifdef HAVE_KRB5_GET_PROMPT_TYPES
+	krb5_prompt_type *prompt_types;
+	prompt_types = krb5_get_prompt_types(pdata->ctx);
+	if (prompt_types != NULL) {
+		if (prompt_types[prompt_index] == KRB5_PROMPT_TYPE_PASSWORD) {
+			return 1;
+		}
+	}
+#endif
 	expected = malloc(strlen(pdata->userinfo->unparsed_name) + 32);
 	if (expected != NULL) {
 		/* Simple */
@@ -309,7 +319,7 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 		}
 		/* If we're just asking for the password again, also skip it,
 		 * if we were told to. */
-		if (_pam_krb5_prompt_is_for_password(&prompts[i], pdata)) {
+		if (_pam_krb5_prompt_is_for_password(&prompts[i], pdata, i)) {
 			if (suppress_password_prompts) {
 				continue;
 			} else {
