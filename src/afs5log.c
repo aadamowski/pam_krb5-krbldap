@@ -63,7 +63,8 @@ static void
 set_methods(const char *strategy, int *methods, int max_methods,
 	    int try_v5_2b_only, int try_rxk5_only)
 {
-	int i = 0, j;
+	int i = 0;
+	unsigned int j;
 	struct {
 		const char *name; int method;
 	} method_names[] = {

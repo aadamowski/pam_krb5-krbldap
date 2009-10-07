@@ -94,6 +94,7 @@ tokens_obtain(krb5_context context,
 	      struct _pam_krb5_user_info *info, int newpag)
 {
 	int i, ret, use_2b;
+	unsigned int n;
 	char localcell[LINE_MAX], homecell[LINE_MAX], homedir[LINE_MAX],
 	     lnk[LINE_MAX];
 	struct stat st;
@@ -156,12 +157,12 @@ tokens_obtain(krb5_context context,
 	p = options->token_strategy;
 	while (strlen(p) > 0) {
 		q = p + strcspn(p, ",");
-		for (i = 0;
-		     i < sizeof(method_names) / sizeof(method_names[0]);
-		     i++) {
-			if (strncmp(p, method_names[i].name,
-				    strlen(method_names[i].name)) == 0) {
-				methods[n_methods++] = method_names[i].method;
+		for (n = 0;
+		     n < sizeof(method_names) / sizeof(method_names[0]);
+		     n++) {
+			if (strncmp(p, method_names[n].name,
+				    strlen(method_names[n].name)) == 0) {
+				methods[n_methods++] = method_names[n].method;
 			}
 		}
 		p = q + strspn(q, ",");

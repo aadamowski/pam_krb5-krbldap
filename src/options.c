@@ -80,8 +80,9 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	 const char *default_services, const char *default_notservices,
 	 const char *s, int default_value)
 {
-	int i, j;
-	krb5_boolean ret;
+	int i, j, ret;
+	unsigned int n;
+	krb5_boolean retbool;
 	char **list, *nots;
 	const char *prefix[] = {"not", "dont", "no", "not_", "dont_", "no_"};
 
@@ -91,10 +92,10 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 			return 1;
 		}
 		/* boolean no */
-		for (j = 0; j < (sizeof(prefix) / sizeof(prefix[0])); j++) {
-			if ((strncmp(argv[i], prefix[j],
-				     strlen(prefix[j])) == 0) &&
-			    (strcmp(argv[i] + strlen(prefix[j]), s) == 0)) {
+		for (n = 0; n < (sizeof(prefix) / sizeof(prefix[0])); n++) {
+			if ((strncmp(argv[i], prefix[n],
+				     strlen(prefix[n])) == 0) &&
+			    (strcmp(argv[i] + strlen(prefix[n]), s) == 0)) {
 				return 0;
 			}
 		}
@@ -122,10 +123,10 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	/* configured service no */
 	if ((ret == -1) && (realm != NULL) &&
 	    (service != NULL) && (strlen(service) > 0)) {
-		for (i = 0; i < (sizeof(prefix) / sizeof(prefix[0])); i++) {
-			nots = malloc(strlen(prefix[i]) + strlen(s) + 1);
+		for (n = 0; n < (sizeof(prefix) / sizeof(prefix[0])); n++) {
+			nots = malloc(strlen(prefix[n]) + strlen(s) + 1);
 			if (nots != NULL) {
-				sprintf(nots, "%s%s", prefix[i], s);
+				sprintf(nots, "%s%s", prefix[n], s);
 				list = option_l(argc, argv, ctx, realm,
 						nots, "");
 				if (list != NULL) {
@@ -148,7 +149,8 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 
 	/* configured boolean */
 	if ((ret == -1) && (realm != NULL)) {
-		v5_appdefault_boolean(ctx, realm, s, -1, &ret);
+		v5_appdefault_boolean(ctx, realm, s, -1, &retbool);
+		ret = retbool;
 	}
 
 	/* compile-time default service yes */
@@ -176,11 +178,15 @@ option_b(int argc, PAM_KRB5_MAYBE_CONST char **argv,
 	}
 
 	/* hard-coded default */
-	if (ret == -1) {
-		ret = default_value;
+	switch (ret) {
+	case -1:
+		retbool = default_value;
+		break;
+	default:
+		retbool = ret;
+		break;
 	}
-
-	return ret;
+	return retbool;
 }
 
 static char *
