@@ -739,8 +739,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 	};
 	krb5_enctype rxk5_enctypes[16];
 	krb5_enctype *etypes;
-	unsigned int i;
-	int n_etypes;
+	int i, n_etypes;
 	int tmp;
 
 	memset(&client, 0, sizeof(client));
