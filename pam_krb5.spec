@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.7
+Version: 2.3.8
 Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -50,6 +50,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Thu Oct  8 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.8-1
+- add a "chpw_prompt" option, to allow changing expired passwords while
+  authenticating, as a workaround for applications which don't handle
+  password expiration the way PAM expects them to (#509092)
+
 * Fri Jun 26 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.7-1
 - when called to refresh credentials, store the new creds in the default
   ccache location if $KRB5CCNAME isn't set (#507984)
