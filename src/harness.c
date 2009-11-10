@@ -1,5 +1,5 @@
 /*
- * Copyright 2005,2006,2007 Red Hat, Inc.
+ * Copyright 2005,2006,2007,2009 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,15 +50,6 @@
 #include <security/pam_misc.h>
 #endif
 
-#include KRB5_H
-#ifdef USE_KRB4
-#include KRB4_DES_H
-#include KRB4_KRB_H
-#ifdef KRB4_KRB_ERR_H
-#include KRB4_KRB_ERR_H
-#endif
-#endif
-
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -66,13 +57,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "logstdio.h"
-#include "stash.h"
-#include "minikafs.h"
-#include "options.h"
 #include "xstr.h"
-
-extern char *log_progname;
 
 struct linux_pam_handle {
 	char *authtok;
@@ -206,7 +191,6 @@ main(int argc, char **argv)
 	struct pam_conv conv;
 	pam_handle_t *pamh;
 
-	log_progname = "harness";
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s [flags]\n"
 			"\t--debug\n"
@@ -243,7 +227,6 @@ main(int argc, char **argv)
 	pamh = NULL;
 
 	memset(&conv, 0, sizeof(conv));
-	memset(&log_options, 0, sizeof(log_options));
 	conv.conv = local_conv;
 	abi_flag = 0;
 	conv.appdata_ptr = &abi_flag;
@@ -253,7 +236,6 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		fflush(stdout);
 		if (strcmp(argv[i], "--debug") == 0) {
-			log_options.debug++;
 			continue;
 		}
 		if (strcmp(argv[i], "--toggle-abi") == 0) {
