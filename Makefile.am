@@ -4,10 +4,10 @@ CONFIGURE_DEPENDENCIES = $(top_srcdir)/pam_krb5.spec
 
 SUBDIRS = src tests po
 
-VERSION=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}\n' | head -n1)
-RELEASE=$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{release}\n' | head -n1)
-GITTAG=pam_krb5-$(shell rpm -q --specfile $(top_srcdir)/pam_krb5.spec --qf '%{version}-%{release}\n' --define 'dist %{nil}' | head -n1)
-distdir=$(shell rpm -q --specfile --qf '%{name}-%{version}-%{release}\n' --define 'dist %{nil}' $(top_srcdir)/pam_krb5.spec | head -n1)
+VERSION=$(shell awk '/^Version:/ {print $$NF}' $(top_srcdir)/pam_krb5.spec | sed 's,%.*,,' | head -n 1)
+RELEASE=$(shell awk '/^Release:/ {print $$NF}' $(top_srcdir)/pam_krb5.spec | sed 's,%.*,,' | head -n 1)
+GITTAG=$(PACKAGE)-$(VERSION)-$(RELEASE)
+distdir=$(PACKAGE)-$(VERSION)-$(RELEASE)
 DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
 tag:
