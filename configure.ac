@@ -1,6 +1,6 @@
 AC_INIT(configure.ac)
 AC_PREREQ(2.59)
-AM_INIT_AUTOMAKE(pam_krb5,`rpm -q --specfile ${srcdir:-.}/pam_krb5.spec --qf '%{version}\n' | head -n1`)
+AM_INIT_AUTOMAKE(pam_krb5,2.3.9)
 AC_LANG_C
 AC_PROG_CC
 AC_DISABLE_STATIC

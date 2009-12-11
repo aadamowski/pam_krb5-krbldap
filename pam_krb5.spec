@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.8
+Version: 2.3.9
 Release: 1%{?dist}
 Source0: pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -22,6 +22,7 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
 %configure --libdir=/%{_lib} \
 	--with-default-use-shmem=sshd --with-default-external=sshd
+	--with-default-multiple-ccaches="su su-l"
 make
 
 %install
