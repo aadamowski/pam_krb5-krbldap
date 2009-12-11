@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2009/10/05 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2009/12/11 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -162,6 +162,12 @@ setting up an auth_to_local rule elsewhere in \fBkrb5.conf\fP(5).
 .IP "minimum_uid = \fI0\fR"
 specifies the minimum UID of users being authenticated.  If a user with a UID
 less than this value attempts authentication, the request will be ignored.
+
+.IP "multiple_ccaches=\fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+specifies that pam_krb5 should maintain multiple credential caches for
+applications that both set credentials and open a PAM session, but which set
+the KRB5CCNAME variable after doing only one of the two.  This option is
+usually not necessary for most services.
 
 @MAN_HPKINIT@.IP "pkinit_flags = \fI0\fR"
 @MAN_HPKINIT@controls the flags value which pam_krb5 passes to libkrb5

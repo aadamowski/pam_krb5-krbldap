@@ -685,6 +685,19 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 
 	/* private option */
+	options->multiple_ccaches = option_b(argc, argv,
+					     ctx, options->realm,
+					     service,
+					     DEFAULT_MULTIPLE_CCACHES, "",
+					     "multiple_ccaches", 0);
+	if (options->debug && (options->external == 1)) {
+		debug("flag: multiple_ccaches");
+	}
+	if (options->debug && (options->external == 0)) {
+		debug("flag: no multiple_ccaches");
+	}
+
+	/* private option */
 	options->validate = option_b(argc, argv,
 				     ctx, options->realm,
 				     service, NULL, NULL,

@@ -82,6 +82,13 @@ AC_ARG_WITH(default-external,
 AC_DEFINE_UNQUOTED(DEFAULT_EXTERNAL,"$DEFAULT_EXTERNAL",[Set to the default value for the "external" setting.])
 AC_SUBST(DEFAULT_EXTERNAL)
 
+AC_ARG_WITH(default-multiple-ccaches,
+[AC_HELP_STRING(--with-default-multiple-ccaches="su su-l",[Set the default value of the "multiple_ccaches" option (default is "su su-l").])],
+	    DEFAULT_MULTIPLE_CCACHES="$withval",
+	    DEFAULT_MULTIPLE_CCACHES="su su-l")
+AC_DEFINE_UNQUOTED(DEFAULT_MULTIPLE_CCACHES,"$DEFAULT_MULTIPLE_CCACHES",[Set to the default value for the "multiple_ccaches" setting.])
+AC_SUBST(DEFAULT_MULTIPLE_CCACHES)
+
 AC_ARG_WITH(default-use-shmem,
 [AC_HELP_STRING(--with-default-use-shmem="sshd",[Set the default value of the "use_shmem" option (default is "sshd").])],
 	    DEFAULT_USE_SHMEM="$withval",

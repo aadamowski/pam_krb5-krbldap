@@ -1256,7 +1256,7 @@ v5_save(krb5_context ctx,
 	krb5_cc_close(ctx, ccache);
 	/* Save the new ccache name in the stash, and optionally return it to
 	 * the caller. */
-	if (_pam_krb5_stash_push_v5(ctx, stash, ccname) == 0) {
+	if (_pam_krb5_stash_push_v5(ctx, stash, options, ccname) == 0) {
 		/* Generate a *new* ccache with the same contents as this
 		 * one, but for the user's use, and destroy this one. */
 		if (for_user) {
@@ -1404,7 +1404,7 @@ v5_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 			debug("removing ccache '%s'",
 			      stash->v5ccnames->name);
 		}
-		if (_pam_krb5_stash_pop_v5(ctx, stash) != 0) {
+		if (_pam_krb5_stash_pop_v5(ctx, stash, options) != 0) {
 			warn("error removing ccache '%s'",
 			     stash->v5ccnames->name);
 		}

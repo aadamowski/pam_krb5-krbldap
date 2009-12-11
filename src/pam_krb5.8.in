@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2009/10/05 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 8 2009/12/11 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -155,6 +155,12 @@ credentials obtained from KDCs.
 .IP minimum_uid=\fI0\fR
 tells pam_krb5.so to ignore authentication attempts by users with
 UIDs below the specified number.
+
+.IP multiple_ccaches
+specifies that pam_krb5 should maintain multiple credential caches for this
+service, because it both sets credentials and opens a PAM session, but it
+sets the KRB5CCNAME variable after doing only one of the two.  This option is
+usually not necessary for most services.
 
 .IP no_initial_prompt
 tells pam_krb5.so to not ask for a password before attempting authentication,

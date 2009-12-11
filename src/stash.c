@@ -1288,39 +1288,48 @@ _pam_krb5_stash_push(krb5_context ctx, struct _pam_krb5_ccname_list **list,
 
 #ifdef USE_KRB4
 int
-_pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
+		       struct _pam_krb5_options *options)
 {
 	return _pam_krb5_stash_pop(ctx, &stash->v4tktfiles);
 }
 int
 _pam_krb5_stash_push_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
-			const char *filename)
+		        struct _pam_krb5_options *options, const char *filename)
 {
+	if (options->multiple_ccaches == 0) {
+		_pam_krb5_stash_pop(ctx, &stash->v4tktfiles);
+	}
 	return _pam_krb5_stash_push(ctx, &stash->v4tktfiles, filename);
 }
 #else
 int
-_pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
+		       struct _pam_krb5_options *options)
 {
 	return 0;
 }
 int
 _pam_krb5_stash_push_v4(krb5_context ctx, struct _pam_krb5_stash *stash,
-			const char *filename)
+			struct _pam_krb5_options *options, const char *filename)
 {
 	return 0;
 }
 #endif
 
 int
-_pam_krb5_stash_pop_v5(krb5_context ctx, struct _pam_krb5_stash *stash)
+_pam_krb5_stash_pop_v5(krb5_context ctx, struct _pam_krb5_stash *stash,
+		       struct _pam_krb5_options *options)
 {
 	return _pam_krb5_stash_pop(ctx, &stash->v5ccnames);
 }
 
 int
 _pam_krb5_stash_push_v5(krb5_context ctx, struct _pam_krb5_stash *stash,
-			const char *ccname)
+		        struct _pam_krb5_options *options, const char *ccname)
 {
+	if (options->multiple_ccaches == 0) {
+		_pam_krb5_stash_pop(ctx, &stash->v5ccnames);
+	}
 	return _pam_krb5_stash_push(ctx, &stash->v5ccnames, ccname);
 }

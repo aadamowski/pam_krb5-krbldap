@@ -476,7 +476,7 @@ v4_save(krb5_context ctx,
 
 	/* Save the new file's name in the stash, and optionally return it to
 	 * the caller. */
-	if (_pam_krb5_stash_push_v4(ctx, stash, tktfile) == 0) {
+	if (_pam_krb5_stash_push_v4(ctx, stash, options, tktfile) == 0) {
 		/* Generate a *new* ticket file with the same contents as this
 		 * one. */
 		if (clone_cc) {
@@ -523,7 +523,7 @@ v4_destroy(krb5_context ctx, struct _pam_krb5_stash *stash,
 			debug("removing ticket file '%s'",
 			      stash->v4tktfiles->name);
 		}
-		if (_pam_krb5_stash_pop_v4(ctx, stash) != 0) {
+		if (_pam_krb5_stash_pop_v4(ctx, stash, options) != 0) {
 			warn("error removing ticket file '%s'",
 			     stash->v4tktfiles->name);
 		}
