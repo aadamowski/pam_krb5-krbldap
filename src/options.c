@@ -690,10 +690,10 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 					     service,
 					     DEFAULT_MULTIPLE_CCACHES, "",
 					     "multiple_ccaches", 0);
-	if (options->debug && (options->external == 1)) {
+	if (options->debug && (options->multiple_ccaches == 1)) {
 		debug("flag: multiple_ccaches");
 	}
-	if (options->debug && (options->external == 0)) {
+	if (options->debug && (options->multiple_ccaches == 0)) {
 		debug("flag: no multiple_ccaches");
 	}
 
