@@ -75,6 +75,13 @@ else
 fi
 AM_CONDITIONAL(AFS,[test "x$afs" = xyes])
 
+AC_ARG_WITH(default-chpw-prompt,
+[AC_HELP_STRING(--with-default-chpw-prompt="gnome-screensaver",[Set the default value of the "chpw_prompt" option (no default).])],
+	    DEFAULT_CHPW_PROMPT="$withval",
+	    DEFAULT_CHPW_PROMPT=)
+AC_DEFINE_UNQUOTED(DEFAULT_CHPW_PROMPT,"$DEFAULT_CHPW_PROMPT",[Set to the default value for the "chpw_prompt" setting.])
+AC_SUBST(DEFAULT_CHPW_PROMPT)
+
 AC_ARG_WITH(default-external,
 [AC_HELP_STRING(--with-default-external="sshd gssftp",[Set the default value of the "external" option (default is "sshd").])],
 	    DEFAULT_EXTERNAL="$withval",

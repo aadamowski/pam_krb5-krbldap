@@ -545,7 +545,9 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	/* library option */
 	options->chpw_prompt = option_b(argc, argv,
 				        ctx, options->realm,
-				        service, NULL, NULL, "chpw_prompt", 0);
+				        service,
+					DEFAULT_CHPW_PROMPT, "",
+					"chpw_prompt", 0);
 	if (options->debug && options->user_check) {
 		debug("flag: chpw_prompt");
 	}
