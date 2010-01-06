@@ -7,7 +7,7 @@ SUBDIRS = src tests po
 SVERSION=$(shell awk '/^Version:/ {print $$NF}' $(top_srcdir)/pam_krb5.spec | sed 's,%.*,,' | head -n 1)
 SRELEASE=$(shell awk '/^Release:/ {print $$NF}' $(top_srcdir)/pam_krb5.spec | sed 's,%.*,,' | head -n 1)
 GITTAG=$(PACKAGE)-$(VERSION)-$(SRELEASE)
-distdir=$(PACKAGE)-$(VERSION)-$(SRELEASE)
+distdir=$(GITTAG)
 DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
 tag:

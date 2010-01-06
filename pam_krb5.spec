@@ -2,7 +2,7 @@ Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
 Version: 2.3.9
 Release: 1%{?dist}
-Source0: pam_krb5-%{version}-1.tar.gz
+Source0: https://fedorahosted.org/released/pam_krb5/pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
 Group: System Environment/Base
 URL: https://fedorahosted.org/pam_krb5/
@@ -51,6 +51,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Wed Jan  6 2010 Nalin Dahyabhai <nalin@redhat.com>
+- change the source location to a full URL
+
 * Wed Jan  6 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.9-1
 - add a "multiple_ccaches" option to allow forcing the previous behavior of
   not deleting an old ccache whenever we create a new one, but saving them
