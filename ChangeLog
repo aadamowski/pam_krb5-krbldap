@@ -1,3 +1,16 @@
+2009-12-11
+	* Makefile.am,configure.ac: relegate use of RPM to the 'archive'
+	target, don't use it in our regular build machinery
+	* configure.ac,src/options.c,src/stash.c,src/v4.c,src/v5.c: add a
+	'multiple_ccaches' option, and change the default behavior from on
+	to off
+	* configure.ac,src/options.c: allow setting a default value for
+	chpw_prompt
+
+2009-11-10
+	* src/harness.c: we're not using our internal logging stuff, so we can
+	eject most of the Kerberos-specific bits
+
 2009-10-07
 	* src/prompter.c(_pam_krb5_prompt_type): add, abstracting out an
 	API difference.

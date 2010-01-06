@@ -21,7 +21,7 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 %build
 CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
 %configure --libdir=/%{_lib} \
-	--with-default-use-shmem=sshd --with-default-external=sshd
+	--with-default-use-shmem=sshd --with-default-external=sshd \
 	--with-default-multiple-ccaches="su su-l"
 make
 
@@ -51,6 +51,12 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Wed Jan  6 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.9-1
+- add a "multiple_ccaches" option to allow forcing the previous behavior of
+  not deleting an old ccache whenever we create a new one, but saving them
+  until the call that caused us to create them is reversed, and default the
+  setting to being enabled for "su", which needs it
+
 * Thu Oct  8 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.8-1
 - add a "chpw_prompt" option, to allow changing expired passwords while
   authenticating, as a workaround for applications which don't handle
