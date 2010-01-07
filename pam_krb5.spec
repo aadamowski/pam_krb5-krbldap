@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5.
 Name: pam_krb5
-Version: 2.3.9
+Version: 2.3.10
 Release: 1%{?dist}
 Source0: https://fedorahosted.org/released/pam_krb5/pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -51,6 +51,10 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Wed Jan  6 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.10-1
+- pull up changes to fine-tune the logic for selecting which key in a keytab
+  to use when validating credentials
+
 * Wed Jan  6 2010 Nalin Dahyabhai <nalin@redhat.com>
 - change the source location to a full URL
 

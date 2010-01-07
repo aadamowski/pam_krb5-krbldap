@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -755,9 +755,9 @@ static int
 v5_validate(krb5_context ctx, krb5_creds *creds,
 	    const struct _pam_krb5_options *options)
 {
-	int i;
+	int i, score;
 	char *principal;
-	krb5_principal princ;
+	krb5_principal princ, host;
 	krb5_keytab keytab;
 	krb5_kt_cursor cursor;
 	krb5_keytab_entry entry;
@@ -772,20 +772,35 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* Figure out what the local host service is named. */
+	host = NULL;
+	i = krb5_sname_to_principal(ctx, NULL, "host", KRB5_NT_SRV_HST, &host);
+	if (i != 0) {
+		host = NULL;
+	}
+
 	/* Set up to walk the keytab. */
 	memset(&cursor, 0, sizeof(cursor));
 	i = krb5_kt_start_seq_get(ctx, keytab, &cursor);
 	if (i != 0) {
 		warn("error reading keytab '%s', not verifying TGT",
 		     options->keytab);
+		if (host != NULL) {
+			krb5_free_principal(ctx, host);
+		}
 		krb5_kt_close(ctx, keytab);
 		return PAM_SERVICE_ERR;
 	}
 
 	/* Walk the keytab, looking for a good service key.  Prefer a "host" in
-	 * the client's realm, but try the first one if we don't find a
-	 * suitable host key. */
+	 * the client's realm, or a (hopefully) host-based service in the
+	 * client's realm (even better, if the instance matches the local
+	 * host's name), or anything from the client's realm, but try the first
+	 * one if we don't find a suitable host key.  If we're being called
+	 * from a non-"host" service, hopefully this will let us try to do
+	 * validation using that service's keytab.  */
 	princ = NULL;
+	score = 0;
 	while ((i = krb5_kt_next_entry(ctx, keytab, &entry, &cursor)) == 0) {
 		/* First entry? */
 		if (princ == NULL) {
@@ -795,32 +810,132 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 				     "not verifying TGT");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
+				if (host != NULL) {
+					krb5_free_principal(ctx, host);
+				}
 				return PAM_SERVICE_ERR;
 			}
-		} else
-		/* Better entry? */
-		if ((v5_princ_component_count(entry.principal) == 2) &&
+		}
+		/* Better entry (anything in the client's realm)? */
+		if ((score < 1) &&
 		    krb5_realm_compare(ctx, entry.principal, creds->client)) {
-			if ((v5_princ_component_length(entry.principal,
-						       0) == 4) &&
-			    (memcmp(v5_princ_component_contents(entry.principal,
-								0),
-				    "host", 4) == 0)) {
-				if (princ != NULL) {
-					krb5_free_principal(ctx, princ);
-				}
-				i = krb5_copy_principal(ctx, entry.principal,
-							&princ);
-				if (i != 0) {
-					warn("internal error copying "
-					     "principal name, "
-					     "not verifying TGT");
-					krb5_kt_end_seq_get(ctx, keytab,
-							    &cursor);
-					krb5_kt_close(ctx, keytab);
-					return PAM_SERVICE_ERR;
-				}
+			if (princ != NULL) {
+				krb5_free_principal(ctx, princ);
 			}
+			i = krb5_copy_principal(ctx, entry.principal, &princ);
+			if (i != 0) {
+				warn("internal error copying principal name, "
+				     "not verifying TGT");
+				krb5_kt_end_seq_get(ctx, keytab, &cursor);
+				krb5_kt_close(ctx, keytab);
+				if (host != NULL) {
+					krb5_free_principal(ctx, host);
+				}
+				return PAM_SERVICE_ERR;
+			}
+			score = 1;
+		}
+		/* Even better entry (hopefully a host-based service in the
+		 * client's realm)? */
+		if ((score < 2) &&
+		    (v5_princ_component_count(entry.principal) == 2) &&
+		    krb5_realm_compare(ctx, entry.principal, creds->client)) {
+			if (princ != NULL) {
+				krb5_free_principal(ctx, princ);
+			}
+			i = krb5_copy_principal(ctx, entry.principal, &princ);
+			if (i != 0) {
+				warn("internal error copying principal name, "
+				     "not verifying TGT");
+				krb5_kt_end_seq_get(ctx, keytab, &cursor);
+				krb5_kt_close(ctx, keytab);
+				if (host != NULL) {
+					krb5_free_principal(ctx, host);
+				}
+				return PAM_SERVICE_ERR;
+			}
+			score = 2;
+		}
+		/* Better entry ("host" with what should be a hostname as the
+		 * instance, in the client's realm)? */
+		if ((score < 3) &&
+		    (v5_princ_component_count(entry.principal) == 2) &&
+		    krb5_realm_compare(ctx, entry.principal, creds->client) &&
+		    (v5_princ_component_length(entry.principal, 0) == 4) &&
+		    (memcmp(v5_princ_component_contents(entry.principal, 0),
+		            "host", 4) == 0)) {
+			if (princ != NULL) {
+				krb5_free_principal(ctx, princ);
+			}
+			i = krb5_copy_principal(ctx, entry.principal, &princ);
+			if (i != 0) {
+				warn("internal error copying principal name, "
+				     "not verifying TGT");
+				krb5_kt_end_seq_get(ctx, keytab, &cursor);
+				krb5_kt_close(ctx, keytab);
+				if (host != NULL) {
+					krb5_free_principal(ctx, host);
+				}
+				return PAM_SERVICE_ERR;
+			}
+			score = 3;
+		}
+		/* Better entry (a service with the local hostname as the
+		 * instance, in the client's realm)? */
+		if ((score < 4) &&
+		    (host != NULL) &&
+		    (v5_princ_component_count(entry.principal) == 2) &&
+		    krb5_realm_compare(ctx, entry.principal, creds->client) &&
+		    (v5_princ_component_length(entry.principal, 1) ==
+		     v5_princ_component_length(host, 1)) &&
+		    (memcmp(v5_princ_component_contents(entry.principal, 1),
+			    v5_princ_component_contents(host, 1),
+			    v5_princ_component_length(host, 1)) == 0)) {
+			if (princ != NULL) {
+				krb5_free_principal(ctx, princ);
+			}
+			i = krb5_copy_principal(ctx, entry.principal, &princ);
+			if (i != 0) {
+				warn("internal error copying principal name, "
+				     "not verifying TGT");
+				krb5_kt_end_seq_get(ctx, keytab, &cursor);
+				krb5_kt_close(ctx, keytab);
+				if (host != NULL) {
+					krb5_free_principal(ctx, host);
+				}
+				return PAM_SERVICE_ERR;
+			}
+			score = 4;
+		}
+		/* Favorite entry ("host" with the local hostname as the
+		* instance, in the client's realm)? */
+		if ((score < 5) &&
+		    (host != NULL) &&
+		    (v5_princ_component_count(entry.principal) == 2) &&
+		    krb5_realm_compare(ctx, entry.principal, creds->client) &&
+		    (v5_princ_component_length(entry.principal, 1) ==
+		     v5_princ_component_length(host, 1)) &&
+		    (memcmp(v5_princ_component_contents(entry.principal, 1),
+			    v5_princ_component_contents(host, 1),
+			    v5_princ_component_length(host, 1)) == 0) &&
+		    (v5_princ_component_length(entry.principal, 0) == 4) &&
+		    (memcmp(v5_princ_component_contents(entry.principal, 0),
+			    "host", 4) == 0)) {
+			if (princ != NULL) {
+				krb5_free_principal(ctx, princ);
+			}
+			i = krb5_copy_principal(ctx, entry.principal, &princ);
+			if (i != 0) {
+				warn("internal error copying principal name, "
+				     "not verifying TGT");
+				krb5_kt_end_seq_get(ctx, keytab, &cursor);
+				krb5_kt_close(ctx, keytab);
+				if (host != NULL) {
+					krb5_free_principal(ctx, host);
+				}
+				return PAM_SERVICE_ERR;
+			}
+			score = 5;
 		}
 	}
 
@@ -832,6 +947,9 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 	if (princ == NULL) {
 		warn("no suitable key found in keytab, not verifying TGT");
 		krb5_kt_close(ctx, keytab);
+		if (host != NULL) {
+			krb5_free_principal(ctx, host);
+		}
 		return PAM_SERVICE_ERR;
 	}
 
@@ -844,6 +962,9 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		     "not verifying TGT");
 		krb5_free_principal(ctx, princ);
 		krb5_kt_close(ctx, keytab);
+		if (host != NULL) {
+			krb5_free_principal(ctx, host);
+		}
 		return PAM_SERVICE_ERR;
 	}
 
@@ -852,6 +973,9 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 	i = krb5_verify_init_creds(ctx, creds, princ, keytab, NULL, &opt);
 	krb5_free_principal(ctx, princ);
 	krb5_kt_close(ctx, keytab);
+	if (host != NULL) {
+		krb5_free_principal(ctx, host);
+	}
 
 	/* Log success or failure. */
 	if (i == 0) {

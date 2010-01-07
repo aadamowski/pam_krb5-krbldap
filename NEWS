@@ -1,3 +1,5 @@
+- 2.3.10:* fine-tune the logic for selecting which key we use for validating
+	   credentials
 - 2.3.9: * add a "multiple_ccaches" option to allow forcing the previous
 	   behavior of not deleting an old ccache whenever we create a new
 	   one, but saving them until the call that caused us to create
