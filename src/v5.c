@@ -310,7 +310,7 @@ v5_user_info_subst(krb5_context ctx,
 void
 v5_free_unparsed_name(krb5_context ctx, char *name)
 {
-	krb5_xfree(ctx, name);
+	krb5_xfree(name);
 }
 #elif defined(HAVE_KRB5_FREE_UNPARSED_NAME)
 void
