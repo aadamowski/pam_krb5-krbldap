@@ -396,10 +396,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			result_string.data = NULL;
 			result_code_string.length = 0;
 			result_code_string.data = NULL;
-			i = krb5_change_password(ctx, &stash->v5creds, password,
-						 &result_code,
-						 &result_code_string,
-						 &result_string);
+			i = v5_change_password(ctx, &stash->v5creds, password,
+					       &result_code,
+					       &result_code_string,
+					       &result_string);
 			if ((i == 0) && (result_code == 0)) {
 				notice("password changed for %s",
 				       userinfo->unparsed_name);

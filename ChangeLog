@@ -4,6 +4,7 @@
 	* src/v5.c: add v5_change_password(); make v5_free_unparsed_name()
 	call krb5_xfree(), if it exists, in preference over
 	krb5_free_unparsed_name() or free()
+	* src/password.c: use v5_change_password()
 
 2009-12-11
 	* Makefile.am,configure.ac: relegate use of RPM to the 'archive'
