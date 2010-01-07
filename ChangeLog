@@ -1,3 +1,7 @@
+2009-01-07
+	* configure.in: check for krb5_change_password, krb5_set_password,
+	krb5_xfree
+
 2009-12-11
 	* Makefile.am,configure.ac: relegate use of RPM to the 'archive'
 	target, don't use it in our regular build machinery
