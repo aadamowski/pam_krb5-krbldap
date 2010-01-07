@@ -306,7 +306,13 @@ v5_user_info_subst(krb5_context ctx,
 	return ret;
 }
 
-#ifdef HAVE_KRB5_FREE_UNPARSED_NAME
+#ifdef HAVE_KRB5_XFREE
+void
+v5_free_unparsed_name(krb5_context ctx, char *name)
+{
+	krb5_xfree(ctx, name);
+}
+#elif defined(HAVE_KRB5_FREE_UNPARSED_NAME)
 void
 v5_free_unparsed_name(krb5_context ctx, char *name)
 {
@@ -1546,3 +1552,27 @@ v5_cc_retrieve_match(void)
 #error "Don't know how to search ccaches!"
 #endif
 }
+
+#ifdef HAVE_KRB5_SET_PASSWORD
+int
+v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
+		   int *result_code,
+		   krb5_data *result_code_string,
+		   krb5_data *result_string)
+{
+	return krb5_set_password(ctx, creds, password, creds->client,
+				 result_code,
+				 result_code_string, result_string);
+}
+#else
+int
+v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
+		   int *result_code,
+		   krb5_data *result_code_string,
+		   krb5_data *result_string)
+{
+	return krb5_change_password(ctx, creds, password,
+				    result_code,
+				    result_code_string, result_string);
+}
+#endif

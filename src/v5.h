@@ -136,4 +136,7 @@ char *v5_user_info_subst(krb5_context ctx,
 			 struct _pam_krb5_user_info *userinfo,
 			 struct _pam_krb5_options *options,
 			 const char *template_value);
+int v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
+		       int *result_code, krb5_data *result_code_string,
+		       krb5_data *result_string);
 #endif
