@@ -102,7 +102,8 @@ o multiple_ccaches
   Specifies that pam_krb5 should maintain multiple credential caches for
   the application, which sets credentials and opens a PAM session, but
   sets the KRB5CCNAME variable after doing only one of the two.  This
-  option is usually not necessary for most services.
+  option is usually not necessary for most services, but the option is
+  provided as a workaround.
 o no_user_check
   Go ahead and authenticate users for whom getpwnam() returns no information.
   Credential cache and ticket files will be created and owned by the current
