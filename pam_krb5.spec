@@ -1,12 +1,12 @@
-Summary: A Pluggable Authentication Module for Kerberos 5.
+Summary: A Pluggable Authentication Module for Kerberos 5
 Name: pam_krb5
 Version: 2.3.10
-Release: 1%{?dist}
+Release: 2%{?dist}
 Source0: https://fedorahosted.org/released/pam_krb5/pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
 Group: System Environment/Base
 URL: https://fedorahosted.org/pam_krb5/
-BuildPrereq: keyutils-libs-devel, krb5-devel, pam-devel
+BuildRequires: keyutils-libs-devel, krb5-devel, pam-devel
 BuildRoot: %{_tmppath}/%{name}-root
 
 %description 
@@ -51,6 +51,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Mon Jan 11 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.10-2
+- replace BuildPreReq: with BuildRequires: (rpmlint)
+- fix inadvertent macro use in changelog (rpmlint)
+- drop the final '.' from the package summary (rpmlint)
+
 * Wed Jan  6 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.10-1
 - pull up changes to fine-tune the logic for selecting which key in a keytab
   to use when validating credentials
@@ -68,6 +73,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 - add a "chpw_prompt" option, to allow changing expired passwords while
   authenticating, as a workaround for applications which don't handle
   password expiration the way PAM expects them to (#509092)
+
+* Sat Jul 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.3.7-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
 * Fri Jun 26 2009 Nalin Dahyabhai <nalin@redhat.com> - 2.3.7-1
 - when called to refresh credentials, store the new creds in the default
@@ -564,7 +572,7 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 - rebuild against Kerberos 5 1.2 (release 15)
 
 * Mon Jun  5 2000 Nalin Dahyabhai <nalin@redhat.com>
-- move man pages to %{_mandir}
+- move man pages to %%{_mandir}
 
 * Wed May 17 2000 Nalin Dahyabhai <nalin@redhat.com>
 - Make errors chown()ing ccache files non-fatal if (getuid() != 0), suggested
