@@ -1,13 +1,13 @@
 Summary: A Pluggable Authentication Module for Kerberos 5
 Name: pam_krb5
 Version: 2.3.10
-Release: 2%{?dist}
+Release: 3%{?dist}
 Source0: https://fedorahosted.org/released/pam_krb5/pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
 Group: System Environment/Base
 URL: https://fedorahosted.org/pam_krb5/
 BuildRequires: keyutils-libs-devel, krb5-devel, pam-devel
-BuildRoot: %{_tmppath}/%{name}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description 
 This is pam_krb5, a pluggable authentication module that can be used with
@@ -51,6 +51,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Mon Jan 18 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.10-3
+- tweak buildroot location (guidelines)
+
 * Mon Jan 11 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.10-2
 - replace BuildPreReq: with BuildRequires: (rpmlint)
 - fix inadvertent macro use in changelog (rpmlint)
