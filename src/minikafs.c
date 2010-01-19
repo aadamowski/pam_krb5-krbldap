@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2005,2006,2007,2008,2009 Red Hat, Inc.
+ * Copyright 2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
  * Copyright 2004 Kungliga Tekniska Högskolan
  *
  * Redistribution and use in source and binary forms, with or without
@@ -762,6 +762,11 @@ minikafs_5log_with_principal(krb5_context ctx,
 	} else {
 		etypes = v5_2b_etypes;
 		n_etypes = sizeof(v5_2b_etypes) / sizeof(v5_2b_etypes[0]);
+#ifdef HAVE_KRB5_ALLOW_WEAK_CRYPTO
+		if (krb5_allow_weak_crypto(ctx, TRUE) != 0) { /* XXX */
+			warn("error enabling weak crypto (DES), continuing");
+		}
+#endif
 	}
 
 	if (krb5_cc_get_principal(ctx, ccache, &client) != 0) {
@@ -791,6 +796,22 @@ minikafs_5log_with_principal(krb5_context ctx,
 		mcreds.client = client;
 		mcreds.server = server;
 		if (etypes != NULL) {
+#ifdef HAVE_KRB5_ENCTYPE_ENABLE
+			if (krb5_enctype_enable(ctx, etypes[i]) != 0) {
+				/* Whether or not enctype_to_string
+				 * nul-terminates varies between
+				 * implementations and versions. */
+				memset(etype, '\0', sizeof(etype));
+				if (krb5_enctype_to_string(etypes[i], etype,
+							   sizeof(etype) - 1) != 0) {
+					warn("error enabling enctype %d, "
+					     "continuing", etypes[i]);
+				} else {
+					warn("error enabling enctype %s "
+					     "continuing", etype);
+				}
+			}
+#endif
 			v5_creds_set_etype(ctx, &mcreds, etypes[i]);
 		}
 		if (krb5_cc_retrieve_cred(ctx, ccache, v5_cc_retrieve_match(),

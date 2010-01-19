@@ -1,3 +1,8 @@
+2009-01-19
+	* src/minikafs.c: call krb5_allow_weak_crypto(), if defined, before
+	doing anything with DES.  call krb5_enctype_enable(), if defined,
+	before attempting to get a credential with a specific enctype.
+
 2009-01-07
 	* configure.in: check for krb5_change_password, krb5_set_password,
 	krb5_xfree
