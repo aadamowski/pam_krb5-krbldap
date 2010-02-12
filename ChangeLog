@@ -1,5 +1,9 @@
-2010-01-19
+2010-02-12
 	* src/minikafs.c: crank up debug verbosity (Chris Wing, #157107)
+	* src/kuserok.c(_pam_krb5_kuserok): also set up the user's ccache,
+	in case there's a process on the box that expects the user to have
+	creds before it can look up the location of the user's .k5login file
+	or read from it (possible fix for #563442)
 
 2010-01-19
 	* src/minikafs.c: call krb5_allow_weak_crypto(), if defined, before

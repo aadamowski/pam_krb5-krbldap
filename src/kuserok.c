@@ -1,5 +1,5 @@
 /*
- * Copyright 2008,2009 Red Hat, Inc.
+ * Copyright 2008,2009,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -146,10 +146,16 @@ _pam_krb5_kuserok(krb5_context ctx,
 			}
 			tokens_obtain(ctx, stash, options, userinfo, 1);
 		}
+		/* Set up the user's Kerberos 5 creds, too. If the naming
+		 * services (for example, nss_ldap in sasl mode) or an
+		 * out-of-process filesystem helper (rpc.gssd) needs the user's
+		 * creds, we probably need to provide them. */
+		v5_save_for_user(ctx, stash, user, userinfo, options, NULL);
 		/* Actually check, now that we have a shot at being able to
 		 * read the user's .k5login file. */
 		allowed = krb5_kuserok(ctx, userinfo->principal_name, user);
 		/* Clean up. */
+		v5_destroy(ctx, stash, options);
 		if ((options->ignore_afs == 0) && tokens_useful()) {
 			if (stash->v4present) {
 				v4_destroy(ctx, stash, options);
