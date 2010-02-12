@@ -397,7 +397,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	} while ((ret != 0) && (errno == E2BIG));
 
 	if (ret != 0) {
-		if (options->debug > 1) {
+		if (options->debug) {
 			debug("got error %d (%s) determining file server for "
 			      "\"%s\"", errno, v5_error_message(errno), path);
 		}
@@ -407,7 +407,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 	free(path);
 
 	sin.sin_family = AF_INET;
-	if (options->debug > 1) {
+	if (options->debug) {
 		for (i = 0; (i < n_addresses) && (address[i] != 0); i++) {
 			debug("file server for \"/afs/%s\" is %u.%u.%u.%u",
 			      cell,
@@ -432,7 +432,7 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 		if (getnameinfo((const struct sockaddr*) &sin, sizeof(sin),
 				host, sizeof(host), NULL, 0,
 				NI_NAMEREQD) == 0) {
-			if (options->debug > 1) {
+			if (options->debug) {
 				debug("file server %d.%d.%d.%d has name %s",
 				      (address[i] >>  0) & 0xff,
 				      (address[i] >>  8) & 0xff,
@@ -444,14 +444,14 @@ minikafs_realm_of_cell_with_ctx(krb5_context ctx,
 				strncpy(realm, realms[0], length - 1);
 				realm[length - 1] = '\0';
 				krb5_free_host_realm(use_ctx, realms);
-				if (options->debug > 1) {
+				if (options->debug) {
 					debug("%s is in realm %s", host, realm);
 				}
 				i = 0;
 				break;
 			}
 		} else {
-			if (options->debug > 1) {
+			if (options->debug) {
 				debug("error %d(%s) determining realm for %s",
 				      i, v5_error_message(i), host);
 			}
@@ -983,7 +983,7 @@ minikafs_5log(krb5_context context, krb5_ccache ccache,
 		defaultrealm = NULL;
 	}
 
-	if (options->debug > 1) {
+	if (options->debug) {
 		debug("attempting to determine realm for \"%s\"", cell);
 	}
 	if (minikafs_realm_of_cell_with_ctx(ctx, options, cell,
