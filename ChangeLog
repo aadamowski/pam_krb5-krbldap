@@ -1,5 +1,5 @@
 2010-01-19
-	* src/minikafs.c: crank up debug verbosity (Chris Wing)
+	* src/minikafs.c: crank up debug verbosity (Chris Wing, #157107)
 
 2010-01-19
 	* src/minikafs.c: call krb5_allow_weak_crypto(), if defined, before
