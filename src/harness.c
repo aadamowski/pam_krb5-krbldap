@@ -57,6 +57,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include KRB5_H
+#include "logstdio.h"
+#include "options.h"
+
 #include "xstr.h"
 
 struct linux_pam_handle {
@@ -236,6 +240,7 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		fflush(stdout);
 		if (strcmp(argv[i], "--debug") == 0) {
+			log_options.debug++;
 			continue;
 		}
 		if (strcmp(argv[i], "--toggle-abi") == 0) {
