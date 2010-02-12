@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2006 Red Hat, Inc.
+ * Copyright 2004,2006,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,12 +57,32 @@
 
 struct _pam_krb5_options log_options;
 char *log_progname = "pam_krb5";
+pid_t log_pid = -1;
+
+static void
+maybe_setup_log_pid(void)
+{
+	char *tmp;
+	size_t l;
+	if (log_pid == -1) {
+		log_pid = getpid();
+	}
+	if (log_pid != getpid()) {
+		l = strlen(log_progname) + sizeof(log_pid) * 3;
+		tmp = malloc(l + 3);
+		if (tmp != NULL) {
+			snprintf(tmp, l + 3, "pam_krb5[%ld]", (long) log_pid);
+			log_progname = tmp;
+		}
+	}
+}
 
 void
 debug(const char *fmt, ...)
 {
 	va_list va;
 	char *fmt2;
+	maybe_setup_log_pid();
 	fmt2 = malloc(strlen(fmt) + strlen(log_progname) + strlen(": \n") + 1);
 	if (fmt2 == NULL) {
 		return;
@@ -81,6 +101,7 @@ notice(const char *fmt, ...)
 {
 	va_list va;
 	char *fmt2;
+	maybe_setup_log_pid();
 	fmt2 = malloc(strlen(fmt) + strlen(log_progname) + strlen(": \n") + 1);
 	if (fmt2 == NULL) {
 		return;
@@ -97,6 +118,7 @@ crit(const char *fmt, ...)
 {
 	va_list va;
 	char *fmt2;
+	maybe_setup_log_pid();
 	fmt2 = malloc(strlen(fmt) + strlen(log_progname) + strlen(": \n") + 1);
 	if (fmt2 == NULL) {
 		return;

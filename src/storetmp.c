@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2006,2009 Red Hat, Inc.
+ * Copyright 2004,2006,2009,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -183,7 +183,8 @@ _pam_krb5_storetmp_data(const unsigned char *data, ssize_t data_len,
 		close(inpipe[1]);
 		close(outpipe[0]);
 		for (i = 0; i < sysconf(_SC_OPEN_MAX); i++) {
-			if ((i != inpipe[0]) && (i != outpipe[1])) {
+			if ((i != inpipe[0]) && (i != outpipe[1]) &&
+			    (i != STDERR_FILENO)) {
 				close(i);
 			}
 		}

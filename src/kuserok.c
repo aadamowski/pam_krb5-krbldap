@@ -90,6 +90,8 @@ _pam_krb5_kuserok(krb5_context ctx,
 	pid_t child;
 	struct sigaction saved_sigchld_handler, saved_sigpipe_handler;
 	struct sigaction ignore_handler, default_handler;
+	char envstr[PATH_MAX + 20];
+	const char *ccname;
 
 	if (pipe(outpipe) == -1) {
 		return -1;
@@ -123,7 +125,10 @@ _pam_krb5_kuserok(krb5_context ctx,
 		/* We're the child. */
 		close(outpipe[0]);
 		for (i = 0; i < sysconf(_SC_OPEN_MAX); i++) {
-			if (i != outpipe[1]) {
+			if ((i != outpipe[1]) &&
+			    (i != STDIN_FILENO) &&
+			    (i != STDOUT_FILENO) &&
+			    (i != STDERR_FILENO)) {
 				close(i);
 			}
 		}
@@ -150,12 +155,31 @@ _pam_krb5_kuserok(krb5_context ctx,
 		 * services (for example, nss_ldap in sasl mode) or an
 		 * out-of-process filesystem helper (rpc.gssd) needs the user's
 		 * creds, we probably need to provide them. */
-		v5_save_for_user(ctx, stash, user, userinfo, options, NULL);
+		ccname = NULL;
+		i = v5_save_for_user(ctx, stash, user, userinfo, options,
+				     &ccname);
+		if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
+			if (options->debug) {
+				debug("created v5 ccache '%s' for '%s'",
+				      ccname, user);
+			}
+			sprintf(envstr, "KRB5CCNAME=%s", ccname);
+			putenv(envstr);
+		}
 		/* Actually check, now that we have a shot at being able to
 		 * read the user's .k5login file. */
 		allowed = krb5_kuserok(ctx, userinfo->principal_name, user);
+		if (options->debug) {
+			debug("krb5_kuserok() says %d", allowed);
+		}
 		/* Clean up. */
-		v5_destroy(ctx, stash, options);
+		if (ccname != NULL) {
+			v5_destroy(ctx, stash, options);
+			if (options->debug) {
+				debug("destroyed ccache '%s'",
+				      envstr + strlen("KRB5CCNAME="));
+			}
+		}
 		if ((options->ignore_afs == 0) && tokens_useful()) {
 			if (stash->v4present) {
 				v4_destroy(ctx, stash, options);

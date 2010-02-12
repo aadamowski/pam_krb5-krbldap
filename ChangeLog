@@ -4,6 +4,10 @@
 	in case there's a process on the box that expects the user to have
 	creds before it can look up the location of the user's .k5login file
 	or read from it (possible fix for #563442)
+	* src/harness.c: fix --debug
+	* src/kuserok.c,src/storetmp.c: don't close stdio on our helpers if
+	we don't need to
+	* src/logstdio.c: make it clear when a subprocess is debug logging
 
 2010-01-19
 	* src/minikafs.c: call krb5_allow_weak_crypto(), if defined, before
