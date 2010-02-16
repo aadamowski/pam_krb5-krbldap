@@ -1559,8 +1559,7 @@ static int
 encode_data(char *buffer, krb5_data *data)
 {
 	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, data->length);
-	encode_variable(encode_bytes, buffer, data->data, data->length);
+	encode_opaque(encode_bytes, buffer, data->data, data->length);
 	return total;
 }
 static int
@@ -1570,8 +1569,7 @@ encode_string(char *buffer, const char *string, ssize_t length)
 	if (length == -1) {
 		length = strlen(string);
 	}
-	encode_fixed(encode_int32, buffer, length);
-	encode_variable(encode_bytes, buffer, string, length);
+	encode_opaque(encode_bytes, buffer, string, length);
 	return total;
 }
 static int
@@ -1579,9 +1577,8 @@ encode_creds_keyblock(char *buffer, krb5_creds *creds)
 {
 	int32_t total = 0;
 	encode_fixed(encode_int32, buffer, v5_creds_get_etype(creds));
-	encode_fixed(encode_int32, buffer, v5_creds_key_length(creds));
-	encode_variable(encode_ubytes, buffer, v5_creds_key_contents(creds),
-			v5_creds_key_length(creds));
+	encode_opaque(encode_ubytes, buffer, v5_creds_key_contents(creds),
+		      v5_creds_key_length(creds));
 	return total;
 }
 static int
@@ -1591,16 +1588,13 @@ encode_principal(char *buffer, krb5_principal princ)
 	int i;
 	encode_fixed(encode_int32, buffer, v5_princ_component_count(princ));
 	for (i = 0; i < v5_princ_component_count(princ); i++) {
-		encode_fixed(encode_int32, buffer,
-			     v5_princ_component_length(princ, i));
-		encode_variable(encode_bytes, buffer,
-				v5_princ_component_contents(princ, i),
-				v5_princ_component_length(princ, i));
+		encode_opaque(encode_bytes, buffer,
+			      v5_princ_component_contents(princ, i),
+			      v5_princ_component_length(princ, i));
 	}
-	encode_fixed(encode_int32, buffer, v5_princ_realm_length(princ));
-	encode_variable(encode_bytes, buffer,
-			v5_princ_realm_contents(princ),
-			v5_princ_realm_length(princ));
+	encode_opaque(encode_bytes, buffer,
+		      v5_princ_realm_contents(princ),
+		      v5_princ_realm_length(princ));
 	return total;
 }
 static int
@@ -1610,9 +1604,8 @@ encode_token_rxkad(char *buffer, krb5_creds *creds, int32_t viceid)
 
 	encode_fixed(encode_int32, buffer, viceid);
 	encode_fixed(encode_int32, buffer, 0x100 - 0x2b);
-	encode_fixed(encode_int32, buffer, v5_creds_key_length(creds));
-	encode_variable(encode_ubytes, buffer, v5_creds_key_contents(creds),
-			v5_creds_key_length(creds));
+	encode_opaque(encode_ubytes, buffer, v5_creds_key_contents(creds),
+		      v5_creds_key_length(creds));
 	encode_fixed(encode_int32, buffer, creds->times.starttime);
 	encode_fixed(encode_int32, buffer, creds->times.endtime);
 	encode_fixed(encode_boolean, buffer, 0);
@@ -1639,11 +1632,9 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 	for (i = 0; i < v5_creds_address_count(creds); i++) {
 		encode_fixed(encode_int32, buffer,
 			     v5_creds_address_type(creds, i));
-		encode_fixed(encode_int32, buffer,
-			     v5_creds_address_length(creds, i));
-		encode_variable(encode_ubytes, buffer,
-				v5_creds_address_contents(creds, i),
-				v5_creds_address_length(creds, i));
+		encode_opaque(encode_ubytes, buffer,
+			      v5_creds_address_contents(creds, i),
+			      v5_creds_address_length(creds, i));
 	}
 
 	encode_fixed(encode_data, buffer, &creds->ticket);
@@ -1653,11 +1644,9 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 	for (i = 0; i < v5_creds_authdata_count(creds); i++) {
 		encode_fixed(encode_int32, buffer,
 			     v5_creds_authdata_type(creds, i));
-		encode_fixed(encode_int32, buffer,
-			     v5_creds_authdata_length(creds, i));
-		encode_variable(encode_ubytes, buffer,
-				v5_creds_authdata_contents(creds, i),
-				v5_creds_authdata_length(creds, i));
+		encode_opaque(encode_ubytes, buffer,
+			      v5_creds_authdata_contents(creds, i),
+			      v5_creds_authdata_length(creds, i));
 	}
 	return total;
 }
