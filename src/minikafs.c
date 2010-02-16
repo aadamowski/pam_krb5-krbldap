@@ -1633,17 +1633,21 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 	}
 	return total;
 }
-#define SOLITON_NONE  0
-#define SOLITON_RXKAD 2
-#define SOLITON_RXGK  4
-#define SOLITON_RXK5  5
+#define AFSTOKEN_UNION_NOAUTH	0
+#define AFSTOKEN_UNION_NONE	AFSTOKEN_UNION_NOAUTH
+#define AFSTOKEN_UNION_KAD	2
+#define AFSTOKEN_UNION_RXKAD	AFSTOKEN_UNION_KAD
+#define AFSTOKEN_UNION_RXGK	4
+#define AFSTOKEN_UNION_GK	AFSTOKEN_UNION_RXGK
+#define AFSTOKEN_UNION_RXK5	5
+#define AFSTOKEN_UNION_K5	AFSTOKEN_UNION_RXK5
 static int
-encode_soliton(char *buffer, krb5_creds *creds, int soliton_type)
+encode_token_union(char *buffer, krb5_creds *creds, int token_union_type)
 {
 	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, soliton_type);
-	switch (soliton_type) {
-	case SOLITON_RXK5:
+	encode_fixed(encode_int32, buffer, token_union_type);
+	switch (token_union_type) {
+	case AFSTOKEN_UNION_RXK5:
 		encode_fixed(encode_token_rxk5, buffer, creds);
 		break;
 	default:
@@ -1657,15 +1661,15 @@ static int
 minikafs_5settoken2(const char *cell, krb5_creds *creds)
 {
 	struct minikafs_ioblock iob;
-	int i, bufsize, soliton_size;
+	int i, bufsize, token_union_size;
 	char *buffer, *bufptr;
 
-	soliton_size = encode_soliton(NULL, creds, SOLITON_RXK5);
+	token_union_size = encode_token_union(NULL, creds, AFSTOKEN_UNION_K5);
 	bufsize = encode_int32(NULL, 0) +
 		  encode_string(NULL, cell, -1) +
 		  encode_int32(NULL, 1) +
-		  encode_int32(NULL, soliton_size) +
-		  soliton_size;
+		  encode_int32(NULL, token_union_size) +
+		  token_union_size;
 	buffer = malloc(bufsize);
 	i = -1;
 	if (buffer != NULL) {
@@ -1673,8 +1677,8 @@ minikafs_5settoken2(const char *cell, krb5_creds *creds)
 		bufptr += encode_int32(bufptr, 0); /* flags */
 		bufptr += encode_string(bufptr, cell, -1); /* cell */
 		bufptr += encode_int32(bufptr, 1); /* number of tokens */
-		bufptr += encode_int32(bufptr, soliton_size); /* size of tok */
-		bufptr += encode_soliton(bufptr, creds, SOLITON_RXK5); /* tok */
+		bufptr += encode_int32(bufptr, token_union_size); /* size of token */
+		bufptr += encode_token_union(bufptr, creds, AFSTOKEN_UNION_K5); /* token */
 		iob.in = buffer;
 		iob.insize = bufptr - buffer;
 		iob.out = NULL;
