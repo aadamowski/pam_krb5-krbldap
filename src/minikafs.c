@@ -1657,6 +1657,8 @@ encode_token_union(char *buffer, krb5_creds *creds, int token_union_type)
 }
 
 /* Stuff a ticket and keyblock into the kernel. */
+#define AFSTOKEN_EX_SETPAG	0x00000001 /* not supported */
+#define AFSTOKEN_EX_ADD		0x00000002
 static int
 minikafs_5settoken2(const char *cell, krb5_creds *creds)
 {
@@ -1674,7 +1676,7 @@ minikafs_5settoken2(const char *cell, krb5_creds *creds)
 	i = -1;
 	if (buffer != NULL) {
 		bufptr = buffer;
-		bufptr += encode_int32(bufptr, 0); /* flags */
+		bufptr += encode_int32(bufptr, 0); /* flags - AFSTOKEN_EX_... */
 		bufptr += encode_string(bufptr, cell, -1); /* cell */
 		bufptr += encode_int32(bufptr, 1); /* number of tokens */
 		bufptr += encode_int32(bufptr, token_union_size); /* size of token */
