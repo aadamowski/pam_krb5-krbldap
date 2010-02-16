@@ -170,7 +170,7 @@ enum minikafs_pioctl_fn {
 };
 
 /* Forward declarations. */
-static int minikafs_5settoken2(const char *cell, krb5_creds *creds);
+static int minikafs_5settoken2(const char *cell, krb5_creds *creds, int32_t id);
 
 /* Call AFS using an ioctl. Might not port to your system. */
 static int
@@ -817,7 +817,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 		if (krb5_cc_retrieve_cred(ctx, ccache, v5_cc_retrieve_match(),
 					  &mcreds, &creds) == 0) {
 			if (use_rxk5 &&
-			    (minikafs_5settoken2(cell, &creds) == 0)) {
+			    (minikafs_5settoken2(cell, &creds, uid) == 0)) {
 				krb5_free_cred_contents(ctx, &creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
@@ -858,7 +858,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 					   &mcreds, &new_creds);
 		if (tmp == 0) {
 			if (use_rxk5 &&
-			    (minikafs_5settoken2(cell, new_creds) == 0)) {
+			    (minikafs_5settoken2(cell, new_creds, uid) == 0)) {
 				krb5_free_creds(ctx, new_creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
@@ -1534,6 +1534,15 @@ encode_ubytes(char *buffer, const unsigned char *bytes, int32_t num)
 		} \
 		total += _length; \
 	}
+#define encode_fixed_with_arg(_op, _buffer, _item, _size) \
+	{ \
+		int _length; \
+		_length = _op(_buffer, _item, _size); \
+		if (_buffer) { \
+			_buffer += _length; \
+		} \
+		total += _length; \
+	}
 #define encode_variable(_op, _buffer, _item, _size) \
 	{ \
 		int _length; \
@@ -1543,6 +1552,9 @@ encode_ubytes(char *buffer, const unsigned char *bytes, int32_t num)
 		} \
 		total += _length; \
 	}
+#define encode_opaque(_op, _buffer, _item, _size) \
+	encode_fixed(encode_int32, _buffer, _size) \
+	encode_variable(_op, _buffer, _item, _size)
 static int
 encode_data(char *buffer, krb5_data *data)
 {
@@ -1589,6 +1601,22 @@ encode_principal(char *buffer, krb5_principal princ)
 	encode_variable(encode_bytes, buffer,
 			v5_princ_realm_contents(princ),
 			v5_princ_realm_length(princ));
+	return total;
+}
+static int
+encode_token_rxkad(char *buffer, krb5_creds *creds, int32_t viceid)
+{
+	int32_t total = 0;
+
+	encode_fixed(encode_int32, buffer, viceid);
+	encode_fixed(encode_int32, buffer, 0x100 - 0x2b);
+	encode_fixed(encode_int32, buffer, v5_creds_key_length(creds));
+	encode_variable(encode_ubytes, buffer, v5_creds_key_contents(creds),
+			v5_creds_key_length(creds));
+	encode_fixed(encode_int32, buffer, creds->times.starttime);
+	encode_fixed(encode_int32, buffer, creds->times.endtime);
+	encode_fixed(encode_boolean, buffer, 0);
+	encode_fixed(encode_data, buffer, &creds->ticket);
 	return total;
 }
 static int
@@ -1642,11 +1670,15 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 #define AFSTOKEN_UNION_RXK5	5
 #define AFSTOKEN_UNION_K5	AFSTOKEN_UNION_RXK5
 static int
-encode_token_union(char *buffer, krb5_creds *creds, int token_union_type)
+encode_token_union(char *buffer, krb5_creds *creds, int token_union_type,
+		   int32_t uid)
 {
 	int32_t total = 0;
 	encode_fixed(encode_int32, buffer, token_union_type);
 	switch (token_union_type) {
+	case AFSTOKEN_UNION_RXKAD:
+		encode_fixed_with_arg(encode_token_rxkad, buffer, creds, uid);
+		break;
 	case AFSTOKEN_UNION_RXK5:
 		encode_fixed(encode_token_rxk5, buffer, creds);
 		break;
@@ -1660,13 +1692,14 @@ encode_token_union(char *buffer, krb5_creds *creds, int token_union_type)
 #define AFSTOKEN_EX_SETPAG	0x00000001 /* not supported */
 #define AFSTOKEN_EX_ADD		0x00000002
 static int
-minikafs_5settoken2(const char *cell, krb5_creds *creds)
+minikafs_5settoken2(const char *cell, krb5_creds *creds, int32_t uid)
 {
 	struct minikafs_ioblock iob;
 	int i, bufsize, token_union_size;
 	char *buffer, *bufptr;
 
-	token_union_size = encode_token_union(NULL, creds, AFSTOKEN_UNION_K5);
+	token_union_size = encode_token_union(NULL, creds, AFSTOKEN_UNION_K5,
+					      uid);
 	bufsize = encode_int32(NULL, 0) +
 		  encode_string(NULL, cell, -1) +
 		  encode_int32(NULL, 1) +
@@ -1680,7 +1713,8 @@ minikafs_5settoken2(const char *cell, krb5_creds *creds)
 		bufptr += encode_string(bufptr, cell, -1); /* cell */
 		bufptr += encode_int32(bufptr, 1); /* number of tokens */
 		bufptr += encode_int32(bufptr, token_union_size); /* size of token */
-		bufptr += encode_token_union(bufptr, creds, AFSTOKEN_UNION_K5); /* token */
+		bufptr += encode_token_union(bufptr, creds, AFSTOKEN_UNION_K5,
+					     uid); /* token */
 		iob.in = buffer;
 		iob.insize = bufptr - buffer;
 		iob.out = NULL;
