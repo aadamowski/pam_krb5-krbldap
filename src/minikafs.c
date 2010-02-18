@@ -170,7 +170,7 @@ enum minikafs_pioctl_fn {
 };
 
 /* Forward declarations. */
-static int minikafs_5settoken2(const char *cell, krb5_creds *creds);
+static int minikafs_5settoken2(const char *cell, krb5_creds *creds, int32_t id);
 
 /* Call AFS using an ioctl. Might not port to your system. */
 static int
@@ -817,7 +817,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 		if (krb5_cc_retrieve_cred(ctx, ccache, v5_cc_retrieve_match(),
 					  &mcreds, &creds) == 0) {
 			if (use_rxk5 &&
-			    (minikafs_5settoken2(cell, &creds) == 0)) {
+			    (minikafs_5settoken2(cell, &creds, uid) == 0)) {
 				krb5_free_cred_contents(ctx, &creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
@@ -858,7 +858,7 @@ minikafs_5log_with_principal(krb5_context ctx,
 					   &mcreds, &new_creds);
 		if (tmp == 0) {
 			if (use_rxk5 &&
-			    (minikafs_5settoken2(cell, new_creds) == 0)) {
+			    (minikafs_5settoken2(cell, new_creds, uid) == 0)) {
 				krb5_free_creds(ctx, new_creds);
 				v5_free_unparsed_name(ctx, unparsed_client);
 				krb5_free_principal(ctx, client);
@@ -1534,6 +1534,15 @@ encode_ubytes(char *buffer, const unsigned char *bytes, int32_t num)
 		} \
 		total += _length; \
 	}
+#define encode_fixed_with_arg(_op, _buffer, _item, _size) \
+	{ \
+		int _length; \
+		_length = _op(_buffer, _item, _size); \
+		if (_buffer) { \
+			_buffer += _length; \
+		} \
+		total += _length; \
+	}
 #define encode_variable(_op, _buffer, _item, _size) \
 	{ \
 		int _length; \
@@ -1543,12 +1552,14 @@ encode_ubytes(char *buffer, const unsigned char *bytes, int32_t num)
 		} \
 		total += _length; \
 	}
+#define encode_opaque(_op, _buffer, _item, _size) \
+	encode_fixed(encode_int32, _buffer, _size) \
+	encode_variable(_op, _buffer, _item, _size)
 static int
 encode_data(char *buffer, krb5_data *data)
 {
 	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, data->length);
-	encode_variable(encode_bytes, buffer, data->data, data->length);
+	encode_opaque(encode_bytes, buffer, data->data, data->length);
 	return total;
 }
 static int
@@ -1558,8 +1569,7 @@ encode_string(char *buffer, const char *string, ssize_t length)
 	if (length == -1) {
 		length = strlen(string);
 	}
-	encode_fixed(encode_int32, buffer, length);
-	encode_variable(encode_bytes, buffer, string, length);
+	encode_opaque(encode_bytes, buffer, string, length);
 	return total;
 }
 static int
@@ -1567,9 +1577,8 @@ encode_creds_keyblock(char *buffer, krb5_creds *creds)
 {
 	int32_t total = 0;
 	encode_fixed(encode_int32, buffer, v5_creds_get_etype(creds));
-	encode_fixed(encode_int32, buffer, v5_creds_key_length(creds));
-	encode_variable(encode_ubytes, buffer, v5_creds_key_contents(creds),
-			v5_creds_key_length(creds));
+	encode_opaque(encode_ubytes, buffer, v5_creds_key_contents(creds),
+		      v5_creds_key_length(creds));
 	return total;
 }
 static int
@@ -1579,16 +1588,28 @@ encode_principal(char *buffer, krb5_principal princ)
 	int i;
 	encode_fixed(encode_int32, buffer, v5_princ_component_count(princ));
 	for (i = 0; i < v5_princ_component_count(princ); i++) {
-		encode_fixed(encode_int32, buffer,
-			     v5_princ_component_length(princ, i));
-		encode_variable(encode_bytes, buffer,
-				v5_princ_component_contents(princ, i),
-				v5_princ_component_length(princ, i));
+		encode_opaque(encode_bytes, buffer,
+			      v5_princ_component_contents(princ, i),
+			      v5_princ_component_length(princ, i));
 	}
-	encode_fixed(encode_int32, buffer, v5_princ_realm_length(princ));
-	encode_variable(encode_bytes, buffer,
-			v5_princ_realm_contents(princ),
-			v5_princ_realm_length(princ));
+	encode_opaque(encode_bytes, buffer,
+		      v5_princ_realm_contents(princ),
+		      v5_princ_realm_length(princ));
+	return total;
+}
+static int
+encode_token_rxkad(char *buffer, krb5_creds *creds, int32_t viceid)
+{
+	int32_t total = 0;
+
+	encode_fixed(encode_int32, buffer, viceid);
+	encode_fixed(encode_int32, buffer, 0x100 - 0x2b);
+	encode_opaque(encode_ubytes, buffer, v5_creds_key_contents(creds),
+		      v5_creds_key_length(creds));
+	encode_fixed(encode_int32, buffer, creds->times.starttime);
+	encode_fixed(encode_int32, buffer, creds->times.endtime);
+	encode_fixed(encode_boolean, buffer, 0);
+	encode_fixed(encode_data, buffer, &creds->ticket);
 	return total;
 }
 static int
@@ -1611,11 +1632,9 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 	for (i = 0; i < v5_creds_address_count(creds); i++) {
 		encode_fixed(encode_int32, buffer,
 			     v5_creds_address_type(creds, i));
-		encode_fixed(encode_int32, buffer,
-			     v5_creds_address_length(creds, i));
-		encode_variable(encode_ubytes, buffer,
-				v5_creds_address_contents(creds, i),
-				v5_creds_address_length(creds, i));
+		encode_opaque(encode_ubytes, buffer,
+			      v5_creds_address_contents(creds, i),
+			      v5_creds_address_length(creds, i));
 	}
 
 	encode_fixed(encode_data, buffer, &creds->ticket);
@@ -1625,25 +1644,31 @@ encode_token_rxk5(char *buffer, krb5_creds *creds)
 	for (i = 0; i < v5_creds_authdata_count(creds); i++) {
 		encode_fixed(encode_int32, buffer,
 			     v5_creds_authdata_type(creds, i));
-		encode_fixed(encode_int32, buffer,
-			     v5_creds_authdata_length(creds, i));
-		encode_variable(encode_ubytes, buffer,
-				v5_creds_authdata_contents(creds, i),
-				v5_creds_authdata_length(creds, i));
+		encode_opaque(encode_ubytes, buffer,
+			      v5_creds_authdata_contents(creds, i),
+			      v5_creds_authdata_length(creds, i));
 	}
 	return total;
 }
-#define SOLITON_NONE  0
-#define SOLITON_RXKAD 2
-#define SOLITON_RXGK  4
-#define SOLITON_RXK5  5
+#define AFSTOKEN_UNION_NOAUTH	0
+#define AFSTOKEN_UNION_NONE	AFSTOKEN_UNION_NOAUTH
+#define AFSTOKEN_UNION_KAD	2
+#define AFSTOKEN_UNION_RXKAD	AFSTOKEN_UNION_KAD
+#define AFSTOKEN_UNION_RXGK	4
+#define AFSTOKEN_UNION_GK	AFSTOKEN_UNION_RXGK
+#define AFSTOKEN_UNION_RXK5	5
+#define AFSTOKEN_UNION_K5	AFSTOKEN_UNION_RXK5
 static int
-encode_soliton(char *buffer, krb5_creds *creds, int soliton_type)
+encode_token_union(char *buffer, krb5_creds *creds, int token_union_type,
+		   int32_t uid)
 {
 	int32_t total = 0;
-	encode_fixed(encode_int32, buffer, soliton_type);
-	switch (soliton_type) {
-	case SOLITON_RXK5:
+	encode_fixed(encode_int32, buffer, token_union_type);
+	switch (token_union_type) {
+	case AFSTOKEN_UNION_RXKAD:
+		encode_fixed_with_arg(encode_token_rxkad, buffer, creds, uid);
+		break;
+	case AFSTOKEN_UNION_RXK5:
 		encode_fixed(encode_token_rxk5, buffer, creds);
 		break;
 	default:
@@ -1653,28 +1678,32 @@ encode_soliton(char *buffer, krb5_creds *creds, int soliton_type)
 }
 
 /* Stuff a ticket and keyblock into the kernel. */
+#define AFSTOKEN_EX_SETPAG	0x00000001 /* not supported */
+#define AFSTOKEN_EX_ADD		0x00000002
 static int
-minikafs_5settoken2(const char *cell, krb5_creds *creds)
+minikafs_5settoken2(const char *cell, krb5_creds *creds, int32_t uid)
 {
 	struct minikafs_ioblock iob;
-	int i, bufsize, soliton_size;
+	int i, bufsize, token_union_size;
 	char *buffer, *bufptr;
 
-	soliton_size = encode_soliton(NULL, creds, SOLITON_RXK5);
+	token_union_size = encode_token_union(NULL, creds, AFSTOKEN_UNION_K5,
+					      uid);
 	bufsize = encode_int32(NULL, 0) +
 		  encode_string(NULL, cell, -1) +
 		  encode_int32(NULL, 1) +
-		  encode_int32(NULL, soliton_size) +
-		  soliton_size;
+		  encode_int32(NULL, token_union_size) +
+		  token_union_size;
 	buffer = malloc(bufsize);
 	i = -1;
 	if (buffer != NULL) {
 		bufptr = buffer;
-		bufptr += encode_int32(bufptr, 0); /* flags */
+		bufptr += encode_int32(bufptr, 0); /* flags - AFSTOKEN_EX_... */
 		bufptr += encode_string(bufptr, cell, -1); /* cell */
 		bufptr += encode_int32(bufptr, 1); /* number of tokens */
-		bufptr += encode_int32(bufptr, soliton_size); /* size of tok */
-		bufptr += encode_soliton(bufptr, creds, SOLITON_RXK5); /* tok */
+		bufptr += encode_int32(bufptr, token_union_size); /* size of token */
+		bufptr += encode_token_union(bufptr, creds, AFSTOKEN_UNION_K5,
+					     uid); /* token */
 		iob.in = buffer;
 		iob.insize = bufptr - buffer;
 		iob.out = NULL;
