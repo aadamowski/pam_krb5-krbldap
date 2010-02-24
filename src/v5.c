@@ -1630,7 +1630,7 @@ v5_enctype_to_string(krb5_context ctx, krb5_enctype enctype,
 	return krb5_enctype_to_string(enctype, buf, length);
 #else
 	int i;
-	char **tmp;
+	char *tmp;
 	tmp = NULL;
 	i = krb5_enctype_to_string(ctx, enctype, &tmp);
 	if (tmp != NULL) {
