@@ -798,12 +798,13 @@ minikafs_5log_with_principal(krb5_context ctx,
 		if (etypes != NULL) {
 #ifdef HAVE_KRB5_ENCTYPE_ENABLE
 			if (krb5_enctype_enable(ctx, etypes[i]) != 0) {
+				char etype[32];
 				/* Whether or not enctype_to_string
 				 * nul-terminates varies between
 				 * implementations and versions. */
 				memset(etype, '\0', sizeof(etype));
-				if (krb5_enctype_to_string(etypes[i], etype,
-							   sizeof(etype) - 1) != 0) {
+				if (v5_enctype_to_string(ctx, etypes[i], etype,
+							 sizeof(etype) - 1) != 0) {
 					warn("error enabling enctype %d, "
 					     "continuing", etypes[i]);
 				} else {

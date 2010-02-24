@@ -195,7 +195,7 @@ fi
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_enctype_to_string krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
@@ -269,6 +269,15 @@ if test x$ac_cv_func_krb5_get_init_creds_opt_set_pkinit = xyes ; then
 									     NULL);]),
 	[AC_DEFINE(KRB5_GET_INIT_CREDS_OPT_SET_PKINIT_TAKES_11_ARGS,1,
 		   [Define if krb5_get_init_creds_opt_set_pkinit() takes 11 arguments.])
+	 AC_MSG_RESULT([yes])],
+	AC_MSG_RESULT([no]))
+fi
+if test x$ac_cv_func_krb5_enctype_to_string = xyes ; then
+	AC_MSG_CHECKING([if krb5_enctype_to_string() takes 4 arguments])
+	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <krb5.h>],[
+					  krb5_enctype_to_string(NULL, 0, NULL, 0);]),
+	[AC_DEFINE(KRB5_ENCTYPE_TO_STRING_TAKES_4_ARGS,1,
+		   [Define if krb5_enctype_to_string() takes 4 arguments.])
 	 AC_MSG_RESULT([yes])],
 	AC_MSG_RESULT([no]))
 fi

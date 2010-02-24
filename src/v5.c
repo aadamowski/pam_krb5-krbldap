@@ -1621,3 +1621,14 @@ v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
 				    result_code_string, result_string);
 }
 #endif
+
+int
+v5_enctype_to_string(krb5_context ctx, krb5_enctype enctype,
+		     char *buf, size_t length)
+{
+#ifdef KRB5_ENCTYPE_TO_STRING_TAKES_4_ARGS
+	return krb5_enctype_to_string(ctx, enctype, buf, length);
+#else
+	return krb5_enctype_to_string(enctype, buf, length);
+#endif
+}

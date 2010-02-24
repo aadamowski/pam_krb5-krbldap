@@ -4,6 +4,7 @@
 	(v5_ticket_get_client), and a wrapper for the set-user-to-user-key
 	function (v5_auth_con_setuserkey).
 	* src/uuauth.c: use the just-introduced abstractions
+	* src/v5.c,v5.h: add wrapper function for krb5_enctype_to_string()
 
 2010-02-12
 	* src/minikafs.c: crank up debug verbosity (Chris Wing, #157107)
