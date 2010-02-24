@@ -1,3 +1,9 @@
+2010-02-24
+	* src/v5.c,v5.h: add wrapper functions for reading a cred keyblock as
+	a keyblock (v5_creds_get_key) and a ticket's client
+	(v5_ticket_get_client), and a wrapper for the set-user-to-user-key
+	function (v5_auth_con_setuserkey).
+
 2010-02-12
 	* src/minikafs.c: crank up debug verbosity (Chris Wing, #157107)
 	* src/kuserok.c(_pam_krb5_kuserok): also set up the user's ccache,

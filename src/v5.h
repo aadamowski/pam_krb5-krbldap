@@ -82,6 +82,12 @@ int v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds);
 int v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds);
 int v5_creds_get_etype(krb5_creds *creds);
 void v5_creds_set_etype(krb5_context ctx, krb5_creds *creds, int etype);
+krb5_keyblock *v5_creds_get_key(krb5_creds *creds);
+
+krb5_principal v5_ticket_get_client(krb5_ticket *ticket);
+krb5_error_code v5_auth_con_setuserkey(krb5_context ctx,
+				       krb5_auth_context auth_con,
+				       krb5_keyblock *key);
 
 void v5_free_unparsed_name(krb5_context ctx, char *name);
 void v5_free_default_realm(krb5_context ctx, char *realm);

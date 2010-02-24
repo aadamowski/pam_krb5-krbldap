@@ -432,7 +432,8 @@ v5_princ_realm_contents(krb5_principal princ)
 
 /* Compare everything except the realms. */
 static int
-v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
+v5_principal_compare_no_realm(krb5_context ctx, krb5_principal princ,
+			      const char *name)
 {
 	int i;
 	krb5_principal temp;
@@ -461,6 +462,11 @@ v5_principal_compare(krb5_context ctx, krb5_principal princ, const char *name)
 }
 
 #if defined(HAVE_KRB5_CREDS_KEYBLOCK) && defined(HAVE_KRB5_KEYBLOCK_ENCTYPE) && defined(HAVE_KRB5_KEYBLOCK_LENGTH) && defined(HAVE_KRB5_KEYBLOCK_CONTENTS)
+krb5_keyblock *
+v5_creds_get_key(krb5_creds *creds)
+{
+	return &creds->keyblock;
+}
 int
 v5_creds_get_etype(krb5_creds *creds)
 {
@@ -487,8 +493,8 @@ v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds)
 	        (creds->keyblock.length > 0) &&
 	        (creds->ticket.length > 0) &&
 		(creds->server->length >= 2) &&
-		(v5_principal_compare(ctx, creds->server,
-				      PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
+		(v5_principal_compare_no_realm(ctx, creds->server,
+					       PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
 }
 int
 v5_creds_key_length(krb5_creds *creds)
@@ -501,6 +507,11 @@ v5_creds_key_contents(krb5_creds *creds)
 	return creds->keyblock.contents;
 }
 #elif defined(HAVE_KRB5_CREDS_SESSION) && defined(HAVE_KRB5_KEYBLOCK_KEYTYPE) && defined(HAVE_KRB5_KEYBLOCK_KEYVALUE)
+krb5_keyblock *
+v5_creds_get_key(krb5_creds *creds)
+{
+	return &creds->session;
+}
 int
 v5_creds_get_etype(krb5_creds *creds)
 {
@@ -520,8 +531,8 @@ int
 v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds)
 {
 	return ((creds->session.keyvalue.length > 0) &&
-		(v5_principal_compare(ctx, creds->server,
-				      PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
+		(v5_principal_compare_no_realm(ctx, creds->server,
+					       PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
 }
 int
 v5_creds_key_length(krb5_creds *creds)
@@ -669,6 +680,40 @@ v5_creds_get_flags(krb5_creds *creds)
 }
 #else
 #error "Don't know how to read ticket flags for your Kerberos implementation!"
+#endif
+
+#if defined(HAVE_KRB5_AUTH_CON_SETUSERUSERKEY)
+krb5_error_code
+v5_auth_con_setuserkey(krb5_context ctx, krb5_auth_context auth_con,
+		       krb5_keyblock *key)
+{
+	return krb5_auth_con_setuseruserkey(ctx, auth_con, key);
+}
+#elif defined(HAVE_KRB5_AUTH_CON_SETUSERKEY)
+krb5_error_code
+v5_auth_con_setuserkey(krb5_context ctx, krb5_auth_context auth_con,
+		       krb5_keyblock *key)
+{
+	return krb5_auth_con_setuserkey(ctx, auth_con, key);
+}
+#else
+#error "Don't know how to set user-to-user key for your Kerberos implementation!"
+#endif
+
+#if defined(HAVE_KRB5_TICKET_ENC_PART2__CLIENT)
+krb5_principal
+v5_ticket_get_client(krb5_ticket *ticket)
+{
+	return ticket->enc_part2->client;
+}
+#elif defined(HAVE_KRB5_TICKET_CLIENT)
+krb5_principal
+v5_ticket_get_client(krb5_ticket *ticket)
+{
+	return ticket->client;
+}
+#else
+#error "Don't know how to read ticket client for your Kerberos implementation!"
 #endif
 
 #ifdef HAVE_KRB5_CONST_REALM

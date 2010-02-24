@@ -195,7 +195,7 @@ fi
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
@@ -324,6 +324,8 @@ AC_CHECK_MEMBERS(krb5_principal_data.realm.length,,,[$headers])
 AC_CHECK_MEMBERS(krb5_principal_data.name.name_string.len,,,[$headers])
 AC_CHECK_MEMBERS(krb5_principal_data.name.name_string.val,,,[$headers])
 AC_CHECK_MEMBERS(krb5_principal_data.realm,,,[$headers])
+AC_CHECK_MEMBERS(krb5_ticket.client,,,[$headers])
+AC_CHECK_MEMBERS([krb5_ticket.enc_part2->client],,,[$headers])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
