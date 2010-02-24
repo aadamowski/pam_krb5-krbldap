@@ -48,6 +48,13 @@
 #endif
 
 #include KRB5_H
+#ifdef USE_KRB4
+#include KRB4_DES_H
+#include KRB4_KRB_H
+#ifdef KRB4_KRB_ERR_H
+#include KRB4_KRB_ERR_H
+#endif
+#endif
 
 #ifndef HAVE_ERROR_MESSAGE_DECL
 #ifdef HAVE_COM_ERR_H
