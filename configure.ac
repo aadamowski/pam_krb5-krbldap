@@ -273,11 +273,12 @@ if test x$ac_cv_func_krb5_get_init_creds_opt_set_pkinit = xyes ; then
 	AC_MSG_RESULT([no]))
 fi
 if test x$ac_cv_func_krb5_enctype_to_string = xyes ; then
-	AC_MSG_CHECKING([if krb5_enctype_to_string() takes 4 arguments])
+	AC_MSG_CHECKING([if krb5_enctype_to_string() takes a size third])
 	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <krb5.h>],[
-					  krb5_enctype_to_string(NULL, 0, NULL, 0);]),
-	[AC_DEFINE(KRB5_ENCTYPE_TO_STRING_TAKES_4_ARGS,1,
-		   [Define if krb5_enctype_to_string() takes 4 arguments.])
+					  char __buf;
+					  krb5_enctype_to_string(0, &__buf, sizeof(__buf));]),
+	[AC_DEFINE(KRB5_ENCTYPE_TO_STRING_TAKES_A_SIZE_THIRD,1,
+		   [Define if krb5_enctype_to_string() takes a size third.])
 	 AC_MSG_RESULT([yes])],
 	AC_MSG_RESULT([no]))
 fi

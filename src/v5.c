@@ -1626,9 +1626,21 @@ int
 v5_enctype_to_string(krb5_context ctx, krb5_enctype enctype,
 		     char *buf, size_t length)
 {
-#ifdef KRB5_ENCTYPE_TO_STRING_TAKES_4_ARGS
-	return krb5_enctype_to_string(ctx, enctype, buf, length);
-#else
+#ifdef KRB5_ENCTYPE_TO_STRING_TAKES_A_SIZE_THIRD
 	return krb5_enctype_to_string(enctype, buf, length);
+#else
+	int i;
+	char **tmp;
+	tmp = NULL;
+	i = krb5_enctype_to_string(ctx, enctype, &tmp);
+	if (tmp != NULL) {
+		snprintf(buf, length, "%s", tmp);
+		free(tmp);
+		return i;
+	}
+	if (i == 0) {
+		return -1;
+	}
+	return i;
 #endif
 }
