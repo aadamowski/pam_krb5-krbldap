@@ -146,7 +146,7 @@ main(int argc, const char **argv)
 		     error_message(ret));
 		return ret;
 	}
-	key = &ocreds.keyblock;
+	key = v5_creds_get_key(&ocreds);
 
 	creds = NULL;
 	mcreds.server = client;
@@ -183,7 +183,7 @@ main(int argc, const char **argv)
 		     error_message(ret));
 		return ret;
 	}
-	ret = krb5_auth_con_setuseruserkey(ctx, oauth_con, key);
+	ret = v5_auth_con_setuserkey(ctx, oauth_con, key);
 
 	flags = 0;
 	ticket = NULL;
@@ -193,7 +193,7 @@ main(int argc, const char **argv)
 		     error_message(ret));
 		return ret;
 	}
-	if (krb5_principal_compare(ctx, ticket->enc_part2->client,
+	if (krb5_principal_compare(ctx, v5_ticket_get_client(ticket),
 				   client) == 0) {
 		crit("Client in request differs from expected client.");
 		return ret;

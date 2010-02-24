@@ -3,6 +3,7 @@
 	a keyblock (v5_creds_get_key) and a ticket's client
 	(v5_ticket_get_client), and a wrapper for the set-user-to-user-key
 	function (v5_auth_con_setuserkey).
+	* src/uuauth.c: use the just-introduced abstractions
 
 2010-02-12
 	* src/minikafs.c: crank up debug verbosity (Chris Wing, #157107)
