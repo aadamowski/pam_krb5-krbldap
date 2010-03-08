@@ -1,3 +1,6 @@
+2010-03-08
+	* krb5.spec,configure.ac: 2.3.11
+
 2010-02-24
 	* src/v5.c,v5.h: add wrapper functions for reading a cred keyblock as
 	a keyblock (v5_creds_get_key) and a ticket's client
@@ -11,7 +14,7 @@
 	* src/kuserok.c(_pam_krb5_kuserok): also set up the user's ccache,
 	in case there's a process on the box that expects the user to have
 	creds before it can look up the location of the user's .k5login file
-	or read from it (possible fix for #563442)
+	or read from it (#563442)
 	* src/harness.c: fix --debug
 	* src/kuserok.c,src/storetmp.c: don't close stdio on our helpers if
 	we don't need to

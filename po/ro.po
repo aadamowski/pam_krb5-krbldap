@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: Pam_krbr5 VERSION\n"
 "Report-Msgid-Bugs-To: http://git.fedorahosted.org/git/?p=pam_krb5.git;a=blob;"
 "f=AUTHORS;hb=HEAD\n"
-"POT-Creation-Date: 2009-05-27 18:48-0400\n"
+"POT-Creation-Date: 2010-03-08 16:08-0500\n"
 "PO-Revision-Date: 2009-02-22 22:41+0200\n"
 "Last-Translator: Florin Dăscălache <floda61@yahoo.com>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
@@ -17,21 +17,21 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/auth.c:132 src/auth.c:328
+#: src/auth.c:132 src/auth.c:325
 msgid "Password: "
 msgstr "Parola: "
 
-#: src/password.c:260
+#: src/password.c:257
 #, c-format
 msgid "%s%sPassword: "
 msgstr "%s%sParola: "
 
-#: src/password.c:365
+#: src/password.c:362
 #, c-format
 msgid "New %s%sPassword: "
 msgstr "%s%sParola nouă: "
 
-#: src/password.c:368
+#: src/password.c:365
 #, c-format
 msgid "Repeat New %s%sPassword: "
 msgstr "Repetaţi %s%sParola nouă: "

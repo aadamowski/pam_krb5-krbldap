@@ -1,7 +1,7 @@
 Summary: A Pluggable Authentication Module for Kerberos 5
 Name: pam_krb5
-Version: 2.3.10
-Release: 3%{?dist}
+Version: 2.3.11
+Release: 1%{?dist}
 Source0: https://fedorahosted.org/released/pam_krb5/pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
 Group: System Environment/Base
@@ -51,6 +51,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Mon Mar  8 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.11-1
+- create creds before calling krb5_kuserok() so that they're available when
+  it goes to look up the target user's home directory (#563442)
+- collapse multiple levels of debugging into a single debug level (#157107)
+
 * Mon Jan 18 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.10-3
 - tweak buildroot location (guidelines)
 
