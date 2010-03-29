@@ -4,6 +4,7 @@ principal=`id -nu`
 
 testdir=${1:-`/bin/pwd`}
 testdir=`cd $testdir; /bin/pwd`
+source $testdir/config/use_krb4.sh
 
 PATH=${PATH}:${testdir}/tools
 export KRB5_BINDIR=${2:-.}
@@ -17,6 +18,7 @@ export KRBCONFDIR=$testdir/config
 export KRB_CONF=$testdir/config/krb.conf
 export KRB_REALMS=$testdir/config/krb.realms
 export KRB5_KDC_PROFILE=$testdir/config/kdc.conf
+export KRB5RCACHEDIR=$testdir/kdc
 export KRB5CCNAME=/dev/bogus-missing-file
 export KRBTKFILE=/dev/bogus-missing-file
 flags=unsecure_for_debugging_only
@@ -64,7 +66,9 @@ kdcstart() {
 	kadmind -r EXAMPLE.COM -nofork &
 	KADMINDPID=$!
 
-	k524start
+	if $USE_KRB4 ; then
+		k524start
+	fi
 
 	settle
 
@@ -85,7 +89,9 @@ k524stop() {
 
 kdcstop() {
 	trap true EXIT
-	k524stop
+	if $USE_KRB4 ; then
+		k524stop
+	fi
 	if test x$KADMINDPID != x ; then
 		kill $KADMINDPID
 		unset KADMINDID
@@ -224,6 +230,8 @@ run -auth -setcred $principal -run klist_a $pam_krb5 $flags renewable proxiable 
 echo "";echo Without krb4.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless no_krb4_convert -- foo
 
+if $USE_KRB4 ; then
+
 echo "";echo With krb4 via krb524.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
 
@@ -231,6 +239,8 @@ k524stop
 echo "";echo With krb4 via kdc.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
 k524start ; settle
+
+fi
 
 echo "";echo Renewable lifetime 0.
 run -auth -setcred $principal -run klist_t $pam_krb5 $flags proxiable forwardable not_addressless renew_lifetime=0 -- foo

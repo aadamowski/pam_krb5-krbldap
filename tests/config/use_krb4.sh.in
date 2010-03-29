@@ -1,0 +1,6 @@
+#!/bin/sh
+if test @USE_KRB4@ -eq 1 ; then
+	USE_KRB4=true
+else
+	USE_KRB4=false
+fi

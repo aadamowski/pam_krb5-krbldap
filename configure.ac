@@ -174,10 +174,13 @@ if test x$ac_cv_header_krb5_h = xyes ; then
 else
 	AC_DEFINE(KRB5_H,[<krb5/krb5.h>],[Define to the name of your Kerberos 5 header.])
 fi
+
+USE_KRB4=0
 if test x$krb4 != xno ; then
 	AC_CHECK_HEADER(krb.h,,[AC_CHECK_HEADER(kerberosIV/krb.h)])
 	if test x$ac_cv_header_krb_h = xyes ; then
 		AC_DEFINE(USE_KRB4,1,[Define if you have Kerberos IV as well.])
+		USE_KRB4=1
 		AC_DEFINE(KRB4_DES_H,[<des.h>],[Define to the name of your Kerberos IV des.h header.])
 		AC_DEFINE(KRB4_KRB_H,[<krb.h>],[Define to the name of your Kerberos IV krb.h header.])
 		AC_CHECK_HEADER(krb_err.h,[AC_DEFINE(KRB4_KRB_ERR_H,[<krb_err.h>],[Define to the name of your Kerberos IV krb_err.h header, if you have one.])])
@@ -192,6 +195,7 @@ if test x$krb4 != xno ; then
 		fi
 	fi
 fi
+AC_SUBST(USE_KRB4)
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
@@ -555,6 +559,7 @@ tests/config/Makefile
 tests/config/krb5.conf
 tests/config/kdc.conf
 tests/config/krb.conf
+tests/config/use_krb4.sh
 tests/kdc/Makefile
 tests/tools/Makefile
 tests/tools/klist_t
