@@ -131,7 +131,7 @@ run() {
 }
 
 # Start the KDC.
-for script in ${testdir}/tools/klist_* ; do
+for script in ${testdir}/tools/klist_4 ; do
 	test -r $script && chmod +x $script 2> /dev/null
 done
 
