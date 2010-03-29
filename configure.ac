@@ -562,10 +562,6 @@ tests/config/krb.conf
 tests/config/use_krb4.sh
 tests/kdc/Makefile
 tests/tools/Makefile
-tests/tools/klist_t
-tests/tools/klist_f
-tests/tools/klist_c
-tests/tools/klist_a
 tests/tools/klist_4
 po/Makefile.in
 ])

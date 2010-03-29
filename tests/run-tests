@@ -29,7 +29,8 @@ settle() {
 
 cleanmsg ()
 {
-	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g'
+	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g' \
+	    -e "s|$testdir/kdc|"'$testdir/kdc|g'
 }
 comparelog() {
 	if test -s $testdir/config/$1.txt ; then
