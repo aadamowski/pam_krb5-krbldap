@@ -27,6 +27,21 @@ settle() {
 	sleep 1
 }
 
+cleanmsg ()
+{
+	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g'
+}
+comparelog() {
+	if test -s $testdir/config/$1.txt ; then
+		if cmp $testdir/config/$1.txt \
+			  $testdir/kdc/$1.log ; then
+			diff -u $testdir/config/$1.txt \
+				   $testdir/kdc/$1.log
+			exit 1
+		fi
+	fi
+}
+
 k524start() {
 	if test x$K524DPID != x ; then
 		kill $K524DPID
@@ -63,7 +78,7 @@ kdcstart() {
 		unset KADMINDID
 	fi
 
-	kadmind -r EXAMPLE.COM -nofork &
+	kadmind -r EXAMPLE.COM -nofork 2> /dev/null &
 	KADMINDPID=$!
 
 	if $USE_KRB4 ; then
@@ -123,6 +138,8 @@ kdcstart
 
 # First, a wrong password, then the right one, then a wrong one.
 
+pambasic() {
+
 echo "";echo Setting password to \"foo\".
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 
@@ -150,7 +167,14 @@ run -auth -setcred -session $principal $pam_krb5 $flags -authtok foo use_first_p
 echo "";echo Succeed: correct password, maybe use incorrect second attempt.
 run -auth $principal $pam_krb5 $flags -authtok foo try_first_pass -- bar
 
+}
+
+pambasic 2>&1 | cleanmsg > $testdir/kdc/pambasic.log
+comparelog pambasic
+
 # Check for expired password detection (both right and wrong), and "nowarn".
+
+pamexpiration() {
 
 echo "";echo Expiring password.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
@@ -181,7 +205,15 @@ kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
 settle
 run -auth -account -chauthtok -setcred -session $principal $pam_krb5 $flags no_warn -- foo bar bar bar baz baz
 
+}
+
+pamexpiration 2>&1 | cleanmsg > $testdir/kdc/pamexpiration.log
+comparelog pamexpiration
+
 # Check password changing.
+
+pamchauthtok() {
+
 echo "";echo Resetting password to \"foo\".
 
 echo "";echo Succeed.
@@ -201,14 +233,22 @@ kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -policy minimum_six '$principal 2> /dev/null > /dev/null
 run -chauthtok $principal $pam_krb5 $flags -- foo bar bar
 kadmin.local -q 'modprinc -clearpolicy '$principal 2> /dev/null > /dev/null
-kadmin.local -q 'delprinc '$principal 2> /dev/null > /dev/null
+kadmin.local -q 'delprinc -force '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'ank -pw foo '$principal 2> /dev/null > /dev/null
 
 echo "";echo Succeed: use_authtok
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 run -chauthtok $principal -oldauthtok foo -authtok bar $pam_krb5 $flags use_authtok
 
+}
+
+pamchauthtok 2>&1 | cleanmsg > $testdir/kdc/pamchauthtok.log
+comparelog pamchauthtok
+
 # Check for being able to set particular options.
+
+pamoptions() {
+
 echo "";echo Checking handling of options.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 
@@ -230,18 +270,6 @@ run -auth -setcred $principal -run klist_a $pam_krb5 $flags renewable proxiable 
 echo "";echo Without krb4.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless no_krb4_convert -- foo
 
-if $USE_KRB4 ; then
-
-echo "";echo With krb4 via krb524.
-run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
-
-k524stop
-echo "";echo With krb4 via kdc.
-run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
-k524start ; settle
-
-fi
-
 echo "";echo Renewable lifetime 0.
 run -auth -setcred $principal -run klist_t $pam_krb5 $flags proxiable forwardable not_addressless renew_lifetime=0 -- foo
 
@@ -261,6 +289,30 @@ run -chauthtok $principal $pam_krb5 $flags banner="K3RB3R05 S" -- foo bar bar
 echo "";echo Password-change Help Text
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 run -chauthtok $principal $pam_krb5 $flags pwhelp=$testdir/pwhelp.txt -- foo bar bar
+
+}
+
+pamoptions 2>&1 | cleanmsg > $testdir/kdc/pamoptions.log
+comparelog pamoptions
+
+# v4-specific tests.
+
+pam4() {
+
+echo "";echo With krb4 via krb524.
+run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
+
+k524stop
+echo "";echo With krb4 via kdc.
+run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
+k524start ; settle
+
+}
+
+if $USE_KRB4 ; then
+	pam4 2>&1 | cleanmsg > $testdir/kdc/pam4.log
+	comparelog pam4
+fi
 
 # Stop the KDC.
 kdcstop
