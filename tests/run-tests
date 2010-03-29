@@ -30,7 +30,8 @@ settle() {
 cleanmsg ()
 {
 	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g' \
-	    -e "s|$testdir/kdc|"'$testdir/kdc|g'
+	    -e "s|$testdir/kdc|"'$testdir/kdc|g' \
+	    -e "s|krb5cc_"`id -u`"_......|"'krb5_cc_$UID_XXXXXX|g'
 }
 comparelog() {
 	if test -s $testdir/config/$1.txt ; then
@@ -266,7 +267,7 @@ echo "";echo With local addresses.
 run -auth -setcred $principal -run klist_a $pam_krb5 $flags renewable proxiable forwardable not_addressless -- foo
 
 echo "";echo With local and extra addresses.
-run -auth -setcred $principal -run klist_a $pam_krb5 $flags renewable proxiable forwardable hosts="localhost" -- foo
+run -auth -setcred $principal -run klist_a $pam_krb5 $flags renewable proxiable forwardable hosts="1.2.3.4" -- foo
 
 echo "";echo Without krb4.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless no_krb4_convert -- foo
