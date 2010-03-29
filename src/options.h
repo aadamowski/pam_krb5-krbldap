@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2005,2006,2008,2009 Red Hat, Inc.
+ * Copyright 2003,2005,2006,2008,2009,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,6 +46,7 @@ struct _pam_krb5_options {
 	int existing_ticket;
 	int forwardable;
 	int ignore_afs;
+	int ignore_k5login;
 	int ignore_unknown_principals;
 	int multiple_ccaches;
 	int null_afs_first;

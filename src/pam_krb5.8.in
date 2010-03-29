@@ -122,6 +122,13 @@ firewall's outward-facing address here should allow Kerberos authentication to
 succeed.  This option is deprecated in favor of the \fIextra_addresses\fR flag
 in the \fIlibdefaults\fR section of \fBkrb5.conf\fR(5).
 
+.IP ignore_k5login
+specifies that pam_krb5 should skip checking the user's .k5login
+file to verify that the principal name of the client being authenticated is
+authorized to access the user account.  (Actually, the check is performed by
+a function offered by the Kerberos library, which controls which files it
+will consult.)  The default is to perform the check.
+
 .IP ignore_unknown_principals
 .IP ignore_unknown_spn
 .IP ignore_unknown_upn

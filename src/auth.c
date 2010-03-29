@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -466,7 +466,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	}
 
 	/* If we got this far, check the target user's .k5login file. */
-	if ((retval == PAM_SUCCESS) && options->user_check) {
+	if ((retval == PAM_SUCCESS) && options->user_check &&
+	    (options->ignore_k5login == 0)) {
 		if (_pam_krb5_kuserok(ctx, stash, options, userinfo, user,
 				      userinfo->uid, userinfo->gid) != TRUE) {
 			notice("account checks fail for '%s': user disallowed "

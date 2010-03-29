@@ -1,3 +1,7 @@
+2010-03-29
+	* src/options.c,src/options.h,src/acct.c,src/auth.c: add and heed an
+	"ignore_k5login" boolean option.
+
 2010-03-08
 	* krb5.spec,configure.ac: 2.3.11
 

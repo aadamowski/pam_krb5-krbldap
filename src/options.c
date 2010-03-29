@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -509,6 +509,18 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->ignore_afs = 1;
 	options->tokens = 0;
 #endif
+
+	/* private option */
+	options->ignore_k5login = option_b(argc, argv,
+					   ctx, options->realm,
+					   service, NULL, NULL,
+					   "ignore_k5login", 0);
+	if (options->debug && (options->ignore_k5login == 1)) {
+		debug("flag: ignore_k5login");
+	}
+	if (options->debug && (options->ignore_k5login == 0)) {
+		debug("flag: no ignore_k5login");
+	}
 
 #ifdef HAVE_KRB5_GET_INIT_CREDS_OPT_SET_PKINIT
 	/* option specific to the Heimdal implementation */
