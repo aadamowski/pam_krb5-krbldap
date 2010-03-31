@@ -6,8 +6,6 @@ echo ""; echo Setting password to \"foo\".
 kadmin.local -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire never '$test_principal 2> /dev/null > /dev/null
 
-kadmin.local -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
-
 echo ""; echo Fail: incorrect password.
 test_run -auth $test_principal $pam_krb5 $test_flags -- bar
 

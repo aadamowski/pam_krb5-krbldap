@@ -112,8 +112,6 @@ test_kdcstart() {
 		test_k524start
 	fi
 
-	test_settle
-
 	kill -CONT $KDCPID
 	kill -CONT $KADMINDPID
 	trap test_kdcstop EXIT
@@ -136,17 +134,11 @@ test_kdcstop() {
 	if test x$KADMINDPID != x ; then
 		kill $KADMINDPID
 		unset KADMINDID
-	else
-		echo "echo error: no running kadmind"
-		exit 1
 	fi
 	if test x$KDCPID != x ; then
 		kill $KDCPID
 		unset KDCPID
 		kdb5_util destroy -f 2> /dev/null > /dev/null
-	else
-		echo "echo error: no running KDC"
-		exit 1
 	fi
 }
 

@@ -12,14 +12,14 @@ Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 `WARN1HOUR'
 AUTH	0	Success
-ACCT	0	Success
+ACCT	12	Authentication token is no longer valid; new one required
 
 Succeed: correct password, do not warn about expiration.
 Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 `WARN1HOUR'
 AUTH	0	Success
-ACCT	0	Success
+ACCT	12	Authentication token is no longer valid; new one required
 
 Succeed: correct password, expired, change.
 Calling module `pam_krb5.so'.
