@@ -1,0 +1,37 @@
+
+Expiring password.
+
+Fail: incorrect password.
+Calling module `pam_krb5.so'.
+`Password: ' -> `bar'
+AUTH	7	Authentication failure
+ACCT	0	Success
+
+Succeed: correct password, warn about expiration.
+Calling module `pam_krb5.so'.
+`Password: ' -> `foo'
+`WARN1HOUR'
+AUTH	0	Success
+ACCT	0	Success
+
+Succeed: correct password, do not warn about expiration.
+Calling module `pam_krb5.so'.
+`Password: ' -> `foo'
+`WARN1HOUR'
+AUTH	0	Success
+ACCT	0	Success
+
+Succeed: correct password, expired, change.
+Calling module `pam_krb5.so'.
+`Password: ' -> `foo'
+`WARN1HOUR'
+AUTH	0	Success
+ACCT	0	Success
+`Kerberos 5 Password: ' -> `foo'
+`WARN1HOUR'
+CHAUTHTOK1	0	Success
+CHAUTHTOK2	0	Success
+ESTCRED	0	Success
+OPENSESS	0	Success
+CLOSESESS	0	Success
+DELCRED	0	Success

@@ -1,5 +1,5 @@
 [kdcdefaults]
- v4_mode = nopreauth
+ v4_mode = full
  kdc_ports = 8800
 
 [realms]

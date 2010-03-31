@@ -1,0 +1,18 @@
+
+Checking ability to get v4 credentials.
+
+With krb4 via krb524.
+Calling module `pam_krb5.so'.
+`Password: ' -> `foo'
+AUTH	0	Success
+ESTCRED	0	Success
+Error initializing ticket file.
+DELCRED	0	Success
+
+With krb4 via kdc.
+Calling module `pam_krb5.so'.
+`Password: ' -> `foo'
+AUTH	0	Success
+ESTCRED	0	Success
+Error initializing ticket file.
+DELCRED	0	Success

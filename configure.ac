@@ -12,6 +12,8 @@ AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
 if test $KRB5_CONFIG = : ; then
 	AC_MSG_ERROR(krb5-config not found)
 fi
+KRB5_BINDIR=`dirname $KRB5_CONFIG`
+AC_SUBST(KRB5_BINDIR)
 
 AC_ARG_WITH(os-distribution,
 [AC_HELP_STRING([--with-os-distribution="Super Duper Linux"],[Override the default OS distribution name in man pages. (default is "Red Hat Linux")])],
@@ -19,6 +21,7 @@ AC_ARG_WITH(os-distribution,
 	    OS_DISTRIBUTION="Red Hat Linux")
 AC_SUBST(OS_DISTRIBUTION)
 
+KRB4_BINDIR=
 AC_ARG_WITH(krb4,
 AC_HELP_STRING(--with-krb4[=AUTO],[Provide Kerberos IV support if possible.]),
 	    krb4=$withval,
@@ -41,8 +44,10 @@ if test x$krb4 != xno ; then
 	else
 		AC_MSG_RESULT(Using krb4 provided by $KRB4_CONFIG.)
 		krb4=yes
+		KRB4_BINDIR=`dirname $KRB4_CONFIG`
 	fi
 fi
+AC_SUBST(KRB4_BINDIR)
 if test x$krb4 != xno ; then
 	MAN_KRB4=""
 	NO_MAN_KRB4=".\\\" "
@@ -187,6 +192,7 @@ if test x$krb4 != xno ; then
 	else
 		if test x$ac_cv_header_kerberosIV_krb_h = xyes ; then
 			AC_DEFINE(USE_KRB4,1,[Define if you have Kerberos IV as well.])
+			USE_KRB4=1
 			AC_DEFINE(KRB4_DES_H,[<kerberosIV/des.h>],[Define to the name of your Kerberos IV des.h header.])
 			AC_DEFINE(KRB4_KRB_H,[<kerberosIV/krb.h>],[Define to the name of your Kerberos IV krb.h header.])
 			AC_CHECK_HEADER(kerberosIV/krb_err.h,[AC_DEFINE(KRB4_KRB_ERR_H,[<kerberosIV/krb_err.h>],[Define to the name of your Kerberos IV krb_err.h header, if you have one.])])
@@ -196,6 +202,7 @@ if test x$krb4 != xno ; then
 	fi
 fi
 AC_SUBST(USE_KRB4)
+AM_CONDITIONAL(USE_KRB4,[test $USE_KRB4 -eq 1])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
@@ -410,7 +417,7 @@ if test "$with_libpam" != no ; then
 else
 	AC_MSG_RESULT(no)
 fi
-AM_CONDITIONAL(WITH_DIRECT_LIBPAM,test "$with_libpam" != no)
+AM_CONDITIONAL(WITH_DIRECT_LIBPAM,[test "$with_libpam" != no])
 
 AC_ARG_ENABLE(default-realm,AC_HELP_STRING([--enable-default-realm=REALM],[last-ditch fallback realm (default is EXAMPLE.COM)]),default_realm=$enableval,default_realm=EXAMPLE.COM)
 AC_DEFINE_UNQUOTED(DEFAULT_REALM,"$default_realm",[Define to the realm name which will be used if no realm is given as a parameter and none is given in krb5.conf.])
@@ -559,9 +566,8 @@ tests/config/Makefile
 tests/config/krb5.conf
 tests/config/kdc.conf
 tests/config/krb.conf
-tests/config/use_krb4.sh
 tests/kdc/Makefile
+tests/testenv.sh
 tests/tools/Makefile
-tests/tools/klist_4
 po/Makefile.in
 ])

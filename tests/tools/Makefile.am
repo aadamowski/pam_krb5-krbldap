@@ -3,9 +3,10 @@ LIBS = @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 testdir = `cd $(builddir); /bin/pwd`
 
-EXTRA_DIST = klist_4.in
-
 noinst_PROGRAMS = pam_harness klist_a klist_f klist_t klist_c
+if USE_KRB4
+noinst_PROGRAMS += klist_4
+endif
 
 pam_harness_SOURCES = pam_harness.c
 pam_harness_LDADD = -lpam -ldl

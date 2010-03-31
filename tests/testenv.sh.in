@@ -1,0 +1,153 @@
+#!/bin/sh
+
+PATH=${testdir}/tools:${PATH}; export PATH
+
+KRB4_BINDIR=@KRB4_BINDIR@
+if test -n "$KRB4_BINDIR" ; then
+	PATH=${KRB4_BINDIR}:${PATH}
+	for d in sbin libexec ; do
+		if test -d ${KRB4_BINDIR}/../$d ; then
+			PATH=${KRB4_BINDIR}/../$d:${PATH}
+		fi
+	done
+fi
+KRB5_BINDIR=@KRB5_BINDIR@
+if test -n "$KRB5_BINDIR" ; then
+	PATH=${KRB5_BINDIR}:${PATH}
+	for d in sbin libexec ; do
+		if test -d ${KRB5_BINDIR}/../$d ; then
+			PATH=${KRB5_BINDIR}/../$d:${PATH}
+		fi
+	done
+fi
+test_principal=`id -nu`
+
+if test @USE_KRB4@ -eq 1 ; then
+	test_krb4=true
+else
+	test_krb4=false
+fi
+
+pam_krb5=${testdir}/../src/pam_krb5.so
+if ! test -x $pam_krb5 ; then
+	pam_krb5=${testdir}/../src/.libs/pam_krb5.so
+fi
+
+KRB5_CONFIG=$testdir/config/krb5.conf ; export KRB5_CONFIG
+KRBCONFDIR=$testdir/config ; export KRBCONFDIR
+KRB_CONF=$testdir/config/krb.conf ; export KRB_CONF
+KRB_REALMS=$testdir/config/krb.realms ; export KRB_REALMS
+KRB5_KDC_PROFILE=$testdir/config/kdc.conf ; export KRB5_KDC_PROFILE
+KRB5RCACHEDIR=$testdir/kdc ; export KRB5RCACHEDIR
+KRB5CCNAME=/dev/bogus-missing-file ; export KRB5CCNAME
+KRBTKFILE=/dev/bogus-missing-file ; export KRBTKFILE
+test_flags=unsecure_for_debugging_only
+
+test_settle() {
+	sleep 1
+}
+
+test_cleanmsg ()
+{
+	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g' \
+	    -e "s|$testdir/kdc|"'$testdir/kdc|g' \
+	    -e "s|krb5cc_"`id -u`"_......|"'krb5_cc_$UID_XXXXXX|g'
+}
+
+test_comparelog() {
+	if test -s $testdir/config/$1.txt ; then
+		if cmp $testdir/config/$1.txt \
+			  $testdir/kdc/$1.log ; then
+			diff -u $testdir/config/$1.txt \
+				   $testdir/kdc/$1.log
+			exit 1
+		fi
+	fi
+}
+
+test_k524start() {
+	if test x$K524DPID != x ; then
+		kill $K524DPID
+		unset K524DPID
+	fi
+
+	krb524d -m -r EXAMPLE.COM -nofork &
+	K524DPID=$!
+
+	kill -CONT $K524DPID
+}
+
+test_kdcstart() {
+	if test x$KDCPID != x ; then
+		kill $KDCPID
+		unset KDCPID
+	fi
+
+	test -d $testdir/kdc || mkdir -p $testdir/kdc
+	(echo .; echo .) | kdb5_util create -s 2> /dev/null > /dev/null
+
+	kadmin.local -q 'addpol -minlength 6 minimum_six' 2> /dev/null > /dev/null
+	kadmin.local -q 'ank -pw foo '$test_principal 2> /dev/null > /dev/null
+	kadmin.local -q 'modprinc -maxrenewlife "1 day" krbtgt/EXAMPLE.COM' 2> /dev/null > /dev/null
+	kadmin.local -q 'modprinc -maxrenewlife "1 day" '$test_principal 2> /dev/null > /dev/null
+	rm -f $testdir/kdc/krb5kdc.log
+	rm -f $testdir/kdc/kadmind.log
+	rm -f $testdir/kdc/krb5libs.log
+	krb5kdc -r EXAMPLE.COM -n -port 8002 &
+	KDCPID=$!
+
+	if test x$KADMINDPID != x ; then
+		kill $KADMINDPID
+		unset KADMINDID
+	fi
+
+	kadmind -r EXAMPLE.COM -nofork 2> /dev/null &
+	KADMINDPID=$!
+
+	if $test_krb4 ; then
+		test_k524start
+	fi
+
+	test_settle
+
+	kill -CONT $KDCPID
+	kill -CONT $KADMINDPID
+	trap test_kdcstop EXIT
+}
+
+test_k524stop() {
+	if test x$K524DPID != x ; then
+		kill $K524DPID
+		unset K524DPID
+	else
+		echo "echo error: no running krb524d"
+		exit 1
+	fi
+}
+
+test_kdcstop() {
+	trap true EXIT
+	if $test_krb4 ; then
+		test_k524stop
+	fi
+	if test x$KADMINDPID != x ; then
+		kill $KADMINDPID
+		unset KADMINDID
+	else
+		echo "echo error: no running kadmind"
+		exit 1
+	fi
+	if test x$KDCPID != x ; then
+		kill $KDCPID
+		unset KDCPID
+		kdb5_util destroy -f 2> /dev/null > /dev/null
+	else
+		echo "echo error: no running KDC"
+		exit 1
+	fi
+}
+
+test_run() {
+	# Filter out the module path and clean up messages.
+	pam_harness "$@" 2>&1 | sed s,"\`.*pam",'\`pam',g | test_cleanmsg
+}
