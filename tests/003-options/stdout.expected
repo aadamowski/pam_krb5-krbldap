@@ -61,7 +61,7 @@ Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 AUTH	0	Success
 ESTCRED	0	Success
-36000
+3600
 DELCRED	0	Success
 
 Default ccache directory.
