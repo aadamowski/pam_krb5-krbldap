@@ -1,4 +1,5 @@
 #!/bin/bash
+
 PATH=${PATH}:/usr/sbin:/usr/local/sbin:/usr/kerberos/sbin
 principal=`id -nu`
 
@@ -23,17 +24,17 @@ export KRB5CCNAME=/dev/bogus-missing-file
 export KRBTKFILE=/dev/bogus-missing-file
 flags=unsecure_for_debugging_only
 
-settle() {
+test_settle() {
 	sleep 1
 }
 
-cleanmsg ()
+test_cleanmsg ()
 {
 	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g' \
 	    -e "s|$testdir/kdc|"'$testdir/kdc|g' \
 	    -e "s|krb5cc_"`id -u`"_......|"'krb5_cc_$UID_XXXXXX|g'
 }
-comparelog() {
+test_comparelog() {
 	if test -s $testdir/config/$1.txt ; then
 		if cmp $testdir/config/$1.txt \
 			  $testdir/kdc/$1.log ; then
@@ -44,7 +45,7 @@ comparelog() {
 	fi
 }
 
-k524start() {
+test_k524start() {
 	if test x$K524DPID != x ; then
 		kill $K524DPID
 		unset K524DPID
@@ -56,7 +57,7 @@ k524start() {
 	kill -CONT $K524DPID
 }
 
-kdcstart() {
+test_kdcstart() {
 	if test x$KDCPID != x ; then
 		kill $KDCPID
 		unset KDCPID
@@ -84,17 +85,17 @@ kdcstart() {
 	KADMINDPID=$!
 
 	if $USE_KRB4 ; then
-		k524start
+		test_k524start
 	fi
 
-	settle
+	test_settle
 
 	kill -CONT $KDCPID
 	kill -CONT $KADMINDPID
-	trap kdcstop EXIT
+	trap test_kdcstop EXIT
 }
 
-k524stop() {
+test_k524stop() {
 	if test x$K524DPID != x ; then
 		kill $K524DPID
 		unset K524DPID
@@ -104,10 +105,10 @@ k524stop() {
 	fi
 }
 
-kdcstop() {
+test_kdcstop() {
 	trap true EXIT
 	if $USE_KRB4 ; then
-		k524stop
+		test_k524stop
 	fi
 	if test x$KADMINDPID != x ; then
 		kill $KADMINDPID
@@ -126,7 +127,7 @@ kdcstop() {
 	fi
 }
 
-run() {
+test_run() {
 	# Filter out the module path.
 	pam_harness "$@" 2>&1 | sed s,"\`.*pam",'\`pam',g
 }
@@ -136,7 +137,7 @@ for script in ${testdir}/tools/klist_4 ; do
 	test -r $script && chmod +x $script 2> /dev/null
 done
 
-kdcstart
+test_kdcstart
 
 # First, a wrong password, then the right one, then a wrong one.
 
@@ -171,8 +172,8 @@ run -auth $principal $pam_krb5 $flags -authtok foo try_first_pass -- bar
 
 }
 
-pambasic 2>&1 | cleanmsg > $testdir/kdc/pambasic.log
-comparelog pambasic
+pambasic 2>&1 | test_cleanmsg > $testdir/kdc/pambasic.log
+test_comparelog pambasic
 
 # Check for expired password detection (both right and wrong), and "nowarn".
 
@@ -181,36 +182,36 @@ pamexpiration() {
 echo "";echo Expiring password.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
-settle
+test_settle
 
 echo "";echo Fail: incorrect password.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
-settle
+test_settle
 run -auth -account $principal $pam_krb5 $flags -- bar
 
 echo "";echo Succeed: correct password, warn about expiration.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
-settle
+test_settle
 run -auth -account $principal $pam_krb5 $flags -- foo bar bar
 
 echo "";echo Succeed: correct password, do not warn about expiration.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
-settle
+test_settle
 run -auth -account $principal $pam_krb5 $flags no_warn -- foo
 
 echo "";echo Succeed: correct password, expired, change.
 kadmin.local -q 'cpw -pw foo '$principal 2> /dev/null > /dev/null
 kadmin.local -q 'modprinc -pwexpire now '$principal 2> /dev/null > /dev/null
-settle
+test_settle
 run -auth -account -chauthtok -setcred -session $principal $pam_krb5 $flags no_warn -- foo bar bar bar baz baz
 
 }
 
-pamexpiration 2>&1 | cleanmsg > $testdir/kdc/pamexpiration.log
-comparelog pamexpiration
+pamexpiration 2>&1 | test_cleanmsg > $testdir/kdc/pamexpiration.log
+test_comparelog pamexpiration
 
 # Check password changing.
 
@@ -244,8 +245,8 @@ run -chauthtok $principal -oldauthtok foo -authtok bar $pam_krb5 $flags use_auth
 
 }
 
-pamchauthtok 2>&1 | cleanmsg > $testdir/kdc/pamchauthtok.log
-comparelog pamchauthtok
+pamchauthtok 2>&1 | test_cleanmsg > $testdir/kdc/pamchauthtok.log
+test_comparelog pamchauthtok
 
 # Check for being able to set particular options.
 
@@ -294,8 +295,8 @@ run -chauthtok $principal $pam_krb5 $flags pwhelp=$testdir/pwhelp.txt -- foo bar
 
 }
 
-pamoptions 2>&1 | cleanmsg > $testdir/kdc/pamoptions.log
-comparelog pamoptions
+pamoptions 2>&1 | test_cleanmsg > $testdir/kdc/pamoptions.log
+test_comparelog pamoptions
 
 # v4-specific tests.
 
@@ -304,17 +305,17 @@ pam4() {
 echo "";echo With krb4 via krb524.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
 
-k524stop
+test_k524stop
 echo "";echo With krb4 via kdc.
 run -auth -setcred $principal -run klist_4 $pam_krb5 $flags renewable proxiable forwardable not_addressless krb4_convert -- foo
-k524start ; settle
+test_k524start ; test_settle
 
 }
 
 if $USE_KRB4 ; then
-	pam4 2>&1 | cleanmsg > $testdir/kdc/pam4.log
-	comparelog pam4
+	pam4 2>&1 | test_cleanmsg > $testdir/kdc/pam4.log
+	test_comparelog pam4
 fi
 
 # Stop the KDC.
-kdcstop
+test_kdcstop
