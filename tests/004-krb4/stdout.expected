@@ -6,7 +6,7 @@ Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 AUTH	0	Success
 ESTCRED	0	Success
-Error initializing ticket file.
+120
 DELCRED	0	Success
 
 With krb4 via kdc.
@@ -14,5 +14,5 @@ Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 AUTH	0	Success
 ESTCRED	0	Success
-Error initializing ticket file.
+120
 DELCRED	0	Success

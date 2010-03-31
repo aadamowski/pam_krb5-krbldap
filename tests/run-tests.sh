@@ -7,6 +7,9 @@ export testdir
 source $testdir/testenv.sh
 
 # Start the KDC and 524 daemon, if we have one.
+test -n "$krb5kdc" && echo Using krb5kdc binary: $krb5kdc
+test -n "$krb524d" && echo Using krb524d binary: $krb524d
+test -n "$kadmind" && echo Using kadmind binary: $kadmind
 test_kdcstart
 
 # First, a wrong password, then the right one, then a wrong one.

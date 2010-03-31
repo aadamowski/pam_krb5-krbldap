@@ -33,6 +33,10 @@ if ! test -x $pam_krb5 ; then
 	pam_krb5=${testdir}/../src/.libs/pam_krb5.so
 fi
 
+krb5kdc=`which krb5kdc`
+krb524d=`which krb524d`
+kadmind=`which kadmind`
+
 KRB5_CONFIG=$testdir/config/krb5.conf ; export KRB5_CONFIG
 KRBCONFDIR=$testdir/config ; export KRBCONFDIR
 KRB_CONF=$testdir/config/krb.conf ; export KRB_CONF
