@@ -26,12 +26,12 @@ for test in ${@:-"$testdir"/0*} ; do
 	echo -n `basename "$test"` ..." "
 	$test/run.sh > $test/stdout 2> $test/stderr
 	if test -s $test/stdout.expected ; then
-		if ! cmp $test/stdout.expected $test/stdout ; then
+		if ! cmp -s $test/stdout.expected $test/stdout ; then
 			echo ""
 			diff -u $test/stdout.expected $test/stdout | sed "s|$testdir/||g"
 			exit 1
 		fi
-		if ! cmp $test/stderr.expected $test/stderr ; then
+		if ! cmp -s $test/stderr.expected $test/stderr ; then
 			echo ""
 			diff -u $test/stderr.expected $test/stderr | sed "s|$testdir/||g"
 			exit 1

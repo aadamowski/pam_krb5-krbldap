@@ -7,17 +7,28 @@ int
 main(int argc, char **argv)
 {
 	krb5_context ctx;
+	krb5_address **addresses;
 	krb5_ccache ccache;
 	krb5_creds creds;
 	krb5_cc_cursor cursor;
 	krb5_error_code ret;
-	int count;
+	int count, lcount;
 
 	ctx = NULL;
 	ret = krb5_init_context(&ctx);
 	if (ret != 0) {
 		printf("Error initializing Kerberos.\n");
 		return ret;
+	}
+	addresses = NULL;
+	ret = krb5_os_localaddr(ctx, &addresses);
+	if (ret != 0) {
+		printf("Error getting local address list.\n");
+		return ret;
+	}
+	lcount = 0;
+	while ((addresses != NULL) && (addresses[lcount] != NULL)) {
+		lcount++;
 	}
 	ccache = NULL;
 	ret = krb5_cc_default(ctx, &ccache);
@@ -36,7 +47,11 @@ main(int argc, char **argv)
 				count++;
 			}
 		}
+#ifdef BASE_ZERO
 		printf("%d\n", count);
+#else
+		printf("%d\n", count - lcount);
+#endif
 		krb5_cc_end_seq_get(ctx, ccache, &cursor);
 	}
 	krb5_cc_close(ctx, ccache);

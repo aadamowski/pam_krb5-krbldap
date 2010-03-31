@@ -13,7 +13,7 @@ echo "";echo I
 test_run -auth -setcred $test_principal -run klist_f $pam_krb5 $test_flags renew_lifetime=0 not_proxiable not_forwardable -- foo
 
 echo "";echo No addresses.
-test_run -auth -setcred $test_principal -run klist_a $pam_krb5 $test_flags proxiable forwardable addressless -- foo
+test_run -auth -setcred $test_principal -run klist_a0 $pam_krb5 $test_flags proxiable forwardable addressless -- foo
 
 echo "";echo With local addresses.
 test_run -auth -setcred $test_principal -run klist_a $pam_krb5 $test_flags proxiable forwardable not_addressless -- foo

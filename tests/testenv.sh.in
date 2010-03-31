@@ -130,7 +130,6 @@ test_k524stop() {
 }
 
 test_kdcstop() {
-	trap true EXIT
 	if $test_krb4 ; then
 		test_k524stop
 	fi

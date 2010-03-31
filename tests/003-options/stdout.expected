@@ -30,7 +30,7 @@ Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 AUTH	0	Success
 ESTCRED	0	Success
-1
+0
 DELCRED	0	Success
 
 With local and extra addresses.
@@ -38,7 +38,7 @@ Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
 AUTH	0	Success
 ESTCRED	0	Success
-2
+1
 DELCRED	0	Success
 
 Without krb4.
