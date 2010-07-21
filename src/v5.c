@@ -601,7 +601,7 @@ v5_creds_address_contents(krb5_creds *creds, int i)
 #error "Don't know how to read addresses for your Kerberos implementation!"
 #endif
 
-#if defined(HAVE_KRB5_AUTHDATA_VAL__AD_TYPE) && defined(HAVE_KRB5_AUTHDATA_VAL__AD_DATA_LENGTH) && defined(HAVE_KRB5_AUTHDATA_VAL__AD_DATA_DATA)
+#if defined(HAVE_KRB5_AUTHDATA_VAL)
 int
 v5_creds_authdata_count(krb5_creds *creds)
 {
@@ -701,7 +701,7 @@ v5_auth_con_setuserkey(krb5_context ctx, krb5_auth_context auth_con,
 #error "Don't know how to set user-to-user key for your Kerberos implementation!"
 #endif
 
-#if defined(HAVE_KRB5_TICKET_ENC_PART2__CLIENT)
+#if defined(HAVE_KRB5_TICKET_ENC_PART2)
 krb5_principal
 v5_ticket_get_client(krb5_ticket *ticket)
 {

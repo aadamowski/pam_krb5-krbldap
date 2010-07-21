@@ -8,6 +8,18 @@ AC_PROG_LIBTOOL
 
 AM_MAINTAINER_MODE
 
+dnl AC_MSG_CHECKING(for -as-needed or equivalent)
+dnl savedCFLAGS="$CFLAGS"
+dnl for flag in --as-needed -as-needed -Wl,--as-needed -Wl,-as-needed ; do
+dnl     if test x"$LD_AS_NEEDED" = x ; then
+dnl     	CFLAGS="$savedCFLAGS $flag"
+dnl     	AC_LINK_IFELSE(AC_LANG_PROGRAM(,return 0;),[LD_AS_NEEDED=$flag])
+dnl     fi
+dnl done
+dnl AC_MSG_RESULT(${LD_AS_NEEDED:-not found})
+dnl CFLAGS="$savedCFLAGS"
+AC_SUBST(LD_AS_NEEDED)
+
 AC_PATH_PROG(KRB5_CONFIG,krb5-config,:,[$PATH:/usr/kerberos/bin:/usr/krb5/bin])
 if test $KRB5_CONFIG = : ; then
 	AC_MSG_ERROR(krb5-config not found)
@@ -331,9 +343,7 @@ AC_CHECK_MEMBERS(krb5_address.addrtype,,,[$headers])
 AC_CHECK_MEMBERS(krb5_address.length,,,[$headers])
 AC_CHECK_MEMBERS(krb5_address.contents,,,[$headers])
 AC_CHECK_MEMBERS(krb5_authdata.len,,,[$headers])
-AC_CHECK_MEMBERS(krb5_authdata.val[0].ad_type,,,[$headers])
-AC_CHECK_MEMBERS(krb5_authdata.val[0].ad_data.length,,,[$headers])
-AC_CHECK_MEMBERS(krb5_authdata.val[0].ad_data.data,,,[$headers])
+AC_CHECK_MEMBERS(krb5_authdata.val,,,[$headers])
 AC_CHECK_MEMBERS(krb5_authdata.ad_type,,,[$headers])
 AC_CHECK_MEMBERS(krb5_authdata.length,,,[$headers])
 AC_CHECK_MEMBERS(krb5_authdata.contents,,,[$headers])
@@ -346,7 +356,7 @@ AC_CHECK_MEMBERS(krb5_principal_data.name.name_string.len,,,[$headers])
 AC_CHECK_MEMBERS(krb5_principal_data.name.name_string.val,,,[$headers])
 AC_CHECK_MEMBERS(krb5_principal_data.realm,,,[$headers])
 AC_CHECK_MEMBERS(krb5_ticket.client,,,[$headers])
-AC_CHECK_MEMBERS(krb5_ticket.enc_part2[0].client,,,[$headers])
+AC_CHECK_MEMBERS(krb5_ticket.enc_part2,,,[$headers])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
