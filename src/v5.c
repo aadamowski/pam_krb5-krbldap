@@ -69,6 +69,7 @@
 #include "log.h"
 #include "perms.h"
 #include "prompter.h"
+#include "sly.h"
 #include "stash.h"
 #include "userinfo.h"
 #include "v5.h"
@@ -803,8 +804,15 @@ v5_appdefault_boolean(krb5_context ctx,
 #endif
 
 static int
-v5_validate(krb5_context ctx, krb5_creds *creds,
-	    const struct _pam_krb5_options *options)
+v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
+		   const struct _pam_krb5_options *options)
+{
+	return PAM_SYSTEM_ERR;
+}
+
+static int
+v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
+		   const struct _pam_krb5_options *options)
 {
 	int i, score;
 	char *principal;
@@ -1039,6 +1047,28 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		v5_free_unparsed_name(ctx, principal);
 		return PAM_AUTH_ERR;
 	}
+}
+
+static int
+v5_validate(krb5_context ctx, krb5_creds *creds,
+	    const struct _pam_krb5_options *options)
+{
+	int ret;
+	if (_pam_krb5_sly_looks_unsafe() == 0) {
+		/* If it looks safe, see if we have an already-issued TGT that
+		 * we can use to perform user-to-user authentication. */
+		ret = v5_validate_ccache(ctx, creds, options);
+		switch (ret) {
+		case PAM_SUCCESS:
+			return ret;
+			break;
+		default:
+			break;
+		}
+	}
+	/* Obtain creds for a service for which we have keys in the keytab and
+	 * then just authenticate to it. */
+	return v5_validate_keytab(ctx, creds, options);
 }
 
 int

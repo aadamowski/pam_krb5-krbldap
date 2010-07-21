@@ -45,6 +45,8 @@ libpam_krb5_la_SOURCES = \
 	prompter.h \
 	shmem.c \
 	shmem.h \
+	sly.c \
+	sly.h \
 	stash.c \
 	stash.h \
 	storetmp.c \
@@ -71,9 +73,7 @@ pam_krb5_la_SOURCES = \
 	auth.c \
 	acct.c \
 	password.c \
-	session.c \
-	sly.c \
-	sly.h
+	session.c
 
 pam_newpag_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
 pam_newpag_la_LIBADD = libpam_krb5.la @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
