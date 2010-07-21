@@ -206,6 +206,7 @@ main(int argc, const char **argv)
 		return ret;
 	}
 
+	errno = 0;
 	warn("OK");
 
 	krb5_free_ticket(ctx, ticket);
