@@ -159,9 +159,13 @@ o use_shmem
   of services can be set at compile-time.
 o validate
   validate = service1 service2
-  Validate initial credentials.  By default, credentials are validated if
-  the specified keytab file can be read, using the first service for which
-  a key is found.
+  Validate initial credentials.  Credentials will be validated if the specified
+  keytab file can be read, using a suitable service whose key is in the file.
+o validate_user_user
+  validate_user_user = service1 service2
+  If validation is enabled, attempt to validate initial credentials using
+  previously-obtained credentials in the default ccache if validation using a
+  keytab is not possible.
 
 Configuration file only:
 o afs_cells = cell1 cell2 cell3 cell4=afs/cell4@EXAMPLE.COM
