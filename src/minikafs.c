@@ -537,12 +537,12 @@ minikafs_settoken(const void *ticket, uint32_t ticket_size,
 		return -1;
 	}
 
-	/* their key, encrypted with our key */
+	/* their copy of the session key, encrypted with their key */
 	size = ticket_size;
 	memcpy(buffer, &size, 4);
 	memcpy(buffer + 4, ticket, size);
 
-	/* our key, plus housekeeping */
+	/* our copy of the session key, plus housekeeping */
 	plain_token.kvno = kvno;
 	memcpy(&plain_token.key, key, 8);
 	plain_token.uid = uid;
