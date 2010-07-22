@@ -806,7 +806,8 @@ v5_appdefault_boolean(krb5_context ctx,
 static int
 v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
 		   struct _pam_krb5_user_info *userinfo,
-		   const struct _pam_krb5_options *options)
+		   const struct _pam_krb5_options *options,
+		   int *had_ccache_creds)
 {
 	krb5_ccache occache, ccache;
 	krb5_ticket *ticket;
@@ -824,6 +825,7 @@ v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
 		debug("verifying credentials using user-to-user auth to "
 		      "ccache '%s'", krb5_cc_default_name(ctx));
 	}
+	*had_ccache_creds = 0;
 
 	/* Open the default ccache and see if it has creds that look like the
 	 * ones we're checking, but which uses a different key (i.e., don't
@@ -850,6 +852,7 @@ v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
 	if (options->debug) {
 		debug("found previously-obtained credentials in ccache");
 	}
+	*had_ccache_creds = 1;
 	if ((v5_creds_get_etype(creds) == v5_creds_get_etype(ocreds)) &&
 	    (v5_creds_key_length(creds) == v5_creds_key_length(ocreds)) &&
 	    (memcmp(v5_creds_key_contents(creds),
@@ -1015,7 +1018,8 @@ v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
 static int
 v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 		   struct _pam_krb5_user_info *userinfo,
-		   const struct _pam_krb5_options *options)
+		   const struct _pam_krb5_options *options,
+		   int *had_service_key)
 {
 	int i, score;
 	char *principal;
@@ -1024,6 +1028,9 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 	krb5_kt_cursor cursor;
 	krb5_keytab_entry entry;
 	krb5_verify_init_creds_opt opt;
+
+	/* So far, we didn't find a service key. */
+	*had_service_key = 0;
 
 	/* Open the keytab. */
 	memset(&keytab, 0, sizeof(keytab));
@@ -1069,7 +1076,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			i = krb5_copy_principal(ctx, entry.principal, &princ);
 			if (i != 0) {
 				warn("internal error copying principal name, "
-				     "not verifying TGT");
+				     "not verifying TGT using keytab");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
 				if (host != NULL) {
@@ -1087,7 +1094,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			i = krb5_copy_principal(ctx, entry.principal, &princ);
 			if (i != 0) {
 				warn("internal error copying principal name, "
-				     "not verifying TGT");
+				     "not verifying TGT using keytab");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
 				if (host != NULL) {
@@ -1108,7 +1115,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			i = krb5_copy_principal(ctx, entry.principal, &princ);
 			if (i != 0) {
 				warn("internal error copying principal name, "
-				     "not verifying TGT");
+				     "not verifying TGT using keytab");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
 				if (host != NULL) {
@@ -1132,7 +1139,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			i = krb5_copy_principal(ctx, entry.principal, &princ);
 			if (i != 0) {
 				warn("internal error copying principal name, "
-				     "not verifying TGT");
+				     "not verifying TGT using keytab");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
 				if (host != NULL) {
@@ -1159,7 +1166,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			i = krb5_copy_principal(ctx, entry.principal, &princ);
 			if (i != 0) {
 				warn("internal error copying principal name, "
-				     "not verifying TGT");
+				     "not verifying TGT using keytab");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
 				if (host != NULL) {
@@ -1189,7 +1196,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			i = krb5_copy_principal(ctx, entry.principal, &princ);
 			if (i != 0) {
 				warn("internal error copying principal name, "
-				     "not verifying TGT");
+				     "not verifying TGT using keytab");
 				krb5_kt_end_seq_get(ctx, keytab, &cursor);
 				krb5_kt_close(ctx, keytab);
 				if (host != NULL) {
@@ -1199,6 +1206,8 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 			}
 			score = 5;
 		}
+		/* Make a note of how well we're doing in finding a key. */
+		*had_service_key = score;
 	}
 
 	/* Close the cursor here.  Even though we're using cursors, the file
@@ -1221,7 +1230,7 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 	i = krb5_unparse_name(ctx, princ, &principal);
 	if (i != 0) {
 		warn("internal error unparsing principal name, "
-		     "not verifying TGT");
+		     "not verifying TGT using keytab");
 		krb5_free_principal(ctx, princ);
 		krb5_kt_close(ctx, keytab);
 		if (host != NULL) {
@@ -1255,21 +1264,26 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 static int
 v5_validate(krb5_context ctx, krb5_creds *creds,
 	    struct _pam_krb5_user_info *userinfo,
-	    const struct _pam_krb5_options *options)
+	    const struct _pam_krb5_options *options,
+	    int *had_keys)
 {
-	int ret;
+	int ret, had_keytab_key, had_ccache;
 	/* Obtain creds for a service for which we have keys in the keytab and
 	 * then just authenticate to it. */
-	ret = v5_validate_keytab(ctx, creds, userinfo, options);
+	had_keytab_key = 0;
+	ret = v5_validate_keytab(ctx, creds, userinfo, options,
+				 &had_keytab_key);
 	switch (ret) {
 	case PAM_SUCCESS:
 	case PAM_AUTH_ERR:
 		/* We either succeeded or know that the creds are bad. */
+		*had_keys = had_keytab_key;
 		return ret;
 		break;
 	case PAM_SERVICE_ERR:
 		/* Some sort of error accessing the keytab, perhaps because
 		 * there isn't one, perhaps due to permissions limitations. */
+		had_ccache = 0;
 		if (_pam_krb5_sly_looks_unsafe() == 0) {
 			/* If it looks safe, see if we have an already-issued
 			 * TGT that we can use to perform user-to-user
@@ -1278,20 +1292,26 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 			 * that issued the older set, and validating those was
 			 * some other process's problem. */
 			switch (v5_validate_ccache(ctx, creds,
-						   userinfo, options)) {
+						   userinfo, options,
+						   &had_ccache)) {
 			case PAM_SUCCESS:
+				*had_keys = had_keytab_key + had_ccache;
 				return PAM_SUCCESS;
 				break;
 			case PAM_AUTH_ERR:
+				*had_keys = had_keytab_key + had_ccache;
 				return PAM_AUTH_ERR;
 				break;
 			default:
+				*had_keys = had_keytab_key + had_ccache;
 				return PAM_SERVICE_ERR;
 				break;
 			}
 		}
+		*had_keys = had_keytab_key + had_ccache;
 		break;
 	default:
+		*had_keys = had_keytab_key;
 		break;
 	}
 	return ret;
@@ -1315,7 +1335,7 @@ v5_get_creds(krb5_context ctx,
 				      krb5_prompt[]),
 	     int *result)
 {
-	int i;
+	int i, validate_had_service_key;
 	char realm_service[LINE_MAX];
 	char *opt;
 	const char *realm;
@@ -1528,9 +1548,19 @@ v5_get_creds(krb5_context ctx,
 			if (options->debug) {
 				debug("validating credentials");
 			}
-			switch (v5_validate(ctx, creds, userinfo, options)) {
+			validate_had_service_key = 0;
+			switch (v5_validate(ctx, creds, userinfo, options,
+					    &validate_had_service_key)) {
 			case PAM_AUTH_ERR:
 				return PAM_AUTH_ERR;
+				break;
+			case PAM_SERVICE_ERR:
+				if (validate_had_service_key) {
+					debug("internal error, but we found a "
+					      "key to use for validation, so "
+					      "rejecting client creds");
+					return PAM_AUTH_ERR;
+				}
 				break;
 			default:
 				break;

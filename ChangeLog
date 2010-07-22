@@ -7,6 +7,8 @@
 	function.
 	* src/v5.c(v5_validate): try to validate using the keytab first, and
 	if we don't get a definite answer, maybe try with the default ccache
+	* src/v5.c(v5_get_creds): keep track of whether or not validation
+	found keys that could be used for validation
 
 2010-03-29
 	* src/options.c,src/options.h,src/acct.c,src/auth.c: add and heed an
