@@ -11,6 +11,12 @@
 	found keys that could be used for validation
 	* src/options.c,src/v5.c: make validation using user-to-user logic an
 	option, and enable it by default
+	* src/v5.c(v5_validate_keytab): split out the server principal
+	selection logic into a separate "v5_select_keytab_service" function
+	* src/v5.c(v5_validate_keytab): rename to v5_validate_using_keytab,
+	using v5_select_keytab_service() to select a service name, or using
+	NULL if it fails for whatever reason.
+	* src/v5.c(v5_validate_ccache): rename to v5_validate_using_ccache
 
 2010-03-29
 	* src/options.c,src/options.h,src/acct.c,src/auth.c: add and heed an
