@@ -715,7 +715,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->validate = option_b(argc, argv,
 				     ctx, options->realm,
 				     service, NULL, NULL,
-				     "validate", 0);
+				     "validate", 1);
 	if (options->debug && (options->validate == 1)) {
 		debug("flag: validate");
 	}

@@ -4,6 +4,8 @@
          * add an "ignore_k5login" option to control whether or not the module
 	   will use the krb5_kuserok() function to perform additional
 	   authorization checks
+	 * turn on validation by default - verify_ap_req_nofail controls part
+	   of how we treat errors reading keytab files now
 - 2.3.11:* create credentials before trying to look up the location of the
 	   user's home directory via krb5_kuserok()
 - 2.3.10:* fine-tune the logic for selecting which key we use for validating

@@ -277,8 +277,11 @@ services.  By default, the module is configured with
 "use_shmem = \fI@DEFAULT_USE_SHMEM@\fR".
 
 .IP "validate = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
-specifies whether or not to attempt validation of the TGT.  The default is
-\fBfalse\fR.
+specifies whether or not to attempt validation of the TGT using the local
+keytab.  The default is \fBtrue\fR.
+The \fBlibdefaults\fR \fBverify_ap_req_nofail\fR setting can
+affect whether or not errors reading the keytab which are encountered during
+validation will be suppressed.
 
 .IP "validate_user_user = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 specifies whether or not, when attempting validation of the TGT, to attempt

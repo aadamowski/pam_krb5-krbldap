@@ -808,7 +808,7 @@ v5_validate_using_ccache(krb5_context ctx, krb5_creds *creds,
 			 struct _pam_krb5_user_info *userinfo,
 			 const struct _pam_krb5_options *options)
 {
-	krb5_ccache occache, ccache;
+	krb5_ccache ccache;
 	krb5_ticket *ticket;
 	krb5_creds mcreds, *ocreds, *ucreds;
 	krb5_auth_context auth_con;
@@ -819,15 +819,15 @@ v5_validate_using_ccache(krb5_context ctx, krb5_creds *creds,
 	static int counter = 0;
 
 	if (options->debug) {
-		debug("attemtping to verify credentials using user-to-user "
+		debug("attempting to verify credentials using user-to-user "
 		      "auth to ccache '%s'", krb5_cc_default_name(ctx));
 	}
 
 	/* Open the default ccache and see if it has creds that look like the
 	 * ones we're checking, but which use a different key (i.e., don't
 	 * bother if the creds are the ones we have already). */
-	occache = NULL;
-	ret = krb5_cc_default(ctx, &occache);
+	ccache = NULL;
+	ret = krb5_cc_default(ctx, &ccache);
 	if (ret != 0) {
 		warn("error opening default ccache: %s", error_message(ret));
 		return PAM_SERVICE_ERR;
@@ -837,12 +837,12 @@ v5_validate_using_ccache(krb5_context ctx, krb5_creds *creds,
 	mcreds.client = creds->client;
 	mcreds.server = creds->server;
 	ocreds = NULL;
-	ret = krb5_get_credentials(ctx, KRB5_GC_CACHED, occache,
+	ret = krb5_get_credentials(ctx, KRB5_GC_CACHED, ccache,
 				   &mcreds, &ocreds);
 	if (ret != 0) {
 		warn("error getting cached creds for the same client/server "
 		     "pair: %s", error_message(ret));
-		krb5_cc_close(ctx, occache);
+		krb5_cc_close(ctx, ccache);
 		return PAM_SERVICE_ERR;
 	}
 	if (options->debug) {
@@ -856,10 +856,10 @@ v5_validate_using_ccache(krb5_context ctx, krb5_creds *creds,
 		warn("internal error - previously-obtained credentials have "
 		     "the same key as the ones we're attempting to verify");
 		krb5_free_creds(ctx, ocreds);
-		krb5_cc_close(ctx, occache);
+		krb5_cc_close(ctx, ccache);
 		return PAM_SERVICE_ERR;
 	}
-	krb5_cc_close(ctx, occache);
+	krb5_cc_close(ctx, ccache);
 
 	/* Create a temporary ccache to hold the creds we're validating and the
 	 * user-to-user creds we'll be obtaining to validate them. */
@@ -909,7 +909,6 @@ v5_validate_using_ccache(krb5_context ctx, krb5_creds *creds,
 		krb5_free_creds(ctx, ocreds);
 		return PAM_AUTH_ERR;
 	}
-
 	krb5_cc_destroy(ctx, ccache);
 
 	/* Create an auth context and use it to generate a user-to-user auth
@@ -1025,7 +1024,8 @@ v5_select_keytab_service(krb5_context ctx, krb5_creds *creds,
 
 	*service = NULL;
 
-	/* Figure out what the local host service is named. */
+	/* Figure out what the local host service is named -- we're mainly
+	 * interested in the second component, which is the local hostname. */
 	host = NULL;
 	i = krb5_sname_to_principal(ctx, NULL, "host", KRB5_NT_SRV_HST, &host);
 	if (i != 0) {
@@ -1193,10 +1193,6 @@ v5_select_keytab_service(krb5_context ctx, krb5_creds *creds,
 		}
 	}
 
-	/* Close the cursor here.  Even though we're using cursors, the file
-	 * handle is stored in the krb5_keytab structure, and it gets
-	 * overwritten when the verify_init_creds() call below creates its own
-	 * cursor, creating a leak. */
 	krb5_kt_end_seq_get(ctx, keytab, &cursor);
 	krb5_kt_close(ctx, keytab);
 	krb5_free_principal(ctx, host);
@@ -1223,16 +1219,27 @@ v5_validate_using_keytab(krb5_context ctx, krb5_creds *creds,
 	/* Try to get a text representation of the principal to which the key
 	 * belongs, for logging purposes. */
 	principal = NULL;
-	i = krb5_unparse_name(ctx, princ, &principal);
+	if (princ != NULL) {
+		i = krb5_unparse_name(ctx, princ, &principal);
+	}
 
 	/* Try to open the keytab. */
 	keytab = NULL;
-	i = krb5_kt_resolve(ctx, options->keytab, &keytab);
-	if (i != 0) {
-		warn("error resolving keytab '%s'", options->keytab);
+	if (options->keytab != NULL) {
+		i = krb5_kt_resolve(ctx, options->keytab, &keytab);
+		if (i != 0) {
+			warn("error resolving keytab '%s'", options->keytab);
+		}
+	} else {
+		i = krb5_kt_default(ctx, &keytab);
+		if (i != 0) {
+			warn("error resolving default keytab");
+		}
 	}
 
-	/* Perform the verification checks using the service key. */
+	/* Perform the verification checks using the service's key, assuming we
+	 * have some idea of what the service's name is, and that we can read
+	 * the key. */
 	krb5_verify_init_creds_opt_init(&opt);
 	i = krb5_verify_init_creds(ctx, creds, princ, keytab, NULL, &opt);
 	*krberr = i;
@@ -1254,11 +1261,12 @@ v5_validate_using_keytab(krb5_context ctx, krb5_creds *creds,
 		return PAM_SUCCESS;
 	} else {
 		if (principal != NULL) {
-			crit("TGT failed verification using key for '%s': %s",
+			crit("TGT failed verification using keytab and "
+			     "key for '%s': %s",
 			     principal, v5_error_message(i));
 			v5_free_unparsed_name(ctx, principal);
 		} else {
-			crit("TGT failed verification: %s",
+			crit("TGT failed verification using keytab: %s",
 			     v5_error_message(i));
 		}
 		return PAM_AUTH_ERR;
@@ -1270,18 +1278,15 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 	    struct _pam_krb5_user_info *userinfo,
 	    const struct _pam_krb5_options *options)
 {
-	int ret, krberr, had_keytab_key, had_ccache;
+	int ret, krberr;
 	/* Obtain creds for a service for which we have keys in the keytab and
 	 * then just authenticate to it. */
-	had_keytab_key = 0;
 	krberr = 0;
 	ret = v5_validate_using_keytab(ctx, creds, options, &krberr);
 	switch (ret) {
-	case PAM_SUCCESS:
-		return ret;
 	case PAM_AUTH_ERR:
 		switch (krberr) {
-		case EPERM:
+		case EACCES:
 		case ENOENT:
 			/* We weren't able to read the keytab. */
 			if (options->validate_user_user &&
@@ -1297,7 +1302,7 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 								 userinfo,
 								 options)) {
 				case PAM_SUCCESS:
-					return PAM_SUCCESS;
+					ret = PAM_SUCCESS;
 					break;
 				default:
 					break;
@@ -1332,7 +1337,7 @@ v5_get_creds(krb5_context ctx,
 				      krb5_prompt[]),
 	     int *result)
 {
-	int i, validate_had_key;
+	int i;
 	char realm_service[LINE_MAX];
 	char *opt;
 	const char *realm;
@@ -1540,11 +1545,11 @@ v5_get_creds(krb5_context ctx,
 	case 0:
 		/* Flat-out success.  Validate the TGT if it's actually a TGT,
 		 * and if we can. */
-		if (strcmp(service, KRB5_TGS_NAME) == 0) {
+		if ((options->validate == 1) &&
+		    (strcmp(service, KRB5_TGS_NAME) == 0)) {
 			if (options->debug) {
 				debug("validating credentials");
 			}
-			validate_had_key = 0;
 			switch (v5_validate(ctx, creds, userinfo, options)) {
 			case PAM_AUTH_ERR:
 				return PAM_AUTH_ERR;

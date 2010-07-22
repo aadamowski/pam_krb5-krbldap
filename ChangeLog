@@ -17,6 +17,10 @@
 	using v5_select_keytab_service() to select a service name, or using
 	NULL if it fails for whatever reason.
 	* src/v5.c(v5_validate_ccache): rename to v5_validate_using_ccache
+	* src/v5.c(v5_get_creds): drop logic that cares about whether or not
+	we found acceptable keys
+	* src/options.c,src/pam_krb5.5.in,src/pam_krb5.8.in: switch to enabling
+	validation by default
 
 2010-03-29
 	* src/options.c,src/options.h,src/acct.c,src/auth.c: add and heed an

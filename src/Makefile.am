@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libpam_krb5.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = afs5log.1 pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8 pam_newpag.5 pam_newpag.8
-noinst_PROGRAMS = harness harness-newpag shmcat uuauth
+noinst_PROGRAMS = harness harness-newpag shmcat uuauth vfy
 man_MANS = pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8
 noinst_MANS =
 if AFS
@@ -137,6 +137,8 @@ shmcat_SOURCES = shmcat.c
 shmcat_LDADD = logstdio.lo libpam_krb5.la @PAM_LIBS@
 
 uuauth_LDADD = logstdio.lo noitems.lo libpam_krb5.la @PAM_LIBS@ $(KRB_LIBS)
+
+vfy_LDADD = logstdio.lo noitems.lo libpam_krb5.la @PAM_LIBS@ $(KRB_LIBS)
 
 if AFS
 libpam_krb5_la_SOURCES += minikafs.c minikafs.h tokens.c tokens.h
