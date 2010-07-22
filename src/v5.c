@@ -812,10 +812,8 @@ v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
 	krb5_ccache occache, ccache;
 	krb5_ticket *ticket;
 	krb5_creds mcreds, *ocreds, *ucreds;
-	krb5_keyblock *key;
-	krb5_principal tgs;
 	krb5_auth_context auth_con;
-	krb5_data saved_ticket, req;
+	krb5_data req;
 	krb5_flags flags;
 	krb5_error_code ret;
 	char ccname[PATH_MAX];
@@ -1017,7 +1015,6 @@ v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
 
 static int
 v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
-		   struct _pam_krb5_user_info *userinfo,
 		   const struct _pam_krb5_options *options,
 		   int *had_service_key)
 {
@@ -1271,8 +1268,7 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 	/* Obtain creds for a service for which we have keys in the keytab and
 	 * then just authenticate to it. */
 	had_keytab_key = 0;
-	ret = v5_validate_keytab(ctx, creds, userinfo, options,
-				 &had_keytab_key);
+	ret = v5_validate_keytab(ctx, creds, options, &had_keytab_key);
 	switch (ret) {
 	case PAM_SUCCESS:
 	case PAM_AUTH_ERR:
