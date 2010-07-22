@@ -57,6 +57,9 @@ o external
 o ignore_afs
   Disable the default behavior of attempting to obtain tokens for the local
   AFS cell on behalf of clients.
+o ignore_k5login
+  Disables additional authorization checks using the krb5_kuserok() function,
+  which typically checks the user's .k5login file.
 o ignore_unknown_principals
   ignore_unknown_spn
   ignore_unknown_upn
