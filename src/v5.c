@@ -805,13 +805,216 @@ v5_appdefault_boolean(krb5_context ctx,
 
 static int
 v5_validate_ccache(krb5_context ctx, krb5_creds *creds,
+		   struct _pam_krb5_user_info *userinfo,
 		   const struct _pam_krb5_options *options)
 {
-	return PAM_SYSTEM_ERR;
+	krb5_ccache occache, ccache;
+	krb5_ticket *ticket;
+	krb5_creds mcreds, *ocreds, *ucreds;
+	krb5_keyblock *key;
+	krb5_principal tgs;
+	krb5_auth_context auth_con;
+	krb5_data saved_ticket, req;
+	krb5_flags flags;
+	krb5_error_code ret;
+	char ccname[PATH_MAX];
+	static int counter = 0;
+
+	if (options->debug) {
+		debug("verifying credentials using user-to-user auth to "
+		      "ccache '%s'", krb5_cc_default_name(ctx));
+	}
+
+	/* Open the default ccache and see if it has creds that look like the
+	 * ones we're checking, but which uses a different key (i.e., don't
+	 * bother if the creds are the ones we have already). */
+	occache = NULL;
+	ret = krb5_cc_default(ctx, &occache);
+	if (ret != 0) {
+		warn("error opening default ccache: %s", error_message(ret));
+		return PAM_SERVICE_ERR;
+	}
+
+	memset(&mcreds, 0, sizeof(mcreds));
+	mcreds.client = creds->client;
+	mcreds.server = creds->server;
+	ocreds = NULL;
+	ret = krb5_get_credentials(ctx, KRB5_GC_CACHED, occache,
+				   &mcreds, &ocreds);
+	if (ret != 0) {
+		warn("error getting cached creds for the same client/server "
+		     "pair: %s", error_message(ret));
+		krb5_cc_close(ctx, occache);
+		return PAM_SERVICE_ERR;
+	}
+	if (options->debug) {
+		debug("found previously-obtained credentials in ccache");
+	}
+	if ((v5_creds_get_etype(creds) == v5_creds_get_etype(ocreds)) &&
+	    (v5_creds_key_length(creds) == v5_creds_key_length(ocreds)) &&
+	    (memcmp(v5_creds_key_contents(creds),
+		    v5_creds_key_contents(ocreds),
+		    v5_creds_key_length(creds)) == 0)) {
+		warn("internal error - previously-obtained credentials have "
+		     "the same key as the ones we're attempting to verify");
+		krb5_free_creds(ctx, ocreds);
+		krb5_cc_close(ctx, occache);
+		return PAM_SERVICE_ERR;
+	}
+	krb5_cc_close(ctx, occache);
+
+	/* Create a temporary ccache to hold the creds we're validating and the
+	 * user-to-user creds we'll be obtaining to validate them. */
+	snprintf(ccname, sizeof(ccname), "MEMORY:_pam_krb5_val_s_%s-%d",
+		 userinfo->unparsed_name, counter++);
+	ccache = NULL;
+	ret = krb5_cc_resolve(ctx, ccname, &ccache);
+	if (ret != 0) {
+		warn("internal error creating in-memory ccache: %s",
+		     error_message(ret));
+		krb5_free_creds(ctx, ocreds);
+		return PAM_SERVICE_ERR;
+	}
+	ret = krb5_cc_initialize(ctx, ccache, creds->client);
+	if (ret != 0) {
+		warn("internal error initializing in-memory ccache: %s",
+		     error_message(ret));
+		krb5_cc_destroy(ctx, ccache);
+		krb5_free_creds(ctx, ocreds);
+		return PAM_SERVICE_ERR;
+	}
+	ret = krb5_cc_store_cred(ctx, ccache, creds);
+	if (ret != 0) {
+		warn("internal error storing creds to in-memory ccache: %s",
+		     error_message(ret));
+		krb5_cc_destroy(ctx, ccache);
+		krb5_free_creds(ctx, ocreds);
+		return PAM_SERVICE_ERR;
+	}
+
+	/* Go get the user-to-user creds for use in authenticating to the
+	 * holder of the previously-obtained TGT. */
+	memset(&mcreds, 0, sizeof(mcreds));
+	mcreds.client = creds->client;
+	mcreds.server = creds->client;
+	mcreds.second_ticket = ocreds->ticket;
+	ucreds = NULL;
+	ret = krb5_get_credentials(ctx, KRB5_GC_USER_USER, ccache,
+				   &mcreds, &ucreds);
+	if (ret != 0) {
+		warn("error obtaining user-to-user creds to '%s': %s",
+		     userinfo->unparsed_name, error_message(ret));
+		notice("TGT failed verification using previously-obtained "
+		       "credentials in '%s': %s", krb5_cc_default_name(ctx),
+		       error_message(ret));
+		krb5_cc_destroy(ctx, ccache);
+		krb5_free_creds(ctx, ocreds);
+		return PAM_AUTH_ERR;
+	}
+
+	krb5_cc_destroy(ctx, ccache);
+
+	/* Create an auth context and use it to generate a user-to-user auth
+	 * request to the old TGT. */
+	memset(&auth_con, 0, sizeof(auth_con));
+	ret = krb5_auth_con_init(ctx, &auth_con);
+	if (ret != 0) {
+		warn("error initializing auth context: %s",
+		     error_message(ret));
+		krb5_free_creds(ctx, ucreds);
+		krb5_free_creds(ctx, ocreds);
+		return PAM_SERVICE_ERR;
+	}
+	if (options->debug) {
+		debug("creating user-to-user authentication request to '%s'",
+		      userinfo->unparsed_name);
+	}
+	memset(&req, 0, sizeof(req));
+	ret = krb5_mk_req_extended(ctx, &auth_con, AP_OPTS_USE_SESSION_KEY,
+				   NULL, ucreds, &req);
+	if (ret != 0) {
+		warn("error generating user-to-user AP request to '%s': %s",
+		     userinfo->unparsed_name, error_message(ret));
+		notice("TGT failed verification using previously-obtained "
+		       "credentials in '%s': %s", krb5_cc_default_name(ctx),
+		       error_message(ret));
+		krb5_auth_con_free(ctx, auth_con);
+		krb5_free_creds(ctx, ucreds);
+		krb5_free_creds(ctx, ocreds);
+		return PAM_AUTH_ERR;
+	}
+	krb5_free_creds(ctx, ucreds);
+	krb5_auth_con_free(ctx, auth_con);
+
+	/* Create an auth context and use it to "receive" the user-to-user
+	 * auth request using the session key from the previously-obtained
+	 * credentials. */
+	ret = krb5_auth_con_init(ctx, &auth_con);
+	if (ret != 0) {
+		warn("error initializing auth context: %s",
+		     error_message(ret));
+		krb5_free_data_contents(ctx, &req);
+		krb5_free_creds(ctx, ocreds);
+		return PAM_SERVICE_ERR;
+	}
+	ret = v5_auth_con_setuserkey(ctx, auth_con,
+				     v5_creds_get_key(ocreds));
+	krb5_free_creds(ctx, ocreds);
+	if (ret != 0) {
+		warn("error setting up to receive user-to-user AP request: %s",
+		     error_message(ret));
+		krb5_free_data_contents(ctx, &req);
+		krb5_auth_con_free(ctx, auth_con);
+		return PAM_SERVICE_ERR;
+	}
+	if (options->debug) {
+		debug("receiving user-to-user authentication request");
+	}
+	ticket = NULL;
+	ret = krb5_rd_req(ctx, &auth_con, &req, NULL, NULL, &flags, &ticket);
+	krb5_free_data_contents(ctx, &req);
+	if (ret != 0) {
+		warn("error receiving user-to-user AP request: %s",
+		     error_message(ret));
+		notice("TGT failed verification using previously-obtained "
+		       "credentials in '%s': %s", krb5_cc_default_name(ctx),
+		       error_message(ret));
+		krb5_auth_con_free(ctx, auth_con);
+		return PAM_AUTH_ERR;
+	}
+	if (options->debug) {
+		debug("checking that the client and server names still match");
+	}
+	if (krb5_principal_compare(ctx, v5_ticket_get_client(ticket),
+				   creds->client) == 0) {
+		warn("client in user-to-user request was changed");
+		notice("TGT failed verification using previously-obtained "
+		       "credentials in '%s': client name mismatch",
+		       krb5_cc_default_name(ctx));
+		krb5_free_ticket(ctx, ticket);
+		krb5_auth_con_free(ctx, auth_con);
+		return PAM_AUTH_ERR;
+	}
+	if (krb5_principal_compare(ctx, ticket->server, creds->client) == 0) {
+		warn("server in user-to-user request was changed");
+		notice("TGT failed verification using previously-obtained "
+		       "credentials in '%s': server name mismatch",
+		       krb5_cc_default_name(ctx));
+		krb5_free_ticket(ctx, ticket);
+		krb5_auth_con_free(ctx, auth_con);
+		return PAM_AUTH_ERR;
+	}
+
+	krb5_free_ticket(ctx, ticket);
+	krb5_auth_con_free(ctx, auth_con);
+	notice("TGT verified using previously-obtained credentials in '%s'",
+	       krb5_cc_default_name(ctx));
+	return PAM_SUCCESS;
 }
 
 static int
 v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
+		   struct _pam_krb5_user_info *userinfo,
 		   const struct _pam_krb5_options *options)
 {
 	int i, score;
@@ -826,8 +1029,8 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 	memset(&keytab, 0, sizeof(keytab));
 	i = krb5_kt_resolve(ctx, options->keytab, &keytab);
 	if (i != 0) {
-		warn("error resolving keytab '%s', not verifying TGT",
-		     options->keytab);
+		warn("error resolving keytab '%s', not verifying TGT "
+		     "using keytab", options->keytab);
 		return PAM_SERVICE_ERR;
 	}
 
@@ -842,8 +1045,8 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 	memset(&cursor, 0, sizeof(cursor));
 	i = krb5_kt_start_seq_get(ctx, keytab, &cursor);
 	if (i != 0) {
-		warn("error reading keytab '%s', not verifying TGT",
-		     options->keytab);
+		warn("error reading keytab '%s', not verifying TGT "
+		     "using keytab", options->keytab);
 		if (host != NULL) {
 			krb5_free_principal(ctx, host);
 		}
@@ -1051,24 +1254,47 @@ v5_validate_keytab(krb5_context ctx, krb5_creds *creds,
 
 static int
 v5_validate(krb5_context ctx, krb5_creds *creds,
+	    struct _pam_krb5_user_info *userinfo,
 	    const struct _pam_krb5_options *options)
 {
 	int ret;
-	if (_pam_krb5_sly_looks_unsafe() == 0) {
-		/* If it looks safe, see if we have an already-issued TGT that
-		 * we can use to perform user-to-user authentication. */
-		ret = v5_validate_ccache(ctx, creds, options);
-		switch (ret) {
-		case PAM_SUCCESS:
-			return ret;
-			break;
-		default:
-			break;
-		}
-	}
 	/* Obtain creds for a service for which we have keys in the keytab and
 	 * then just authenticate to it. */
-	return v5_validate_keytab(ctx, creds, options);
+	ret = v5_validate_keytab(ctx, creds, userinfo, options);
+	switch (ret) {
+	case PAM_SUCCESS:
+	case PAM_AUTH_ERR:
+		/* We either succeeded or know that the creds are bad. */
+		return ret;
+		break;
+	case PAM_SERVICE_ERR:
+		/* Some sort of error accessing the keytab, perhaps because
+		 * there isn't one, perhaps due to permissions limitations. */
+		if (_pam_krb5_sly_looks_unsafe() == 0) {
+			/* If it looks safe, see if we have an already-issued
+			 * TGT that we can use to perform user-to-user
+			 * authentication. It's not ideal, but it tells us that
+			 * the KDC that issued this set of creds was the one
+			 * that issued the older set, and validating those was
+			 * some other process's problem. */
+			switch (v5_validate_ccache(ctx, creds,
+						   userinfo, options)) {
+			case PAM_SUCCESS:
+				return PAM_SUCCESS;
+				break;
+			case PAM_AUTH_ERR:
+				return PAM_AUTH_ERR;
+				break;
+			default:
+				return PAM_SERVICE_ERR;
+				break;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return ret;
 }
 
 int
@@ -1302,7 +1528,7 @@ v5_get_creds(krb5_context ctx,
 			if (options->debug) {
 				debug("validating credentials");
 			}
-			switch (v5_validate(ctx, creds, options)) {
+			switch (v5_validate(ctx, creds, userinfo, options)) {
 			case PAM_AUTH_ERR:
 				return PAM_AUTH_ERR;
 				break;

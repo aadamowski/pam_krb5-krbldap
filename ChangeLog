@@ -1,3 +1,13 @@
+2010-07-22
+	* src/v5.c(v5_validate_ccache): add, using user-to-user auth with an
+	already-present ccache to verify that the KDC that issued the just-
+	obtained creds was the same one that issued the previously-obtained
+	ones.
+	* src/v5.c(v5_validate_keytab): rename from the previous v5_validate
+	function.
+	* src/v5.c(v5_validate): try to validate using the keytab first, and
+	if we don't get a definite answer, maybe try with the default ccache
+
 2010-03-29
 	* src/options.c,src/options.h,src/acct.c,src/auth.c: add and heed an
 	"ignore_k5login" boolean option.
