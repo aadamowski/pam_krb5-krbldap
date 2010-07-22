@@ -1335,7 +1335,7 @@ v5_get_creds(krb5_context ctx,
 				      krb5_prompt[]),
 	     int *result)
 {
-	int i, validate_had_service_key;
+	int i, validate_had_key;
 	char realm_service[LINE_MAX];
 	char *opt;
 	const char *realm;
@@ -1548,19 +1548,13 @@ v5_get_creds(krb5_context ctx,
 			if (options->debug) {
 				debug("validating credentials");
 			}
-			validate_had_service_key = 0;
+			validate_had_key = 0;
 			switch (v5_validate(ctx, creds, userinfo, options,
-					    &validate_had_service_key)) {
+					    &validate_had_key)) {
 			case PAM_AUTH_ERR:
 				return PAM_AUTH_ERR;
 				break;
 			case PAM_SERVICE_ERR:
-				if (validate_had_service_key) {
-					debug("internal error, but we found a "
-					      "key to use for validation, so "
-					      "rejecting client creds");
-					return PAM_AUTH_ERR;
-				}
 				break;
 			default:
 				break;
