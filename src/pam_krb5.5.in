@@ -280,6 +280,12 @@ services.  By default, the module is configured with
 specifies whether or not to attempt validation of the TGT.  The default is
 \fBfalse\fR.
 
+.IP "validate_user_user = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
+specifies whether or not, when attempting validation of the TGT, to attempt
+user-to-user authentication using a previously-obtainted TGT in the default
+ccache if validation can't be performed using a keytab.  The default is
+\fBtrue\fR.
+
 .SH EXAMPLE
 
 [appdefaults]

@@ -1280,7 +1280,8 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		/* Some sort of error accessing the keytab, perhaps because
 		 * there isn't one, perhaps due to permissions limitations. */
 		had_ccache = 0;
-		if (_pam_krb5_sly_looks_unsafe() == 0) {
+		if (options->validate_user_user &&
+		    (_pam_krb5_sly_looks_unsafe() == 0)) {
 			/* If it looks safe, see if we have an already-issued
 			 * TGT that we can use to perform user-to-user
 			 * authentication. It's not ideal, but it tells us that

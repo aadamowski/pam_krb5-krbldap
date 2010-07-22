@@ -9,6 +9,8 @@
 	if we don't get a definite answer, maybe try with the default ccache
 	* src/v5.c(v5_get_creds): keep track of whether or not validation
 	found keys that could be used for validation
+	* src/options.c,src/v5.c: make validation using user-to-user logic an
+	option, and enable it by default
 
 2010-03-29
 	* src/options.c,src/options.h,src/acct.c,src/auth.c: add and heed an

@@ -61,6 +61,7 @@ struct _pam_krb5_options {
 	int use_third_pass;
 	int use_shmem;
 	int validate;
+	int validate_user_user;
 	int v4;
 	int v4_for_afs;
 	int v4_use_524;

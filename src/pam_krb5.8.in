@@ -292,6 +292,13 @@ tells pam_krb5.so to verify that the TGT obtained from the realm's servers has
 not been spoofed.  Note that the process which is performing authentication
 must be able to read the \fIkeytab\fR in order for validation to be possible.
 
+.IP validate_user_user
+.IP "validate_user_user = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
+specifies whether or not, when attempting validation of the TGT, to attempt
+user-to-user authentication using a previously-obtainted TGT in the default
+ccache if validation can't be performed using a keytab.  The default is
+\fBtrue\fR.
+
 .SH FILES
 \fI/etc/krb5.conf\fR
 .br
