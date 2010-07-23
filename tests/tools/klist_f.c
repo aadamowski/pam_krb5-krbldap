@@ -99,13 +99,13 @@ main(int argc, char **argv)
 			if (creds.flags.b.transited_policy_checked) {
 				printf("f");
 			}
-#elif defined(HAVE_KRB5_CREDS_TICKET_FLAGS)
+#elif defined(HAVE_KRB5_CREDS_TICKET_FLAGS) && defined(TKT_FLG_TRANSIT_POLICY_CHECKED)
 			if (creds.ticket_flags &
 			    TKT_FLG_TRANSIT_POLICY_CHECKED) {
 				printf("T");
 			}
 #else
-#error "Don't know how to check for the transited-policy-checked ticket flag."
+#warning "Don't know how to check for the transited-policy-checked ticket flag."
 #endif
 			printf("\n");
 		}
