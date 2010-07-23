@@ -667,7 +667,7 @@ v5_creds_get_is_skey(krb5_creds *creds)
 }
 #endif
 
-#if defined(HAVE_KRB5_CREDS_FLAGS)
+#if defined(HAVE_KRB5_CREDS_FLAGS_I)
 krb5_flags
 v5_creds_get_flags(krb5_creds *creds)
 {
