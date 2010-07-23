@@ -110,11 +110,6 @@ o multiple_ccaches
 o no_validate
   no_validate = service1 service2
   Don't try to validate initial credentials.
-o no_validate_user_user
-  no_validate_user_user = service1 service2
-  Even if validation fails due to permissions problems, don't attempt to
-  validate initial credentials using previously-obtained credentials in the
-  default ccache.
 o no_user_check
   Go ahead and authenticate users for whom getpwnam() returns no information.
   Credential cache and ticket files will be created and owned by the current
@@ -168,6 +163,10 @@ o use_shmem
   managment to be performed in different processes, so long as the PAM
   environment is correctly propagated from one to the other.  A default list
   of services can be set at compile-time.
+o validate_user_user
+  validate_user_user = service1 service2
+  If validation fails due to permissions problems, attempt to validate initial
+  credentials using previously-obtained credentials in the default ccache.
 
 Configuration file only:
 o afs_cells = cell1 cell2 cell3 cell4=afs/cell4@EXAMPLE.COM

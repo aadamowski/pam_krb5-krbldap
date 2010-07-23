@@ -200,12 +200,6 @@ The \fBlibdefaults\fR \fBverify_ap_req_nofail\fR setting can
 affect whether or not errors reading the keytab which are encountered during
 validation will be suppressed.
 
-.IP no_validate_user_user
-.IP "no_validate_user_user=\fIsshd\fR"
-specifies that, when attempting validation of the TGT, to not attempt
-user-to-user authentication using a previously-obtainted TGT in the default
-ccache if validation can't be performed using a keytab.
-
 @MAN_AFS@.IP null_afs
 @MAN_AFS@tells pam_krb5.so, when it attempts to set tokens, to try to get
 @MAN_AFS@credentials for services with names which resemble afs@\fIREALM\fR
@@ -299,6 +293,12 @@ to enforce use of less-easy-to-guess passwords.
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory, or to do so for
 specific services.
+
+.IP validate_user_user
+.IP "validate_user_user=\fIgnome-screensaver\fR"
+specifies that, when attempting validation of the TGT, the module should
+attempt user-to-user authentication using a previously-obtainted TGT in the
+default ccache if validation can't be performed using a keytab.
 
 .SH FILES
 \fI/etc/krb5.conf\fR

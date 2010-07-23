@@ -287,7 +287,7 @@ validation will be suppressed.
 specifies whether or not, when attempting validation of the TGT, to attempt
 user-to-user authentication using a previously-obtainted TGT in the default
 ccache if validation can't be performed using a keytab.  The default is
-\fBtrue\fR.
+\fBfalse\fR.
 
 .SH EXAMPLE
 

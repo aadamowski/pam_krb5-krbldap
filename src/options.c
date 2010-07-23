@@ -722,7 +722,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->validate_user_user = option_b(argc, argv,
 					       ctx, options->realm,
 					       service, NULL, NULL,
-					       "validate_user_user", 1);
+					       "validate_user_user", 0);
 	if (options->debug && (options->validate_user_user == 1)) {
 		debug("flag: validate_user_user");
 	}
