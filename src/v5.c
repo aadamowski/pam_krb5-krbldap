@@ -1288,6 +1288,7 @@ v5_validate(krb5_context ctx, krb5_creds *creds,
 		switch (krberr) {
 		case EACCES:
 		case ENOENT:
+		case KRB5_KT_NOTFOUND:
 			/* We weren't able to read the keytab. */
 			if (options->validate_user_user &&
 			    (_pam_krb5_sly_looks_unsafe() == 0)) {
