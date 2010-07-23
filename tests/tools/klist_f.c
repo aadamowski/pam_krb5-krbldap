@@ -85,7 +85,7 @@ main(int argc, char **argv)
 #error "Don't know how to check for the is-initial-ticket ticket flag."
 #endif
 #if defined(HAVE_KRB5_CREDS_FLAGS_B)
-			if (creds.flags.b.preauth) {
+			if (creds.flags.b.pre_authent) {
 				printf("A");
 			}
 #elif defined(HAVE_KRB5_CREDS_TICKET_FLAGS)
