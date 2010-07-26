@@ -450,7 +450,7 @@ v5_principal_compare_no_realm(krb5_context ctx, krb5_principal princ,
 		if ((v5_princ_component_length(princ, i) !=
 		     v5_princ_component_length(temp, i)) ||
 		    (memcmp(v5_princ_component_contents(princ, i),
-		            v5_princ_component_contents(temp, i),
+			    v5_princ_component_contents(temp, i),
 			    v5_princ_component_length(princ, i)) != 0)) {
 			break;
 		}
@@ -482,17 +482,17 @@ int
 v5_creds_check_initialized(krb5_context ctx, krb5_creds *creds)
 {
 	return ((creds->client != NULL) &&
-	        (creds->server != NULL) &&
-	        (creds->keyblock.length > 0) &&
-	        (creds->ticket.length > 0)) ? 0 : 1;
+		(creds->server != NULL) &&
+		(creds->keyblock.length > 0) &&
+		(creds->ticket.length > 0)) ? 0 : 1;
 }
 int
 v5_creds_check_initialized_pwc(krb5_context ctx, krb5_creds *creds)
 {
 	return ((creds->client != NULL) &&
-	        (creds->server != NULL) &&
-	        (creds->keyblock.length > 0) &&
-	        (creds->ticket.length > 0) &&
+		(creds->server != NULL) &&
+		(creds->keyblock.length > 0) &&
+		(creds->ticket.length > 0) &&
 		(creds->server->length >= 2) &&
 		(v5_principal_compare_no_realm(ctx, creds->server,
 					       PASSWORD_CHANGE_PRINCIPAL) == 0)) ? 0 : 1;
@@ -739,7 +739,7 @@ v5_appdefault_boolean(krb5_context ctx,
 {
 	*ret_value = default_value;
 	krb5_appdefault_boolean(ctx, PAM_KRB5_APPNAME, realm, option,
-			        default_value, ret_value);
+				default_value, ret_value);
 }
 #else
 static krb5_data *
@@ -1126,7 +1126,7 @@ v5_select_keytab_service(krb5_context ctx, krb5_creds *creds,
 		    krb5_realm_compare(ctx, entry.principal, creds->client) &&
 		    (v5_princ_component_length(entry.principal, 0) == 4) &&
 		    (memcmp(v5_princ_component_contents(entry.principal, 0),
-		            "host", 4) == 0)) {
+			    "host", 4) == 0)) {
 			if (princ != NULL) {
 				krb5_free_principal(ctx, princ);
 			}
