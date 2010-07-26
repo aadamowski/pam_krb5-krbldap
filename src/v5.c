@@ -1165,7 +1165,7 @@ v5_select_keytab_service(krb5_context ctx, krb5_creds *creds,
 			score = 4;
 		}
 		/* Favorite entry ("host" with the local hostname as the
-		* instance, in the client's realm)? */
+		 * instance, in the client's realm)? */
 		if ((score < 5) &&
 		    (host != NULL) &&
 		    (v5_princ_component_count(entry.principal) == 2) &&
