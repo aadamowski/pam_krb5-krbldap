@@ -7,7 +7,6 @@ License: BSD or LGPLv2+
 Group: System Environment/Base
 URL: https://fedorahosted.org/pam_krb5/
 BuildRequires: keyutils-libs-devel, krb5-devel, pam-devel
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description 
 This is pam_krb5, a pluggable authentication module that can be used with
@@ -19,15 +18,13 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 %setup -q -n pam_krb5-%{version}-1
 
 %build
-CFLAGS="$RPM_OPT_FLAGS -fPIC"; export CFLAGS
 %configure --libdir=/%{_lib} \
 	--with-default-use-shmem=sshd --with-default-external=sshd \
 	--with-default-multiple-ccaches="su su-l"
-make
+make %{?_smp_mflags}
 
 %install
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT INSTALL="install -p"
 ln -s pam_krb5.so $RPM_BUILD_ROOT/%{_lib}/security/pam_krb5afs.so
 rm -f $RPM_BUILD_ROOT/%{_lib}/security/*.la
 
@@ -36,11 +33,9 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 %find_lang %{name}
 
-%clean
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -fr $RPM_BUILD_ROOT
-
 %files -f %{name}.lang
-%defattr(-,root,root)
+%defattr(-,root,root,-)
+%doc README* COPYING* ChangeLog NEWS
 %{_bindir}/*
 /%{_lib}/security/pam_krb5.so
 /%{_lib}/security/pam_krb5afs.so
@@ -48,9 +43,15 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %{_mandir}/man1/*
 %{_mandir}/man5/*
 %{_mandir}/man8/*
-%doc README* COPYING* ChangeLog NEWS
 
 %changelog
+* Mon Jul 26 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.11-2
+- build with %%{_smp_mflags}, if set (Parag AN(पराग), part of #226225)
+- drop explicit buildroot specification and cleanup (Parag AN(पराग), part of
+  #226225)
+- drop explicit -fPIC since libtool seems to be doing the right thing (Parag
+  AN(पराग), part of #226225)
+
 * Mon Mar  8 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.11-1
 - create creds before calling krb5_kuserok() so that they're available when
   it goes to look up the target user's home directory (#563442)
