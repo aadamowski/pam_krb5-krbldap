@@ -247,7 +247,7 @@ If the calling application does not properly support PAM conversations
 (possibly due to limitations of a network protocol which it is serving),
 this may be need to be disabled for that application to prevent it
 from supplying the user's current password in a password-changing
-situations when a new password is called for.
+situation when a new password is called for.
 
 .IP "ticket_lifetime = \fI36000\fR"
 default credential lifetime, in seconds.
