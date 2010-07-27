@@ -77,7 +77,7 @@ main(int argc, const char **argv)
 	int ret;
 
 	ctx = NULL;
-	ret = _pam_krb5_init_ctx(&ctx, argc, argv);
+	ret = krb5_init_context(&ctx);
 	if (ret != 0) {
 		crit("error initializing Kerberos: %s", error_message(ret));
 		return ret;
