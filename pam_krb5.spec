@@ -46,11 +46,11 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 
 %changelog
 * Mon Jul 26 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.11-2
-- build with %%{_smp_mflags}, if set (Parag AN(पराग), part of #226225)
-- drop explicit buildroot specification and cleanup (Parag AN(पराग), part of
+- build with %%{_smp_mflags}, if set (Parag AN, part of #226225)
+- drop explicit buildroot specification and cleanup (Parag AN, part of
   #226225)
 - drop explicit -fPIC since libtool seems to be doing the right thing (Parag
-  AN(पराग), part of #226225)
+  AN, part of #226225)
 
 * Mon Mar  8 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.11-1
 - create creds before calling krb5_kuserok() so that they're available when
