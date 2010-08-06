@@ -344,7 +344,7 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 					      "password, replacing prompt text "
 					      "with generic prompt");
 				}
-				tmp = strdup("Password: ");
+				tmp = strdup(Y_("Password: "));
 			}
 		} else
 		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
