@@ -74,8 +74,9 @@
 
 #include "kuserok.h"
 
-/* Use a helper to store the given data in a new file with a name which is
- * based on the given pattern. */
+/* Use a helper to perform the kuserok check using the user's credentials,
+ * in case we're in a root-squashed or needs-authentication situation with
+ * a remotely-stored file. */
 krb5_boolean
 _pam_krb5_kuserok(krb5_context ctx,
                   struct _pam_krb5_stash *stash,
@@ -87,11 +88,12 @@ _pam_krb5_kuserok(krb5_context ctx,
 	int outpipe[2];
 	int i;
 	krb5_boolean allowed;
+	krb5_error_code err;
 	unsigned char result;
 	pid_t child;
 	struct sigaction saved_sigchld_handler, saved_sigpipe_handler;
 	struct sigaction ignore_handler, default_handler;
-	char envstr[PATH_MAX + 20];
+	char envstr[PATH_MAX + 20], localname[PATH_MAX];
 	const char *ccname;
 
 	if (pipe(outpipe) == -1) {
@@ -173,6 +175,33 @@ _pam_krb5_kuserok(krb5_context ctx,
 		if (options->debug) {
 			debug("krb5_kuserok() says %d", allowed);
 		}
+#ifdef HAVE_KRB5_ANAME_TO_LOCALNAME
+		if (!allowed && options->always_allow_localname) {
+			memset(&localname, '\0', sizeof(localname));
+			err = krb5_aname_to_localname(ctx,
+						      userinfo->principal_name,
+						      sizeof(localname),
+						      localname);
+			if (err != 0) {
+				if (options->debug) {
+					debug("krb5_aname_to_localname "
+					      "failed: %s",
+					      error_message(err));
+				}
+			} else {
+				if (strcmp(localname, user) == 0) {
+					if (options->debug) {
+						debug("krb5_aname_to_localname "
+						      "returned '%s' for '%s', "
+						      "allowing access",
+						      localname,
+						      userinfo->unparsed_name);
+					}
+					allowed = 1;
+				}
+			}
+		}
+#endif
 		/* Clean up. */
 		if (ccname != NULL) {
 			v5_destroy(ctx, stash, options);

@@ -218,7 +218,7 @@ AM_CONDITIONAL(USE_KRB4,[test $USE_KRB4 -eq 1])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_enctype_to_string krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_enctype_to_string krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey krb5_aname_to_localname)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
@@ -536,6 +536,17 @@ else
 fi
 AC_SUBST(NO_MAN_MPREAUTH)
 AC_SUBST(MAN_MPREAUTH)
+
+# Set up to make MIT-specific krb5_aname_to_localname man page section variable.
+if test x$ac_cv_func_krb5_aname_to_localname = xyes ; then
+	MAN_MANAME=""
+	NO_MAN_MANAME=".\\\" "
+else
+	NO_MAN_MANAME=""
+	MAN_MANAME=".\\\" "
+fi
+AC_SUBST(NO_MAN_MANAME)
+AC_SUBST(MAN_MANAME)
 
 TESTDIR=`cd ${ac_top_builddir:-.}; /bin/pwd`/tests
 TESTHOST=`hostname`

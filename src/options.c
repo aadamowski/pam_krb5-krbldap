@@ -470,6 +470,20 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	}
 #endif
 
+#ifdef HAVE_KRB5_ANAME_TO_LOCALNAME
+	/* private option */
+	options->always_allow_localname = option_b(argc, argv,
+						   ctx, options->realm,
+						   service, NULL, NULL,
+						   "always_allow_localname",
+						   0);
+	if (options->debug && (options->always_allow_localname == 1)) {
+		debug("flag: always_allow_localname");
+	}
+	if (options->debug && (options->always_allow_localname == 0)) {
+		debug("flag: don't always_allow_localname");
+	}
+#endif
 #ifdef HAVE_AFS
 	/* private option */
 	options->ignore_afs = option_b(argc, argv,

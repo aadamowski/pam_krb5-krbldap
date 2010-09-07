@@ -24,6 +24,10 @@ o try_first_pass
   the correct password and try again.
 
 Recognized options (krb5.conf's appdefaults/pam section, and command-line):
+o always_allow_localname
+  Always allow the local user, as derived from the principal name being
+  authenticated, to access the account, even when not explicitly listed in
+  the .k5login file or its equivalent(s).
 o banner=Kerberos
   When changing passwords, tell users that they are changing their Kerberos
   passwords (unset to avoid using any term other than "password").

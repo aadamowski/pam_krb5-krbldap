@@ -1,4 +1,4 @@
-.TH pam_krb5 5 2009/12/11 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 5 2010/09/07 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -36,6 +36,16 @@ regularly.  This directive is deprecated in favor of the \fBlibdefaults\fR
 @MAN_AFS@service for the listed cells, or it can be specified by listing cells
 @MAN_AFS@in the form \fIcellname\fB=principalname\fR.
 @MAN_AFS@
+@MAN_MANAME@.IP "always_allow_localname = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+@MAN_MANAME@tells pam_krb5.so, when performing an authorization check using the
+@MAN_MANAME@target user's .k5login file, to always allow access when the
+@MAN_MANAME@principal name being authenticated maps to the local user's name
+@MAN_MANAME@(as configured using the \fIauth_to_local_names\fR and
+@MAN_MANAME@\fIauth_to_local\fR settings in \fBkrb5.conf\fR(5), if your
+@MAN_MANAME@implementation provides those settings).  Otherwise, if the file
+@MAN_MANAME@exists and can be read, but the principal is not explicitly listed,
+@MAN_MANAME@access is typically denied.  This setting is disabled by default.
+@MAN_MANAME@
 .IP "banner = \fIKerberos 5\fR"
 specifies what sort of password the module claims to be changing whenever it is
 called upon to change passwords.  The default is \fBKerberos 5\fR.

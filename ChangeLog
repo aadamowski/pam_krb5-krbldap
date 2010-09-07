@@ -1,3 +1,8 @@
+2010-09-07
+	* src/kuserok.c(add a double-check using krb5_aname_to_localname()
+	when options->always_allow_localname is set)
+	* src/options.c: parse options->always_allow_localname
+
 2010-07-22
 	* src/v5.c(v5_validate_ccache): add, using user-to-user auth with an
 	already-present ccache to verify that the KDC that issued the just-
