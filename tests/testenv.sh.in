@@ -43,7 +43,7 @@ KRBTKFILE=/dev/bogus-missing-file ; export KRBTKFILE
 test_flags=unsecure_for_debugging_only
 
 test_settle() {
-	sleep 1
+	sleep 5
 }
 
 test_cleanmsg ()
@@ -70,7 +70,7 @@ test_k524start() {
 		unset K524DPID
 	fi
 
-	krb524d -m -r EXAMPLE.COM -nofork &
+	$krb524d -m -r EXAMPLE.COM -nofork &
 	K524DPID=$!
 
 	kill -CONT $K524DPID
@@ -83,16 +83,16 @@ test_kdcstart() {
 	fi
 
 	test -d $testdir/kdc || mkdir -p $testdir/kdc
-	(echo .; echo .) | kdb5_util create -s 2> /dev/null > /dev/null
+	(echo .; echo .; echo .) | kdb5_util create -s 2> /dev/null > /dev/null
 
-	kadmin.local -q 'addpol -minlength 6 minimum_six' 2> /dev/null > /dev/null
-	kadmin.local -q 'ank -pw foo '$test_principal 2> /dev/null > /dev/null
-	kadmin.local -q 'modprinc -maxrenewlife "1 day" krbtgt/EXAMPLE.COM' 2> /dev/null > /dev/null
-	kadmin.local -q 'modprinc -maxrenewlife "1 day" '$test_principal 2> /dev/null > /dev/null
+	$kadmin -q 'addpol -minlength 6 minimum_six' 2> /dev/null > /dev/null
+	$kadmin -q 'ank -pw foo '$test_principal 2> /dev/null > /dev/null
+	$kadmin -q 'modprinc -maxrenewlife "1 day" krbtgt/EXAMPLE.COM' 2> /dev/null > /dev/null
+	$kadmin -q 'modprinc -maxrenewlife "1 day" '$test_principal 2> /dev/null > /dev/null
 	rm -f $testdir/kdc/krb5kdc.log
 	rm -f $testdir/kdc/kadmind.log
 	rm -f $testdir/kdc/krb5libs.log
-	krb5kdc -r EXAMPLE.COM -n -port 8002 &
+	$krb5kdc -r EXAMPLE.COM -n -port 8002 &
 	KDCPID=$!
 
 	if test x$KADMINDPID != x ; then
@@ -100,7 +100,7 @@ test_kdcstart() {
 		unset KADMINDID
 	fi
 
-	kadmind -r EXAMPLE.COM -nofork 2> /dev/null &
+	$kadmind -r EXAMPLE.COM -nofork 2> /dev/null &
 	KADMINDPID=$!
 
 	if $test_krb4 ; then
