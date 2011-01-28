@@ -10,9 +10,9 @@ else
 	test_krb4=false
 fi
 
-pam_krb5=${testdir}/../src/pam_krb5.so
+pam_krb5=@abs_builddir@/../src/pam_krb5.so
 if ! test -x $pam_krb5 ; then
-	pam_krb5=${testdir}/../src/.libs/pam_krb5.so
+	pam_krb5=@abs_builddir@/../src/.libs/pam_krb5.so
 fi
 
 krb5kdc=@KRB5KDC@
@@ -32,12 +32,12 @@ if test $kadmin = : ; then
 	kadmin=
 fi
 
-KRB5_CONFIG=$testdir/config/krb5.conf ; export KRB5_CONFIG
-KRBCONFDIR=$testdir/config ; export KRBCONFDIR
-KRB_CONF=$testdir/config/krb.conf ; export KRB_CONF
-KRB_REALMS=$testdir/config/krb.realms ; export KRB_REALMS
-KRB5_KDC_PROFILE=$testdir/config/kdc.conf ; export KRB5_KDC_PROFILE
-KRB5RCACHEDIR=$testdir/kdc ; export KRB5RCACHEDIR
+KRB5_CONFIG=@abs_builddir@/config/krb5.conf ; export KRB5_CONFIG
+KRBCONFDIR=@abs_builddir@/config ; export KRBCONFDIR
+KRB_CONF=@abs_builddir@/config/krb.conf ; export KRB_CONF
+KRB_REALMS=@abs_builddir@/config/krb.realms ; export KRB_REALMS
+KRB5_KDC_PROFILE=@abs_builddir@/config/kdc.conf ; export KRB5_KDC_PROFILE
+KRB5RCACHEDIR=@abs_builddir@/kdc ; export KRB5RCACHEDIR
 KRB5CCNAME=/dev/bogus-missing-file ; export KRB5CCNAME
 KRBTKFILE=/dev/bogus-missing-file ; export KRBTKFILE
 test_flags=unsecure_for_debugging_only
@@ -54,11 +54,11 @@ test_cleanmsg ()
 }
 
 test_comparelog() {
-	if test -s $testdir/config/$1.txt ; then
-		if cmp $testdir/config/$1.txt \
-			  $testdir/kdc/$1.log ; then
-			diff -u $testdir/config/$1.txt \
-				   $testdir/kdc/$1.log
+	if test -s @abs_builddir@/config/$1.txt ; then
+		if cmp @abs_builddir@/config/$1.txt \
+			  @abs_builddir@/kdc/$1.log ; then
+			diff -u @abs_builddir@/config/$1.txt \
+				   @abs_builddir@/kdc/$1.log
 			exit 1
 		fi
 	fi
@@ -82,17 +82,17 @@ test_kdcstart() {
 		unset KDCPID
 	fi
 
-	test -d $testdir/kdc || mkdir -p $testdir/kdc
+	test -d @abs_builddir@/kdc || mkdir -p @abs_builddir@/kdc
 	(echo .; echo .; echo .) | kdb5_util create -s 2> /dev/null > /dev/null
 
 	$kadmin -q 'addpol -minlength 6 minimum_six' 2> /dev/null > /dev/null
 	$kadmin -q 'ank -pw foo '$test_principal 2> /dev/null > /dev/null
 	$kadmin -q 'modprinc -maxrenewlife "1 day" krbtgt/EXAMPLE.COM' 2> /dev/null > /dev/null
 	$kadmin -q 'modprinc -maxrenewlife "1 day" '$test_principal 2> /dev/null > /dev/null
-	rm -f $testdir/kdc/krb5kdc.log
-	rm -f $testdir/kdc/kadmind.log
-	rm -f $testdir/kdc/krb5libs.log
-	$krb5kdc -r EXAMPLE.COM -n -port 8002 &
+	rm -f @abs_builddir@/kdc/krb5kdc.log
+	rm -f @abs_builddir@/kdc/kadmind.log
+	rm -f @abs_builddir@/kdc/krb5libs.log
+	$krb5kdc -r EXAMPLE.COM -n &
 	KDCPID=$!
 
 	if test x$KADMINDPID != x ; then
@@ -127,11 +127,11 @@ test_kdcstop() {
 		test_k524stop
 	fi
 	if test x$KADMINDPID != x ; then
-		kill $KADMINDPID
+		kill $KADMINDPID 2> /dev/null
 		unset KADMINDID
 	fi
 	if test x$KDCPID != x ; then
-		kill $KDCPID
+		kill $KDCPID 2> /dev/null
 		unset KDCPID
 		kdb5_util destroy -f 2> /dev/null > /dev/null
 	fi
@@ -139,5 +139,5 @@ test_kdcstop() {
 
 test_run() {
 	# Filter out the module path and clean up messages.
-	pam_harness "$@" 2>&1 | sed s,"\`.*pam",'\`pam',g | test_cleanmsg
+	@abs_builddir@/tools/pam_harness "$@" 2>&1 | sed s,"\`.*pam",'\`pam',g | test_cleanmsg
 }
