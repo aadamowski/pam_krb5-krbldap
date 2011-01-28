@@ -2,6 +2,8 @@
 
 source $testdir/testenv.sh
 
+test_flags="$test_flags ignore_afs"
+
 echo ""; echo Setting password to \"foo\".
 $kadmin -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
 $kadmin -q 'modprinc -pwexpire never '$test_principal 2> /dev/null > /dev/null
