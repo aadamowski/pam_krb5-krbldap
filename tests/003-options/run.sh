@@ -3,8 +3,8 @@
 source $testdir/testenv.sh
 
 echo "";echo Checking handling of options.
-kadmin.local -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
-kadmin.local -q 'modprinc -pwexpire never '$test_principal 2> /dev/null > /dev/null
+$kadmin -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
+$kadmin -q 'modprinc -pwexpire never '$test_principal 2> /dev/null > /dev/null
 
 echo "";echo FPRI
 test_run -auth -setcred $test_principal -run klist_f $pam_krb5 $test_flags renew_lifetime=3600 proxiable forwardable -- foo
@@ -37,9 +37,9 @@ echo "";echo Ccache directory = testdir/kdc.
 test_run -auth -setcred $test_principal -run klist_c $pam_krb5 $test_flags ccache_dir=${testdir}/kdc -- foo
 
 echo "";echo Banner = K3RB3R05 S
-kadmin.local -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
+$kadmin -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
 test_run -chauthtok $test_principal $pam_krb5 $test_flags banner="K3RB3R05 S" -- foo bar bar
 
 echo "";echo Password-change Help Text
-kadmin.local -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
+$kadmin -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
 test_run -chauthtok $test_principal $pam_krb5 $test_flags pwhelp=$testdir/pwhelp.txt -- foo bar bar

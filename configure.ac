@@ -68,6 +68,26 @@ else
 	MAN_KRB4=".\\\" "
 	NO_MAN_KRB4=""
 fi
+AM_CONDITIONAL(V4,[test "x$krb4" = xyes])
+
+AC_PATH_PROG(KRB5KDC,krb5kdc,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+AC_PATH_PROG(KRB524D,krb524d,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+AC_PATH_PROG(KADMIND,kadmind,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+AC_PATH_PROG(KADMIN,kadmin,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+if test x$KADMIN != x: ; then
+	KADMINMAYBELOCAL="$KADMIN --local"
+else
+	KADMINMAYBELOCAL=":"
+fi
+AC_PATH_PROG(KADMINLOCAL,kadmin.local,$KADMINMAYBELOCAL,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+AM_CONDITIONAL(KRB5KDC,[test x$KRB5KDC != x: ])
+AM_CONDITIONAL(KRB524D,[test x$KRB524D != x: ])
+AM_CONDITIONAL(KADMIND,[test x$KADMIND != x: ])
+AM_CONDITIONAL(KADMINLOCAL,[test x$KADMINLOCAL != x: ])
+AC_SUBST(KRB5KDC)
+AC_SUBST(KRB524D)
+AC_SUBST(KADMIND)
+AC_SUBST(KADMINLOCAL)
 
 AC_ARG_WITH(afs,
 [AC_HELP_STRING(--without-afs,[Disable AFS support (default is AUTO).])],
