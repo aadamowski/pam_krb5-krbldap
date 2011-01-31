@@ -43,7 +43,7 @@ KRBTKFILE=/dev/bogus-missing-file ; export KRBTKFILE
 test_flags=unsecure_for_debugging_only
 
 test_settle() {
-	sleep 10
+	sleep 2
 }
 
 test_cleanmsg ()
