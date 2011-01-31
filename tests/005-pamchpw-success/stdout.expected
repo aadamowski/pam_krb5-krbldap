@@ -1,6 +1,4 @@
 
-Expiring password.
-
 Succeed: correct password, expired, change.
 Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
