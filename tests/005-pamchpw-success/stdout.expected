@@ -2,11 +2,10 @@
 Succeed: correct password, expired, change.
 Calling module `pam_krb5.so'.
 `Password: ' -> `foo'
-`WARN1HOUR'
+`WARNEXPIRED'
 AUTH	0	Success
-ACCT	0	Success
+ACCT	12	Authentication token is no longer valid; new one required
 `Kerberos 5 Password: ' -> `foo'
-`WARN1HOUR'
 CHAUTHTOK1	0	Success
 CHAUTHTOK2	0	Success
 ESTCRED	0	Success
