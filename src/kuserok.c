@@ -171,7 +171,7 @@ _pam_krb5_kuserok(krb5_context ctx,
 		}
 		/* Actually check, now that we have a shot at being able to
 		 * read the user's .k5login file. */
-		allowed = krb5_kuserok(ctx, stash->v5creds.client, user);
+		allowed = krb5_kuserok(ctx, userinfo->principal_name, user);
 		if (options->debug) {
 			debug("krb5_kuserok() says %d", allowed);
 		}
@@ -179,7 +179,7 @@ _pam_krb5_kuserok(krb5_context ctx,
 		if (!allowed && options->always_allow_localname) {
 			memset(&localname, '\0', sizeof(localname));
 			err = krb5_aname_to_localname(ctx,
-						      stash->v5creds.client,
+						      userinfo->principal_name,
 						      sizeof(localname),
 						      localname);
 			if (err != 0) {
