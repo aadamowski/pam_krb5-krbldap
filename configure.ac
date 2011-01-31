@@ -71,6 +71,10 @@ fi
 AM_CONDITIONAL(V4,[test "x$krb4" = xyes])
 
 AC_PATH_PROG(KRB5KDC,krb5kdc,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+if test x$KRB5KDC = x: ; then
+	unset ac_cv_path_KRB5KDC
+	AC_PATH_PROG(KRB5KDC,kdc,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
+fi
 AC_PATH_PROG(KRB524D,krb524d,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
 AC_PATH_PROG(KADMIND,kadmind,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
 AC_PATH_PROG(KADMIN,kadmin,:,[${KRB5_BINDIR}:${KRB5_BINDIR}/../sbin:${KRB5_BINDIR}/../libexec])
