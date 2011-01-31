@@ -48,7 +48,7 @@ test_settle() {
 
 test_cleanmsg ()
 {
-	sed -e 's,Warning: Your password will expire in less than one hour.,WARN1HOUR,g' \
+	sed -e "s,Warning: Your password will expire in less than one hour.[^\']*,WARN1HOUR,g" \
 	    -e "s|$testdir/kdc|"'$testdir/kdc|g' \
 	    -e "s|krb5cc_"`id -u`"_......|"'krb5_cc_$UID_XXXXXX|g'
 }
