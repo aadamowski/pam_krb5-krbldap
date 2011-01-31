@@ -11,8 +11,6 @@ test -n "$krb5kdc" && echo Using krb5kdc binary: $krb5kdc
 test -n "$krb524d" && echo Using krb524d binary: $krb524d
 test -n "$kadmind" && echo Using kadmind binary: $kadmind
 test -n "$kadmin"  && echo Using kadmin.local binary: $kadmin
-test_kdcstart
-test_settle
 
 # First, a wrong password, then the right one, then a wrong one.
 for test in ${@:-"$testdir"/0*} ; do
@@ -26,7 +24,10 @@ for test in ${@:-"$testdir"/0*} ; do
 		fi
 	fi
 	echo -n `basename "$test"` ..." "
+	test_kdcstart
+	test_settle
 	$test/run.sh > $test/stdout 2> $test/stderr
+	test_kdcstop
 	if test -s $test/stdout.expected ; then
 		if ! cmp -s $test/stdout.expected $test/stdout ; then
 			echo ""
@@ -41,6 +42,3 @@ for test in ${@:-"$testdir"/0*} ; do
 	fi
 	echo OK
 done
-
-# Stop the KDC and 524 daemon, if we have one.
-test_kdcstop
