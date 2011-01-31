@@ -77,22 +77,26 @@ test_k524start() {
 	kill -CONT $K524DPID
 }
 
-test_kdcstart() {
-	if test x$KDCPID != x ; then
-		kill -KILL $KDCPID 2> /dev/null
-		unset KDCPID
-	fi
-
+test_kdcinitdb() {
 	test -d @abs_builddir@/kdc || mkdir -p @abs_builddir@/kdc
+	kdb5_util destroy -f 2> /dev/null > /dev/null
 	(echo .; echo .; echo .) | kdb5_util create -s 2> /dev/null > /dev/null
 
 	$kadmin -q 'addpol -minlength 6 minimum_six' 2> /dev/null > /dev/null
 	$kadmin -q 'ank -pw foo '$test_principal 2> /dev/null > /dev/null
 	$kadmin -q 'modprinc -maxrenewlife "1 day" -maxlife "7 day" krbtgt/EXAMPLE.COM' 2> /dev/null > /dev/null
 	$kadmin -q 'modprinc -maxrenewlife "1 day" -maxlife "7 day" '$test_principal 2> /dev/null > /dev/null
+}
+
+test_kdcstart() {
 	rm -f @abs_builddir@/kdc/krb5kdc.log
 	rm -f @abs_builddir@/kdc/kadmind.log
 	rm -f @abs_builddir@/kdc/krb5libs.log
+
+	if test x$KDCPID != x ; then
+		kill -KILL $KDCPID 2> /dev/null
+		unset KDCPID
+	fi
 	$krb5kdc -r EXAMPLE.COM -n > /dev/null 2> /dev/null &
 	KDCPID=$!
 
@@ -115,7 +119,7 @@ test_kdcstart() {
 
 test_k524stop() {
 	if test x$K524DPID != x ; then
-		kill -TERM $K524DPID
+		kill -TERM $K524DPID 2> /dev/null
 		unset K524DPID
 	else
 		echo "echo error: no running krb524d"
@@ -134,7 +138,6 @@ test_kdcstop() {
 	if test x$KDCPID != x ; then
 		kill -TERM $KDCPID 2> /dev/null
 		unset KDCPID
-		kdb5_util destroy -f 2> /dev/null > /dev/null
 	fi
 }
 

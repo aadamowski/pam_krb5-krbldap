@@ -24,6 +24,7 @@ for test in ${@:-"$testdir"/0*} ; do
 		fi
 	fi
 	echo -n `basename "$test"` ..." "
+	test_kdcinitdb
 	test_kdcstart
 	test_settle
 	$test/run.sh > $test/stdout 2> $test/stderr
