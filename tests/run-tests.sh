@@ -6,13 +6,14 @@ export testdir
 
 source $testdir/testenv.sh
 
-# Start the KDC and 524 daemon, if we have one.
+# Tell the caller where the binaries are.
 test -n "$krb5kdc" && echo Using krb5kdc binary: $krb5kdc
 test -n "$krb524d" && echo Using krb524d binary: $krb524d
 test -n "$kadmind" && echo Using kadmind binary: $kadmind
 test -n "$kadmin"  && echo Using kadmin.local binary: $kadmin
 
-# First, a wrong password, then the right one, then a wrong one.
+# Run each test with clear log files and a fresh copy of the KDC and kadmind,
+# and a fresh 524d if available.
 for test in ${@:-"$testdir"/0*} ; do
 	if ! test -s $test/run.sh ; then
 		continue
@@ -25,10 +26,8 @@ for test in ${@:-"$testdir"/0*} ; do
 	fi
 	echo -n `basename "$test"` ..." "
 	test_kdcinitdb
-	test_kdcstart
-	test_settle
-	$test/run.sh > $test/stdout 2> $test/stderr
-	test_kdcstop
+	test_kdcprep
+	meanwhile "$run_kdc" "$run_kadmind" "$run_krb524d" "$test/run.sh" > $test/stdout 2> $test/stderr
 	if test -s $test/stdout.expected ; then
 		if ! cmp -s $test/stdout.expected $test/stdout ; then
 			echo ""

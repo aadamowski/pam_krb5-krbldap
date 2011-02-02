@@ -54,28 +54,13 @@ test_cleanmsg ()
 	    -e "s|krb5cc_"`id -u`"_......|"'krb5_cc_$UID_XXXXXX|g'
 }
 
-test_comparelog() {
-	if test -s @abs_builddir@/config/$1.txt ; then
-		if cmp @abs_builddir@/config/$1.txt \
-			  @abs_builddir@/kdc/$1.log ; then
-			diff -u @abs_builddir@/config/$1.txt \
-				   @abs_builddir@/kdc/$1.log
-			exit 1
-		fi
-	fi
-}
-
-test_k524start() {
-	if test x$K524DPID != x ; then
-		kill -TERM $K524DPID
-		unset K524DPID
-	fi
-
-	$krb524d -m -r EXAMPLE.COM -nofork > /dev/null 2> /dev/null &
-	K524DPID=$!
-
-	kill -CONT $K524DPID
-}
+run_kdc="$krb5kdc -r EXAMPLE.COM -n > /dev/null 2> /dev/null"
+run_kadmind="$kadmind -r EXAMPLE.COM -nofork > /dev/null 2> /dev/null"
+if test -n "$krb524d" ; then
+	run_k524="$krb524d -m -r EXAMPLE.COM -nofork > /dev/null 2> /dev/null"
+else
+	run_k524="sleep 1"
+fi
 
 test_kdcinitdb() {
 	test -d @abs_builddir@/kdc || mkdir -p @abs_builddir@/kdc
@@ -88,57 +73,10 @@ test_kdcinitdb() {
 	$kadmin -q 'modprinc -maxrenewlife "1 day" -maxlife "7 day" '$test_principal 2> /dev/null > /dev/null
 }
 
-test_kdcstart() {
+test_kdcprep() {
 	rm -f @abs_builddir@/kdc/krb5kdc.log
 	rm -f @abs_builddir@/kdc/kadmind.log
 	rm -f @abs_builddir@/kdc/krb5libs.log
-
-	if test x$KDCPID != x ; then
-		kill -KILL $KDCPID 2> /dev/null
-		unset KDCPID
-	fi
-	$krb5kdc -r EXAMPLE.COM -n > /dev/null 2> /dev/null &
-	KDCPID=$!
-
-	if test x$KADMINDPID != x ; then
-		kill -KILL $KADMINDPID 2> /dev/null
-		unset KADMINDID
-	fi
-
-	$kadmind -r EXAMPLE.COM -nofork > /dev/null 2> /dev/null &
-	KADMINDPID=$!
-
-	if $test_krb4 ; then
-		test_k524start
-	fi
-
-	kill -CONT $KDCPID
-	kill -CONT $KADMINDPID
-	trap test_kdcstop EXIT
-}
-
-test_k524stop() {
-	if test x$K524DPID != x ; then
-		kill -TERM $K524DPID 2> /dev/null
-		unset K524DPID
-	else
-		echo "echo error: no running krb524d"
-		exit 1
-	fi
-}
-
-test_kdcstop() {
-	if $test_krb4 ; then
-		test_k524stop
-	fi
-	if test x$KADMINDPID != x ; then
-		kill -TERM $KADMINDPID 2> /dev/null
-		unset KADMINDID
-	fi
-	if test x$KDCPID != x ; then
-		kill -TERM $KDCPID 2> /dev/null
-		unset KDCPID
-	fi
 }
 
 test_run() {
