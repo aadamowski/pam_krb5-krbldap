@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2007,2009 Red Hat, Inc.
+ * Copyright 2003,2007,2009,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@ struct _pam_krb5_ccname_list {
 struct _pam_krb5_stash {
 	char *key;
 	krb5_context v5ctx;
-	int v5attempted, v5result;
+	int v5attempted, v5result, v5expired;
 	struct _pam_krb5_ccname_list *v5ccnames;
 	krb5_creds v5creds;
 	int v5setenv;

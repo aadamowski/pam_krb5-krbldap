@@ -236,6 +236,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, NULL,
 					 _pam_krb5_normal_prompter,
+					 NULL,
 					 &tmp_result);
 			prelim_attempted = 1;
 			if (options->debug) {
@@ -288,6 +289,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 password ?
 					 _pam_krb5_normal_prompter :
 					 _pam_krb5_always_fail_prompter,
+					 NULL,
 					 &tmp_result);
 			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
@@ -450,6 +452,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 KRB5_TGS_NAME,
 					 password, gic_options,
 					 _pam_krb5_always_fail_prompter,
+					 NULL,
 					 &stash->v5result);
 			stash->v5attempted = 1;
 			if (i == PAM_SUCCESS) {

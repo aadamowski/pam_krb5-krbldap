@@ -224,6 +224,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      NULL,
 				      gic_options,
 				      _pam_krb5_always_fail_prompter,
+				      &stash->v5expired,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {
@@ -272,6 +273,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      use_third_pass ?
 					      _pam_krb5_normal_prompter :
 					      _pam_krb5_previous_prompter,
+					      &stash->v5expired,
 					      &stash->v5result);
 			use_third_pass = 0;
 			stash->v5attempted = 1;
@@ -365,6 +367,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      use_third_pass ?
 					      _pam_krb5_normal_prompter :
 					      _pam_krb5_always_fail_prompter,
+					      &stash->v5expired,
 					      &stash->v5result);
 			use_third_pass = 0;
 			stash->v5attempted = 1;
@@ -426,6 +429,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      options->permit_password_callback ?
 				      _pam_krb5_always_prompter :
 				      _pam_krb5_normal_prompter,
+				      &stash->v5expired,
 				      &stash->v5result);
 		stash->v5attempted = 1;
 		if (options->debug) {

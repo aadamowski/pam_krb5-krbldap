@@ -56,7 +56,13 @@ EXTRA_DIST = run-tests.sh testenv.sh.in \
 	018-krb4/run.sh \
 	018-krb4/stderr.expected \
 	018-krb4/stdout.expected \
-	018-krb4/uses_v4
+	018-krb4/uses_v4 \
+	019-pamchpw-prompt-wrongpw/run.sh \
+	019-pamchpw-prompt-wrongpw/stderr.expected \
+	019-pamchpw-prompt-wrongpw/stdout.expected \
+	020-pamchpw-prompt-success/run.sh \
+	020-pamchpw-prompt-success/stderr.expected \
+	020-pamchpw-prompt-success/stdout.expected
 
 check: all testenv.sh
 	$(srcdir)/run-tests.sh

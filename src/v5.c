@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1336,6 +1336,7 @@ v5_get_creds(krb5_context ctx,
 				      const char *,
 				      int,
 				      krb5_prompt[]),
+	     int *expired,
 	     int *result)
 {
 	int i;
@@ -1628,6 +1629,9 @@ v5_get_creds(krb5_context ctx,
 		case 0:
 			/* Got password-changing creds, so warn about the
 			 * expired password and continue. */
+			if (expired) {
+				*expired = 1;
+			}
 			if (options->warn == 1) {
 				message.msg = "Warning: password has expired.";
 				message.msg_style = PAM_TEXT_INFO;
@@ -1643,6 +1647,9 @@ v5_get_creds(krb5_context ctx,
 		if (options->debug) {
 			debug("attempt to obtain credentials for %s "
 			      "failed: %s", realm_service, v5_error_message(i));
+		}
+		if (result) {
+			*result = i;
 		}
 		return PAM_AUTH_ERR;
 		break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2006,2007,2009 Red Hat, Inc.
+ * Copyright 2003,2006,2007,2009,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,6 +54,7 @@ int v5_get_creds(krb5_context ctx,
 					  const char *,
 					  int,
 					  krb5_prompt[]),
+		 int *expired,
 		 int *result);
 
 int v5_get_creds_etype(krb5_context ctx,
