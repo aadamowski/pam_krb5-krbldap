@@ -6,6 +6,7 @@
 [libdefaults]
  ticket_lifetime = 24000
  default_realm = EXAMPLE.COM
+ udp_preference_limit = 1
 
 [realms]
  EXAMPLE.COM = {
