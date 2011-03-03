@@ -8,6 +8,7 @@
 	   treat errors reading keytab files now
 	 * add an "always_allow_localname" option when we can use
 	   krb5_aname_to_localname() to second-guess the krb5_kuserok() check
+	 * prefer krb5_change_password() to krb5_set_password()
 - 2.3.11:* create credentials before trying to look up the location of the
 	   user's home directory via krb5_kuserok()
 - 2.3.10:* fine-tune the logic for selecting which key we use for validating

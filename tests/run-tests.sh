@@ -5,6 +5,9 @@ testdir=`cd "$testdir" ; pwd`
 export testdir
 
 source $testdir/testenv.sh
+echo "Running tests using test principal \"$test_principal\"".
+echo "Running tests using KDC on \"$test_host\"".
+getent hosts "$test_host"
 
 # Tell the caller where the binaries are.
 test -n "$krb5kdc" && echo Using krb5kdc binary: $krb5kdc
@@ -17,6 +20,12 @@ test -n "$kadmin"  && echo Using kadmin.local binary: $kadmin
 for test in ${@:-"$testdir"/0*} ; do
 	if ! test -s $test/run.sh ; then
 		continue
+	fi
+	if ! $test_addresses ; then
+		if test -r $test/uses_addresses ; then
+			echo Skipping address manipulating test `basename "$test"`.
+			continue
+		fi
 	fi
 	if ! $test_krb4 ; then
 		if test -r $test/uses_v4 ; then

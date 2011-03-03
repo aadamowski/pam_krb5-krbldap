@@ -1,8 +1,8 @@
 AC_INIT(configure.ac)
 AC_PREREQ(2.59)
-AM_INIT_AUTOMAKE(pam_krb5,2.3.11)
-AC_LANG_C
+AM_INIT_AUTOMAKE(pam_krb5,2.3.12)
 AC_PROG_CC
+AC_LANG([C])
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
@@ -242,7 +242,7 @@ AM_CONDITIONAL(USE_KRB4,[test $USE_KRB4 -eq 1])
 
 LIBSsave="$LIBS"
 LIBS="$LIBS $KRB5_LIBS $KRB4_LIBS"
-AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_enctype_to_string krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey krb5_aname_to_localname krb5_os_hostaddr krb5_copy_addr)
+AC_CHECK_FUNCS(krb_life_to_time krb_time_to_life krb5_init_secure_context krb5_free_unparsed_name krb5_free_default_realm krb5_set_principal_realm krb5_get_prompt_types krb_in_tkt in_tkt krb_save_credentials save_credentials krb5_get_init_creds_opt_alloc krb5_get_init_creds_opt_free krb5_get_init_creds_opt_set_pkinit krb5_get_init_creds_opt_set_pa krb5_get_init_creds_opt_set_change_password_prompt krb5_get_init_creds_opt_set_canonicalize krb5_parse_name_flags krb5_change_password krb5_set_password krb5_change_password krb5_xfree krb5_allow_weak_crypto krb5_enctype_enable krb5_enctype_to_string krb5_auth_con_setuserkey krb5_auth_con_setuseruserkey krb5_aname_to_localname)
 LIBS="$LIBSsave"
 headers='
 #include <stdio.h>
@@ -333,10 +333,27 @@ AC_CHECK_DECL(error_message,
 	      [AC_DEFINE(HAVE_ERROR_MESSAGE_DECL,1,[Define if your krb5.h declares the error_message() function.])],,[$headers])
 AC_CHECK_HEADERS(com_err.h et/com_err.h)
 
+USE_ADDRESSES=0
+AC_CHECK_DECL(krb5_copy_addr,
+	      [AC_DEFINE(HAVE_KRB5_COPY_ADDR,1,[Define if your krb5.h declares the krb5_copy_addr() function.])],,[$headers])
+AC_CHECK_DECL(krb5_os_hostaddr,
+	      [AC_DEFINE(HAVE_KRB5_OS_HOSTADDR,1,[Define if your krb5.h declares the krb5_os_hostaddr() function.])],,[$headers])
 AC_CHECK_DECL(krb5_os_localaddr,
 	      [AC_DEFINE(HAVE_KRB5_OS_LOCALADDR,1,[Define if your krb5.h declares the krb5_os_localaddr() function.])],,[$headers])
 AC_CHECK_DECL(krb5_get_all_client_addrs,
 	      [AC_DEFINE(HAVE_KRB5_GET_ALL_CLIENT_ADDRS,1,[Define if your krb5.h declares the krb5_get_all_client_addrs() function.])],,[$headers])
+if test x$ac_cv_decl_krb5_copy_addr = xyes ; then
+	if test x$ac_cv_decl_krb5_os_hostaddr = xyes ; then
+		if test x$ac_cv_decl_krb5_os_localaddr = xyes ; then
+			USE_ADDRESSES=1
+		fi
+	fi
+fi
+if test x$ac_cv_decl_krb5_get_all_client_addrs = xyes ; then
+	USE_ADDRESSES=1
+fi
+AC_SUBST(USE_ADDRESSES)
+AM_CONDITIONAL(USE_ADDRESSES,[test $USE_ADDRESSES -eq 1])
 
 if test x$ac_cv_func_krb5_get_init_creds_opt_alloc = xyes ; then
 	if test x$ac_cv_func_krb5_get_init_creds_opt_free = xyes ; then

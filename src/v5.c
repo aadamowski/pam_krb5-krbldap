@@ -1884,7 +1884,18 @@ v5_cc_retrieve_match(void)
 #endif
 }
 
-#ifdef HAVE_KRB5_SET_PASSWORD
+#if defined(HAVE_KRB5_CHANGE_PASSWORD)
+int
+v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
+		   int *result_code,
+		   krb5_data *result_code_string,
+		   krb5_data *result_string)
+{
+	return krb5_change_password(ctx, creds, password,
+				    result_code,
+				    result_code_string, result_string);
+}
+#elif defined(HAVE_KRB5_SET_PASSWORD)
 int
 v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
 		   int *result_code,
@@ -1896,16 +1907,7 @@ v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
 				 result_code_string, result_string);
 }
 #else
-int
-v5_change_password(krb5_context ctx, krb5_creds *creds, char *password,
-		   int *result_code,
-		   krb5_data *result_code_string,
-		   krb5_data *result_string)
-{
-	return krb5_change_password(ctx, creds, password,
-				    result_code,
-				    result_code_string, result_string);
-}
+#error "Don't know how to change passwords!"
 #endif
 
 int

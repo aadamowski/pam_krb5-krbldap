@@ -1,3 +1,11 @@
+2011-03-03
+	* src/v5.c(v5_change_password): prefer krb5_change_password() over
+	krb5_set_password()
+	* configure.ac: go back to checking for address manipulation
+	declarations
+	* tests: disable tests that depend on address manipulation if we
+	didn't find those functions
+
 2010-09-07
 	* src/kuserok.c(add a double-check using krb5_aname_to_localname()
 	when options->always_allow_localname is set)

@@ -1,6 +1,6 @@
 SUBDIRS = config tools kdc
 
-EXTRA_DIST = run-tests.sh testenv.sh.in \
+EXTRA_DIST = run-tests.sh testenv.sh.in pwhelp.txt \
 	001-pambasic/run.sh \
 	001-pambasic/stderr.expected \
 	001-pambasic/stdout.expected \
@@ -31,6 +31,7 @@ EXTRA_DIST = run-tests.sh testenv.sh.in \
 	010-options-moreaddrs/run.sh \
 	010-options-moreaddrs/stderr.expected \
 	010-options-moreaddrs/stdout.expected \
+	010-options-moreaddrs/uses_addresses \
 	011-options-nov4/run.sh \
 	011-options-nov4/stderr.expected \
 	011-options-nov4/stdout.expected \
