@@ -4,7 +4,7 @@
 	* configure.ac: go back to checking for address manipulation
 	declarations
 	* tests: disable tests that depend on address manipulation if we
-	didn't find those functions
+	didn't find those functions; run the test kdc on tcp, too
 
 2010-09-07
 	* src/kuserok.c(add a double-check using krb5_aname_to_localname()

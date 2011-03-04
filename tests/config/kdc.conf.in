@@ -1,6 +1,7 @@
 [kdcdefaults]
  v4_mode = full
  kdc_ports = 8800
+ kdc_tcp_ports = 8800
 
 [realms]
  EXAMPLE.COM = {
