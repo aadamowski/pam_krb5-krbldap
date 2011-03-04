@@ -8,7 +8,7 @@ Group: System Environment/Base
 URL: https://fedorahosted.org/pam_krb5/
 BuildRequires: keyutils-libs-devel, krb5-devel, pam-devel
 # Needed by tests.
-BuildRequires: krb5-server, krb5-workstation
+# BuildRequires: krb5-server, krb5-workstation
 
 %description 
 This is pam_krb5, a pluggable authentication module that can be used with
