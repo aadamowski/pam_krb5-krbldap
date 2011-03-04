@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -152,11 +152,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		}
 	} else {
 		/* Check what happened when we asked for initial credentials. */
-		if (stash->v5expired) {
-			notice("account checks fail for '%s': "
-			       "password has expired", user);
-			retval = PAM_NEW_AUTHTOK_REQD;
-		} else
 		switch (stash->v5result) {
 		case 0:
 			if (options->debug) {
@@ -188,6 +183,11 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 				       user);
 				retval = PAM_USER_UNKNOWN;
 			}
+			break;
+		case KRB5KDC_ERR_KEY_EXP:
+			notice("account checks fail for '%s': "
+			       "password has expired", user);
+			retval = PAM_NEW_AUTHTOK_REQD;
 			break;
 		case EAGAIN:
 		case KRB5_REALM_CANT_RESOLVE:
