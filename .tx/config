@@ -1,0 +1,9 @@
+[main]
+host = https://www.transifex.net
+
+[pam_krb5.main]
+file_filter = po/<lang>.po
+host = http://www.transifex.net
+source_file = po/pam_krb5.pot
+source_lang = en_US
+
