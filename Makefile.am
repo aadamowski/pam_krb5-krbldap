@@ -12,6 +12,7 @@ DISTCLEANFILES = tests/kdc/krb5cc_* tests/kdc/tkt*
 
 tag:
 	test $(GITTAG) = $(PACKAGE)-$(SVERSION)-$(SRELEASE)
+	tx pull
 	git tag $(GITTAG)
 
 force-tag:
@@ -31,6 +32,7 @@ archive:
 		cd $$tmpdir/pam_krb5;\
 		git checkout $(GITTAG);\
 		./autogen;\
+		tx pull;\
 		make dist;\
 		mkdir -p $$tmpdir/rpm-build-top;\
 		rpmbuild \
