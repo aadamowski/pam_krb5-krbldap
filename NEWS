@@ -1,7 +1,7 @@
 - 2.3.12:* add a "validate_user_user" option to control trying to perform
 	   user-to-user authentication to validate TGTs when a keytab is not
 	   available
-         * add an "ignore_k5login" option to control whether or not the module
+	 * add an "ignore_k5login" option to control whether or not the module
 	   will use the krb5_kuserok() function to perform additional
 	   authorization checks
 	 * turn on validation by default - verify_ap_req_nofail controls how we

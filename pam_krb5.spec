@@ -52,6 +52,13 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %{_mandir}/man8/*
 
 %changelog
+* Tue Mar 22 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.12-1
+- update to 2.3.12
+  - prefer to send change-password over set-password requests (#676526)
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.3.11-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Mon Jul 26 2010 Nalin Dahyabhai <nalin@redhat.com> - 2.3.11-2
 - build with %%{_smp_mflags}, if set (Parag AN, part of #226225)
 - drop explicit buildroot specification and cleanup (Parag AN, part of
