@@ -52,7 +52,7 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %{_mandir}/man8/*
 
 %changelog
-* Tue Mar 22 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.12-1
+* Thu Mar 24 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.12-1
 - update to 2.3.12
   - prefer to send change-password over set-password requests (#676526)
 
