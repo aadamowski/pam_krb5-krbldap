@@ -1,3 +1,4 @@
+- 2.3.13:* don't bother creating a v5 ccache in "external" mode
 - 2.3.12:* add a "validate_user_user" option to control trying to perform
 	   user-to-user authentication to validate TGTs when a keytab is not
 	   available
