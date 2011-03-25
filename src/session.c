@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -225,35 +225,41 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		v5_destroy(ctx, stash, options);
 	}
 
-	/* Create the user's credential cache. */
-	if (options->debug) {
-#ifdef HAVE_LONG_LONG
-		debug("creating v5 ccache for '%s', uid=%llu, gid=%llu", user,
-		      options->user_check ?
-		      (unsigned long long) userinfo->uid :
-		      (unsigned long long) getuid(),
-		      options->user_check ?
-		      (unsigned long long) userinfo->gid :
-		      (unsigned long long) getgid());
-#else
-		debug("creating v5 ccache for '%s', uid=%lu, gid=%lu",
-		      user,
-		      options->user_check ?
-		      (unsigned long) userinfo->uid :
-		      (unsigned long) getuid(),
-		      options->user_check ?
-		      (unsigned long) userinfo->gid :
-		      (unsigned long) getgid());
-#endif
-	}
-	i = v5_save_for_user(ctx, stash, user, userinfo, options, &ccname);
-	if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
+	/* Create the user's credential cache, but only if we didn't pick them
+	 * up from our calling process. */
+	if (!stash->v5external) {
 		if (options->debug) {
-			debug("created v5 ccache '%s' for '%s'", ccname, user);
+#ifdef HAVE_LONG_LONG
+			debug("creating v5 ccache for '%s', uid=%llu, gid=%llu",
+			      user,
+			      options->user_check ?
+			      (unsigned long long) userinfo->uid :
+			      (unsigned long long) getuid(),
+			      options->user_check ?
+			      (unsigned long long) userinfo->gid :
+			      (unsigned long long) getgid());
+#else
+			debug("creating v5 ccache for '%s', uid=%lu, gid=%lu",
+			      user,
+			      options->user_check ?
+			      (unsigned long) userinfo->uid :
+			      (unsigned long) getuid(),
+			      options->user_check ?
+			      (unsigned long) userinfo->gid :
+			      (unsigned long) getgid());
+#endif
 		}
-		sprintf(envstr, "KRB5CCNAME=%s", ccname);
-		pam_putenv(pamh, envstr);
-		stash->v5setenv = 1;
+		i = v5_save_for_user(ctx, stash, user, userinfo,
+				     options, &ccname);
+		if ((i == PAM_SUCCESS) && (strlen(ccname) > 0)) {
+			if (options->debug) {
+				debug("created v5 ccache '%s' for '%s'",
+				      ccname, user);
+			}
+			sprintf(envstr, "KRB5CCNAME=%s", ccname);
+			pam_putenv(pamh, envstr);
+			stash->v5setenv = 1;
+		}
 	}
 
 #ifdef USE_KRB4

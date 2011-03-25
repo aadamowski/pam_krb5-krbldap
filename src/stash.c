@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2009 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2009,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -184,9 +184,9 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		return;
 	}
 	blob_creds = blob;
-	blob_creds += sizeof(int) * 3;
+	blob_creds += sizeof(int) * 4;
 	blob_creds_size = ((int*)blob)[0];
-	if (blob_creds_size + sizeof(int) * 3 > blob_size) {
+	if (blob_creds_size + sizeof(int) * 4 > blob_size) {
 		warn("saved creds too small: %d bytes, need %d bytes",
 		     (int) blob_size,
 		     (int) (blob_creds_size + sizeof(int) * 3));
@@ -251,6 +251,7 @@ _pam_krb5_stash_shm_read_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		/* Read other variables. */
 		stash->v5attempted = ((int*)blob)[1];
 		stash->v5result = ((int*)blob)[2];
+		stash->v5external = ((int*)blob)[3];
 		if (options->debug) {
 			debug("recovered v5 credentials from shared memory "
 			      "segment %d", key);
@@ -341,7 +342,7 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 	}
 
 	/* Read the entire file. */
-	key = _pam_krb5_shm_new_from_file(pamh, sizeof(int) * 3,
+	key = _pam_krb5_shm_new_from_file(pamh, sizeof(int) * 4,
 					  variable + 5, &blob_size, &blob,
 					  options->debug);
 	if ((key != -1) && (blob != NULL)) {
@@ -349,6 +350,7 @@ _pam_krb5_stash_shm_write_v5(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 		intblob[0] = blob_size;
 		intblob[1] = stash->v5attempted;
 		intblob[2] = stash->v5result;
+		intblob[3] = stash->v5external;
 	}
 	if (blob != NULL) {
 		blob = _pam_krb5_shm_detach(blob);
@@ -693,6 +695,7 @@ _pam_krb5_stash_external_read(pam_handle_t *pamh, struct _pam_krb5_stash *stash,
 							unparsed = NULL;
 							stash->v5attempted = 1;
 							stash->v5result = 0;
+							stash->v5external = 1;
 							break;
 						}
 						if (options->debug) {
@@ -801,6 +804,8 @@ _pam_krb5_stash_get(pam_handle_t *pamh, const char *user,
 	stash->v5ctx = NULL;
 	stash->v5attempted = 0;
 	stash->v5result = KRB5KRB_ERR_GENERIC;
+	stash->v5expired = 0;
+	stash->v5external = 0;
 	stash->v5ccnames = NULL;
 	stash->v5setenv = 0;
 	stash->v5shm = -1;

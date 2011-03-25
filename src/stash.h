@@ -43,7 +43,7 @@ struct _pam_krb5_ccname_list {
 struct _pam_krb5_stash {
 	char *key;
 	krb5_context v5ctx;
-	int v5attempted, v5result, v5expired;
+	int v5attempted, v5result, v5expired, v5external;
 	struct _pam_krb5_ccname_list *v5ccnames;
 	krb5_creds v5creds;
 	int v5setenv;
