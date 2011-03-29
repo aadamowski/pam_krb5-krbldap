@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source $testdir/testenv.sh
+. $testdir/testenv.sh
 
 echo "";echo Checking ability to get v4 credentials.
 $kadmin -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null

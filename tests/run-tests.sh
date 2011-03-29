@@ -4,7 +4,7 @@ testdir=`dirname "$0"`
 testdir=`cd "$testdir" ; pwd`
 export testdir
 
-source $testdir/testenv.sh
+. $testdir/testenv.sh
 echo "Running tests using test principal \"$test_principal\"".
 echo "Running tests using KDC on \"$test_host\"".
 getent hosts "$test_host"
@@ -41,11 +41,13 @@ for test in ${@:-"$testdir"/0*} ; do
 		if ! cmp -s $test/stdout.expected $test/stdout ; then
 			echo ""
 			diff -u $test/stdout.expected $test/stdout | sed "s|$testdir/||g"
+			echo "Test $test stdout unexpected error!"
 			exit 1
 		fi
 		if ! cmp -s $test/stderr.expected $test/stderr ; then
 			echo ""
 			diff -u $test/stderr.expected $test/stderr | sed "s|$testdir/||g"
+			echo "Test $test stderr unexpected error!"
 			exit 1
 		fi
 	fi

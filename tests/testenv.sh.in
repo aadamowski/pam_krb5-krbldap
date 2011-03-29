@@ -22,20 +22,20 @@ if ! test -x $pam_krb5 ; then
 	pam_krb5=@abs_builddir@/../src/.libs/pam_krb5.so
 fi
 
-krb5kdc=@KRB5KDC@
-if test $krb5kdc = : ; then
+krb5kdc="@KRB5KDC@"
+if test "$krb5kdc" = : ; then
 	krb5kdc=
 fi
-krb524d=@KRB524D@
-if test $krb524d = : ; then
+krb524d="@KRB524D@"
+if test "$krb524d" = : ; then
 	krb524d=
 fi
-kadmind=@KADMIND@
-if test $kadmind = : ; then
+kadmind="@KADMIND@"
+if test "$kadmind" = : ; then
 	kadmind=
 fi
-kadmin=@KADMINLOCAL@
-if test $kadmin = : ; then
+kadmin="@KADMINLOCAL@"
+if test "$kadmin" = : ; then
 	kadmin=
 fi
 
