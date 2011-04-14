@@ -3,8 +3,8 @@ LD_AS_NEEDED = @LD_AS_NEEDED@
 KRB_LIBS = @KRB5_LIBS@ @KRB4_LIBS@ @KEYUTILS_LIBS@
 
 securitydir = $(libdir)/security
-security_LTLIBRARIES = pam_krb5.la
-noinst_LTLIBRARIES = libpam_krb5.la
+security_LTLIBRARIES = pam_krb5.la pam_krbldap.la
+noinst_LTLIBRARIES = libpam_krb5.la libpam_krbldap.la
 pkgsecuritydir = $(libdir)/security/$(PACKAGE)
 pkgsecurity_PROGRAMS = pam_krb5_storetmp
 EXTRA_DIST = afs5log.1 pam_krb5.5 pam_krb5.8 pam_krb5_storetmp.8 pam_newpag.5 pam_newpag.8
@@ -90,6 +90,15 @@ pam_krb5_storetmp_SOURCES = \
 	pam_krb5_storetmp.c
 pam_krb5_storetmp_LIBS =
 pam_krb5_storetmp_LDADD = xstr.lo
+
+libpam_krbldap_la_SOURCES = \
+	libkrbldap.c
+	
+pam_krbldap_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
+# TODO: s/KRB_LIBS/LDAP_LIBS/
+pam_krbldap_la_LIBADD = libpam_krbldap.la $(KRB_LIBS) $(DIRECT_LIBPAM)
+pam_krbldap_la_SOURCES = \
+	pam_krbldap.c
 
 afs5log_SOURCES = \
 	afs5log.c \
