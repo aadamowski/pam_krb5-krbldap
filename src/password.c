@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -253,7 +253,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			retval = i;
 		}
-		if ((password == NULL) && (options->use_second_pass)) {
+		if ((retval != PAM_SUCCESS) &&
+		    (password == NULL) &&
+		    options->use_second_pass) {
 			/* Ask the user for a password. */
 			sprintf(prompt, Y_("%s%sPassword: "),
 				options->banner,
@@ -267,8 +269,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 		/* We have a password, so try to obtain initial credentials
 		 * using the password. */
-		if (((password != NULL) && (i == PAM_SUCCESS)) ||
-		    (prelim_attempted == 0)) {
+		if ((retval != PAM_SUCCESS) &&
+		    (((password != NULL) && (i == PAM_SUCCESS)) ||
+		     (prelim_attempted == 0))) {
 			i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
 			if (i == 0) {
 				/* Set hard-coded defaults for

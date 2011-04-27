@@ -1,3 +1,9 @@
+2011-04-27
+	* src/password.c(pam_sm_chauthtok): if we managed to get password
+	changing creds the first time, don't try again, but do prompt for
+	a password if we're still expected to be the module that does it
+	password if we're still expected to be the module that does it
+
 2011-03-25
 	* src/stash.c(_pam_krb5_stash_external_read): add a flag to track
 	whether or not our creds were externally obtained, and set it
