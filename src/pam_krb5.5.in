@@ -280,6 +280,10 @@ default credential lifetime, in seconds.
 @MAN_AFS@@MAN_KRB4@ \fI524\fP   Kerberos 524 service + traditional Kerberos IV
 @MAN_AFS@@MAN_KRB4@ \fIv4\fP    traditional Kerberos IV
 @MAN_AFS@
+@MAN_TRACE@.IP "trace = \fItrue\fR|\fIfalse\fR|\fIservice [...]\fR"
+@MAN_TRACE@turns on libkrb5's library tracing.  Trace messages are
+@MAN_TRACE@logged to \fBsyslog\fR(3) with priority \fILOG_DEBUG\fR.
+@MAN_TRACE@
 .IP "use_shmem = \fItrue\fR|\fIfalse\fR|\fIservice\ [...]\fR"
 tells pam_krb5.so to pass credentials from the authentication service function
 to the session management service function using shared memory for specific

@@ -1,4 +1,6 @@
 - 2.3.13:* don't bother creating a v5 ccache in "external" mode
+	 * add a "trace" option to enable libkrb5 tracing, if available
+	 * avoid trying to get password-change creds twice
 - 2.3.12:* add a "validate_user_user" option to control trying to perform
 	   user-to-user authentication to validate TGTs when a keytab is not
 	   available

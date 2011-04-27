@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2006 Red Hat, Inc.
+ * Copyright 2003,2006,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,5 +40,8 @@ void warn(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
 void notice(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
 void crit(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
 void notice_user(struct pam_handle *pamh, const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (2, 3);
+#ifdef HAVE_KRB5_SET_TRACE_CALLBACK
+void trace(krb5_context ctx, const struct krb5_trace_info *info, void *data);
+#endif
 
 #endif

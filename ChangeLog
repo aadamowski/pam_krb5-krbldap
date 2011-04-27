@@ -1,4 +1,13 @@
 2011-04-27
+	* configure.ac: check for krb5_set_trace_callback()
+	* src/log.h,src/logpam.c,src/logstdio.c: add a trace() function
+	to log trace messages along with debug messages
+	* src/options.c: set the trace callback to our own logging function
+	if the "trace" option is enabled
+	* src/pam_krb5.5.in,src/pam_krb5.8.in,README: make a note about
+	the "trace" option
+
+2011-04-27
 	* src/password.c(pam_sm_chauthtok): if we managed to get password
 	changing creds the first time, don't try again, but do prompt for
 	a password if we're still expected to be the module that does it

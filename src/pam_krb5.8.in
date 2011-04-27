@@ -283,6 +283,10 @@ sets the default lifetime for credentials.
 @MAN_AFS@properly-written server will not need this flag set in order to
 @MAN_AFS@function correctly.
 @MAN_AFS@
+@MAN_TRACE@.IP trace
+@MAN_TRACE@turns on libkrb5's library tracing.  Trace messages are
+@MAN_TRACE@logged to \fBsyslog\fR(3) with priority \fILOG_DEBUG\fR.
+@MAN_TRACE@
 .IP try_first_pass
 tells pam_krb5.so to check the previously-entered password as with
 \fBuse_first_pass\fR, but to prompt the user for another one if the
