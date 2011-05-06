@@ -1,6 +1,9 @@
 SUBDIRS = config tools kdc
 
-EXTRA_DIST = run-tests.sh testenv.sh.in pwhelp.txt \
+EXTRA_DIST = run-tests.sh testenv.sh.in run-tests-krbldap.sh testenv-krbldap.sh.in pwhelp.txt \
+	000-pambasic_krbldap/run.sh \
+	000-pambasic_krbldap/stderr.expected \
+	000-pambasic_krbldap/stdout.expected \
 	001-pambasic/run.sh \
 	001-pambasic/stderr.expected \
 	001-pambasic/stdout.expected \
