@@ -55,8 +55,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
 	int rc;
+	printf("Now in krbldap.\n");
 	PAM_KRB5_MAYBE_CONST char *username;
 	rc = pam_get_user (pamh, &username, NULL);
-	printf("%s", username);
+	printf("User: [%s]\n", username);
 	return PAM_SERVICE_ERR;
 }
