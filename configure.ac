@@ -645,6 +645,7 @@ tests/config/kdc.conf
 tests/config/krb.conf
 tests/kdc/Makefile
 tests/testenv.sh
+tests/testenv-krbldap.sh
 tests/tools/Makefile
 po/Makefile.in
 ])
