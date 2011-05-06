@@ -48,9 +48,15 @@
 #include <string.h>
 #include <unistd.h>
 
-int
+#include <stdio.h>
+
+PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
+	int rc;
+	PAM_KRB5_MAYBE_CONST char *username;
+	rc = pam_get_user (pamh, &username, NULL);
+	printf("%s", username);
 	return PAM_SERVICE_ERR;
 }
