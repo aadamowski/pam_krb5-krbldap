@@ -47,23 +47,38 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include KRB5_H
 
 #include <stdio.h>
 
 #include <lber.h>
 #include <ldap.h>
 
+#include "conv.h"
+#include "init.h"
+#include "initopts.h"
+#include "items.h"
+#include "kuserok.h"
+#include "log.h"
+#include "options.h"
+#include "prompter.h"
+
 PAM_EXTERN int
 pam_sm_authenticate (pam_handle_t * pamh, int flags,
 		     int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
-  int rc;
+  int rc, prompt_result;
   printf ("Now in krbldap.\n");
   PAM_KRB5_MAYBE_CONST char *username;
+  char *pass;
+
   rc = pam_get_user (pamh, &username, NULL);
   printf ("User: [%s]\n", username);
+  prompt_result = _pam_krb5_prompt_for (pamh, Y_ ("Password: "), &pass);
+  printf ("Pass: [%s]\n", pass);
   return PAM_SERVICE_ERR;
 }
+
 
 /*
 int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username, ) {
