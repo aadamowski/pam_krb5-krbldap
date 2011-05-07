@@ -627,6 +627,17 @@ AH_VERBATIM([_ZZENABLE_NLS],
  #endif /* ENABLE_NLS */
 ])
 
+
+AC_CHECK_HEADERS(lber.h)
+AC_CHECK_HEADERS(ldap.h, , AC_MSG_ERROR(could not locate <ldap.h>))
+
+AC_CHECK_LIB(lber, main)
+AC_CHECK_LIB(ldap, main, LIBS="-lldap $LIBS" found_ldap_lib=yes)
+
+AC_CHECK_FUNCS(ldap_init ldap_get_lderrno ldap_set_lderrno ldap_parse_result ldap_memfree ldap_controls_free ldap_set_option ldap_get_option)
+AC_CHECK_FUNCS(ldap_start_tls_s)
+AC_CHECK_FUNCS(ldap_initialize)
+
 AC_CONFIG_HEADER(config.h)
 AC_OUTPUT([
 Makefile

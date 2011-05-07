@@ -50,6 +50,9 @@
 
 #include <stdio.h>
 
+#include <lber.h>
+#include <ldap.h>
+
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
@@ -61,3 +64,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	printf("User: [%s]\n", username);
 	return PAM_SERVICE_ERR;
 }
+/*
+int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username, ) {
+}
+*/
