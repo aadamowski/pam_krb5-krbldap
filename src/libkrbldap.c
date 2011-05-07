@@ -49,8 +49,7 @@
 #include <unistd.h>
 
 int
-krbldap_authenticate(
-		    char *user, char *pass)
+krbldap_authenticate (char *user, char *pass)
 {
-	return PAM_SERVICE_ERR;
+  return PAM_SERVICE_ERR;
 }
