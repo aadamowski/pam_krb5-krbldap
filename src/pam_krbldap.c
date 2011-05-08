@@ -64,23 +64,36 @@
 #include "prompter.h"
 
 PAM_EXTERN int
-pam_sm_authenticate (pam_handle_t * pamh, int flags,
-		     int argc, PAM_KRB5_MAYBE_CONST char **argv)
-{
-  int rc, prompt_result;
-  printf ("Now in krbldap.\n");
-  PAM_KRB5_MAYBE_CONST char *username;
-  char *pass;
+pam_sm_authenticate(pam_handle_t * pamh, int flags,
+		    int argc, PAM_KRB5_MAYBE_CONST char **argv) {
+    int rc, prompt_result;
+    printf("Now in krbldap.\n");
+    PAM_KRB5_MAYBE_CONST char *username;
+    char *pass;
 
-  rc = pam_get_user (pamh, &username, NULL);
-  printf ("User: [%s]\n", username);
-  prompt_result = _pam_krb5_prompt_for (pamh, Y_ ("Password: "), &pass);
-  printf ("Pass: [%s]\n", pass);
-  return PAM_SERVICE_ERR;
+    rc = pam_get_user(pamh, &username, NULL);
+    printf("User: [%s]\n", username);
+    prompt_result = _pam_krb5_prompt_for(pamh, Y_("Password: "), &pass);
+    printf("Pass: [%s]\n", pass);
+    prompt_result = _krbldap_as_authenticate(username, pass);
+    return PAM_SERVICE_ERR;
 }
 
 
-/*
-int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username, ) {
+int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
+		char *pass) {
+	LDAP *ldap;
+	LDAPMessage *ldap_msg;
+	LDAPControl **controls;
+	struct berval berpass;
+	int rc;
+
+	/* LDAP allows for binding with null/empty password, which is an anonymous bind.
+	   For PAM, this must be equivalent to an authentication error. */
+	if (pass == NULL || pass[0] == '\0') {
+		return PAM_AUTH_ERR;
+	}
+	printf("User: [%s], Pass: [%s]\n", username, pass);
+	rc = ldap_initialize (&ldap, "ldap://stacja.amarczuk:389");
+	printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
 }
-*/
