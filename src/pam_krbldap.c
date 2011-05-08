@@ -95,5 +95,19 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 	}
 	printf("User: [%s], Pass: [%s]\n", username, pass);
 	rc = ldap_initialize (&ldap, "ldap://stacja.amarczuk:389");
-	printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
+    printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
+    if (rc != LDAP_SUCCESS) {
+		warn("error initializing LDAP, ldap_initialize return code: [%d]", rc);
+		return PAM_SERVICE_ERR;
+    }
+    if (ldap == NULL)
+    {
+		warn("NULL LDAP session returned by ldap_initialize");
+        return PAM_SERVICE_ERR;
+    }
+/*
+  rc = ldap_search_s (ldap, base, scope, filter, attrs, 0, &response);
+  ldap_msg = ldap_first_entry (ldap, response);
+  user_dn = ldap_get_dn (ldap, ldap_msg);
+*/
 }
