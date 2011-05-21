@@ -87,6 +87,11 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 	LDAPControl **controls;
 	struct berval berpass;
 	int rc;
+	char *base = "dc=example,dc=com";
+	struct timeval timeout;
+	int sizelimit = 1;
+	timeout.tv_sec = 29;
+	timeout.tv_usec = 0;
 
 	/* LDAP allows for binding with null/empty password, which is an anonymous bind.
 	   For PAM, this must be equivalent to an authentication error. */
@@ -94,20 +99,23 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 		return PAM_AUTH_ERR;
 	}
 	printf("User: [%s], Pass: [%s]\n", username, pass);
-	rc = ldap_initialize (&ldap, "ldap://stacja.amarczuk:389");
-    printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
-    if (rc != LDAP_SUCCESS) {
+	rc = ldap_initialize (&ldap, "ldap://localhost:1389");
+	printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
+	if (rc != LDAP_SUCCESS) {
 		warn("error initializing LDAP, ldap_initialize return code: [%d]", rc);
 		return PAM_SERVICE_ERR;
-    }
-    if (ldap == NULL)
-    {
+	}
+	if (ldap == NULL)
+	{
 		warn("NULL LDAP session returned by ldap_initialize");
-        return PAM_SERVICE_ERR;
-    }
-/*
-  rc = ldap_search_s (ldap, base, scope, filter, attrs, 0, &response);
-  ldap_msg = ldap_first_entry (ldap, response);
-  user_dn = ldap_get_dn (ldap, ldap_msg);
-*/
+		return PAM_SERVICE_ERR;
+	}
+	rc = ldap_search_ext_s (ldap, base, LDAP_SCOPE_SUBTREE, "(uid=alice)", NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
+	printf("rc: [%d]\n", rc);
+
+	/*
+	   entry_msg = ldap_first_entry (ldap, ldap_msg);
+	   user_dn = ldap_get_dn (ldap, entry_msg);
+	 */
+	ldap_msgfree (ldap_msg);
 }

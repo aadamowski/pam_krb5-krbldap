@@ -209,6 +209,7 @@ KRB5_CPPFLAGS=`echo $KRB5_CFLAGS | sed 's,-[^I][^[:space:]]*,,g'`
 KRB4_CPPFLAGS=`echo $KRB4_CFLAGS | sed 's,-[^I][^[:space:]]*,,g'`
 
 CPPFLAGS="$CPPFLAGS $KRB5_CPPFLAGS $KRB4_CPPFLAGS"
+CFLAGS="-g"
 CFLAGS="$CFLAGS $KRB5_CFLAGS $KRB4_CFLAGS"
 
 AC_CHECK_HEADERS(krb5.h krb5/krb5.h)
