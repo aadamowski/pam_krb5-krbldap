@@ -99,7 +99,8 @@ pam_krbldap_la_SOURCES = \
 	pamitems.c \
 	items.h \
 	logpam.c \
-	pam_krbldap.c
+	pam_krbldap.c \
+	pam_krbldap.h
 
 afs5log_SOURCES = \
 	afs5log.c \

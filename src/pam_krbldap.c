@@ -62,6 +62,7 @@
 #include "log.h"
 #include "options.h"
 #include "prompter.h"
+#include "pam_krbldap.h"
 
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t * pamh, int flags,
@@ -88,6 +89,7 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 	struct berval berpass;
 	int rc;
 	char *base = "dc=example,dc=com";
+	char ldap_filter[KRBLDAP_DYNAMIC_STRING_MAXSIZE];
 	struct timeval timeout;
 	int sizelimit = 1;
 	timeout.tv_sec = 29;
@@ -99,6 +101,8 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 		return PAM_AUTH_ERR;
 	}
 	printf("User: [%s], Pass: [%s]\n", username, pass);
+	/* TODO: filter username characters not present in a whitelist? e.g. parens, which
+		can be used for LDAP filter injection attacks. */
 	rc = ldap_initialize (&ldap, "ldap://localhost:1389");
 	printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
 	if (rc != LDAP_SUCCESS) {
@@ -110,7 +114,10 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 		warn("NULL LDAP session returned by ldap_initialize");
 		return PAM_SERVICE_ERR;
 	}
-	rc = ldap_search_ext_s (ldap, base, LDAP_SCOPE_SUBTREE, "(uid=alice)", NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
+	/* TODO: make the uid attribute configurable */
+	snprintf (ldap_filter, sizeof ldap_filter, "(uid=%s)", username);
+	printf("LDAP filter: [%s]\n", ldap_filter);
+	rc = ldap_search_ext_s (ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
 	printf("rc: [%d]\n", rc);
 
 	/*
