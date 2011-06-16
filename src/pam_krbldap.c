@@ -84,11 +84,12 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 		char *pass) {
 	LDAP *ldap;
-	LDAPMessage *ldap_msg;
+	LDAPMessage *ldap_msg, *entry_msg;
 	LDAPControl **controls;
 	struct berval berpass;
 	int rc;
 	char *base = "dc=example,dc=com";
+	char *user_dn;
 	char ldap_filter[KRBLDAP_DYNAMIC_STRING_MAXSIZE];
 	struct timeval timeout;
 	int sizelimit = 1;
@@ -100,9 +101,10 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 	if (pass == NULL || pass[0] == '\0') {
 		return PAM_AUTH_ERR;
 	}
-	printf("User: [%s], Pass: [%s]\n", username, pass);
 	/* TODO: filter username characters not present in a whitelist? e.g. parens, which
 		can be used for LDAP filter injection attacks. */
+	printf("User: [%s], Pass: [%s]\n", username, pass);
+	/* TODO: implement configuration for LDAP URL etc. */
 	rc = ldap_initialize (&ldap, "ldap://localhost:1389");
 	printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
 	if (rc != LDAP_SUCCESS) {
@@ -119,10 +121,11 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 	printf("LDAP filter: [%s]\n", ldap_filter);
 	rc = ldap_search_ext_s (ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
 	printf("rc: [%d]\n", rc);
+	entry_msg = ldap_first_entry (ldap, ldap_msg);
+	user_dn = ldap_get_dn (ldap, entry_msg);
+	printf("user_dn: [%s]\n", user_dn);
 
 	/*
-	   entry_msg = ldap_first_entry (ldap, ldap_msg);
-	   user_dn = ldap_get_dn (ldap, entry_msg);
 	 */
 	ldap_msgfree (ldap_msg);
 }
