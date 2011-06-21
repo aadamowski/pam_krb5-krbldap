@@ -228,16 +228,29 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 		}
 		if ((password != NULL) && (i == PAM_SUCCESS)) {
+			i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
+			if (i == 0) {
+				/* Set hard-coded defaults for
+				 * password-changing creds which might not
+				 * match generally-used options. */
+				_pam_krb5_set_init_opts_for_pwchange(ctx,
+								     tmp_gicopts,
+								     options);
+			} else {
+				/* Try library defaults. */
+				tmp_gicopts = NULL;
+			}
 			/* We have a password, so try to obtain initial
 			 * credentials using the password. */
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, user, userinfo,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
-					 password, NULL,
+					 password, tmp_gicopts,
 					 _pam_krb5_normal_prompter,
 					 NULL,
 					 &tmp_result);
+			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
