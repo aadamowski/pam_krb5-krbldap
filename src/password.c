@@ -82,7 +82,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	struct _pam_krb5_stash *stash;
 	krb5_get_init_creds_opt *gic_options, *tmp_gicopts;
 	int tmp_result, prelim_attempted;
-	int i, retval;
+	int i, retval, use_third_pass;
 	char *pwhelp;
 	struct stat st;
 	FILE *fp;
@@ -164,6 +164,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		password = NULL;
 		prelim_attempted = 0;
 
+		/* Ideally we're only going to let libkrb5 ask questions once,
+		 * and after that we intend to lie to it. */
+		use_third_pass = options->use_third_pass;
+
 		/* Display password help text. */
 		if ((options->pwhelp != NULL) && (options->pwhelp[0] != '\0')) {
 			fp = fopen(options->pwhelp, "r");
@@ -240,6 +244,17 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				/* Try library defaults. */
 				tmp_gicopts = NULL;
 			}
+			if (options->debug) {
+				if (use_third_pass) {
+					debug("trying previously-entered "
+					      "password for '%s', allowing "
+					      "libkrb5 to prompt for more",
+					      user);
+				} else {
+					debug("trying previously-entered "
+					      "password for '%s'", user);
+				}
+			}
 			/* We have a password, so try to obtain initial
 			 * credentials using the password. */
 			i = v5_get_creds(ctx, pamh,
@@ -247,11 +262,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, tmp_gicopts,
-					 _pam_krb5_normal_prompter,
+					 use_third_pass ?
+					 _pam_krb5_normal_prompter :
+					 _pam_krb5_previous_prompter,
 					 NULL,
 					 &tmp_result);
 			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
+			use_third_pass = 0;
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s: %s.",
@@ -297,18 +315,30 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				/* Try library defaults. */
 				tmp_gicopts = NULL;
 			}
+			if (options->debug) {
+				if (use_third_pass) {
+					debug("trying newly-entered "
+					      "password for '%s', allowing "
+					      "libkrb5 to prompt for more",
+					      user);
+				} else {
+					debug("trying newly-entered "
+					      "password for '%s'", user);
+				}
+			}
 			i = v5_get_creds(ctx, pamh,
 					 &stash->v5creds, user, userinfo,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, tmp_gicopts,
-					 password ?
+					 password && use_third_pass ?
 					 _pam_krb5_normal_prompter :
 					 _pam_krb5_always_fail_prompter,
 					 NULL,
 					 &tmp_result);
 			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
+			use_third_pass = 0;
 			if (options->debug) {
 				debug("Got %d (%s) acquiring credentials for "
 				      "%s.",
