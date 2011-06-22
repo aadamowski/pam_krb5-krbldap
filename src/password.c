@@ -348,7 +348,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 NULL, tmp_gicopts,
-					 _pam_krb5_always_prompter,
+					 options->permit_password_callback ?
+					 _pam_krb5_always_prompter :
+					 _pam_krb5_normal_prompter,
 					 NULL,
 					 &tmp_result);
 			prelim_attempted = 1;
