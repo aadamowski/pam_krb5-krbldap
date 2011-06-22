@@ -168,6 +168,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 * and after that we intend to lie to it. */
 		use_third_pass = options->use_third_pass;
 
+		/* Set up options for getting password-changing creds. */
+		i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
+		if (i == 0) {
+			/* Set hard-coded defaults for password-changing creds
+			 * which might not match generally-used options. */
+			_pam_krb5_set_init_opts_for_pwchange(ctx,
+							     tmp_gicopts,
+							     options);
+		} else {
+			/* Try library defaults. */
+			tmp_gicopts = NULL;
+		}
+
 		/* Display password help text. */
 		if ((options->pwhelp != NULL) && (options->pwhelp[0] != '\0')) {
 			fp = fopen(options->pwhelp, "r");
@@ -232,18 +245,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 		}
 		if ((password != NULL) && (i == PAM_SUCCESS)) {
-			i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
-			if (i == 0) {
-				/* Set hard-coded defaults for
-				 * password-changing creds which might not
-				 * match generally-used options. */
-				_pam_krb5_set_init_opts_for_pwchange(ctx,
-								     tmp_gicopts,
-								     options);
-			} else {
-				/* Try library defaults. */
-				tmp_gicopts = NULL;
-			}
 			if (options->debug) {
 				if (use_third_pass) {
 					debug("trying previously-entered "
@@ -267,7 +268,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 _pam_krb5_previous_prompter,
 					 NULL,
 					 &tmp_result);
-			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
 			use_third_pass = 0;
 			if (options->debug) {
@@ -303,18 +303,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		if ((retval != PAM_SUCCESS) &&
 		    (((password != NULL) && (i == PAM_SUCCESS)) ||
 		     (prelim_attempted == 0))) {
-			i = v5_alloc_get_init_creds_opt(ctx, &tmp_gicopts);
-			if (i == 0) {
-				/* Set hard-coded defaults for
-				 * password-changing creds which might not
-				 * match generally-used options. */
-				_pam_krb5_set_init_opts_for_pwchange(ctx,
-								     tmp_gicopts,
-								     options);
-			} else {
-				/* Try library defaults. */
-				tmp_gicopts = NULL;
-			}
 			if (options->debug) {
 				if (use_third_pass) {
 					debug("trying newly-entered "
@@ -336,7 +324,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 _pam_krb5_always_fail_prompter,
 					 NULL,
 					 &tmp_result);
-			v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 			prelim_attempted = 1;
 			use_third_pass = 0;
 			if (options->debug) {
@@ -347,6 +334,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			retval = i;
 		}
+		/* Clean up the password-changing options. */
+		v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 		/* Free [the copy of] the password. */
 		xstrfree(password);
 	}
