@@ -161,7 +161,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	 * obtaining a password-changing initial ticket. */
 	if (flags & PAM_PRELIM_CHECK) {
 		retval = PAM_AUTH_ERR;
-		password = NULL;
 		prelim_attempted = 0;
 
 		/* Ideally we're only going to let libkrb5 ask questions once,
@@ -233,6 +232,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		}
 
 		/* Obtain the current password. */
+		password = NULL;
 		if (options->use_first_pass) {
 			/* Read the stored password. */
 			password = NULL;
@@ -298,11 +298,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				pam_set_item(pamh, PAM_OLDAUTHTOK, password);
 			}
 		}
-		/* We have a password, so try to obtain initial credentials
-		 * using the password. */
+		/* We have a second password, so try to obtain initial
+		 * credentials using the password. */
 		if ((retval != PAM_SUCCESS) &&
-		    (((password != NULL) && (i == PAM_SUCCESS)) ||
-		     (prelim_attempted == 0))) {
+		    ((password != NULL) && (i == PAM_SUCCESS))) {
 			if (options->debug) {
 				if (use_third_pass) {
 					debug("trying newly-entered "
@@ -319,7 +318,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 					 options,
 					 PASSWORD_CHANGE_PRINCIPAL,
 					 password, tmp_gicopts,
-					 password && use_third_pass ?
+					 use_third_pass ?
 					 _pam_krb5_normal_prompter :
 					 _pam_krb5_always_fail_prompter,
 					 NULL,
@@ -334,6 +333,35 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			retval = i;
 		}
+		/* We haven't tried anything yet, so if it's allowed, try to
+		 * obtain initial credentials, letting libkrb5 ask the
+		 * questions. */
+		if ((retval != PAM_SUCCESS) &&
+		    (prelim_attempted == 0) &&
+		    use_third_pass) {
+			if (options->debug) {
+				debug("not using an entered password for '%s', "
+				      "allowing libkrb5 to prompt", user);
+			}
+			i = v5_get_creds(ctx, pamh,
+					 &stash->v5creds, user, userinfo,
+					 options,
+					 PASSWORD_CHANGE_PRINCIPAL,
+					 NULL, tmp_gicopts,
+					 _pam_krb5_normal_prompter,
+					 NULL,
+					 &tmp_result);
+			prelim_attempted = 1;
+			use_third_pass = 0;
+			if (options->debug) {
+				debug("Got %d (%s) acquiring credentials for "
+				      "%s.",
+				      tmp_result, v5_error_message(tmp_result),
+				      PASSWORD_CHANGE_PRINCIPAL);
+			}
+			retval = i;
+		}
+
 		/* Clean up the password-changing options. */
 		v5_free_get_init_creds_opt(ctx, tmp_gicopts);
 		/* Free [the copy of] the password. */
