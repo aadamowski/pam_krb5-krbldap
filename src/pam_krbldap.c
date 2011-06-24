@@ -111,21 +111,49 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 		warn("error initializing LDAP, ldap_initialize return code: [%d]", rc);
 		return PAM_SERVICE_ERR;
 	}
-	if (ldap == NULL)
-	{
+	if (ldap == NULL) {
 		warn("NULL LDAP session returned by ldap_initialize");
 		return PAM_SERVICE_ERR;
 	}
+	int ldap_version = LDAP_VERSION3;
+	ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
 	/* TODO: make the uid attribute configurable */
 	snprintf (ldap_filter, sizeof ldap_filter, "(uid=%s)", username);
 	printf("LDAP filter: [%s]\n", ldap_filter);
 	rc = ldap_search_ext_s (ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
 	printf("rc: [%d]\n", rc);
 	entry_msg = ldap_first_entry (ldap, ldap_msg);
+	if (entry_msg == NULL) {
+		ldap_msgfree (ldap_msg);
+		warn("No entries found for filter [%s]", ldap_filter);
+		return PAM_SERVICE_ERR;
+	}
 	user_dn = ldap_get_dn (ldap, entry_msg);
 	printf("user_dn: [%s]\n", user_dn);
 
-	/*
-	 */
+	/**/
+	BerElement *berelem;
+	struct berval *berval;
+	char *retoid = NULL;
+	struct berval *retdata = NULL;
+	berelem = ber_alloc_t(LBER_USE_DER);
+	if (berelem == NULL) { 
+		return PAM_BUF_ERR;
+	}
+	ber_printf(berelem, "{s}", username);
+	rc = ber_flatten (berelem, &berval);
+	if (rc < 0) {
+		ber_free(berelem, 1);
+		return PAM_BUF_ERR;
+	}
+	printf("flatten rc: [%d]\n", rc);
+	int debug = 0xffffff;
+	ldap_set_option (NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
+	rc = ldap_extended_operation_s(ldap, KRBLDAP_OID_EXOP_AS_REQ, berval, NULL, NULL, &retoid, &retdata);
+	ldap_memfree(retoid);
+	ber_bvfree(retdata);
+	printf("exop rc: [%d]\n", rc);
+	/**/
+
 	ldap_msgfree (ldap_msg);
 }
