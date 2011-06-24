@@ -4,7 +4,7 @@ testdir=`dirname "$0"`
 testdir=`cd "$testdir" ; pwd`
 export testdir
 
-. $testdir/testenv.sh
+. $testdir/testenv-krbldap.sh
 echo "Running tests using test principal \"$test_principal\"".
 echo "Running tests using KDC on \"$test_host\"".
 getent hosts "$test_host"
