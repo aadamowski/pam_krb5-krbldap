@@ -432,14 +432,16 @@ _pam_krb5_close_session(pam_handle_t *pamh, int flags,
 		tokens_release(stash, options);
 	}
 
-	if (stash->v5ccnames != NULL) {
-		v5_destroy(ctx, stash, options);
-		if (stash->v5setenv) {
-			pam_putenv(pamh, "KRB5CCNAME");
-			stash->v5setenv = 0;
-		}
-		if (options->debug) {
-			debug("destroyed v5 ccache for '%s'", user);
+	if (!stash->v5external) {
+		if (stash->v5ccnames != NULL) {
+			v5_destroy(ctx, stash, options);
+			if (stash->v5setenv) {
+				pam_putenv(pamh, "KRB5CCNAME");
+				stash->v5setenv = 0;
+			}
+			if (options->debug) {
+				debug("destroyed v5 ccache for '%s'", user);
+			}
 		}
 	}
 
