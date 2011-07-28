@@ -98,6 +98,7 @@ tokens_obtain(krb5_context context,
 	char localcell[LINE_MAX], homecell[LINE_MAX], homedir[LINE_MAX],
 	     lnk[LINE_MAX];
 	struct stat st;
+	char ccname[PATH_MAX];
 	krb5_ccache ccache;
 	uid_t uid;
 	const struct {
@@ -112,6 +113,7 @@ tokens_obtain(krb5_context context,
 	};
 	int *methods, n_methods;
 	const char *p, *q;
+	static int counter = 0;
 
 	if (options->debug) {
 		debug("obtaining afs tokens");
@@ -170,14 +172,15 @@ tokens_obtain(krb5_context context,
 
 	/* Open the ccache. */
 	memset(&ccache, 0, sizeof(ccache));
+	snprintf(ccname, sizeof(ccname), "MEMORY:_pam_krb5_token_s_%s-%d",
+		 info->unparsed_name, counter++);
 	if (stash &&
-	    (stash->v5ccnames != NULL) &&
-	    (stash->v5ccnames->name != NULL) &&
-	    (strlen(stash->v5ccnames->name) > 0)) {
-		if (krb5_cc_resolve(context, stash->v5ccnames->name,
-				    &ccache) != 0) {
-			memset(&ccache, 0, sizeof(ccache));
-		}
+	    (v5_creds_check_initialized(context, &stash->v5creds) == 0) &&
+	    (krb5_cc_resolve(context, ccname, &ccache) == 0) &&
+	    (krb5_cc_initialize(context, ccache, stash->v5creds.client) == 0) &&
+	    (krb5_cc_store_cred(context, ccache, &stash->v5creds) == 0)) {
+	} else {
+		memset(&ccache, 0, sizeof(ccache));
 	}
 
 	/* Get the name of the local cell.  The root.afs volume which is
@@ -303,7 +306,7 @@ tokens_obtain(krb5_context context,
 	}
 
 	if (ccache != NULL) {
-		krb5_cc_close(context, ccache);
+		krb5_cc_destroy(context, ccache);
 	}
 
 	/* Suppress all errors. */

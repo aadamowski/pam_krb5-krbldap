@@ -255,7 +255,10 @@ _pam_krb5_sly_maybe_refresh(pam_handle_t *pamh, int flags,
 	retval = PAM_SERVICE_ERR;
 
 	/* Save credentials in the right places. */
-	v5ccname = krb5_cc_default_name(ctx);
+	v5ccname = pam_getenv(pamh, "KRB5CCNAME");
+	if (v5ccname == NULL) {
+		v5ccname = krb5_cc_default_name(ctx);
+	}
 	v5filename = NULL;
 	if (v5ccname == NULL) {
 		/* This should never happen, but all we can do is tell libpam

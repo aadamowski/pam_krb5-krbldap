@@ -10,6 +10,12 @@
 	* src/session.c: when opening/closing a session, if cred_sessios is
 	false and we're called from pam_sm_setcred, just return success
 	* src/auth.c: when we get non-"external" creds, be sure to note that
+	* src/sly.c: if libpam has a KRB5CCNAME set, look there for creds
+	before looking in the default location
+	* src/stash.c: always re-read "external" creds when called by libpam
+	* src/tokens.c: create a temporary in-memory ccache for use in
+	obtaining tokens using v5 creds, since we might not be creating one
+	on disk any more
 
 2011-04-27
 	* configure.ac: check for krb5_set_trace_callback()
