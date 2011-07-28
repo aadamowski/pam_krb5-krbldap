@@ -1,3 +1,10 @@
+2011-07-28
+	* src/session.c,src/session.h: make the current open/close session
+	function into one that's called with an extra parameter to help
+	clarify when we're calling it
+	* src/auth.c: call the new open/close session "worker" function with
+	information indicating that it's really a setcred call
+
 2011-04-27
 	* configure.ac: check for krb5_set_trace_callback()
 	* src/log.h,src/logpam.c,src/logstdio.c: add a trace() function
