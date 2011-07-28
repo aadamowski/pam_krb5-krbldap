@@ -105,6 +105,14 @@ _pam_krb5_open_session(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* If we're in a no-cred-session situation, return. */
+	if ((!options->cred_session) &&
+	    (caller_type == _pam_krb5_session_caller_setcred)) {
+		_pam_krb5_options_free(pamh, ctx, options);
+		krb5_free_context(ctx);
+		return PAM_SUCCESS;
+	}
+
 	/* Get information about the user and the user's principal name. */
 	userinfo = _pam_krb5_user_info_init(ctx, user, options);
 	if (userinfo == NULL) {
@@ -341,6 +349,14 @@ _pam_krb5_close_session(pam_handle_t *pamh, int flags,
 	if (options == NULL) {
 		krb5_free_context(ctx);
 		return PAM_SERVICE_ERR;
+	}
+
+	/* If we're in a no-cred-session situation, return. */
+	if ((!options->cred_session) &&
+	    (caller_type == _pam_krb5_session_caller_setcred)) {
+		_pam_krb5_options_free(pamh, ctx, options);
+		krb5_free_context(ctx);
+		return PAM_SUCCESS;
 	}
 
 	/* Get information about the user and the user's principal name. */

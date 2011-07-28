@@ -535,6 +535,18 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 #endif
 
 	/* private option */
+	options->cred_session = option_b(argc, argv,
+					 ctx, options->realm,
+					 service, NULL, DEFAULT_NO_CRED_SESSION,
+					 "cred_session", 1);
+	if (options->debug && (options->cred_session == 1)) {
+		debug("flag: cred_session");
+	}
+	if (options->debug && (options->cred_session == 0)) {
+		debug("flag: no cred_session");
+	}
+
+	/* private option */
 	options->ignore_k5login = option_b(argc, argv,
 					   ctx, options->realm,
 					   service, NULL, NULL,

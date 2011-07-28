@@ -4,6 +4,11 @@
 	clarify when we're calling it
 	* src/auth.c: call the new open/close session "worker" function with
 	information indicating that it's really a setcred call
+	* configure.ac: add a --with-default-no-cred-session option
+	* src/options.c,src/options.h: track the cred_session option
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: note "cred_session"
+	* src/session.c: when opening/closing a session, if cred_sessios is
+	false and we're called from pam_sm_setcred, just return success
 
 2011-04-27
 	* configure.ac: check for krb5_set_trace_callback()

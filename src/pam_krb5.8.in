@@ -1,4 +1,4 @@
-.TH pam_krb5 8 2010/09/07 "@OS_DISTRIBUTION@" "System Administrator's Manual"
+.TH pam_krb5 8 2011/07/28 "@OS_DISTRIBUTION@" "System Administrator's Manual"
 
 .SH NAME
 pam_krb5 \- Kerberos 5 authentication
@@ -101,6 +101,15 @@ applications which don't handle password expiration correctly will fail
 unconditionally if the user's password is expired, and this flag can be used
 to attempt to work around this bug in those applications.
 The default is \fBfalse\fR.
+
+.IP cred_session
+specifies that pam_krb5 should create and destroy credential caches, as it
+does when the calling application opens and closes a PAM session, when the
+calling application establishes and deletes PAM credentials.  This is done
+to compensate for applications which expect to create a credential cache but
+which don't use PAM session management.  It is usually a harmless redundancy
+in applications which don't require it, so this option is enabled by default.
+except for services in this list: "\fI@DEFAULT_NO_CRED_SESSION@\fR".
 
 .IP existing_ticket
 tells pam_krb5.so to accept the presence of pre-existing Kerberos credentials

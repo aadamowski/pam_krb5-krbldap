@@ -124,7 +124,7 @@ AC_DEFINE_UNQUOTED(DEFAULT_CHPW_PROMPT,"$DEFAULT_CHPW_PROMPT",[Set to the defaul
 AC_SUBST(DEFAULT_CHPW_PROMPT)
 
 AC_ARG_WITH(default-external,
-[AC_HELP_STRING(--with-default-external="sshd gssftp",[Set the default value of the "external" option (default is "sshd").])],
+[AC_HELP_STRING(--with-default-external="sshd sshd-rekey gssftp",[Set the default value of the "external" option (default is "sshd").])],
 	    DEFAULT_EXTERNAL="$withval",
 	    DEFAULT_EXTERNAL=sshd)
 AC_DEFINE_UNQUOTED(DEFAULT_EXTERNAL,"$DEFAULT_EXTERNAL",[Set to the default value for the "external" setting.])
@@ -136,6 +136,13 @@ AC_ARG_WITH(default-multiple-ccaches,
 	    DEFAULT_MULTIPLE_CCACHES="su su-l")
 AC_DEFINE_UNQUOTED(DEFAULT_MULTIPLE_CCACHES,"$DEFAULT_MULTIPLE_CCACHES",[Set to the default value for the "multiple_ccaches" setting.])
 AC_SUBST(DEFAULT_MULTIPLE_CCACHES)
+
+AC_ARG_WITH(default-no-cred-session,
+[AC_HELP_STRING(--with-default-no-cred-session="sshd",[Set the default value of the "no_cred_session" option (default is "sshd").])],
+	    DEFAULT_NO_CRED_SESSION="$withval",
+	    DEFAULT_NO_CRED_SESSION=sshd)
+AC_DEFINE_UNQUOTED(DEFAULT_NO_CRED_SESSION,"$DEFAULT_NO_CRED_SESSION",[Set to the default value for the "no_cred_session" setting.])
+AC_SUBST(DEFAULT_NO_CRED_SESSION)
 
 AC_ARG_WITH(default-use-shmem,
 [AC_HELP_STRING(--with-default-use-shmem="sshd",[Set the default value of the "use_shmem" option (default is "sshd").])],
