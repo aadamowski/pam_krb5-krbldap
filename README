@@ -43,6 +43,11 @@ o chpw_prompt
   function.  Some applications which don't handle password expiration will fail
   incorrectly if the user's password is correct but expired, and setting this
   flag attempts to work around the bug.
+o cred_session
+  Control whether or not pam_krb5 will create/remove credential caches when
+  the calling application initializes or deletes PAM credentials.  The module
+  will do so when the application opens and closes the PAM session, and this
+  is usually harmless, so it is typically enabled by default.
 o debug
   debug = service1 service2
   Log debug messages to syslog with priority LOG_DEBUG.
