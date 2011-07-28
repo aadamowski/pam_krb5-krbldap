@@ -9,6 +9,7 @@
 	* src/pam_krb5.5.in,src/pam_krb5.8.in: note "cred_session"
 	* src/session.c: when opening/closing a session, if cred_sessios is
 	false and we're called from pam_sm_setcred, just return success
+	* src/auth.c: when we get non-"external" creds, be sure to note that
 
 2011-04-27
 	* configure.ac: check for krb5_set_trace_callback()

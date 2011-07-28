@@ -227,6 +227,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      _pam_krb5_always_fail_prompter,
 				      &stash->v5expired,
 				      &stash->v5result);
+		stash->v5external = 0;
 		stash->v5attempted = 1;
 		if (options->debug) {
 			debug("got result %d (%s)", stash->v5result,
@@ -277,6 +278,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      &stash->v5expired,
 					      &stash->v5result);
 			use_third_pass = 0;
+			stash->v5external = 0;
 			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
@@ -371,6 +373,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      &stash->v5expired,
 					      &stash->v5result);
 			use_third_pass = 0;
+			stash->v5external = 0;
 			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
@@ -432,6 +435,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      _pam_krb5_normal_prompter,
 				      &stash->v5expired,
 				      &stash->v5result);
+		stash->v5external = 0;
 		stash->v5attempted = 1;
 		if (options->debug) {
 			debug("got result %d (%s)", stash->v5result,
