@@ -71,7 +71,8 @@
 int
 _pam_krb5_open_session(pam_handle_t *pamh, int flags,
 		       int argc, PAM_KRB5_MAYBE_CONST char **argv,
-		       const char *caller)
+		       const char *caller,
+		       enum _pam_krb5_session_caller caller_type)
 {
 	PAM_KRB5_MAYBE_CONST char *user;
 	char envstr[PATH_MAX + 20], *segname;
@@ -311,7 +312,8 @@ _pam_krb5_open_session(pam_handle_t *pamh, int flags,
 int
 _pam_krb5_close_session(pam_handle_t *pamh, int flags,
 			int argc, PAM_KRB5_MAYBE_CONST char **argv,
-			const char *caller)
+		        const char *caller,
+		        enum _pam_krb5_session_caller caller_type)
 {
 	PAM_KRB5_MAYBE_CONST char *user;
 	krb5_context ctx;
@@ -453,7 +455,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
 	return _pam_krb5_open_session(pamh, flags, argc, argv,
-				      "pam_sm_open_session");
+				      "pam_sm_open_session",
+				      _pam_krb5_session_caller_session);
 }
 
 int
@@ -461,5 +464,6 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		     int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
 	return _pam_krb5_close_session(pamh, flags, argc, argv,
-				       "pam_sm_close_session");
+				       "pam_sm_close_session",
+				       _pam_krb5_session_caller_session);
 }

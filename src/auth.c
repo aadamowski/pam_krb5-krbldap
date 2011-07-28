@@ -528,7 +528,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 {
 	if (flags & PAM_ESTABLISH_CRED) {
 		return _pam_krb5_open_session(pamh, flags, argc, argv,
-					      "pam_setcred(PAM_ESTABLISH_CRED)");
+					      "pam_setcred(PAM_ESTABLISH_CRED)",
+					      _pam_krb5_session_caller_setcred);
 	}
 	if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED)) {
 		if (_pam_krb5_sly_looks_unsafe() == 0) {
@@ -540,7 +541,8 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	}
 	if (flags & PAM_DELETE_CRED) {
 		return _pam_krb5_close_session(pamh, flags, argc, argv,
-					       "pam_setcred(PAM_DELETE_CRED)");
+					       "pam_setcred(PAM_DELETE_CRED)",
+					       _pam_krb5_session_caller_setcred);
 	}
 	warn("pam_setcred() called with no flags");
 	return PAM_SERVICE_ERR;

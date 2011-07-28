@@ -33,11 +33,17 @@
 #ifndef pam_krb5_session_h
 #define pam_krb5_session_h
 
+enum _pam_krb5_session_caller {
+	_pam_krb5_session_caller_setcred,
+	_pam_krb5_session_caller_session
+};
 int _pam_krb5_open_session(pam_handle_t *pamh, int flags,
 			   int argc, PAM_KRB5_MAYBE_CONST char **argv,
-			   const char *caller);
+			   const char *caller,
+			   enum _pam_krb5_session_caller caller_type);
 int _pam_krb5_close_session(pam_handle_t *pamh, int flags,
 			    int argc, PAM_KRB5_MAYBE_CONST char **argv,
-			    const char *caller);
+			    const char *caller,
+			    enum _pam_krb5_session_caller caller_type);
 
 #endif
