@@ -63,6 +63,8 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
     ccache when setting up tokens (more of #690832)
   - apply when-to-prompt-for-what logic that we use in authentication to
     the initial part of password-change (#700520)
+  - fix some bashisms and explicitly note errors when we run into them
+    (ticket #1, patch by Aleksander Adamowski)
 
 * Thu Mar 24 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.12-1
 - update to 2.3.12

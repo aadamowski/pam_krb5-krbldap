@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source $testdir/testenv.sh
+. $testdir/testenv.sh
 
 test_flags="$test_flags ignore_afs"
 

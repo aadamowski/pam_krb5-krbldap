@@ -1,3 +1,7 @@
+2011-07-29
+	* tests/: remove some bashisms, add more explicit error reporting to
+	the test harness (trac #1, Aleksander Adamowski)
+
 2011-07-28
 	* src/session.c,src/session.h: make the current open/close session
 	function into one that's called with an extra parameter to help

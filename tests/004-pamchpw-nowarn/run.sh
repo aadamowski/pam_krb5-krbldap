@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source $testdir/testenv.sh
+. $testdir/testenv.sh
 
 echo "";echo Succeed: correct password, do not warn about expiration.
 $kadmin -q 'cpw -pw foo '$test_principal 2> /dev/null > /dev/null
