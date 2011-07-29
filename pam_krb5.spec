@@ -21,7 +21,8 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %build
 %configure --libdir=/%{_lib} \
-	--with-default-external="sshd sshd-rekey" \
+	--with-default-use-shmem="sshd" \
+	--with-default-external="sshd sshd-rekey gssftp" \
 	--with-default-multiple-ccaches="su su-l" \
 	--with-default-no-cred-session="sshd"
 make %{?_smp_mflags}
