@@ -61,6 +61,8 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
     application's already managing one (#690832)
   - always re-read "external" creds when possible, and use an in-memory
     ccache when setting up tokens (more of #690832)
+  - apply when-to-prompt-for-what logic that we use in authentication to
+    the initial part of password-change (#700520)
 
 * Thu Mar 24 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.12-1
 - update to 2.3.12
