@@ -276,7 +276,7 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 	int headers, i, j, ret, num_msgs;
 	char *tmp;
 	struct _pam_krb5_prompter_data *pdata = data;
-	krb5_data *pw0, *pw1;
+	krb5_data *pw1, *pw2;
 
 	/* If we have a name or banner, we need to make space for it in the
 	 * messages structure, so keep track of the number of non-prompts which
@@ -438,8 +438,8 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 	}
 
 	/* Gather up the results. */
-	pw0 = NULL;
 	pw1 = NULL;
+	pw2 = NULL;
 	for (i = j = 0; i < num_prompts; i++) {
 		if (_pam_krb5_prompt_default_is_password(&prompts[i], pdata)) {
 			/* We never prompted for this. */
@@ -474,24 +474,24 @@ _pam_krb5_generic_prompter(krb5_context context, void *data,
 		/* If it's a prompt for a new password, make note of it. */
 		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
 		    KRB5_PROMPT_TYPE_NEW_PASSWORD) {
-			pw0 = prompts[i].reply;
+			pw1 = prompts[i].reply;
 		}
 		if (_pam_krb5_prompt_type(pdata->ctx, prompts, i) ==
 		    KRB5_PROMPT_TYPE_NEW_PASSWORD_AGAIN) {
-			pw1 = prompts[i].reply;
+			pw2 = prompts[i].reply;
 		}
 		j++;
 	}
 	/* If we were called as part of a password-change operation, then
 	 * we've captured both the new password and its confirmation.  Save the
 	 * new password as the PAM_AUTHTOK for other modules. */
-	if ((pw0 != NULL) && (pw1 != NULL) &&
-	    (strcmp(pw0->data, pw1->data) == 0)) {
+	if ((pw1 != NULL) && (pw2 != NULL) &&
+	    (strcmp(pw1->data, pw2->data) == 0)) {
 		if (pdata->options->debug) {
 			debug("saving newly-entered password for use by "
 			      "other modules");
 		}
-		pam_set_item(pdata->pamh, PAM_AUTHTOK, pw0->data);
+		pam_set_item(pdata->pamh, PAM_AUTHTOK, pw1->data);
 	}
 
 	_pam_krb5_maybe_free_responses(responses, num_msgs);

@@ -823,7 +823,9 @@ _pam_krb5_stash_get(pam_handle_t *pamh, const char *user,
 	if (options->use_shmem) {
 		_pam_krb5_stash_shm_read(pamh, key, stash, options);
 	}
-	if (options->external && (stash->v5attempted == 0)) {
+	if (options->external &&
+	    ((stash->v5attempted == 0) ||
+	     ((stash->v5external == 1) && (stash->v5result == 0)))) {
 		_pam_krb5_stash_external_read(pamh, stash, user, info, options);
 		if (stash->v5attempted && (stash->v5result == 0)) {
 			if ((_pam_krb5_init_ctx(&ctx, 0, NULL) == 0) &&

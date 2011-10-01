@@ -1,5 +1,5 @@
 /*
- * Copyright 2004,2006,2010 Red Hat, Inc.
+ * Copyright 2004,2006,2010,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -95,6 +95,14 @@ debug(const char *fmt, ...)
 	}
 	free(fmt2);
 }
+
+#ifdef HAVE_KRB5_SET_TRACE_CALLBACK
+void
+trace(krb5_context ctx, const struct krb5_trace_info *info, void *data)
+{
+	debug("libkrb5 trace message: %s", info->message);
+}
+#endif
 
 void
 notice(const char *fmt, ...)

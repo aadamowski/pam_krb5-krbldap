@@ -64,6 +64,7 @@
 #include "log.h"
 #include "options.h"
 #include "prompter.h"
+#include "session.h"
 #include "sly.h"
 #include "stash.h"
 #include "tokens.h"
@@ -226,6 +227,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      _pam_krb5_always_fail_prompter,
 				      &stash->v5expired,
 				      &stash->v5result);
+		stash->v5external = 0;
 		stash->v5attempted = 1;
 		if (options->debug) {
 			debug("got result %d (%s)", stash->v5result,
@@ -276,6 +278,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      &stash->v5expired,
 					      &stash->v5result);
 			use_third_pass = 0;
+			stash->v5external = 0;
 			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
@@ -370,6 +373,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 					      &stash->v5expired,
 					      &stash->v5result);
 			use_third_pass = 0;
+			stash->v5external = 0;
 			stash->v5attempted = 1;
 			if (options->debug) {
 				debug("got result %d (%s)", stash->v5result,
@@ -431,6 +435,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 				      _pam_krb5_normal_prompter,
 				      &stash->v5expired,
 				      &stash->v5result);
+		stash->v5external = 0;
 		stash->v5attempted = 1;
 		if (options->debug) {
 			debug("got result %d (%s)", stash->v5result,
@@ -526,7 +531,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	       int argc, PAM_KRB5_MAYBE_CONST char **argv)
 {
 	if (flags & PAM_ESTABLISH_CRED) {
-		return pam_sm_open_session(pamh, flags, argc, argv);
+		return _pam_krb5_open_session(pamh, flags, argc, argv,
+					      "pam_setcred(PAM_ESTABLISH_CRED)",
+					      _pam_krb5_session_caller_setcred);
 	}
 	if (flags & (PAM_REINITIALIZE_CRED | PAM_REFRESH_CRED)) {
 		if (_pam_krb5_sly_looks_unsafe() == 0) {
@@ -537,7 +544,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 		}
 	}
 	if (flags & PAM_DELETE_CRED) {
-		return pam_sm_close_session(pamh, flags, argc, argv);
+		return _pam_krb5_close_session(pamh, flags, argc, argv,
+					       "pam_setcred(PAM_DELETE_CRED)",
+					       _pam_krb5_session_caller_setcred);
 	}
 	warn("pam_setcred() called with no flags");
 	return PAM_SERVICE_ERR;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2004,2005,2006,2007,2008,2009,2010 Red Hat, Inc.
+ * Copyright 2003,2004,2005,2006,2007,2008,2009,2010,2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -415,7 +415,7 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 			break;
 		}
 	}
-	
+
 	/* private option */
 	options->debug = option_b(argc, argv, ctx, options->realm,
 				  service, NULL, NULL,
@@ -423,6 +423,16 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	if (options->debug) {
 		debug("flag: debug");
 	}
+
+#ifdef HAVE_KRB5_SET_TRACE_CALLBACK
+	options->debug = option_b(argc, argv, ctx, options->realm,
+				  service, NULL, NULL,
+				  "trace", 0);
+	if (options->debug) {
+		debug("flag: trace");
+		krb5_set_trace_callback(ctx, &trace, NULL);
+	}
+#endif
 
 	/* private option */
 	options->debug_sensitive = option_b(argc, argv, ctx, options->realm,
@@ -523,6 +533,18 @@ _pam_krb5_options_init(pam_handle_t *pamh, int argc,
 	options->ignore_afs = 1;
 	options->tokens = 0;
 #endif
+
+	/* private option */
+	options->cred_session = option_b(argc, argv,
+					 ctx, options->realm,
+					 service, NULL, DEFAULT_NO_CRED_SESSION,
+					 "cred_session", 1);
+	if (options->debug && (options->cred_session == 1)) {
+		debug("flag: cred_session");
+	}
+	if (options->debug && (options->cred_session == 0)) {
+		debug("flag: no cred_session");
+	}
 
 	/* private option */
 	options->ignore_k5login = option_b(argc, argv,

@@ -74,7 +74,8 @@ pam_krb5_la_SOURCES = \
 	auth.c \
 	acct.c \
 	password.c \
-	session.c
+	session.c \
+	session.h
 
 pam_newpag_la_LDFLAGS = -avoid-version -export-dynamic -module -export-symbols-regex 'pam_sm.*' @SYMBOLIC_LINKER_FLAG@
 pam_newpag_la_LIBADD = libpam_krb5.la $(KRB_LIBS) $(DIRECT_LIBPAM)

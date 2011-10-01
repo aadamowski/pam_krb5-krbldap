@@ -1,6 +1,6 @@
 Summary: A Pluggable Authentication Module for Kerberos 5
 Name: pam_krb5
-Version: 2.3.12
+Version: 2.3.13
 Release: 1%{?dist}
 Source0: https://fedorahosted.org/released/pam_krb5/pam_krb5-%{version}-1.tar.gz
 License: BSD or LGPLv2+
@@ -21,8 +21,10 @@ The included pam_krb5afs module also gets AFS tokens if so configured.
 
 %build
 %configure --libdir=/%{_lib} \
-	--with-default-use-shmem=sshd --with-default-external=sshd \
-	--with-default-multiple-ccaches="su su-l"
+	--with-default-use-shmem="sshd" \
+	--with-default-external="sshd sshd-rekey gssftp" \
+	--with-default-multiple-ccaches="su su-l" \
+	--with-default-no-cred-session="sshd"
 make %{?_smp_mflags}
 
 %install
@@ -52,6 +54,18 @@ sed -ri -e 's|/lib(64)?/|/\$LIB/|g' $RPM_BUILD_ROOT/%{_mandir}/man*/pam_krb5*.8*
 %{_mandir}/man8/*
 
 %changelog
+* Thu Jul 28 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.13-1
+- update to 2.3.13
+  - don't treat setcred() as session open/close in sshd (#720609, #725797)
+  - don't create a new ccache when "external" is enabled, as the calling
+    application's already managing one (#690832)
+  - always re-read "external" creds when possible, and use an in-memory
+    ccache when setting up tokens (more of #690832)
+  - apply when-to-prompt-for-what logic that we use in authentication to
+    the initial part of password-change (#700520)
+  - fix some bashisms and explicitly note errors when we run into them
+    (ticket #1, patch by Aleksander Adamowski)
+
 * Thu Mar 24 2011 Nalin Dahyabhai <nalin@redhat.com> - 2.3.12-1
 - update to 2.3.12
   - prefer to send change-password over set-password requests (#676526)

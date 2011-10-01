@@ -1,5 +1,5 @@
 /*
- * Copyright 2003,2006,2011 Red Hat, Inc.
+ * Copyright 2011 Red Hat, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,18 +30,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef pam_krb5_log_h
-#define pam_krb5_log_h
+#ifndef pam_krb5_session_h
+#define pam_krb5_session_h
 
-struct pam_handle;
-
-void debug(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
-void warn(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
-void notice(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
-void crit(const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (1, 2);
-void notice_user(struct pam_handle *pamh, const char *fmt, ...) PAM_KRB5_GNUC_PRINTF (2, 3);
-#ifdef HAVE_KRB5_SET_TRACE_CALLBACK
-void trace(krb5_context ctx, const struct krb5_trace_info *info, void *data);
-#endif
+enum _pam_krb5_session_caller {
+	_pam_krb5_session_caller_setcred,
+	_pam_krb5_session_caller_session
+};
+int _pam_krb5_open_session(pam_handle_t *pamh, int flags,
+			   int argc, PAM_KRB5_MAYBE_CONST char **argv,
+			   const char *caller,
+			   enum _pam_krb5_session_caller caller_type);
+int _pam_krb5_close_session(pam_handle_t *pamh, int flags,
+			    int argc, PAM_KRB5_MAYBE_CONST char **argv,
+			    const char *caller,
+			    enum _pam_krb5_session_caller caller_type);
 
 #endif

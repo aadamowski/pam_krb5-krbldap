@@ -43,6 +43,14 @@ o chpw_prompt
   function.  Some applications which don't handle password expiration will fail
   incorrectly if the user's password is correct but expired, and setting this
   flag attempts to work around the bug.
+o cred_session
+  Control whether or not pam_krb5 will create/remove credential caches when
+  the calling application initializes or deletes PAM credentials.  The module
+  will do so when the application opens and closes the PAM session, and this
+  is usually harmless, so it is typically enabled by default.
+o debug
+  debug = service1 service2
+  Log debug messages to syslog with priority LOG_DEBUG.
 o existing_ticket
   Use the presence of a TGT for the user's realm in the default ccache as
   sufficient proof of the user's identity.  If you're not also validating
@@ -160,6 +168,10 @@ o token_strategy
     rxk5  Get krb5 credentials, and use the rxk5 token format, which may be
           supported in OpenAFS 1.6 and later.
   The default list of methods, and their order, is noted in the manual pages.
+o trace
+  trace = service1 service2
+  Log libkrb5 trace messages to syslog with priority LOG_DEBUG, if the
+  Kerberos implementation provides a means to let pam_krb5 do so.
 o use_shmem
   use_shmem = service1 service2
   Pass credentials from authentication to session management using shared

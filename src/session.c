@@ -59,6 +59,7 @@
 #include "log.h"
 #include "options.h"
 #include "prompter.h"
+#include "session.h"
 #include "shmem.h"
 #include "stash.h"
 #include "tokens.h"
@@ -68,8 +69,10 @@
 #include "xstr.h"
 
 int
-pam_sm_open_session(pam_handle_t *pamh, int flags,
-		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
+_pam_krb5_open_session(pam_handle_t *pamh, int flags,
+		       int argc, PAM_KRB5_MAYBE_CONST char **argv,
+		       const char *caller,
+		       enum _pam_krb5_session_caller caller_type)
 {
 	PAM_KRB5_MAYBE_CONST char *user;
 	char envstr[PATH_MAX + 20], *segname;
@@ -102,6 +105,14 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* If we're in a no-cred-session situation, return. */
+	if ((!options->cred_session) &&
+	    (caller_type == _pam_krb5_session_caller_setcred)) {
+		_pam_krb5_options_free(pamh, ctx, options);
+		krb5_free_context(ctx);
+		return PAM_SUCCESS;
+	}
+
 	/* Get information about the user and the user's principal name. */
 	userinfo = _pam_krb5_user_info_init(ctx, user, options);
 	if (userinfo == NULL) {
@@ -114,7 +125,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 			retval = PAM_USER_UNKNOWN;
 		}
 		if (options->debug) {
-			debug("pam_open_session returning %d (%s)",
+			debug("%s returning %d (%s)", caller,
 			      retval,
 			      pam_strerror(pamh, retval));
 		}
@@ -131,7 +142,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
-			debug("pam_open_session returning %d (%s)", PAM_IGNORE,
+			debug("%s returning %d (%s)", caller, PAM_IGNORE,
 			      pam_strerror(pamh, PAM_IGNORE));
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
@@ -145,7 +156,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		warn("no stash for '%s' (shouldn't happen)", user);
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
-			debug("pam_open_session returning %d (%s)",
+			debug("%s returning %d (%s)", caller,
 			      PAM_SERVICE_ERR,
 			      pam_strerror(pamh, PAM_SERVICE_ERR));
 		}
@@ -200,7 +211,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
-			debug("pam_open_session returning %d (%s)", PAM_SUCCESS,
+			debug("%s returning %d (%s)", caller, PAM_SUCCESS,
 			      pam_strerror(pamh, PAM_SUCCESS));
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
@@ -216,7 +227,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (stash->v4present) {
 			v4_save_for_tokens(ctx, stash, userinfo, options, NULL);
 		}
-		
+
 		tokens_obtain(ctx, stash, options, userinfo, 1);
 
 		if (stash->v4present) {
@@ -295,7 +306,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	/* Clean up. */
 	if (options->debug) {
-		debug("pam_open_session returning %d (%s)", i,
+		debug("%s returning %d (%s)", caller, i,
 		      pam_strerror(pamh, i));
 	}
 	_pam_krb5_options_free(pamh, ctx, options);
@@ -307,8 +318,10 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 }
 
 int
-pam_sm_close_session(pam_handle_t *pamh, int flags,
-		     int argc, PAM_KRB5_MAYBE_CONST char **argv)
+_pam_krb5_close_session(pam_handle_t *pamh, int flags,
+			int argc, PAM_KRB5_MAYBE_CONST char **argv,
+		        const char *caller,
+		        enum _pam_krb5_session_caller caller_type)
 {
 	PAM_KRB5_MAYBE_CONST char *user;
 	krb5_context ctx;
@@ -338,6 +351,14 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		return PAM_SERVICE_ERR;
 	}
 
+	/* If we're in a no-cred-session situation, return. */
+	if ((!options->cred_session) &&
+	    (caller_type == _pam_krb5_session_caller_setcred)) {
+		_pam_krb5_options_free(pamh, ctx, options);
+		krb5_free_context(ctx);
+		return PAM_SUCCESS;
+	}
+
 	/* Get information about the user and the user's principal name. */
 	userinfo = _pam_krb5_user_info_init(ctx, user, options);
 	if (userinfo == NULL) {
@@ -348,7 +369,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 			retval = PAM_USER_UNKNOWN;
 		}
 		if (options->debug) {
-			debug("pam_close_session returning %d (%s)",
+			debug("%s returning %d (%s)", caller,
 			      retval,
 			      pam_strerror(pamh, retval));
 		}
@@ -366,7 +387,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
-			debug("pam_close_session returning %d (%s)", PAM_IGNORE,
+			debug("%s returning %d (%s)", caller, PAM_IGNORE,
 			      pam_strerror(pamh, PAM_IGNORE));
 		}
 		_pam_krb5_options_free(pamh, ctx, options);
@@ -380,7 +401,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		warn("no stash for user %s (shouldn't happen)", user);
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
-			debug("pam_close_session returning %d (%s)",
+			debug("%s returning %d (%s)", caller,
 			      PAM_SERVICE_ERR,
 			      pam_strerror(pamh, PAM_SERVICE_ERR));
 		}
@@ -398,7 +419,7 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		}
 		_pam_krb5_user_info_free(ctx, userinfo);
 		if (options->debug) {
-			debug("pam_close_session returning %d (%s)",
+			debug("%s returning %d (%s)", caller,
 			      PAM_SUCCESS,
 			      pam_strerror(pamh, PAM_SUCCESS));
 		}
@@ -411,14 +432,16 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 		tokens_release(stash, options);
 	}
 
-	if (stash->v5ccnames != NULL) {
-		v5_destroy(ctx, stash, options);
-		if (stash->v5setenv) {
-			pam_putenv(pamh, "KRB5CCNAME");
-			stash->v5setenv = 0;
-		}
-		if (options->debug) {
-			debug("destroyed v5 ccache for '%s'", user);
+	if (!stash->v5external) {
+		if (stash->v5ccnames != NULL) {
+			v5_destroy(ctx, stash, options);
+			if (stash->v5setenv) {
+				pam_putenv(pamh, "KRB5CCNAME");
+				stash->v5setenv = 0;
+			}
+			if (options->debug) {
+				debug("destroyed v5 ccache for '%s'", user);
+			}
 		}
 	}
 
@@ -436,11 +459,29 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 #endif
 	_pam_krb5_user_info_free(ctx, userinfo);
 	if (options->debug) {
-		debug("pam_close_session returning %d (%s)",
+		debug("%s returning %d (%s)", caller,
 		      PAM_SUCCESS,
 		      pam_strerror(pamh, PAM_SUCCESS));
 	}
 	_pam_krb5_options_free(pamh, ctx, options);
 	krb5_free_context(ctx);
 	return PAM_SUCCESS;
+}
+
+int
+pam_sm_open_session(pam_handle_t *pamh, int flags,
+		    int argc, PAM_KRB5_MAYBE_CONST char **argv)
+{
+	return _pam_krb5_open_session(pamh, flags, argc, argv,
+				      "pam_sm_open_session",
+				      _pam_krb5_session_caller_session);
+}
+
+int
+pam_sm_close_session(pam_handle_t *pamh, int flags,
+		     int argc, PAM_KRB5_MAYBE_CONST char **argv)
+{
+	return _pam_krb5_close_session(pamh, flags, argc, argv,
+				       "pam_sm_close_session",
+				       _pam_krb5_session_caller_session);
 }

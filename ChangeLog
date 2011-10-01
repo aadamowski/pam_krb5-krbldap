@@ -1,3 +1,40 @@
+2011-07-29
+	* tests/: remove some bashisms, add more explicit error reporting to
+	the test harness (trac #1, Aleksander Adamowski)
+
+2011-07-28
+	* src/session.c,src/session.h: make the current open/close session
+	function into one that's called with an extra parameter to help
+	clarify when we're calling it
+	* src/auth.c: call the new open/close session "worker" function with
+	information indicating that it's really a setcred call
+	* configure.ac: add a --with-default-no-cred-session option
+	* src/options.c,src/options.h: track the cred_session option
+	* src/pam_krb5.5.in,src/pam_krb5.8.in: note "cred_session"
+	* src/session.c: when opening/closing a session, if cred_sessios is
+	false and we're called from pam_sm_setcred, just return success
+	* src/auth.c: when we get non-"external" creds, be sure to note that
+	* src/sly.c: if libpam has a KRB5CCNAME set, look there for creds
+	before looking in the default location
+	* src/stash.c: always re-read "external" creds when called by libpam
+	* src/tokens.c: create a temporary in-memory ccache for use in
+	obtaining tokens using v5 creds, since we might not be creating one
+	on disk any more
+
+2011-04-27
+	* configure.ac: check for krb5_set_trace_callback()
+	* src/log.h,src/logpam.c,src/logstdio.c: add a trace() function
+	to log trace messages along with debug messages
+	* src/options.c: set the trace callback to our own logging function
+	if the "trace" option is enabled
+	* src/pam_krb5.5.in,src/pam_krb5.8.in,README: make a note about
+	the "trace" option
+
+2011-04-27
+	* src/password.c(pam_sm_chauthtok): if we managed to get password
+	changing creds the first time, don't try again, but do prompt for
+	a password if we're still expected to be the module that does it
+
 2011-03-25
 	* src/stash.c(_pam_krb5_stash_external_read): add a flag to track
 	whether or not our creds were externally obtained, and set it
