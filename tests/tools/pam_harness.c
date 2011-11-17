@@ -115,6 +115,8 @@ converse(int num_msgs,
 int
 main(int argc, char **argv)
 {
+	/* Disable buffering on stdout so that output lines up with error output */
+	setbuf(stdout, NULL);
 	void *dlhandle;
 	int doauth, doaccount, dosession, dosetcred, dochauthtok, doprompt;
 	int noreentrancy;
