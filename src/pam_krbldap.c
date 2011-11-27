@@ -152,12 +152,28 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
     krb5_principal client = NULL;
 
 
+    /*
+        initialize k5context
+     */
+    code = krb5_init_context(&k5context);
+    if (code != 0) {
+        warn("Kerberos initialization error [%d]: [%s]", code, error_message(code));
+        goto cleanup;
+    }
+
+    /*
+        allocate krb5 options structure
+     */
     code = krb5_get_init_creds_opt_alloc(k5context, &options);
     if (code != 0) {
         warn("Kerberos error [%d] allocating options: [%s]", code, error_message(code));
         goto cleanup;
     }
-    const char * princ_name = "alice@example.com";
+
+    /*
+        parse the principal name (currently constant for test purposes)
+     */
+    const char *princ_name = "alice@example.com";
     krb5_parse_name(k5context, "alice@example.com", &client);
     if (code != 0) {
         warn("Kerberos error [%d] parsing principal name [%s]: [%s]", code, princ_name, error_message(code));
