@@ -47,7 +47,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include KRB5_H
+/* Including libkrb5 private headers for the need of its message encoding
+ * functions. Unfortunately, this risks breakage with future releases of krb5 
+ * and internal changes generally aren't written up in krb5 release notes. */
+#define KRB5_PRIVATE 1
+#include "k5-int.h"
+
+/*#include KRB5_H*/
 
 #include <stdio.h>
 
@@ -66,7 +72,7 @@
 
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t * pamh, int flags,
-		    int argc, PAM_KRB5_MAYBE_CONST char **argv) {
+        int argc, PAM_KRB5_MAYBE_CONST char **argv) {
     int rc, prompt_result;
     printf("Now in krbldap.\n");
     PAM_KRB5_MAYBE_CONST char *username;
@@ -80,80 +86,128 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
     return PAM_SERVICE_ERR;
 }
 
-
 int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
-		char *pass) {
-	LDAP *ldap;
-	LDAPMessage *ldap_msg, *entry_msg;
-	LDAPControl **controls;
-	struct berval berpass;
-	int rc;
-	char *base = "dc=example,dc=com";
-	char *user_dn;
-	char ldap_filter[KRBLDAP_DYNAMIC_STRING_MAXSIZE];
-	struct timeval timeout;
-	int sizelimit = 1;
-	timeout.tv_sec = 29;
-	timeout.tv_usec = 0;
+        char *pass) {
+    LDAP *ldap;
+    LDAPMessage *ldap_msg, *entry_msg;
+    LDAPControl **controls;
+    int rc;
+    char *base = "dc=example,dc=com";
+    char *user_dn;
+    char ldap_filter[KRBLDAP_DYNAMIC_STRING_MAXSIZE];
+    struct timeval timeout;
+    int sizelimit = 1;
+    timeout.tv_sec = 29;
+    timeout.tv_usec = 0;
 
-	/* LDAP allows for binding with null/empty password, which is an anonymous bind.
-	   For PAM, this must be equivalent to an authentication error. */
-	if (pass == NULL || pass[0] == '\0') {
-		return PAM_AUTH_ERR;
-	}
-	/* TODO: filter username characters not present in a whitelist? e.g. parens, which
-		can be used for LDAP filter injection attacks. */
-	printf("User: [%s], Pass: [%s]\n", username, pass);
-	/* TODO: implement configuration for LDAP URL etc. */
-	rc = ldap_initialize (&ldap, "ldap://localhost:1389");
-	printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
-	if (rc != LDAP_SUCCESS) {
-		warn("error initializing LDAP, ldap_initialize return code: [%d]", rc);
-		return PAM_SERVICE_ERR;
-	}
-	if (ldap == NULL) {
-		warn("NULL LDAP session returned by ldap_initialize");
-		return PAM_SERVICE_ERR;
-	}
-	int ldap_version = LDAP_VERSION3;
-	ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
-	/* TODO: make the uid attribute configurable */
-	snprintf (ldap_filter, sizeof ldap_filter, "(uid=%s)", username);
-	printf("LDAP filter: [%s]\n", ldap_filter);
-	rc = ldap_search_ext_s (ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
-	printf("rc: [%d]\n", rc);
-	entry_msg = ldap_first_entry (ldap, ldap_msg);
-	if (entry_msg == NULL) {
-		ldap_msgfree (ldap_msg);
-		warn("No entries found for filter [%s]", ldap_filter);
-		return PAM_SERVICE_ERR;
-	}
-	user_dn = ldap_get_dn (ldap, entry_msg);
-	printf("user_dn: [%s]\n", user_dn);
 
-	/**/
-	BerElement *berelem;
-	struct berval *berval;
-	char *retoid = NULL;
-	struct berval *retdata = NULL;
-	berelem = ber_alloc_t(LBER_USE_DER);
-	if (berelem == NULL) { 
-		return PAM_BUF_ERR;
-	}
-	ber_printf(berelem, "{s}", username);
-	rc = ber_flatten (berelem, &berval);
-	if (rc < 0) {
-		ber_free(berelem, 1);
-		return PAM_BUF_ERR;
-	}
-	printf("flatten rc: [%d]\n", rc);
-	int debug = 0xffffff;
-	ldap_set_option (NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
-	rc = ldap_extended_operation_s(ldap, KRBLDAP_OID_EXOP_AS_REQ, berval, NULL, NULL, &retoid, &retdata);
-	ldap_memfree(retoid);
-	ber_bvfree(retdata);
-	printf("exop rc: [%d]\n", rc);
-	/**/
+    /* LDAP allows for binding with null/empty password, which is an anonymous bind.
+       For PAM, this must be equivalent to an authentication error. */
+    if (pass == NULL || pass[0] == '\0') {
+        return PAM_AUTH_ERR;
+    }
+    /* TODO: filter username characters not present in a whitelist? e.g. parens, which
+            can be used for LDAP filter injection attacks. */
+    printf("User: [%s], Pass: [%s]\n", username, pass);
+    /* TODO: implement configuration for LDAP URL etc. */
+    rc = ldap_initialize(&ldap, "ldap://localhost:1389");
+    printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
+    if (rc != LDAP_SUCCESS) {
+        warn("error initializing LDAP, ldap_initialize return code: [%d]", rc);
+        return PAM_SERVICE_ERR;
+    }
+    if (ldap == NULL) {
+        warn("NULL LDAP session returned by ldap_initialize");
+        return PAM_SERVICE_ERR;
+    }
+    int ldap_version = LDAP_VERSION3;
+    ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
+    /* TODO: make the uid attribute configurable */
+    snprintf(ldap_filter, sizeof ldap_filter, "(uid=%s)", username);
+    printf("LDAP filter: [%s]\n", ldap_filter);
+    rc = ldap_search_ext_s(ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
+    printf("rc: [%d]\n", rc);
+    entry_msg = ldap_first_entry(ldap, ldap_msg);
+    if (entry_msg == NULL) {
+        ldap_msgfree(ldap_msg);
+        warn("No entries found for filter [%s]", ldap_filter);
+        return PAM_SERVICE_ERR;
+    }
+    user_dn = ldap_get_dn(ldap, entry_msg);
+    printf("user_dn: [%s]\n", user_dn);
 
-	ldap_msgfree (ldap_msg);
+    /**/
+    char *retoid = NULL;
+    struct berval *retdata = NULL;
+    krb5_context k5context = NULL;
+    krb5_error_code code;
+    krb5_init_creds_context icc = NULL;
+    krb5_get_init_creds_opt *options = NULL;
+    krb5_principal client = NULL;
+
+
+    code = krb5_get_init_creds_opt_alloc(k5context, &options);
+    if (code != 0) {
+        warn("Kerberos error [%d] allocating options: [%s]", code, error_message(code));
+        goto cleanup;
+    }
+    const char * princ_name = "alice@example.com";
+    krb5_parse_name(k5context, "alice@example.com", &client);
+    if (code != 0) {
+        warn("Kerberos error [%d] parsing principal name [%s]: [%s]", code, princ_name, error_message(code));
+        goto cleanup;
+    }
+
+    code = krb5_init_creds_init(k5context,
+            client,
+            NULL,
+            NULL,
+            0,
+            options,
+            &icc);
+    printf("request: [%s]", icc->request);
+
+    /*
+    code = encode_krb5_kdc_req_body(icc->request, &icc->inner_request_body);
+    if (code) {
+        warn("Kerberos error [%d] encoding request body: [%s]", code, error_message(code));
+        goto cleanup;
+    }*/
+
+    BerElement *berelem;
+    struct berval *berval;
+    berelem = ber_alloc_t(LBER_USE_DER);
+    if (berelem == NULL) {
+        return PAM_BUF_ERR;
+    }
+    ber_printf(berelem, "{s}", username);
+    rc = ber_flatten(berelem, &berval);
+    if (rc < 0) {
+        ber_free(berelem, 1);
+        return PAM_BUF_ERR;
+    }
+    printf("flatten rc: [%d]\n", rc);
+
+    int debug = 0xffffff;
+    ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
+    rc = ldap_extended_operation_s(ldap, KRBLDAP_OID_EXOP_AS_REQ, berval, NULL, NULL, &retoid, &retdata);
+    ldap_memfree(retoid);
+    ber_bvfree(retdata);
+    printf("exop rc: [%d]\n", rc);
+    /**/
+
+    /*
+            i = krb5_get_init_creds_password(ctx,
+                                             creds,
+                                             userinfo->principal_name,
+                                             password,
+                                             prompter,
+                                             &prompter_data,
+                                             0,
+                                             realm_service,
+                                             gic_options);
+     */
+cleanup:
+    printf("doing cleanup\n", rc);
+    ldap_msgfree(ldap_msg);
 }
