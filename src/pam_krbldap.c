@@ -52,6 +52,9 @@
  * and internal changes generally aren't written up in krb5 release notes. */
 #define KRB5_PRIVATE 1
 #include "k5-int.h"
+/* Other private krb5 headers START */
+#include "init_creds_ctx.h"
+/* Other private krb5 headers END */
 
 /*#include KRB5_H*/
 
