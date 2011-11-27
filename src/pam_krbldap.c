@@ -49,7 +49,10 @@
 #include <unistd.h>
 /* Including libkrb5 private headers for the need of its message encoding
  * functions. Unfortunately, this risks breakage with future releases of krb5 
- * and internal changes generally aren't written up in krb5 release notes. */
+ * and internal changes generally aren't written up in krb5 release notes.
+ * NOTE: because of this, the pam_krb5 module must now be placed inside
+ * krb5 sources (e.g. krb5/src/pam_krb5) so that it has access to its private
+ * headers. */
 #define KRB5_PRIVATE 1
 #include "k5-int.h"
 /* Other private krb5 headers START */
