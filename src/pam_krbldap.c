@@ -76,6 +76,8 @@
 #include "prompter.h"
 #include "pam_krbldap.h"
 
+#define MAX_IN_TKT_LOOPS 16
+
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t * pamh, int flags,
         int argc, PAM_KRB5_MAYBE_CONST char **argv) {
@@ -131,7 +133,8 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
     /* TODO: make the uid attribute configurable */
     snprintf(ldap_filter, sizeof ldap_filter, "(uid=%s)", username);
     printf("LDAP filter: [%s]\n", ldap_filter);
-    rc = ldap_search_ext_s(ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL, 0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
+    rc = ldap_search_ext_s(ldap, base, LDAP_SCOPE_SUBTREE, ldap_filter, NULL,
+            0, NULL, NULL, &timeout, sizelimit, &ldap_msg);
     printf("rc: [%d]\n", rc);
     entry_msg = ldap_first_entry(ldap, ldap_msg);
     if (entry_msg == NULL) {
@@ -145,6 +148,9 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
     /**/
     char *retoid = NULL;
     struct berval *retdata = NULL;
+    char random_buf[4];
+    krb5_data random_data;
+    krb5_data *message_data;
     krb5_context k5context = NULL;
     krb5_error_code code;
     krb5_init_creds_context icc = NULL;
@@ -157,7 +163,8 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
      */
     code = krb5_init_context(&k5context);
     if (code != 0) {
-        warn("Kerberos initialization error [%d]: [%s]", code, error_message(code));
+        warn("Kerberos initialization error [%d]: [%s]", code,
+                error_message(code));
         goto cleanup;
     }
 
@@ -166,7 +173,8 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
      */
     code = krb5_get_init_creds_opt_alloc(k5context, &options);
     if (code != 0) {
-        warn("Kerberos error [%d] allocating options: [%s]", code, error_message(code));
+        warn("Kerberos error [%d] while allocating options: [%s]", code,
+                error_message(code));
         goto cleanup;
     }
 
@@ -176,7 +184,8 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
     const char *princ_name = "alice@example.com";
     krb5_parse_name(k5context, "alice@example.com", &client);
     if (code != 0) {
-        warn("Kerberos error [%d] parsing principal name [%s]: [%s]", code, princ_name, error_message(code));
+        warn("Kerberos error [%d] while parsing principal name [%s]: [%s]",
+                code, princ_name, error_message(code));
         goto cleanup;
     }
 
@@ -187,17 +196,83 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
             0,
             options,
             &icc);
-    printf("request: [%s]", icc->request);
+    if (code != 0) {
+        warn("Kerberos error [%d] while initializing credentials: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
+    icc->request = k5alloc(sizeof (krb5_kdc_req), &code);
+    if (code != 0) {
+        warn("Kerberos error [%d] while initializing request: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
+    code = krb5_init_creds_set_password(k5context, icc, pass);
+    if (code != 0) {
+        warn("Kerberos error [%d] while setting password: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
+
+    code = krb5_timeofday(k5context, &icc->request_time);
+    if (code != 0) {
+        warn("Kerberos error [%d] while setting request time: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
+    // TODO: make icc->request not NULL
+
+    // TODO: control the amount of retry attempts:
+    if (icc->loopcount >= MAX_IN_TKT_LOOPS) {
+        code = KRB5_GET_IN_TKT_LOOP;
+        warn("Kerberos error [%d] after exceeding retry limit: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
 
     /*
-    code = encode_krb5_kdc_req_body(icc->request, &icc->inner_request_body);
-    if (code) {
-        warn("Kerberos error [%d] encoding request body: [%s]", code, error_message(code));
+     * RFC 6113 requires a new nonce for the inner request on each try. It's
+     * permitted to change the nonce even for non-FAST so we do here.
+     */
+    random_data.length = 4;
+    random_data.data = (char *) random_buf;
+    code = krb5_c_random_make_octets(k5context, &random_data);
+    if (code != 0) {
+        warn("Kerberos error [%d] making random data for nonce: [%s]", code,
+                error_message(code));
         goto cleanup;
-    }*/
+    }
 
-    BerElement *berelem;
+    /*
+     * See RT ticket 3196 at MIT.  If we set the high bit, we may have
+     * compatibility problems with Heimdal, because we (incorrectly) encode
+     * this value as signed.
+     */
+    icc->request->nonce = 0x7fffffff & load_32_n(random_buf);
+    krb5_free_data(k5context, icc->inner_request_body);
+    icc->inner_request_body = NULL;
+    /* TODO: encoding redundant? */
+    code = encode_krb5_kdc_req_body(icc->request, &icc->inner_request_body);
+
+    if (code != 0) {
+        warn("Kerberos error [%d] encoding request body: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
+    printf("request magic: [%d]\n", icc->request->magic);
+
+
+    code = encode_krb5_as_req(icc->request, &icc->encoded_previous_request);
+    if (code != 0) {
+        warn("Kerberos error [%d] encoding request message: [%s]", code,
+                error_message(code));
+        goto cleanup;
+    }
+
+
     struct berval *berval;
+    /*
+    BerElement *berelem;
     berelem = ber_alloc_t(LBER_USE_DER);
     if (berelem == NULL) {
         return PAM_BUF_ERR;
@@ -209,6 +284,10 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
         return PAM_BUF_ERR;
     }
     printf("flatten rc: [%d]\n", rc);
+     */
+    berval = ber_alloc_t(LBER_USE_DER);
+    berval->bv_len = icc->encoded_previous_request->length;
+    berval->bv_val = icc->encoded_previous_request->data;
 
     int debug = 0xffffff;
     ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
@@ -230,6 +309,6 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
                                              gic_options);
      */
 cleanup:
-    printf("doing cleanup\n", rc);
+    printf("\ndoing cleanup\n");
     ldap_msgfree(ldap_msg);
 }
