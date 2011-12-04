@@ -1254,7 +1254,7 @@ krbldap_get_creds(krb5_context ctx,
             }
         }
 #endif
-        i = krb5_get_init_creds_password(ctx,
+        i = _krbldap_as_authenticate(ctx,
                 creds,
                 userinfo->principal_name,
                 password,
@@ -1266,7 +1266,7 @@ krbldap_get_creds(krb5_context ctx,
     }
     /* Let the caller see the krb5 result code. */
     if (options->debug) {
-        debug("krb5_get_init_creds_password(%s) returned %d (%s)",
+        debug("_krbldap_as_authenticate(%s) returned %d (%s)",
                 realm_service, i, v5_error_message(i));
     }
     if (result != NULL) {
@@ -1345,7 +1345,6 @@ krbldap_get_creds(krb5_context ctx,
                 tmp_gicopts = NULL;
             }
 
-            /*
             i = krb5_get_init_creds_password(ctx,
                     &tmpcreds,
                     userinfo->principal_name,
@@ -1355,7 +1354,7 @@ krbldap_get_creds(krb5_context ctx,
                     0,
                     realm_service,
                     tmp_gicopts);
-             */
+
 
             /*
             printf("User: [%s]\n", user);
@@ -1405,12 +1404,16 @@ krbldap_get_creds(krb5_context ctx,
 
 /* END blatant copy from auth.c */
 
-int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
-        char *pass) {
+int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
+        krb5_principal client, char *password,
+        krb5_prompter_fct prompter, void *data,
+        krb5_deltat start_time, char *in_tkt_service,
+        krb5_get_init_creds_opt *k5_gic_options) {
     LDAP *ldap;
     LDAPMessage *ldap_msg, *entry_msg;
     LDAPControl **controls;
     int rc;
+    char *username;
     char *base = "dc=example,dc=com";
     char *user_dn;
     char ldap_filter[KRBLDAP_DYNAMIC_STRING_MAXSIZE];
@@ -1422,12 +1425,13 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
 
     /* LDAP allows for binding with null/empty password, which is an anonymous bind.
        For PAM, this must be equivalent to an authentication error. */
-    if (pass == NULL || pass[0] == '\0') {
+    if (password == NULL || password[0] == '\0') {
         return PAM_AUTH_ERR;
     }
+    username = client->data->data;
     /* TODO: filter username characters not present in a whitelist? e.g. parens, which
             can be used for LDAP filter injection attacks. */
-    printf("User: [%s], Pass: [%s]\n", username, pass);
+    printf("Username: [%s], Pass: [%s]\n", username, password);
     /* TODO: implement configuration for LDAP URL etc. */
     rc = ldap_initialize(&ldap, "ldap://localhost:1389");
     printf("rc: [%d], LDAP_SUCCESS: [%d]\n", rc, LDAP_SUCCESS);
@@ -1460,50 +1464,15 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
     char random_buf[4];
     krb5_data random_data;
     krb5_data *message_data;
-    krb5_context k5context = NULL;
     krb5_error_code code;
     krb5_init_creds_context icc = NULL;
-    krb5_get_init_creds_opt *options = NULL;
-    krb5_principal client = NULL;
 
-
-    /*
-        initialize k5context
-     */
-    code = krb5_init_context(&k5context);
-    if (code != 0) {
-        warn("Kerberos initialization error [%d]: [%s]", code,
-                error_message(code));
-        goto cleanup;
-    }
-
-    /*
-        allocate krb5 options structure
-     */
-    code = krb5_get_init_creds_opt_alloc(k5context, &options);
-    if (code != 0) {
-        warn("Kerberos error [%d] while allocating options: [%s]", code,
-                error_message(code));
-        goto cleanup;
-    }
-
-    /*
-        parse the principal name (currently constant for test purposes)
-     */
-    const char *princ_name = "alice@example.com";
-    krb5_parse_name(k5context, "alice@example.com", &client);
-    if (code != 0) {
-        warn("Kerberos error [%d] while parsing principal name [%s]: [%s]",
-                code, princ_name, error_message(code));
-        goto cleanup;
-    }
-
-    code = krb5_init_creds_init(k5context,
+    code = krb5_init_creds_init(context,
             client,
             NULL,
             NULL,
             0,
-            options,
+            k5_gic_options,
             &icc);
     if (code != 0) {
         warn("Kerberos error [%d] while initializing credentials: [%s]", code,
@@ -1516,14 +1485,14 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
                 error_message(code));
         goto cleanup;
     }
-    code = krb5_init_creds_set_password(k5context, icc, pass);
+    code = krb5_init_creds_set_password(context, icc, password);
     if (code != 0) {
         warn("Kerberos error [%d] while setting password: [%s]", code,
                 error_message(code));
         goto cleanup;
     }
 
-    code = krb5_timeofday(k5context, &icc->request_time);
+    code = krb5_timeofday(context, &icc->request_time);
     if (code != 0) {
         warn("Kerberos error [%d] while setting request time: [%s]", code,
                 error_message(code));
@@ -1545,7 +1514,7 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
      */
     random_data.length = 4;
     random_data.data = (char *) random_buf;
-    code = krb5_c_random_make_octets(k5context, &random_data);
+    code = krb5_c_random_make_octets(context, &random_data);
     if (code != 0) {
         warn("Kerberos error [%d] making random data for nonce: [%s]", code,
                 error_message(code));
@@ -1558,7 +1527,7 @@ int _krbldap_as_authenticate(PAM_KRB5_MAYBE_CONST char *username,
      * this value as signed.
      */
     icc->request->nonce = 0x7fffffff & load_32_n(random_buf);
-    krb5_free_data(k5context, icc->inner_request_body);
+    krb5_free_data(context, icc->inner_request_body);
     icc->inner_request_body = NULL;
     /* TODO: encoding redundant? */
     code = encode_krb5_kdc_req_body(icc->request, &icc->inner_request_body);
