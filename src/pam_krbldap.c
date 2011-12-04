@@ -56,7 +56,7 @@
 #define KRB5_PRIVATE 1
 #include "k5-int.h"
 /* Other private krb5 headers START */
-#include "init_creds_ctx.h"
+#include "../../lib/krb5/krb/init_creds_ctx.h"
 /* Other private krb5 headers END */
 
 /*#include KRB5_H*/
@@ -1254,7 +1254,7 @@ krbldap_get_creds(krb5_context ctx,
             }
         }
 #endif
-        i = _krbldap_as_authenticate(ctx,
+        i = krbldap_get_init_creds_password(ctx,
                 creds,
                 userinfo->principal_name,
                 password,
@@ -1266,7 +1266,7 @@ krbldap_get_creds(krb5_context ctx,
     }
     /* Let the caller see the krb5 result code. */
     if (options->debug) {
-        debug("_krbldap_as_authenticate(%s) returned %d (%s)",
+        debug("krbldap_get_init_creds_password(%s) returned %d (%s)",
                 realm_service, i, v5_error_message(i));
     }
     if (result != NULL) {
@@ -1404,7 +1404,7 @@ krbldap_get_creds(krb5_context ctx,
 
 /* END blatant copy from auth.c */
 
-int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
+int krbldap_get_init_creds_password(krb5_context context, krb5_creds *creds,
         krb5_principal client, char *password,
         krb5_prompter_fct prompter, void *data,
         krb5_deltat start_time, char *in_tkt_service,
@@ -1421,6 +1421,8 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
     int sizelimit = 1;
     timeout.tv_sec = 29;
     timeout.tv_usec = 0;
+    krb5_error_code code = 0;
+
 
 
     /* LDAP allows for binding with null/empty password, which is an anonymous bind.
@@ -1464,8 +1466,7 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
     char random_buf[4];
     krb5_data random_data;
     krb5_data *message_data;
-    krb5_error_code code;
-    krb5_init_creds_context icc = NULL;
+    krb5_init_creds_context ctx = NULL;
 
     code = krb5_init_creds_init(context,
             client,
@@ -1473,26 +1474,29 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
             NULL,
             0,
             k5_gic_options,
-            &icc);
+            &ctx);
     if (code != 0) {
         warn("Kerberos error [%d] while initializing credentials: [%s]", code,
                 error_message(code));
         goto cleanup;
     }
-    icc->request = k5alloc(sizeof (krb5_kdc_req), &code);
+
+
+    ctx->request = k5alloc(sizeof (krb5_kdc_req), &code);
     if (code != 0) {
         warn("Kerberos error [%d] while initializing request: [%s]", code,
                 error_message(code));
         goto cleanup;
     }
-    code = krb5_init_creds_set_password(context, icc, password);
+    code = krb5_init_creds_set_password(context, ctx, password);
     if (code != 0) {
         warn("Kerberos error [%d] while setting password: [%s]", code,
                 error_message(code));
         goto cleanup;
     }
 
-    code = krb5_timeofday(context, &icc->request_time);
+
+    code = krb5_timeofday(context, &ctx->request_time);
     if (code != 0) {
         warn("Kerberos error [%d] while setting request time: [%s]", code,
                 error_message(code));
@@ -1500,8 +1504,10 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
     }
     // TODO: make icc->request not NULL
 
+    krb5_boolean got_real;
+
     // TODO: control the amount of retry attempts:
-    if (icc->loopcount >= MAX_IN_TKT_LOOPS) {
+    if (ctx->loopcount >= MAX_IN_TKT_LOOPS) {
         code = KRB5_GET_IN_TKT_LOOP;
         warn("Kerberos error [%d] after exceeding retry limit: [%s]", code,
                 error_message(code));
@@ -1526,21 +1532,65 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
      * compatibility problems with Heimdal, because we (incorrectly) encode
      * this value as signed.
      */
-    icc->request->nonce = 0x7fffffff & load_32_n(random_buf);
-    krb5_free_data(context, icc->inner_request_body);
-    icc->inner_request_body = NULL;
-    /* TODO: encoding redundant? */
-    code = encode_krb5_kdc_req_body(icc->request, &icc->inner_request_body);
+    ctx->request->nonce = 0x7fffffff & load_32_n(random_buf);
+    krb5_free_data(context, ctx->inner_request_body);
+    ctx->inner_request_body = NULL;
+
+    /*For some reason this leaves ctx->request->server == NULL: */
+    /*
+    if (in_tkt_service) {
+        code = krb5_init_creds_set_service(context, ctx, in_tkt_service);
+        if (code != 0) {
+            warn("Kerberos error [%d] while setting service: [%s]", code,
+                    error_message(code));
+            goto cleanup;
+        }
+    }*/
+
+    /* so we set ctx->request->server by hand: */
+    krb5_principal service_principal;
+    memset(&service_principal, 0, sizeof (service_principal));
+    code = krb5_parse_name(ctx, in_tkt_service, &service_principal);
+    if (code != 0) {
+        warn("Kerberos error [%d] while parsing service principal name [%s]: [%s]",
+                code, in_tkt_service, error_message(code));
+        goto cleanup;
+    }
+    ctx->request->server = service_principal;
+
+    printf("in_tkt_service: [%s]\n", in_tkt_service);
+    printf("request server: [%d]\n", ctx->request->server);
+    code = encode_krb5_kdc_req_body(ctx->request, &ctx->inner_request_body);
 
     if (code != 0) {
         warn("Kerberos error [%d] encoding request body: [%s]", code,
                 error_message(code));
         goto cleanup;
     }
-    printf("request magic: [%d]\n", icc->request->magic);
+    printf("request magic: [%d]\n", ctx->request->magic);
 
 
-    code = encode_krb5_as_req(icc->request, &icc->encoded_previous_request);
+    if (ctx->err_reply == NULL) {
+        /* either our first attempt, or retrying after PREAUTH_NEEDED */
+        code = krb5_do_preauth(context,
+                ctx->request,
+                ctx->inner_request_body,
+                ctx->encoded_previous_request,
+                ctx->preauth_to_use,
+                &ctx->request->padata,
+                ctx->prompter,
+                ctx->prompter_data,
+                &ctx->preauth_rock,
+                ctx->opte,
+                &got_real);
+        if (code == 0 && !got_real && ctx->preauth_required)
+            code = KRB5_PREAUTH_FAILED;
+        if (code != 0)
+            goto cleanup;
+    }
+
+
+    code = encode_krb5_as_req(ctx->request, &ctx->encoded_previous_request);
     if (code != 0) {
         warn("Kerberos error [%d] encoding request message: [%s]", code,
                 error_message(code));
@@ -1566,8 +1616,8 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
     }
     printf("flatten rc: [%d]\n", rc);
      */
-    berval.bv_len = icc->encoded_previous_request->length;
-    berval.bv_val = icc->encoded_previous_request->data;
+    berval.bv_len = ctx->encoded_previous_request->length;
+    berval.bv_val = ctx->encoded_previous_request->data;
 
     int debug = 0xffffff;
     ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
@@ -1589,6 +1639,7 @@ int _krbldap_as_authenticate(krb5_context context, krb5_creds *creds,
                                              gic_options);
      */
 cleanup:
-    printf("\ndoing cleanup\n");
+    warn("doing cleanup");
     ldap_msgfree(ldap_msg);
+    return code;
 }
