@@ -11,9 +11,9 @@ else
 	test_addresses=false
 fi
 
-pam_krbldap=@abs_builddir@/../src/pam_krbldap.so
+pam_krbldap=@abs_builddir@/../src/pam_krb5.so
 if ! test -x $pam_krbldap ; then
-	pam_krbldap=@abs_builddir@/../src/.libs/pam_krbldap.so
+	pam_krbldap=@abs_builddir@/../src/.libs/pam_krb5.so
 fi
 
 KRB5_CONFIG=@abs_builddir@/config/krbldap.conf ; export KRB5_CONFIG
