@@ -1,0 +1,37 @@
+#!/bin/sh
+
+PATH=${testdir}/tools:${PATH}; export PATH
+
+test_principal=`id -nu`
+test_host=@TESTHOST@
+
+if test @USE_ADDRESSES@ -eq 1 ; then
+	test_addresses=true
+else
+	test_addresses=false
+fi
+
+pam_krbldap=@abs_builddir@/../src/pam_krbldap.so
+if ! test -x $pam_krbldap ; then
+	pam_krbldap=@abs_builddir@/../src/.libs/pam_krbldap.so
+fi
+
+KRB5_CONFIG=@abs_builddir@/config/krbldap.conf ; export KRB5_CONFIG
+KRBCONFDIR=@abs_builddir@/config ; export KRBCONFDIR
+
+test_settle() {
+	sleep 1
+}
+
+test_cleanmsg ()
+{
+	sed -e "s,Warning: Your password will expire in less than one hour.[^\']*,WARN1HOUR,g" \
+	    -e "s,Warning: .*password has expired[^\']*,WARNEXPIRED,g" \
+	    -e "s|krb5cc_"`id -u`"_......|"'krb5_cc_$UID_XXXXXX|g'
+}
+
+
+test_run() {
+	# Filter out the module path and clean up messages.
+	@abs_builddir@/tools/pam_harness "$@" 2>&1 | sed s,"\`.*pam",'\`pam',g | test_cleanmsg
+}
