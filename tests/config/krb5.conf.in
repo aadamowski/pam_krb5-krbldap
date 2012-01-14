@@ -20,7 +20,7 @@
 
 [appdefaults]
  pam = {
-   debug = false
+   debug = true
    ticket_lifetime = 36000
    renew_lifetime = 36000
    forwardable = true
