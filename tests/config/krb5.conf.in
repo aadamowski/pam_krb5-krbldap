@@ -11,6 +11,7 @@
 [realms]
  EXAMPLE.COM = {
   kdc = @TESTHOST@:8800
+  master_kdc = @TESTHOST@:8800
   admin_server = @TESTHOST@:8801
   kpasswd_server = @TESTHOST@:8802
  }
